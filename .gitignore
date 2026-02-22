@@ -1,0 +1,75 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+
+# Jupyter
+.ipynb_checkpoints
+
+# Private keys (CRITICAL - never commit!)
+**/agent.json
+**/demo-agent.json
+**/*-agent.json
+**/private_key*
+**/test-agent.json
+
+# Build artifacts
+*.tar.gz
+*.zip
+*.whl
+
+# Documentation
+docs/_build/
+site/
+
+# Temporary files
+*.tmp
+*.log
+*.bak

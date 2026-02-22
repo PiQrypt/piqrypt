@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://piqrypt.org/schemas/aiss-1/audit.json",
+  "title": "AISS-1.0 Audit Export",
+  "description": "RFC Section 15 compliant audit export format",
+  "type": "object",
+  "required": ["spec", "agent_identity", "events", "chain_integrity_hash", "exported_at"],
+  "properties": {
+    "spec": {
+      "type": "string",
+      "const": "AISS-1.0-AUDIT"
+    },
+    "agent_identity": {
+      "$ref": "aiss1_identity.schema.json"
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "$ref": "aiss1_event.schema.json"
+      }
+    },
+    "chain_integrity_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "SHA-256 hash of entire chain"
+    },
+    "exported_at": {
+      "type": "integer",
+      "minimum": 1577836800,
+      "description": "Export timestamp (Unix UTC)"
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "event_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "first_timestamp": {
+          "type": ["integer", "null"]
+        },
+        "last_timestamp": {
+          "type": ["integer", "null"]
+        },
+        "exporter": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

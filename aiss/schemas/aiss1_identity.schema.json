@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://piqrypt.org/schemas/aiss-1/identity.json",
+  "title": "AISS-1.0 Agent Identity Document",
+  "description": "RFC-compliant agent identity structure",
+  "type": "object",
+  "required": ["version", "agent_id", "public_key", "algorithm", "created_at"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "AISS-1.0",
+      "description": "AISS specification version"
+    },
+    "agent_id": {
+      "type": "string",
+      "minLength": 32,
+      "maxLength": 32,
+      "pattern": "^[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]{32}$",
+      "description": "Base58 encoded agent ID (32 chars)"
+    },
+    "public_key": {
+      "type": "string",
+      "description": "Base58 encoded Ed25519 public key"
+    },
+    "algorithm": {
+      "type": "string",
+      "enum": ["Ed25519"],
+      "description": "Signature algorithm"
+    },
+    "created_at": {
+      "type": "integer",
+      "minimum": 1577836800,
+      "description": "Unix UTC timestamp (seconds since epoch)"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Optional application-specific metadata",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

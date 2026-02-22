@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://piqrypt.org/schemas/aiss-1/event.json",
+  "title": "AISS-1.0 Event Stamp",
+  "description": "RFC-compliant event structure with signature",
+  "type": "object",
+  "required": ["version", "agent_id", "timestamp", "nonce", "payload", "previous_hash", "signature"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "AISS-1.0"
+    },
+    "agent_id": {
+      "type": "string",
+      "minLength": 32,
+      "maxLength": 32
+    },
+    "timestamp": {
+      "type": "integer",
+      "minimum": 1577836800,
+      "description": "Unix UTC timestamp in seconds"
+    },
+    "nonce": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Unique nonce (UUID recommended)"
+    },
+    "payload": {
+      "type": "object",
+      "description": "Event data (application-specific)"
+    },
+    "previous_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "SHA-256 hash of previous event (hex)"
+    },
+    "signature": {
+      "type": "string",
+      "description": "Base58 encoded Ed25519 signature"
+    }
+  },
+  "additionalProperties": false
+}
