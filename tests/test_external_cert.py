@@ -163,20 +163,17 @@ def test_certification_cli():
             assert len(request_zips) == 1
             request_zip = request_zips[0]
 
-            # Generate temp CA key and validate with Python script
-            ca_key_path, ca_pub_bytes, ca_key_id = _write_temp_ca_key(tmpdir)
-            result = subprocess.run(
-                ["python3", "scripts/validate_certification_request.py",
-                 str(request_zip), "--ca-key", ca_key_path,
-                 "--output-dir", str(tmpdir)],
-                cwd=REPO_ROOT,
-                capture_output=True,
-                text=True,
+           # Generate temp CA key and validate via Python API (no internal script)
+           ca_key_path, ca_pub_bytes, ca_key_id = _write_temp_ca_key(tmpdir)
+
+           certified_path = validate_and_certify(
+               str(request_zip),
+               ca_key_path,
+               output_dir=str(tmpdir)
             )
 
-            assert result.returncode == 0, f"validate script failed: {result.stderr}"
-            assert "CERTIFICATION SUCCESSFUL" in result.stdout
-            print("✓ Validation script OK")
+            assert Path(certified_path).exists()
+            print("✓ validate_and_certify (Python API) OK")
 
             # Find certified file and verify directly (bypass bundled CA key)
             certified_files = list(tmpdir.glob("*.piqrypt-certified"))
