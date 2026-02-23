@@ -5,8 +5,8 @@ Tests only the user-facing functions:
   - create_certification_request()
   - verify_piqrypt_certification()
 
-The server-side validate_and_certify() is tested via external_cert_server,
-which is imported here only to simulate the full round-trip in integration tests.
+Round-trip integration tests simulate the server-side signing inline,
+without depending on any private/internal module.
 """
 
 import sys
@@ -144,8 +144,13 @@ class TestVerifyPiqryptCertification:
     """Full round-trip: create request → server certifies → user verifies."""
 
     def _round_trip(self, tmp_path):
-        """Helper: returns (certified_path, ca_pub, ca_id)."""
-        from aiss.external_cert_server import validate_and_certify
+        """Helper: full round-trip without depending on the private server module.
+        Simulates validate_and_certify() inline so only public API is needed.
+        Returns (certified_path_str, ca_pub_bytes, ca_id_str).
+        """
+        import hashlib, zipfile, uuid
+        from datetime import datetime, timezone
+        from aiss.crypto import ed25519
 
         activate_license("pk_pro_test123_2423cdc1")
         try:
@@ -154,11 +159,53 @@ class TestVerifyPiqryptCertification:
                 audit_path, cert_path, "test@example.com",
                 output_dir=str(tmp_path)
             )
+
+            # Generate temp CA key
             ca_key_path, ca_pub, ca_id = _temp_ca_key(tmp_path)
-            certified = validate_and_certify(
-                zip_path, ca_key_path, output_dir=str(tmp_path)
-            )
-            return certified, ca_pub, ca_id
+            ca_data = json.loads(Path(ca_key_path).read_text())
+            ca_private = ed25519.decode_base64(ca_data["private_key"])
+
+            # Extract request ZIP
+            with zipfile.ZipFile(zip_path, "r") as zf:
+                request_meta = json.loads(zf.read("request.json"))
+                audit_data = json.loads(zf.read("audit.json"))
+                cert_data = json.loads(zf.read("audit.json.cert"))
+
+            request_id = request_meta["request_id"]
+            certificate_id = f"PIQRYPT-{request_id}"
+            certified_at = datetime.now(timezone.utc).isoformat()
+
+            attestation = {
+                "version": "PIQRYPT-ATTESTATION-1.0",
+                "certificate_id": certificate_id,
+                "request_id": request_id,
+                "certified_at": certified_at,
+                "certified_by": "PiQrypt Inc.",
+                "ca_id": ca_id,
+                "verification_results": {
+                    "agent_signature": "valid",
+                    "chain_integrity": "valid",
+                    "export_hash": "valid",
+                    "events_count": len(audit_data.get("events", [])),
+                },
+                "legal_statement": "PiQrypt Inc. has independently verified this audit.",
+            }
+
+            attestation_bytes = json.dumps(attestation, sort_keys=True).encode()
+            ca_signature = ed25519.sign(ca_private, attestation_bytes)
+            attestation["ca_signature"] = ed25519.encode_base64(ca_signature)
+
+            certified_export = {
+                "version": "PIQRYPT-CERTIFIED-1.0",
+                "audit": audit_data,
+                "agent_certification": cert_data,
+                "piqrypt_attestation": attestation,
+            }
+
+            output_path = tmp_path / f"audit-{request_id}.piqrypt-certified"
+            output_path.write_text(json.dumps(certified_export, indent=2))
+
+            return str(output_path), ca_pub, ca_id
         finally:
             deactivate_license()
 
