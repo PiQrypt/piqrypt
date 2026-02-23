@@ -72,7 +72,7 @@ def validate_audit_for_certification(audit_path: str) -> Dict[str, Any]:
         CertificationError: If audit invalid
     """
     try:
-        with open(audit_path, 'r') as f:
+        with open(audit_path, 'r', encoding='utf-8') as f:
             audit = json.load(f)
     except Exception as e:
         raise CertificationError(f"Failed to load audit file: {e}")
@@ -175,16 +175,16 @@ def certify_simple(
     bundle_dir.mkdir(exist_ok=True, parents=True)
 
     # Save files
-    with open(bundle_dir / "audit.json", 'w') as f:
+    with open(bundle_dir / 'audit.json', 'w', encoding='utf-8') as f:
         json.dump(audit, f, indent=2)
 
-    with open(bundle_dir / "certificate.json", 'w') as f:
+    with open(bundle_dir / 'certificate.json', 'w', encoding='utf-8') as f:
         json.dump(certificate, f, indent=2)
 
-    with open(bundle_dir / "badge.svg", 'w') as f:
+    with open(bundle_dir / 'badge.svg', 'w', encoding='utf-8') as f:
         f.write(badge["svg"])
 
-    with open(bundle_dir / "SNIPPETS.txt", 'w') as f:
+    with open(bundle_dir / 'SNIPPETS.txt', 'w', encoding='utf-8') as f:
         f.write(generate_badge_snippets(cert_id, "simple"))
 
     # 8. Create ZIP
@@ -281,20 +281,20 @@ def certify_timestamp(
     bundle_dir = Path(output_dir) / cert_id
     bundle_dir.mkdir(exist_ok=True, parents=True)
 
-    with open(bundle_dir / "audit.json", 'w') as f:
+    with open(bundle_dir / 'audit.json', 'w', encoding='utf-8') as f:
         json.dump(audit, f, indent=2)
 
-    with open(bundle_dir / "certificate.json", 'w') as f:
+    with open(bundle_dir / 'certificate.json', 'w', encoding='utf-8') as f:
         json.dump(certificate, f, indent=2)
 
     if tsa_token:
         with open(bundle_dir / "tsa_token.tsr", 'wb') as f:
             f.write(tsa_token)
 
-    with open(bundle_dir / "badge.svg", 'w') as f:
+    with open(bundle_dir / 'badge.svg', 'w', encoding='utf-8') as f:
         f.write(badge["svg"])
 
-    with open(bundle_dir / "SNIPPETS.txt", 'w') as f:
+    with open(bundle_dir / 'SNIPPETS.txt', 'w', encoding='utf-8') as f:
         f.write(generate_badge_snippets(cert_id, "timestamp"))
 
     # 10. Create ZIP
