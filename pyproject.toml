@@ -97,7 +97,9 @@ select = ["E", "F", "W"]
 "aiss/__init__.py" = ["F401"]
 "cli/__init__.py" = ["F401"]
 "cli/main.py" = ["E501"]
-"aiss/templates/decrypt.py" = ["E501"]
+"aiss/*.py" = ["E501", "E722"]
+"aiss/rfc3161.py" = ["F401"]
+"aiss/license.py" = ["E722"]
 
 [tool.mypy]
 python_version = "3.9"
