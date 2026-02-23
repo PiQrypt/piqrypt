@@ -90,6 +90,14 @@ extend-exclude = '''
 line-length = 100
 target-version = "py39"
 
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+
+[tool.ruff.lint.per-file-ignores]
+# __init__.py files are public facades — re-export warnings are expected
+"aiss/__init__.py" = ["F401"]
+"cli/__init__.py" = ["F401"]
+
 [tool.mypy]
 python_version = "3.9"
 warn_return_any = true
