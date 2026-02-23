@@ -36,7 +36,7 @@ import uuid
 from typing import Dict, Any, Optional, List
 
 from aiss.crypto import ed25519
-from aiss.canonical import canonicalize_json
+from aiss.canonical import canonicalize as canonicalize_json
 from aiss.exceptions import PiQryptError
 from aiss.logger import get_logger
 
