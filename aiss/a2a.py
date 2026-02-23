@@ -18,8 +18,8 @@ Trust Score formula (RFC Section 16.5):
 import time
 import uuid
 import json
+import math  
 from typing import Dict, Any, Optional, List
-from pathlib import Path
 
 from aiss.crypto import ed25519
 from aiss.canonical import canonicalize, hash_bytes
@@ -556,7 +556,6 @@ def record_external_interaction(
         Signed interaction event
     """
     from aiss.stamp import generate_nonce
-    from aiss.canonical import hash_bytes
     
     # Hash the interaction data (don't store raw if sensitive)
     interaction_json = json.dumps(interaction_data, sort_keys=True)
@@ -596,7 +595,7 @@ def record_external_interaction(
 
 
 # ─── Trust Score (RFC Section 16.5) ──────────────────────────────────────────
-import math
+
 
 def compute_trust_score(
     agent_id: str,
