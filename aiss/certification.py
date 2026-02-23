@@ -89,7 +89,7 @@ def validate_audit_for_certification(audit_path: str) -> Dict[str, Any]:
 
     # Verify chain integrity
     try:
-        verify_audit_chain(audit["events"])
+        verify_audit_chain(audit)
     except Exception as e:
         raise CertificationError(f"Chain verification failed: {e}")
 
