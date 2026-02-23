@@ -18,6 +18,7 @@ Trust Score formula (RFC Section 16.5):
 import time
 import uuid
 import json
+import math
 from typing import Dict, Any, Optional, List
 from pathlib import Path
 
@@ -596,7 +597,6 @@ def record_external_interaction(
 
 
 # ─── Trust Score (RFC Section 16.5) ──────────────────────────────────────────
-import math
 
 def compute_trust_score(
     agent_id: str,
