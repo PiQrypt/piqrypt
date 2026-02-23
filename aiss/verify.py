@@ -284,10 +284,46 @@ def get_verification_report(
     return report
 
 
-# Public API
+# Public API (see extended __all__ at end of file)
+
+
+def verify_audit_chain(audit_data: Dict[str, Any]) -> bool:
+    """
+    Verify an audit chain document (used by certification service).
+
+    Accepts an audit dict with 'events' list and optional 'agent_identity'.
+    Validates event structure and chain linkage without requiring signatures
+    (events may not include public key in audit context).
+
+    Args:
+        audit_data: Audit document dict with 'events' key
+
+    Returns:
+        True if chain structure is valid
+
+    Raises:
+        InvalidChainError: If chain linkage is broken or events are malformed
+    """
+    from aiss.chain import verify_chain_linkage
+
+    events = audit_data.get("events", [])
+    if not events:
+        return True
+
+    # If identity with public key is provided, do full signature verification
+    identity = audit_data.get("agent_identity") or audit_data.get("identity")
+    if identity and identity.get("public_key"):
+        return verify_chain(events, identity, check_forks=False, check_replay=False)
+
+    # Otherwise verify chain linkage only (structural integrity)
+    verify_chain_linkage(events)
+    return True
+
+
 __all__ = [
     "verify_signature",
     "verify_event",
     "verify_chain",
+    "verify_audit_chain",
     "get_verification_report",
 ]

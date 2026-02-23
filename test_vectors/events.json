@@ -1,0 +1,53 @@
+{
+  "description": "Event structure and hash test vectors (RFC Section 7)",
+  "tests": [
+    {
+      "name": "genesis_event",
+      "event": {
+        "version": "AISS-1.0",
+        "agent_id": "3gFw2S1NT6dzo9vTPQ6JNWEwYFysZn8F",
+        "timestamp": 1771845244,
+        "nonce": "d363c917-ca77-4c63-94d4-c1f5f93261d2",
+        "payload": {
+          "seq": 0,
+          "action": "init"
+        },
+        "previous_hash": "27c5e890fa306d60805a01143bf74a47421811c5afac15d12ee968971afb7fc4",
+        "signature": "eA3oT793bV/hJnDXDttmFvX1bN+BzckqMJWg+a7gkdXAGiuZJe7ggkk4tvSA1yI9tWnK8r1b9tNLMTE41/HkBw=="
+      },
+      "expected_hash": "8b1cfab333041b262cbfc93ea8110fed167515ee1668879a84136479d5439b00"
+    },
+    {
+      "name": "event_1",
+      "event": {
+        "version": "AISS-1.0",
+        "agent_id": "3gFw2S1NT6dzo9vTPQ6JNWEwYFysZn8F",
+        "timestamp": 1771845244,
+        "nonce": "36f7709e-48dd-41c3-ba31-2b5a09556231",
+        "payload": {
+          "seq": 1,
+          "action": "step_1"
+        },
+        "previous_hash": "8b1cfab333041b262cbfc93ea8110fed167515ee1668879a84136479d5439b00",
+        "signature": "E/Taf3BtkrnkADF4CNmfvwbAmzaRTDsH8f2mfTuREP+fX4su8ADB/ca9icv0CeE0u18pM/+tm7crtAq/sRBeAw=="
+      },
+      "expected_hash": "befcb6329063ea685f511f1f92a4eb534a3cf297206149082de3970c95454e70"
+    },
+    {
+      "name": "event_2",
+      "event": {
+        "version": "AISS-1.0",
+        "agent_id": "3gFw2S1NT6dzo9vTPQ6JNWEwYFysZn8F",
+        "timestamp": 1771845244,
+        "nonce": "35766875-13c7-49c6-808e-a65c5167e357",
+        "payload": {
+          "seq": 2,
+          "action": "step_2"
+        },
+        "previous_hash": "befcb6329063ea685f511f1f92a4eb534a3cf297206149082de3970c95454e70",
+        "signature": "B9d9eJwPtVHjlk6jsWNQZ9cSQLeAbEUKKoXt3eQUW7d0lPuO43NZ30TGZ0ZA+HUS/RiufkWVL0TzTD+ZVUN+CQ=="
+      },
+      "expected_hash": "74436eec01dce77e7048d399db6d6220b0e9c8a4a487e6995228c881cb0fd151"
+    }
+  ]
+}

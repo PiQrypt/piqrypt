@@ -19,8 +19,8 @@ def run_cli(cmd: list) -> tuple:
     """Execute CLI command"""
     result = subprocess.run(
         ["python3", "-m", "cli.main"] + cmd,
-        cwd="/home/claude/piqrypt-v1.2.0",
-        env={**os.environ, "PYTHONPATH": "/home/claude/piqrypt-v1.2.0"},
+        cwd=str(Path(__file__).parent.parent),
+        env={**os.environ, "PYTHONPATH": str(Path(__file__).parent.parent)},
         capture_output=True,
         text=True,
     )

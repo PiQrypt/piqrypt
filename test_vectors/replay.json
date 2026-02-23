@@ -1,0 +1,74 @@
+{
+  "description": "Replay attack detection test vectors (RFC Section 11)",
+  "tests": [
+    {
+      "name": "duplicate_nonce",
+      "events": [
+        {
+          "version": "AISS-1.0",
+          "agent_id": "FiU6DfwGsub1Y2sxL4ETESuweRvuhxGe",
+          "timestamp": 1771845244,
+          "nonce": "unique-nonce-111",
+          "payload": {
+            "seq": 1
+          },
+          "previous_hash": null,
+          "signature": "9W0UU1AvgJhgSm59BrzhnfB17SUpaPDj391GtbYaW2kA9t9gAaWmjAmrMUoUv4TEpRom+9fMNaQg6Oj+OPtHCA=="
+        },
+        {
+          "version": "AISS-1.0",
+          "agent_id": "FiU6DfwGsub1Y2sxL4ETESuweRvuhxGe",
+          "timestamp": 1771845244,
+          "nonce": "replay-nonce-abc123",
+          "payload": {
+            "seq": 2
+          },
+          "previous_hash": null,
+          "signature": "wQ8JAPXtyCH69cIrsMQD1NlwJj1/45pMSpf4xcUl9S80jVjCLPSrpvOV2dHwrams55Zg+bWcq5hoVuLxeSBUBQ=="
+        },
+        {
+          "version": "AISS-1.0",
+          "agent_id": "FiU6DfwGsub1Y2sxL4ETESuweRvuhxGe",
+          "timestamp": 1771845244,
+          "nonce": "replay-nonce-abc123",
+          "payload": {
+            "seq": 3
+          },
+          "previous_hash": null,
+          "signature": "vdEvhYDbsKoSf4E4oAuu7r6mKdJoNA7xX0CIjNGXe8VTFYaOWZA3+Srbqe+UnoCvQIRuk6oBhgLoR+wpOIpgDg=="
+        }
+      ],
+      "expected_replay": true,
+      "replay_nonce": "replay-nonce-abc123"
+    },
+    {
+      "name": "no_replay",
+      "events": [
+        {
+          "version": "AISS-1.0",
+          "agent_id": "FiU6DfwGsub1Y2sxL4ETESuweRvuhxGe",
+          "timestamp": 1771845244,
+          "nonce": "unique-nonce-111",
+          "payload": {
+            "seq": 1
+          },
+          "previous_hash": null,
+          "signature": "9W0UU1AvgJhgSm59BrzhnfB17SUpaPDj391GtbYaW2kA9t9gAaWmjAmrMUoUv4TEpRom+9fMNaQg6Oj+OPtHCA=="
+        },
+        {
+          "version": "AISS-1.0",
+          "agent_id": "FiU6DfwGsub1Y2sxL4ETESuweRvuhxGe",
+          "timestamp": 1771845244,
+          "nonce": "unique-nonce-444",
+          "payload": {
+            "seq": 4
+          },
+          "previous_hash": null,
+          "signature": "YfTc4ebL0lzO47c89QyUHm6NzxjOe71M9QXNvs2n1DYyAaF6nvNpLmbC5ueHfFBKEEfqxv1wsxF+BMnHP3SZBw=="
+        }
+      ],
+      "expected_replay": false,
+      "replay_nonce": ""
+    }
+  ]
+}

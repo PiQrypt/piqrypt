@@ -1,0 +1,45 @@
+{
+  "description": "Fork detection test vectors (RFC Section 10)",
+  "tests": [
+    {
+      "name": "simple_fork",
+      "genesis": {
+        "version": "AISS-1.0",
+        "agent_id": "EwimrsC7Enf9W7VUGMFL9TFS6s9x3Dpc",
+        "timestamp": 1771845244,
+        "nonce": "05a05a7f-1667-434c-8b9b-38d32cba764c",
+        "payload": {
+          "init": true
+        },
+        "previous_hash": "cf2c86f1176b092ae9d188c80c14022c3b0cae524c767f692fcbf766d806b8e3",
+        "signature": "MG3D2CK7pZh4EIM7w40/HADu21PCixWgajZVOMHorl84Yca8dI43OHsWWANCSq0PwnEllgOyG7BQH+4mpab9Ag=="
+      },
+      "fork_events": [
+        {
+          "version": "AISS-1.0",
+          "agent_id": "EwimrsC7Enf9W7VUGMFL9TFS6s9x3Dpc",
+          "timestamp": 1771845244,
+          "nonce": "422810a1-0595-49fb-9d22-9a8eed5ce013",
+          "payload": {
+            "branch": "A"
+          },
+          "previous_hash": "5bb9c72894e438697223049144fad5f01728082cd0da2b82b899d4c4bc1097d3",
+          "signature": "H1PmoFdwG69yzHnpNhTrFjGPJhxw8n1B/6CydnU5w3Mg2ruERWqwlSYStS8HlG6JIQJLaAnPUEeaFOj5c4QoBQ=="
+        },
+        {
+          "version": "AISS-1.0",
+          "agent_id": "EwimrsC7Enf9W7VUGMFL9TFS6s9x3Dpc",
+          "timestamp": 1771845244,
+          "nonce": "6cc38d3f-d1ae-488f-b246-cd5731e7323e",
+          "payload": {
+            "branch": "B"
+          },
+          "previous_hash": "5bb9c72894e438697223049144fad5f01728082cd0da2b82b899d4c4bc1097d3",
+          "signature": "OIGsU5DQUQagz8rhGr4CYBtPkCVtfp5inR7yPTaNNGmGS1TVnPZ0+WgDEWm2U+FRlEdGgoFEFjUORStyQa2ACg=="
+        }
+      ],
+      "expected_fork_at": "5bb9c72894e438697223049144fad5f01728082cd0da2b82b899d4c4bc1097d3",
+      "expected_branches": 2
+    }
+  ]
+}

@@ -53,10 +53,11 @@ def minimal_audit(tmp_path, sample_keypair):
     priv_key, pub_key = sample_keypair
     agent_id = derive_agent_id(pub_key)
 
-    # Genesis event
-    genesis = stamp_genesis_event(priv_key, pub_key, {"action": "init"})
-    # Second event chained
-    second = stamp_event(priv_key, pub_key, {"action": "update"}, prev_event=genesis)
+    # Genesis event — signature: (private_key, public_key, agent_id, payload)
+    genesis = stamp_genesis_event(priv_key, pub_key, agent_id, {"action": "init"})
+    # Second event chained — signature: (private_key, agent_id, payload, previous_hash)
+    second = stamp_event(priv_key, agent_id, {"action": "update"},
+                         previous_hash=compute_event_hash(genesis))
 
     audit = {
         "agent_id": agent_id,

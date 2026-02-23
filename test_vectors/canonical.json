@@ -1,0 +1,57 @@
+{
+  "description": "RFC 8785 JSON Canonicalization Scheme (JCS) test vectors",
+  "tests": [
+    {
+      "name": "simple_string",
+      "input": {
+        "hello": "world"
+      },
+      "expected_canonical": "{\"hello\":\"world\"}",
+      "expected_sha256": "93a23971a914e5eacbf0a8d25154cda309c3c1c72fbb9914d47c60f3cb681588"
+    },
+    {
+      "name": "key_ordering",
+      "input": {
+        "z": 1,
+        "a": 2,
+        "m": 3
+      },
+      "expected_canonical": "{\"a\":2,\"m\":3,\"z\":1}",
+      "expected_sha256": "ebba85cfdc0a724b6cc327ecc545faeb38b9fe02eca603b430eb872f5cf75370"
+    },
+    {
+      "name": "nested",
+      "input": {
+        "b": {
+          "d": 4,
+          "c": 3
+        },
+        "a": 1
+      },
+      "expected_canonical": "{\"a\":1,\"b\":{\"c\":3,\"d\":4}}",
+      "expected_sha256": "8d463b4d44d84c3a5f01c287245d254181e5d88e0f520c14c325a33422ed9331"
+    },
+    {
+      "name": "array",
+      "input": {
+        "items": [
+          3,
+          1,
+          2
+        ],
+        "name": "list"
+      },
+      "expected_canonical": "{\"items\":[3,1,2],\"name\":\"list\"}",
+      "expected_sha256": "c57e8758cec85ce26b7b25071a5671fe4ef9f86410ac5848f0ea98b69b7ea4ef"
+    },
+    {
+      "name": "unicode",
+      "input": {
+        "emoji": "ok",
+        "name": "test"
+      },
+      "expected_canonical": "{\"emoji\":\"ok\",\"name\":\"test\"}",
+      "expected_sha256": "8b19b8de9b7403d1a1b23660c2d70d5db3f32323150c629ba521c44031e16707"
+    }
+  ]
+}
