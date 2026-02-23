@@ -171,7 +171,6 @@ def test_certification_cli():
                 ca_key_path,
                 output_dir=str(tmpdir)
             )
-
             assert Path(certified_path).exists()
             print("✓ validate_and_certify (Python API) OK")
 
