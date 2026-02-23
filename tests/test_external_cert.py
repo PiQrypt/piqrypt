@@ -249,8 +249,8 @@ class TestVerifyPiqryptCertification:
         import pytest
         certified, _, _ = self._round_trip(tmp_path)
         # Use a completely different CA key → signature mismatch
-        _, wrong_pub, wrong_id = _temp_ca_key(tmp_path / "wrong")
         (tmp_path / "wrong").mkdir(exist_ok=True)
+        _, wrong_pub, wrong_id = _temp_ca_key(tmp_path / "wrong")
         with pytest.raises(CertificationError, match="CA signature verification failed"):
             verify_piqrypt_certification(
                 certified, ca_public_key=wrong_pub, ca_key_id=wrong_id
