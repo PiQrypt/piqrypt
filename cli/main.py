@@ -571,6 +571,12 @@ def cmd_telemetry_status(args):
 # ─────────────────────────────────────────────
 
 def main():
+    # Force UTF-8 output on Windows (default cp1252 can't encode emojis)
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8')
+    if hasattr(sys.stderr, 'reconfigure'):
+        sys.stderr.reconfigure(encoding='utf-8')
+
     parser = argparse.ArgumentParser(
         description=f"PiQrypt v{aiss.__version__} – AISS Command Line Interface",
         formatter_class=argparse.RawDescriptionHelpFormatter,
