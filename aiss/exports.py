@@ -23,27 +23,27 @@ def export_audit_chain(
 ) -> Dict[str, Any]:
     """
     Export event chain in RFC Section 15 compliant format.
-    
+
     Creates standardized audit file containing:
     - Agent identity document
     - Complete event chain
     - Chain integrity hash
     - Export metadata
-    
+
     This format is designed for:
     - Regulatory compliance
     - Forensic analysis
     - Third-party audits
     - Archive/backup
-    
+
     Args:
         agent_identity: Agent identity document
         events: List of events in chronological order
         include_metadata: Include export metadata (default: True)
-        
+
     Returns:
         Audit export dict conforming to RFC Section 15
-        
+
     Example:
         >>> audit = export_audit_chain(identity, events)
         >>> audit['spec']
@@ -73,18 +73,18 @@ def export_audit_chain(
 def validate_audit_export(audit: Dict[str, Any]) -> bool:
     """
     Validate audit export structure.
-    
+
     Checks:
     - Required fields present
     - Spec version correct
     - Chain integrity hash matches
-    
+
     Args:
         audit: Audit export dict
-        
+
     Returns:
         True if valid
-        
+
     Raises:
         ValueError: If audit export invalid
     """
@@ -118,17 +118,17 @@ def export_subset(
 ) -> Dict[str, Any]:
     """
     Export subset of events from audit chain.
-    
+
     Useful for:
     - Time-range exports
     - Pagination
     - Selective disclosure
-    
+
     Args:
         audit: Full audit export
         start_index: First event index (inclusive)
         end_index: Last event index (exclusive, None = end)
-        
+
     Returns:
         New audit export with subset of events
     """
@@ -148,12 +148,12 @@ def export_by_timerange(
 ) -> Dict[str, Any]:
     """
     Export events within timestamp range.
-    
+
     Args:
         audit: Full audit export
         start_timestamp: Start time (Unix UTC)
         end_timestamp: End time (Unix UTC)
-        
+
     Returns:
         New audit export with filtered events
     """
@@ -172,7 +172,7 @@ def export_by_timerange(
 def get_audit_summary(audit: Dict[str, Any]) -> Dict[str, Any]:
     """
     Generate summary statistics from audit export.
-    
+
     Returns:
         Summary dict with:
         - agent_id: Agent ID

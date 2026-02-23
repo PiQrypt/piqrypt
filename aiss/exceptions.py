@@ -19,7 +19,7 @@ class InvalidSignatureError(AISSError):
 
 class ForkDetected(AISSError):
     """Raised when fork condition is detected (RFC Section 10)
-    
+
     A fork occurs when multiple events reference the same previous_hash.
     """
 

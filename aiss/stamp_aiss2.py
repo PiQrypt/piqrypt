@@ -176,14 +176,14 @@ def stamp_genesis_event_aiss2_hybrid(
 ) -> Dict[str, Any]:
     """
     Create AISS-2 genesis event with hybrid signatures
-    
+
     Args:
         private_key_ed25519: Ed25519 private key
         private_key_dilithium: Dilithium3 private key
         public_key_ed25519: Ed25519 public key (for genesis hash)
         agent_id: Agent ID
         payload: Genesis event data
-        
+
     Returns:
         AISS-2.0 genesis event
     """
@@ -205,15 +205,15 @@ def stamp_genesis_event_aiss2_hybrid(
 def verify_aiss2_hybrid(event: Dict[str, Any], public_key_ed25519: bytes, public_key_dilithium: bytes) -> bool:
     """
     Verify AISS-2 hybrid signatures
-    
+
     Args:
         event: AISS-2.0 event
         public_key_ed25519: Ed25519 public key
         public_key_dilithium: Dilithium3 public key
-        
+
     Returns:
         True if both signatures valid
-        
+
     Raises:
         InvalidSignatureError: If either signature invalid
     """

@@ -24,7 +24,7 @@ Index schema:
         length INTEGER,
         created_at INTEGER
     );
-    
+
     CREATE INDEX idx_timestamp ON events_index(timestamp);
     CREATE INDEX idx_event_type ON events_index(event_type);
     CREATE INDEX idx_agent_id ON events_index(agent_id);
@@ -72,7 +72,7 @@ CREATE INDEX IF NOT EXISTS idx_nonce ON events_index(nonce);
 class MemoryIndex:
     """
     SQLite-backed index for fast event search.
-    
+
     Supports:
     - Search by timestamp range
     - Search by event_type
@@ -84,7 +84,7 @@ class MemoryIndex:
     def __init__(self, index_path: Path):
         """
         Initialize index.
-        
+
         Args:
             index_path: Path to index.db file
         """
@@ -137,7 +137,7 @@ class MemoryIndex:
     ):
         """
         Add event to index.
-        
+
         Args:
             event_hash:  SHA-256 hash of event
             timestamp:   Unix UTC seconds
@@ -151,7 +151,7 @@ class MemoryIndex:
         self.connect()
         self.conn.execute(
             """
-            INSERT OR REPLACE INTO events_index 
+            INSERT OR REPLACE INTO events_index
             (event_hash, timestamp, event_type, agent_id, nonce, file_path, offset, length, created_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
@@ -162,7 +162,7 @@ class MemoryIndex:
     def add_events_batch(self, events: List[Dict[str, Any]]):
         """
         Batch insert events (faster for migration).
-        
+
         Args:
             events: List of dicts with keys: event_hash, timestamp, event_type, agent_id, nonce, file_path, offset, length
         """
@@ -176,7 +176,7 @@ class MemoryIndex:
         ]
         self.conn.executemany(
             """
-            INSERT OR REPLACE INTO events_index 
+            INSERT OR REPLACE INTO events_index
             (event_hash, timestamp, event_type, agent_id, nonce, file_path, offset, length, created_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
@@ -197,7 +197,7 @@ class MemoryIndex:
     ) -> List[Dict[str, Any]]:
         """
         Search events by criteria.
-        
+
         Args:
             agent_id:       Filter by agent_id
             event_type:     Filter by event_type (exact match)
@@ -205,7 +205,7 @@ class MemoryIndex:
             to_timestamp:   Unix UTC end (inclusive)
             nonce:          Filter by nonce (exact match)
             limit:          Max results
-        
+
         Returns:
             List of index entries (dicts with event_hash, timestamp, file_path, offset, length)
         """
@@ -243,11 +243,11 @@ class MemoryIndex:
     def search_by_hash_prefix(self, hash_prefix: str, limit: int = 20) -> List[Dict[str, Any]]:
         """
         Search events by partial hash (e.g., "a3f7e8").
-        
+
         Args:
             hash_prefix: Hash prefix (min 6 chars recommended)
             limit:       Max results
-        
+
         Returns:
             List of matching events
         """
@@ -261,10 +261,10 @@ class MemoryIndex:
     def find_by_nonce(self, nonce: str) -> Optional[Dict[str, Any]]:
         """
         Find event by nonce (for replay detection).
-        
+
         Args:
             nonce: Event nonce
-        
+
         Returns:
             Index entry or None
         """
@@ -281,7 +281,7 @@ class MemoryIndex:
     def get_stats(self) -> Dict[str, Any]:
         """
         Get index statistics.
-        
+
         Returns:
             Dict with total_events, earliest_timestamp, latest_timestamp, agents, event_types
         """
@@ -289,7 +289,7 @@ class MemoryIndex:
 
         cursor = self.conn.execute(
             """
-            SELECT 
+            SELECT
                 COUNT(*) as total,
                 MIN(timestamp) as earliest,
                 MAX(timestamp) as latest,
@@ -321,7 +321,7 @@ class MemoryIndex:
     def rebuild_index(self, events: List[Dict[str, Any]]):
         """
         Rebuild entire index from scratch.
-        
+
         Args:
             events: List of events with metadata
         """
@@ -343,10 +343,10 @@ class MemoryIndex:
 def get_index(encrypted: bool = False) -> MemoryIndex:
     """
     Get memory index (Free or Pro).
-    
+
     Args:
         encrypted: If True, returns Pro encrypted index; else Free plaintext index
-    
+
     Returns:
         MemoryIndex instance
     """

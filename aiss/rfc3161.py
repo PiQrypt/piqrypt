@@ -64,7 +64,7 @@ DEFAULT_TIMEOUT = 10  # seconds
 def _build_tsr_request(data_hash: bytes, hash_algorithm: str = "sha256") -> bytes:
     """
     Build a minimal RFC 3161 TimeStampReq (DER encoded).
-    
+
     Structure (simplified):
         TimeStampReq ::= SEQUENCE {
             version     INTEGER { v1(1) },
@@ -75,7 +75,7 @@ def _build_tsr_request(data_hash: bytes, hash_algorithm: str = "sha256") -> byte
             hashAlgorithm AlgorithmIdentifier,
             hashedMessage OCTET STRING
         }
-    
+
     This is a minimal implementation using raw DER encoding.
     For production, use python-pkcs11 or cryptography.x509.
     """
@@ -107,7 +107,7 @@ def _build_tsr_request(data_hash: bytes, hash_algorithm: str = "sha256") -> byte
 def _parse_tsr_response(response_bytes: bytes) -> Dict[str, Any]:
     """
     Parse RFC 3161 TimeStampResp minimally.
-    
+
     Returns basic status and token info.
     Full DER parsing would require pyasn1 or cryptography library.
     """
@@ -143,14 +143,14 @@ def request_timestamp(
 ) -> Dict[str, Any]:
     """
     Request a trusted timestamp from a TSA (RFC 3161).
-    
+
     PRO feature. Gracefully degrades if TSA unreachable.
-    
+
     Args:
         data: Bytes to timestamp (typically canonical event JSON)
         tsa_url: TSA URL (defaults to freetsa.org)
         timeout: Request timeout in seconds
-    
+
     Returns:
         TSA token dict:
         {
@@ -161,11 +161,11 @@ def request_timestamp(
             "data_hash": "hex...",
             "status": "granted"
         }
-    
+
     Raises:
         TSAUnavailableError: If TSA unreachable (caller should handle gracefully)
         TSAError: If TSA returns error status
-    
+
     Example:
         >>> from aiss.rfc3161 import request_timestamp
         >>> from aiss.canonical import canonicalize
@@ -242,18 +242,18 @@ def stamp_event_with_tsa(
 ) -> Dict[str, Any]:
     """
     Add a trusted timestamp to an already-signed event.
-    
+
     The TSA signs the canonical form of the event (including its Ed25519
     signature), providing independent proof that the event existed at time T.
-    
+
     Args:
         event: Already-signed AISS event
         tsa_url: TSA URL (defaults to freetsa.org)
         fail_gracefully: If True, return event without TSA on network error
-    
+
     Returns:
         Event with 'trusted_timestamp' field added
-    
+
     Example:
         >>> event = stamp_event(priv, agent_id, payload)
         >>> event = stamp_event_with_tsa(event)
@@ -294,14 +294,14 @@ def verify_tsa_token(
 ) -> Dict[str, Any]:
     """
     Verify a TSA token embedded in an event.
-    
+
     For full verification of the token's TSA signature, the cryptography
     library with x509 support is needed. This function performs available checks.
-    
+
     Args:
         event: Event containing trusted_timestamp field
         expected_data: Optional original data to verify hash against
-    
+
     Returns:
         Verification result dict
     """
@@ -391,13 +391,13 @@ def retry_pending_timestamps(
 ) -> Dict[str, int]:
     """
     Retry TSA timestamp for events where it failed at stamp time.
-    
+
     Called by: piqrypt timestamp --retry
-    
+
     Args:
         agent_id: Agent whose events to retry
         tsa_url: TSA URL to use
-    
+
     Returns:
         {"retried": N, "succeeded": M, "failed": K}
     """

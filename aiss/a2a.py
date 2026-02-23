@@ -19,14 +19,14 @@ Example:
     ...     agent_b_id,
     ...     payload={"intent": "data_sharing"}
     ... )
-    
+
     >>> # Agent B accepts
     >>> response = accept_handshake(
     ...     agent_b_private_key,
     ...     agent_b_id,
     ...     handshake
     ... )
-    
+
     >>> # Both verify
     >>> verify_handshake(response, {agent_a_id: pub_a, agent_b_id: pub_b})
 """
@@ -61,17 +61,17 @@ def initiate_handshake(
 ) -> Dict[str, Any]:
     """
     Initiate A2A handshake.
-    
+
     Args:
         initiator_private_key: Initiator's Ed25519 private key (32 bytes)
         initiator_agent_id: Initiator's agent ID
         responder_agent_id: Responder's agent ID
         payload: Optional handshake data (intent, terms, etc.)
         expires_in: Handshake validity in seconds (default: 1h)
-    
+
     Returns:
         Handshake dict (send to responder)
-    
+
     Example:
         >>> handshake = initiate_handshake(
         ...     priv_key,
@@ -113,19 +113,19 @@ def accept_handshake(
 ) -> Dict[str, Any]:
     """
     Accept A2A handshake.
-    
+
     Args:
         responder_private_key: Responder's Ed25519 private key
         responder_agent_id: Responder's agent ID
         handshake: Handshake dict from initiator
         counter_payload: Optional response data
-    
+
     Returns:
         Completed handshake (send back to initiator)
-    
+
     Raises:
         A2AError: If handshake invalid or expired
-    
+
     Example:
         >>> response = accept_handshake(
         ...     priv_key,
@@ -173,13 +173,13 @@ def reject_handshake(
 ) -> Dict[str, Any]:
     """
     Reject A2A handshake.
-    
+
     Args:
         responder_private_key: Responder's Ed25519 private key
         responder_agent_id: Responder's agent ID
         handshake: Handshake dict from initiator
         reason: Rejection reason
-    
+
     Returns:
         Rejected handshake (send back to initiator)
     """
@@ -212,17 +212,17 @@ def verify_handshake(
 ) -> bool:
     """
     Verify A2A handshake signatures.
-    
+
     Args:
         handshake: Completed handshake dict
         public_keys: Dict mapping agent_id → public_key
-    
+
     Returns:
         True if both signatures valid
-    
+
     Raises:
         A2AError: If verification fails
-    
+
     Example:
         >>> verify_handshake(handshake, {
         ...     "agent_A": public_key_a,
@@ -290,7 +290,7 @@ def verify_handshake(
 class PeerRegistry:
     """
     Simple in-memory peer registry.
-    
+
     In production, use:
     - DHT (Distributed Hash Table)
     - Central registry server
@@ -313,10 +313,10 @@ class PeerRegistry:
     def discover(self, agent_id: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Discover peers.
-        
+
         Args:
             agent_id: Optional specific agent to find
-        
+
         Returns:
             List of peer info dicts
         """
@@ -339,11 +339,11 @@ class PeerRegistry:
 def handshake_to_event(handshake: Dict[str, Any], agent_id: str) -> Dict[str, Any]:
     """
     Convert handshake to AISS event for audit trail.
-    
+
     Args:
         handshake: Completed handshake
         agent_id: Agent storing this event
-    
+
     Returns:
         AISS-1.0 event dict
     """

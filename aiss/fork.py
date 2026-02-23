@@ -34,7 +34,7 @@ from aiss.chain import compute_event_hash
 class ForkDetector:
     """
     Fork detection engine (RFC Section 10.1).
-    
+
     Scans event sequences to detect fork conditions.
     """
 
@@ -44,7 +44,7 @@ class ForkDetector:
     def add_event(self, event: Dict[str, Any]) -> None:
         """
         Add event to fork detector.
-        
+
         Args:
             event: Event to track
         """
@@ -55,10 +55,10 @@ class ForkDetector:
     def detect(self, events: List[Dict[str, Any]]) -> Optional[ForkDetected]:
         """
         Detect forks in event list.
-        
+
         Returns:
             ForkDetected exception if fork found, None otherwise
-            
+
         Example:
             >>> detector = ForkDetector()
             >>> fork = detector.detect(events)
@@ -82,7 +82,7 @@ class ForkDetector:
     def detect_and_raise(self, events: List[Dict[str, Any]]) -> None:
         """
         Detect forks and raise exception if found.
-        
+
         Raises:
             ForkDetected: If fork condition detected
         """
@@ -94,13 +94,13 @@ class ForkDetector:
 def find_forks(events: List[Dict[str, Any]]) -> List[ForkDetected]:
     """
     Find all forks in event list.
-    
+
     Args:
         events: List of events to scan
-        
+
     Returns:
         List of ForkDetected exceptions (one per fork)
-        
+
     Example:
         >>> forks = find_forks(events)
         >>> for fork in forks:
@@ -124,17 +124,17 @@ def find_forks(events: List[Dict[str, Any]]) -> List[ForkDetected]:
 def resolve_fork_by_timestamp(fork: ForkDetected) -> Dict[str, Any]:
     """
     Resolve fork by selecting event with latest timestamp.
-    
+
     This is one possible resolution strategy (RFC Section 10.2).
     Applications may implement different strategies:
     - First seen wins
     - Highest nonce wins
     - Manual resolution
     - Reject all branches
-    
+
     Args:
         fork: ForkDetected exception
-        
+
     Returns:
         Event with latest timestamp
     """
@@ -144,12 +144,12 @@ def resolve_fork_by_timestamp(fork: ForkDetected) -> Dict[str, Any]:
 def resolve_fork_by_first_seen(fork: ForkDetected) -> Dict[str, Any]:
     """
     Resolve fork by selecting first event in list.
-    
+
     This assumes events list is ordered by reception time.
-    
+
     Args:
         fork: ForkDetected exception
-        
+
     Returns:
         First event in fork
     """
@@ -159,7 +159,7 @@ def resolve_fork_by_first_seen(fork: ForkDetected) -> Dict[str, Any]:
 def get_fork_resolution_info(fork: ForkDetected) -> Dict[str, Any]:
     """
     Get detailed information about a fork for manual resolution.
-    
+
     Returns:
         Dict with fork details:
         - hash: previous_hash where fork occurred

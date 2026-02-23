@@ -24,22 +24,22 @@ from aiss.exceptions import (
 def verify_signature(event: Dict[str, Any], public_key: bytes) -> bool:
     """
     Verify Ed25519 signature on event (RFC Section 7.2).
-    
+
     Validates that:
     1. Event has signature field
     2. Signature is valid Base58
     3. Signature verifies against canonical event (without signature field)
-    
+
     Args:
         event: Event dict with signature
         public_key: Agent's public key bytes
-        
+
     Returns:
         True if signature is valid
-        
+
     Raises:
         InvalidSignatureError: If signature verification fails
-        
+
     Example:
         >>> verify_signature(event, public_key)
         True
@@ -77,20 +77,20 @@ def verify_event(
 ) -> bool:
     """
     Verify complete event validity.
-    
+
     Checks:
     - Signature validity
     - Hash chain linkage (if previous_event provided)
     - Required fields present
-    
+
     Args:
         event: Event to verify
         public_key: Agent's public key
         previous_event: Previous event in chain (None for genesis)
-        
+
     Returns:
         True if event is valid
-        
+
     Raises:
         InvalidSignatureError: If signature invalid
         InvalidChainError: If chain linkage broken
@@ -126,30 +126,30 @@ def verify_chain(
 ) -> bool:
     """
     Verify complete event chain integrity (RFC Section 15.1).
-    
+
     Performs comprehensive validation:
     1. All signatures valid
     2. Hash chain continuity
     3. No forks (optional)
     4. No replay attacks (optional)
     5. Monotonic timestamps (optional)
-    
+
     Args:
         events: List of events in chronological order
         identity: Agent identity document
         check_forks: Enable fork detection (default: True)
         check_replay: Enable replay detection (default: True)
         check_timestamps: Enable timestamp validation (default: True)
-        
+
     Returns:
         True if chain is valid
-        
+
     Raises:
         InvalidSignatureError: If any signature invalid
         InvalidChainError: If chain linkage broken
         ForkDetected: If fork condition found
         ReplayAttackDetected: If duplicate nonce found
-        
+
     Example:
         >>> verify_chain(events, agent_identity)
         True
@@ -206,13 +206,13 @@ def get_verification_report(
 ) -> Dict[str, Any]:
     """
     Generate detailed verification report.
-    
+
     Returns comprehensive validation results without raising exceptions.
-    
+
     Args:
         events: List of events
         identity: Agent identity
-        
+
     Returns:
         Verification report dict with:
         - valid: Overall validity (bool)

@@ -20,7 +20,7 @@ from datetime import datetime
 class License:
     """
     License verification for Pro features
-    
+
     License key format: pk_<tier>_<uuid>_<signature>
     Examples:
       - pk_pro_a3f29b4c_8d7e6f5a
@@ -57,7 +57,7 @@ class License:
     def _verify_license_key(self, key: str) -> Optional[Dict[str, Any]]:
         """
         Verify license key format and signature
-        
+
         Format: pk_<tier>_<license_id>_<signature>
         Signature: HMAC-SHA256(tier:license_id:secret)[:8]
         """
@@ -161,10 +161,10 @@ class License:
     def activate(self, license_key: str) -> bool:
         """
         Activate Pro license
-        
+
         Args:
             license_key: License key from piqrypt.com
-            
+
         Returns:
             True if activation successful
         """
@@ -227,7 +227,7 @@ def deactivate_license():
 def require_pro(feature_name: str = "This feature"):
     """
     Decorator to require Pro license
-    
+
     Example:
         @require_pro("Hybrid signatures")
         def stamp_event_aiss2_hybrid(...):

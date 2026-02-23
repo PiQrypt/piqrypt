@@ -7,15 +7,15 @@ Creates legally-stronger audit exports certified by a trusted third party.
 Workflow:
     1. User: piqrypt certify-request audit.json audit.json.cert
        → Creates certification-request-XXXXX.zip
-    
+
     2. User: Email zip to certify@piqrypt.com
-    
+
     3. PiQrypt: python validate_certification_request.py request.zip
        → Verifies all signatures + chain + TSA
        → Generates audit.json.piqrypt-certified
-    
+
     4. PiQrypt: Email certified file back to user
-    
+
     5. User: piqrypt certify-verify audit.json.piqrypt-certified
        → Verifies PiQrypt CA signature
 
@@ -52,7 +52,7 @@ class CertificationError(PiQryptError):
 def load_ca_public_key() -> Tuple[bytes, str]:
     """
     Load PiQrypt CA public key (distributed with package).
-    
+
     Returns:
         (public_key_bytes, ca_id)
     """
@@ -81,16 +81,16 @@ def create_certification_request(
 ) -> str:
     """
     Create certification request ZIP for emailing to PiQrypt.
-    
+
     Args:
         audit_path: Path to audit.json
         cert_path: Path to audit.json.cert
         user_email: User's email for response
         output_dir: Output directory for request ZIP
-    
+
     Returns:
         Path to certification-request-XXXXX.zip
-    
+
     Example:
         >>> request_zip = create_certification_request(
         ...     "audit.json", "audit.json.cert", "user@company.com"
@@ -110,7 +110,7 @@ def create_certification_request(
 
     # Read files
     audit_data = json.loads(audit_path.read_text())
-    cert_data = json.loads(cert_path.read_text())
+    json.loads(cert_path.read_text())
 
     # Request metadata
     request_meta = {
@@ -147,20 +147,20 @@ def validate_and_certify(
 ) -> str:
     """
     Validate certification request and generate PiQrypt-certified export.
-    
+
     This is run by PiQrypt staff to process certification requests.
-    
+
     Args:
         request_zip_path: Path to certification-request-XXXXX.zip
         ca_private_key_path: Path to piqrypt-ca-private.key (KEEP SECRET)
         output_dir: Output directory for certified file
-    
+
     Returns:
         Path to audit.json.piqrypt-certified
-    
+
     Raises:
         CertificationError: If validation fails
-    
+
     Example:
         >>> certified = validate_and_certify(
         ...     "certification-request-CERT-20260218-A3F7.zip",
@@ -210,7 +210,7 @@ def validate_and_certify(
 
     # 2. Verify agent signature
     try:
-        agent_id = cert_data.get("agent_id")
+        cert_data.get("agent_id")
         signature_b64 = cert_data.get("signature")
 
         # We need agent public key to verify — should be in audit metadata
@@ -297,16 +297,16 @@ def validate_and_certify(
 def verify_piqrypt_certification(certified_path: str) -> Dict[str, Any]:
     """
     Verify a PiQrypt-certified export.
-    
+
     Args:
         certified_path: Path to audit.json.piqrypt-certified
-    
+
     Returns:
         Verification results dict
-    
+
     Raises:
         CertificationError: If verification fails
-    
+
     Example:
         >>> result = verify_piqrypt_certification("audit.piqrypt-certified")
         >>> print(result["status"])  # "valid"

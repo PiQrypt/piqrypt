@@ -20,9 +20,9 @@ from aiss.exceptions import ReplayAttackDetected, NonceError
 class NonceStore:
     """
     Nonce storage and replay detection (RFC Section 11).
-    
+
     Tracks seen nonces per agent to prevent replay attacks.
-    
+
     AISS-1: Minimum 24-hour retention
     AISS-2: 7-year retention (audit period)
     """
@@ -30,7 +30,7 @@ class NonceStore:
     def __init__(self, retention_hours: int = 24):
         """
         Initialize nonce store.
-        
+
         Args:
             retention_hours: How long to retain nonces (default: 24)
         """
@@ -43,12 +43,12 @@ class NonceStore:
     def check_and_add(self, agent_id: str, nonce: str, timestamp: Optional[int] = None) -> None:
         """
         Check if nonce is unique and add to store.
-        
+
         Args:
             agent_id: Agent ID
             nonce: Nonce to check
             timestamp: Event timestamp (for expiration tracking)
-            
+
         Raises:
             ReplayAttackDetected: If nonce already seen
             NonceError: If nonce is invalid
@@ -72,10 +72,10 @@ class NonceStore:
     def cleanup_expired(self) -> int:
         """
         Remove expired nonces (older than retention period).
-        
+
         Returns:
             Number of nonces removed
-            
+
         Example:
             >>> store = NonceStore(retention_hours=24)
             >>> # ... add nonces ...
@@ -108,10 +108,10 @@ class NonceStore:
     def get_nonce_count(self, agent_id: Optional[str] = None) -> int:
         """
         Get count of stored nonces.
-        
+
         Args:
             agent_id: Specific agent (None for all agents)
-            
+
         Returns:
             Number of nonces
         """
@@ -127,7 +127,7 @@ class NonceStore:
     def export_state(self) -> Dict[str, List[tuple]]:
         """
         Export nonce store state for persistence.
-        
+
         Returns:
             Dict mapping agent_id to list of (nonce, timestamp) tuples
         """
@@ -139,7 +139,7 @@ class NonceStore:
     def import_state(self, state: Dict[str, List[tuple]]) -> None:
         """
         Import nonce store state from persistence.
-        
+
         Args:
             state: Exported state dict
         """
@@ -151,15 +151,15 @@ class NonceStore:
 def detect_replay_attacks(events: List[Dict]) -> List[ReplayAttackDetected]:
     """
     Detect replay attacks in event list.
-    
+
     Scans events for duplicate nonces within same agent.
-    
+
     Args:
         events: List of events to check
-        
+
     Returns:
         List of ReplayAttackDetected exceptions
-        
+
     Example:
         >>> attacks = detect_replay_attacks(events)
         >>> if attacks:
@@ -187,13 +187,13 @@ def detect_replay_attacks(events: List[Dict]) -> List[ReplayAttackDetected]:
 def validate_nonces(events: List[Dict]) -> bool:
     """
     Validate that all events have unique nonces.
-    
+
     Args:
         events: List of events
-        
+
     Returns:
         True if all nonces are unique
-        
+
     Raises:
         ReplayAttackDetected: If duplicate nonce found
     """

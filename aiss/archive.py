@@ -15,7 +15,7 @@ Usage:
     Free:   piqrypt archive --output agent.pqz
     Pro:    piqrypt archive --output agent.pqz  (passphrase prompted)
     Import: piqrypt import agent.pqz
-    
+
     Standalone (no PiQrypt):
         python decrypt.py agent.pqz
         > Enter passphrase: ***
@@ -106,29 +106,29 @@ def load_archive(archive_path: str, passphrase: str = None):
     with zipfile.ZipFile(archive_path, \'r\') as zf:
         meta = json.loads(zf.read(\'metadata.json\'))
         encrypted = meta.get(\'encrypted\', False)
-        
+
         if encrypted:
             if passphrase is None:
                 passphrase = getpass.getpass("🔒 Enter archive passphrase: ")
-            
+
             blob = zf.read(\'data.enc\')
-            
+
             # Extract salt (first 32 bytes of blob)
             salt = blob[:32]
             cipher_blob = blob[32:]
-            
+
             key = _derive_key(passphrase, salt)
-            
+
             try:
                 plaintext = _decrypt_aes_gcm(key, cipher_blob)
             except Exception:
                 print("❌ Wrong passphrase or corrupted archive.")
                 sys.exit(1)
-            
+
             events = json.loads(plaintext.decode(\'utf-8\'))
         else:
             events = json.loads(zf.read(\'data.json\'))
-    
+
     return events, meta
 
 
@@ -154,20 +154,20 @@ def cmd_interactive(events, meta):
 
 Commands: search <query>, show <id>, list [N], stats, export <file>, help, quit
 """)
-    
+
     while True:
         try:
             line = input("> ").strip()
         except (EOFError, KeyboardInterrupt):
             break
-        
+
         if not line:
             continue
-        
+
         parts = line.split(None, 1)
         cmd = parts[0].lower()
         arg = parts[1] if len(parts) > 1 else ""
-        
+
         if cmd in ("quit", "exit", "q"):
             break
         elif cmd == "help":
@@ -219,7 +219,7 @@ Commands: search <query>, show <id>, list [N], stats, export <file>, help, quit
                 print(f"✓ Exported {len(events)} events to {arg}")
         else:
             print(f"Unknown command: {cmd}. Type 'help' for commands.")
-    
+
     print("Goodbye.")
 
 
@@ -232,7 +232,7 @@ def main():
     parser.add_argument(\'--stats\', action=\'store_true\', help=\'Show statistics\')
     parser.add_argument(\'--passphrase\', help=\'Passphrase (prefer interactive prompt)\')
     args = parser.parse_args()
-    
+
     if not args.archive:
         # Find .pqz in current directory
         pqz_files = [f for f in os.listdir(\'.\') if f.endswith(\'.pqz\')]
@@ -242,14 +242,14 @@ def main():
         else:
             parser.print_help()
             sys.exit(1)
-    
+
     if not os.path.exists(args.archive):
         print(f"Error: {args.archive} not found")
         sys.exit(1)
-    
+
     events, meta = load_archive(args.archive, args.passphrase)
     print(f"✓ Loaded {len(events)} events")
-    
+
     if args.search:
         results = [e for e in events if args.search.lower() in json.dumps(e).lower()]
         print(json.dumps(results, indent=2))
@@ -292,18 +292,18 @@ import getpass
 def verify_archive(archive_path: str, passphrase: str = None) -> bool:
     """Verify archive integrity and chain signatures."""
     print(f"Verifying: {archive_path}\\n")
-    
+
     with zipfile.ZipFile(archive_path, \'r\') as zf:
         files = zf.namelist()
         print(f"Archive files: {files}")
-        
+
         # Check required files
         required = [\'metadata.json\']
         missing = [f for f in required if f not in files]
         if missing:
             print(f"❌ Missing required files: {missing}")
             return False
-        
+
         meta = json.loads(zf.read(\'metadata.json\'))
         print(f"\\nArchive metadata:")
         print(f"  Agent ID     : {meta.get(\'agent_id\', \'unknown\')}")
@@ -311,7 +311,7 @@ def verify_archive(archive_path: str, passphrase: str = None) -> bool:
         print(f"  Created      : {meta.get(\'created_at\', \'unknown\')}")
         print(f"  PiQrypt ver  : {meta.get(\'piqrypt_version\', \'unknown\')}")
         print(f"  Encrypted    : {meta.get(\'encrypted\', False)}")
-        
+
         # Verify archive checksum
         archive_hash = meta.get(\'archive_checksum\')
         if archive_hash:
@@ -324,13 +324,13 @@ def verify_archive(archive_path: str, passphrase: str = None) -> bool:
                 else:
                     print(f"\\n❌ Archive checksum: INVALID (tampered?)")
                     return False
-        
+
         # Try to load and verify events
         encrypted = meta.get(\'encrypted\', False)
         if encrypted:
             if passphrase is None:
                 passphrase = getpass.getpass("\\n🔒 Enter passphrase to verify events: ")
-            
+
             try:
                 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
                 blob = zf.read(\'data.enc\')
@@ -344,7 +344,7 @@ def verify_archive(archive_path: str, passphrase: str = None) -> bool:
                 return False
         else:
             events = json.loads(zf.read(\'data.json\'))
-        
+
         # Verify chain integrity
         print(f"\\nVerifying chain integrity ({len(events)} events)...")
         errors = 0
@@ -355,12 +355,12 @@ def verify_archive(archive_path: str, passphrase: str = None) -> bool:
             if not event.get(\'nonce\'):
                 print(f"  ⚠ Event {i}: missing nonce")
                 errors += 1
-        
+
         if errors == 0:
             print(f"✓ Chain structure: VALID (all fields present)")
         else:
             print(f"⚠ Chain structure: {errors} warnings")
-        
+
         nonces = [e.get(\'nonce\') for e in events if e.get(\'nonce\')]
         duplicates = len(nonces) - len(set(nonces))
         if duplicates == 0:
@@ -368,7 +368,7 @@ def verify_archive(archive_path: str, passphrase: str = None) -> bool:
         else:
             print(f"❌ Replay protection: {duplicates} duplicate nonces detected")
             errors += 1
-    
+
     print(f"\\n{'✓ ARCHIVE VERIFIED' if errors == 0 else '⚠ ARCHIVE HAS WARNINGS'}")
     return errors == 0
 
@@ -382,12 +382,12 @@ if __name__ == "__main__":
     if not path:
         print("Usage: python verify.py <archive.pqz>")
         sys.exit(1)
-    
+
     passphrase = None
     if "--passphrase" in sys.argv:
         idx = sys.argv.index("--passphrase")
         passphrase = sys.argv[idx + 1]
-    
+
     success = verify_archive(path, passphrase)
     sys.exit(0 if success else 1)
 '''
@@ -467,20 +467,20 @@ def create_archive(
 ) -> Dict[str, Any]:
     """
     Create a portable .pqz archive from agent events.
-    
+
     Free:  passphrase=None → data.json (plaintext)
     Pro:   passphrase="..."  → data.enc (AES-256-GCM)
-    
+
     Args:
         events: List of signed AISS events to archive
         agent_identity: Agent identity document
         output_path: Path for output .pqz file
         passphrase: Encryption passphrase (Pro) or None (Free)
         label: Optional label for the archive
-    
+
     Returns:
         Archive metadata dict
-    
+
     Example:
         >>> create_archive(events, identity, "backup.pqz", passphrase="strong-pass")
         {"events_count": 1234, "encrypted": True, ...}
@@ -598,15 +598,15 @@ def import_archive(
 ) -> Dict[str, Any]:
     """
     Import a .pqz archive back into PiQrypt memory.
-    
+
     Args:
         archive_path: Path to .pqz file
         passphrase: Decryption passphrase (required for encrypted archives)
         store_in_memory: Whether to store imported events in memory
-    
+
     Returns:
         Import result dict
-    
+
     Raises:
         ArchiveError: If archive is invalid
         ArchiveCorruptedError: If archive integrity check fails

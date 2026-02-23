@@ -13,7 +13,7 @@ Installation:
 
 Usage:
     from aiss.crypto import dilithium
-    
+
     priv, pub = dilithium.generate_keypair()
     sig = dilithium.sign(priv, message)
     valid = dilithium.verify(pub, message, sig)
@@ -90,10 +90,10 @@ def _check_license():
 def generate_keypair() -> tuple[bytes, bytes]:
     """
     Generate Dilithium3 keypair.
-    
+
     Returns:
         Tuple of (private_key_bytes, public_key_bytes)
-        
+
     Raises:
         CryptoBackendError: If Dilithium3 backend not available
     """
@@ -123,14 +123,14 @@ def generate_keypair() -> tuple[bytes, bytes]:
 def sign(private_key: bytes, message: bytes) -> bytes:
     """
     Sign message with Dilithium3 private key.
-    
+
     Args:
         private_key: Dilithium3 private key bytes
         message: Message bytes to sign
-        
+
     Returns:
         Dilithium3 signature bytes (~3293 bytes)
-        
+
     Raises:
         CryptoBackendError: If backend not available or signing fails
     """
@@ -156,15 +156,15 @@ def sign(private_key: bytes, message: bytes) -> bytes:
 def verify(public_key: bytes, message: bytes, signature: bytes) -> bool:
     """
     Verify Dilithium3 signature.
-    
+
     Args:
         public_key: Dilithium3 public key bytes
         message: Original message bytes
         signature: Signature to verify
-        
+
     Returns:
         True if signature is valid, False otherwise
-        
+
     Raises:
         CryptoBackendError: If backend not available
     """
@@ -190,7 +190,7 @@ def verify(public_key: bytes, message: bytes, signature: bytes) -> bool:
 def is_available() -> bool:
     """
     Check if Dilithium3 backend is available.
-    
+
     Returns:
         True if AISS-2 crypto is available
     """
@@ -200,7 +200,7 @@ def is_available() -> bool:
 def get_backend_info() -> dict:
     """
     Get backend information.
-    
+
     Returns:
         Dict with backend details including which implementation is being used
     """

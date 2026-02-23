@@ -82,9 +82,9 @@ class PassphraseError(PiQryptError):
 def _aes_gcm_encrypt(key: bytes, plaintext: bytes) -> bytes:
     """
     AES-256-GCM encryption using Python stdlib cryptography.
-    
+
     Returns: nonce (12B) + ciphertext + tag (16B)
-    
+
     Note: Uses cryptography package if available, falls back to
     PyCryptodome, or raises ImportError with clear message.
     """
@@ -115,7 +115,7 @@ def _aes_gcm_encrypt(key: bytes, plaintext: bytes) -> bytes:
 def _aes_gcm_decrypt(key: bytes, blob: bytes) -> bytes:
     """
     AES-256-GCM decryption.
-    
+
     Input: nonce (12B) + ciphertext + tag (16B)
     """
     if len(blob) < AES_NONCE_SIZE + AES_TAG_SIZE:
@@ -244,11 +244,11 @@ _session: Dict[str, Any] = {
 def unlock(passphrase: str, permanent: bool = False) -> None:
     """
     Unlock Pro memory with passphrase.
-    
+
     Args:
         passphrase: User passphrase
         permanent: If True, stays unlocked until lock() called
-    
+
     Example:
         >>> unlock("my-strong-passphrase")
         >>> # Pro memory now accessible for 1 hour
@@ -264,7 +264,6 @@ def unlock(passphrase: str, permanent: bool = False) -> None:
     _session["unlocked_at"] = time.time()
     _session["permanent"] = permanent
 
-    mode = "permanent" if permanent else "1 hour"
     log_memory_unlocked()
 
 
@@ -318,7 +317,7 @@ def store_event_free(event: Dict[str, Any]) -> None:
     """
     Store a signed event in plaintext monthly JSON file.
     FREE tier — no encryption.
-    
+
     Args:
         event: Signed AISS-1.0 event dict
     """
@@ -371,11 +370,11 @@ def load_events_free(
 ) -> List[Dict[str, Any]]:
     """
     Load plaintext events from FREE memory.
-    
+
     Args:
         month: 'YYYY-MM' filter, or None for all months
         agent_id: Filter by agent ID
-    
+
     Returns:
         List of matching events (chronological order)
     """
@@ -408,10 +407,10 @@ def store_event_pro(event: Dict[str, Any]) -> None:
     """
     Store a signed event in AES-256-GCM encrypted monthly file.
     PRO tier — requires unlocked session.
-    
+
     Args:
         event: Signed AISS event dict
-    
+
     Raises:
         MemoryLockedError: If session not unlocked
     """
@@ -472,14 +471,14 @@ def load_events_pro(
     """
     Load and decrypt events from PRO memory.
     Index built in RAM — never persisted in plaintext.
-    
+
     Args:
         month: 'YYYY-MM' filter, or None for all months
         agent_id: Filter by agent ID
-    
+
     Returns:
         List of matching events
-    
+
     Raises:
         MemoryLockedError: If session not unlocked
     """
@@ -516,10 +515,10 @@ def load_events_pro(
 def store_event(event: Dict[str, Any]) -> None:
     """
     Store event using appropriate tier (Free or Pro).
-    
+
     Auto-detects Pro license and session state.
     Falls back to Free if Pro not available/unlocked.
-    
+
     Args:
         event: Signed AISS event dict
     """
@@ -540,11 +539,11 @@ def load_events(
 ) -> List[Dict[str, Any]]:
     """
     Load events using appropriate tier.
-    
+
     Args:
         month: Optional 'YYYY-MM' filter
         agent_id: Optional agent ID filter
-    
+
     Returns:
         List of matching events
     """
@@ -567,7 +566,7 @@ def search_events(
 ) -> List[Dict[str, Any]]:
     """
     Search events in memory (Sprint 3: uses SQLite index for fast queries).
-    
+
     Args:
         participant: agent_id appearing as agent or in payload participants
         event_type: Filter by payload event_type or event type field
@@ -575,10 +574,10 @@ def search_events(
         before: Unix timestamp upper bound
         limit: Max results (default 100)
         use_index: If True, use SQLite index (10-1000x faster); if False, linear scan
-    
+
     Returns:
         List of matching events (full event dicts)
-    
+
     Example:
         >>> results = search_events(participant="pq_agent_z", after=1700000000)
         >>> # Returns full events matching criteria
@@ -680,15 +679,15 @@ def search_events(
 def migrate_to_encrypted(passphrase: str) -> Dict[str, int]:
     """
     Migrate plaintext Free events to encrypted Pro storage.
-    
+
     Called by: piqrypt memory encrypt
-    
+
     Args:
         passphrase: Passphrase for new encrypted storage
-    
+
     Returns:
         {"migrated": N, "months": M, "errors": E}
-    
+
     Example:
         >>> result = migrate_to_encrypted("strong-passphrase")
         >>> print(f"Migrated {result['migrated']} events")

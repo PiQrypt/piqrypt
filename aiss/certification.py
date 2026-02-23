@@ -49,7 +49,7 @@ class CertificationError(PiQryptError):
 def generate_cert_id() -> str:
     """
     Generate unique certification ID.
-    
+
     Format: CERT-YYYYMMDD-XXXXXX
     Example: CERT-20260220-A3F7E8
     """
@@ -61,13 +61,13 @@ def generate_cert_id() -> str:
 def validate_audit_for_certification(audit_path: str) -> Dict[str, Any]:
     """
     Validate audit file before certification.
-    
+
     Args:
         audit_path: Path to audit.json file
-    
+
     Returns:
         Validated audit data
-    
+
     Raises:
         CertificationError: If audit invalid
     """
@@ -101,10 +101,10 @@ def validate_audit_for_certification(audit_path: str) -> Dict[str, Any]:
 def compute_audit_hash(audit_data: Dict[str, Any]) -> str:
     """
     Compute SHA-256 hash of audit.
-    
+
     Args:
         audit_data: Audit dictionary
-    
+
     Returns:
         Hex hash string with sha256: prefix
     """
@@ -121,18 +121,18 @@ def certify_simple(
 ) -> Dict[str, Any]:
     """
     Simple Certification (€9 tier).
-    
+
     Includes:
     - PiQrypt CA signature (Ed25519)
     - Audit hash
     - Certificate metadata
-    
+
     Args:
         audit_path: Path to audit.json
         ca_private_key: PiQrypt CA private key
         ca_agent_id: PiQrypt CA agent ID
         output_dir: Output directory for bundle
-    
+
     Returns:
         Certification result with cert_id and files
     """
@@ -213,18 +213,18 @@ def certify_timestamp(
 ) -> Dict[str, Any]:
     """
     Timestamp Certification (€29 tier).
-    
+
     Includes:
     - Everything from Simple
     - TSA RFC 3161 timestamp token
-    
+
     Args:
         audit_path: Path to audit.json
         ca_private_key: PiQrypt CA private key
         ca_agent_id: PiQrypt CA agent ID
         output_dir: Output directory
         tsa_url: TSA server URL (default: FreeTSA)
-    
+
     Returns:
         Certification result
     """
@@ -323,18 +323,18 @@ def certify_pq_bundle(
 ) -> Dict[str, Any]:
     """
     Post-Quantum Bundle Certification (€99 tier).
-    
+
     Includes:
     - Everything from Timestamp
     - Dilithium3 signature
     - Encrypted .pqz archive
-    
+
     Args:
         audit_path: Path to audit.json
         ca_private_key: PiQrypt CA private key
         ca_agent_id: PiQrypt CA agent ID
         output_dir: Output directory
-    
+
     Returns:
         Certification result
     """
@@ -385,14 +385,14 @@ def certify_audit(
 ) -> Dict[str, Any]:
     """
     Main certification function — dispatches to tier-specific certifier.
-    
+
     Args:
         audit_path: Path to audit.json
         tier: "simple", "timestamp", or "pq_bundle"
         ca_private_key: PiQrypt CA private key (loaded from keyfile if None)
         ca_agent_id: PiQrypt CA agent ID
         output_dir: Output directory
-    
+
     Returns:
         Certification result
     """

@@ -16,16 +16,16 @@ from aiss.exceptions import InvalidChainError
 def compute_event_hash(event: Dict[str, Any]) -> str:
     """
     Compute SHA-256 hash of event (RFC Section 9.1).
-    
+
     Hash is computed over the canonical JSON of the event
     EXCLUDING the signature field.
-    
+
     Args:
         event: Event dict
-        
+
     Returns:
         Hexadecimal SHA-256 hash
-        
+
     Example:
         >>> event = {
         ...     "version": "AISS-1.0",
@@ -53,13 +53,13 @@ def compute_event_hash(event: Dict[str, Any]) -> str:
 def compute_chain_hash(events: List[Dict[str, Any]]) -> str:
     """
     Compute integrity hash of entire chain.
-    
+
     This is the hash of all event hashes concatenated.
     Used for audit export (RFC Section 15).
-    
+
     Args:
         events: List of events in order
-        
+
     Returns:
         Hexadecimal SHA-256 hash of chain
     """
@@ -76,17 +76,17 @@ def compute_chain_hash(events: List[Dict[str, Any]]) -> str:
 def verify_chain_linkage(events: List[Dict[str, Any]]) -> bool:
     """
     Verify hash chain linkage (RFC Section 9.2).
-    
+
     Validates that each event correctly references the hash
     of the previous event:
         current_event.previous_hash == SHA256(previous_event)
-    
+
     Args:
         events: List of events in chronological order
-        
+
     Returns:
         True if chain is valid
-        
+
     Raises:
         InvalidChainError: If chain linkage is broken
     """
@@ -115,16 +115,16 @@ def verify_chain_linkage(events: List[Dict[str, Any]]) -> bool:
 def verify_monotonic_timestamps(events: List[Dict[str, Any]]) -> bool:
     """
     Verify timestamps are monotonically increasing (RFC Section 8).
-    
+
     AISS-1: SHOULD enforce (warning only)
     AISS-2: MUST enforce (exception)
-    
+
     Args:
         events: List of events
-        
+
     Returns:
         True if timestamps are monotonic
-        
+
     Raises:
         InvalidChainError: If timestamps are not monotonic
     """
@@ -150,18 +150,18 @@ def append_event(
 ) -> List[Dict[str, Any]]:
     """
     Append event to chain with validation.
-    
+
     Validates:
     - previous_hash matches last event
     - timestamp is monotonic
-    
+
     Args:
         chain: Existing event chain
         new_event: Event to append
-        
+
     Returns:
         Updated chain
-        
+
     Raises:
         InvalidChainError: If event cannot be appended
     """
@@ -195,7 +195,7 @@ def append_event(
 def get_chain_info(events: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
     Get summary information about a chain.
-    
+
     Returns:
         Dict with chain metadata:
         - length: Number of events

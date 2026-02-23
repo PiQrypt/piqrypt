@@ -7,12 +7,12 @@ GitHub READMEs, documentation, etc.
 
 Usage:
     from aiss.cert_badges import generate_cert_badge
-    
+
     badge = generate_cert_badge("CERT-20260220-A3F7E8", "timestamp")
     # Save SVG
     with open("badge.svg", "w") as f:
         f.write(badge["svg"])
-    
+
     # Get embed codes
     print(badge["markdown"])
     print(badge["html"])
@@ -25,11 +25,11 @@ from typing import Dict, Any
 def generate_cert_badge_svg(cert_id: str, tier: str) -> str:
     """
     Generate SVG badge for certification.
-    
+
     Args:
         cert_id: Certification ID (e.g., "CERT-20260220-A3F7E8")
         tier: Certification tier ("simple", "timestamp", "pq_bundle")
-    
+
     Returns:
         SVG content as string
     """
@@ -55,7 +55,7 @@ def generate_cert_badge_svg(cert_id: str, tier: str) -> str:
     svg = f'''<svg width="240" height="80" xmlns="http://www.w3.org/2000/svg">
   <!-- Background -->
   <rect fill="{color}" width="240" height="80" rx="8"/>
-  
+
   <!-- Gradient overlay -->
   <defs>
     <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -64,21 +64,21 @@ def generate_cert_badge_svg(cert_id: str, tier: str) -> str:
     </linearGradient>
   </defs>
   <rect fill="url(#gradient)" width="240" height="80" rx="8"/>
-  
+
   <!-- Checkmark icon -->
   <circle cx="25" cy="25" r="12" fill="white" opacity="0.9"/>
   <path d="M 20 25 L 23 28 L 30 21" stroke="{color}" stroke-width="2" fill="none"/>
-  
+
   <!-- Text: Title -->
   <text x="45" y="28" fill="white" font-size="16" font-family="Arial, sans-serif" font-weight="bold">
     Verified by PiQrypt
   </text>
-  
+
   <!-- Text: Tier -->
   <text x="45" y="48" fill="white" font-size="12" font-family="Arial, sans-serif" opacity="0.9">
     {label} Certification
   </text>
-  
+
   <!-- Text: Cert ID -->
   <text x="45" y="65" fill="white" font-size="9" font-family="monospace" opacity="0.7">
     {short_cert}
@@ -91,11 +91,11 @@ def generate_cert_badge_svg(cert_id: str, tier: str) -> str:
 def generate_cert_badge(cert_id: str, tier: str) -> Dict[str, Any]:
     """
     Generate complete certification badge with all formats.
-    
+
     Args:
         cert_id: Certification ID
         tier: Certification tier ("simple", "timestamp", "pq_bundle")
-    
+
     Returns:
         Dictionary containing:
         - svg: SVG content
@@ -143,11 +143,11 @@ def generate_cert_badge(cert_id: str, tier: str) -> Dict[str, Any]:
 def generate_badge_snippets(cert_id: str, tier: str) -> str:
     """
     Generate ready-to-copy snippets for user.
-    
+
     Args:
         cert_id: Certification ID
         tier: Certification tier
-    
+
     Returns:
         Formatted string with all embed codes
     """

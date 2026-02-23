@@ -6,10 +6,10 @@ Users must explicitly opt-in. No PII collected.
 
 Enable:
     piqrypt telemetry enable
-    
+
 Disable:
     piqrypt telemetry disable
-    
+
 Status:
     piqrypt telemetry status
 """
@@ -25,13 +25,13 @@ from datetime import datetime
 class Telemetry:
     """
     Anonymous telemetry collection (opt-in only)
-    
+
     Collected data:
       - Event types (identity_created, event_signed, etc.)
       - Feature usage (aiss1, aiss2, exports)
       - Error types (for debugging)
       - Version info
-      
+
     NOT collected:
       - Agent IDs
       - Event payloads
@@ -71,7 +71,7 @@ class Telemetry:
                     install_id = config.get("installation_id")
                     if install_id:
                         return install_id
-            except:
+            except Exception:
                 pass
 
         # Generate new UUID
@@ -117,7 +117,7 @@ class Telemetry:
 
                 with open(self.config_file, 'w') as f:
                     json.dump(config, f, indent=2)
-            except:
+            except Exception:
                 self.config_file.unlink()
 
         self.enabled = False
@@ -137,7 +137,7 @@ class Telemetry:
     ):
         """
         Track anonymous event
-        
+
         Args:
             event_name: Event name (e.g., "identity_created", "event_signed")
             properties: Anonymous properties (no PII)
@@ -165,7 +165,7 @@ class Telemetry:
         try:
             with open(log_file, 'a') as f:
                 f.write(json.dumps(event) + "\n")
-        except:
+        except Exception:
             pass  # Silent fail (telemetry should never break app)
 
 
@@ -176,7 +176,7 @@ _telemetry = Telemetry()
 def track(event_name: str, **properties):
     """
     Track anonymous event (if opt-in enabled)
-    
+
     Examples:
         track("identity_created", algorithm="Ed25519")
         track("event_signed", aiss_version="2.0", hybrid=True)

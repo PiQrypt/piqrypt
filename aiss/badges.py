@@ -5,7 +5,7 @@ Generate verification badges for GitHub, websites, documentation.
 
 Usage:
     from aiss.badges import generate_badge
-    
+
     badge = generate_badge(agent_id, "pro")
     print(badge["markdown"])
 """
@@ -18,11 +18,11 @@ from aiss.license import get_tier
 def generate_badge(agent_id: str, tier: str = None) -> Dict[str, Any]:
     """
     Generate verification badge for agent
-    
+
     Args:
         agent_id: Agent ID
         tier: License tier (auto-detected if None)
-        
+
     Returns:
         Dict with badge URLs and embed codes
     """
@@ -60,7 +60,7 @@ def generate_badge(agent_id: str, tier: str = None) -> Dict[str, Any]:
     config = badge_configs.get(tier, badge_configs["free"])
 
     # Truncate agent ID for badge
-    short_id = agent_id[:8]
+    agent_id[:8]
 
     # Badge URLs (shields.io style)
     badge_url = f"https://img.shields.io/badge/{config['label']}-{config['message']}-{config['color']}?style=flat-square"
@@ -88,11 +88,11 @@ def generate_badge(agent_id: str, tier: str = None) -> Dict[str, Any]:
 def generate_badge_svg(agent_id: str, tier: str = None) -> str:
     """
     Generate SVG badge content
-    
+
     Args:
         agent_id: Agent ID
         tier: License tier
-        
+
     Returns:
         SVG content as string
     """
@@ -107,24 +107,24 @@ def generate_badge_svg(agent_id: str, tier: str = None) -> str:
     }
 
     color = colors.get(tier, colors["free"])
-    short_id = agent_id[:8]
+    agent_id[:8]
 
     svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="120" height="20">
     <linearGradient id="b" x2="0" y2="100%">
         <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
         <stop offset="1" stop-opacity=".1"/>
     </linearGradient>
-    
+
     <mask id="a">
         <rect width="120" height="20" rx="3" fill="#fff"/>
     </mask>
-    
+
     <g mask="url(#a)">
         <path fill="#555" d="M0 0h60v20H0z"/>
         <path fill="{color}" d="M60 0h60v20H60z"/>
         <path fill="url(#b)" d="M0 0h120v20H0z"/>
     </g>
-    
+
     <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11">
         <text x="30" y="15" fill="#010101" fill-opacity=".3">PiQrypt</text>
         <text x="30" y="14">PiQrypt</text>
@@ -139,11 +139,11 @@ def generate_badge_svg(agent_id: str, tier: str = None) -> str:
 def get_badge_embed_code(agent_id: str, format: str = "markdown") -> str:
     """
     Get badge embed code in specified format
-    
+
     Args:
         agent_id: Agent ID
         format: "markdown", "html", "rst"
-        
+
     Returns:
         Embed code as string
     """

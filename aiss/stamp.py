@@ -20,10 +20,10 @@ from aiss.exceptions import NonceError
 def generate_nonce() -> str:
     """
     Generate unique nonce for anti-replay protection (RFC Section 11).
-    
+
     Uses UUIDv4 for cryptographic randomness and global uniqueness.
     Alternative formats like ULID or KSUID are also acceptable.
-    
+
     Returns:
         UUID string (e.g., "550e8400-e29b-41d4-a716-446655440000")
     """
@@ -40,13 +40,13 @@ def stamp_event(
 ) -> Dict[str, Any]:
     """
     Create and sign an event stamp (RFC Section 7).
-    
+
     This is the core operation for agent actions. Each event:
     - Links to previous event via hash chain
     - Contains unique nonce (anti-replay)
     - Includes UTC timestamp
     - Signed with agent's private key
-    
+
     Args:
         private_key: Agent's Ed25519 private key
         agent_id: Agent ID (must match private_key)
@@ -54,13 +54,13 @@ def stamp_event(
         previous_hash: Hash of previous event (None for genesis)
         nonce: Optional nonce (auto-generated if None)
         timestamp: Optional Unix timestamp (auto-generated if None)
-        
+
     Returns:
         Signed event dict conforming to RFC Section 7.1
-        
+
     Raises:
         NonceError: If nonce is invalid
-        
+
     Example:
         >>> from aiss import generate_keypair, derive_agent_id
         >>> private_key, public_key = generate_keypair()
@@ -114,22 +114,22 @@ def stamp_genesis_event(
 ) -> Dict[str, Any]:
     """
     Create genesis (first) event in a chain (RFC Section 9.3).
-    
+
     The genesis event uses a special previous_hash computed as:
         previous_hash = SHA256(agent_public_key_bytes)
-    
+
     This binds the chain cryptographically to the agent's identity
     and prevents genesis collision attacks.
-    
+
     Args:
         private_key: Agent's private key
         public_key: Agent's public key
         agent_id: Agent ID
         payload: Genesis event data
-        
+
     Returns:
         Genesis event dict
-        
+
     Example:
         >>> private_key, public_key = generate_keypair()
         >>> agent_id = derive_agent_id(public_key)
