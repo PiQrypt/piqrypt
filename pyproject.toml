@@ -36,12 +36,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# AISS-2 Post-Quantum (optional, future)
 aiss2 = [
     "liboqs-python>=0.8.0",
 ]
-
-# Development tools
 dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
@@ -71,21 +68,7 @@ addopts = "--cov=aiss --cov-report=term-missing --cov-report=html -v"
 
 [tool.black]
 line-length = 100
-target-version = ['py39']
-include = '\.pyi?$'
-extend-exclude = '''
-/(
-  # directories
-  \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | build
-  | dist
-)/
-'''
+target-version = ["py39"]
 
 [tool.ruff]
 line-length = 100
@@ -100,7 +83,6 @@ select = ["E", "F", "W"]
 "cli/main.py" = ["E501"]
 "aiss/*.py" = ["E501", "E722"]
 "aiss/rfc3161.py" = ["F401"]
-"aiss/license.py" = ["E722"]
 
 [tool.mypy]
 python_version = "3.9"
