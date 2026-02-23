@@ -349,20 +349,36 @@ def certify_pq_bundle(
     )
 
     # 8. Add Dilithium3 signature
-    # TODO: Implement Dilithium3 when library stable
-    # For now, document intention in certificate
+    # Uses aiss.crypto.dilithium with automatic fallback:
+    #   1. liboqs-python (C backend, preferred)
+    #   2. dilithium-py (pure Python fallback)
+    from aiss.crypto import dilithium
 
     certificate = result["certificate"]
     certificate["tier"] = "pq_bundle"
-    certificate["post_quantum"] = {
-        "algorithm": "ML-DSA-65 (Dilithium3)",
-        "status": "planned",
-        "note": "Full PQ implementation in v1.6.0"
-    }
 
-    # 9. Create .pqz archive
-    # For now, use standard encrypted zip
-    # TODO: Implement proper .pqz with AES-256-GCM
+    if dilithium.is_available():
+        cert_bytes = json.dumps(certificate, sort_keys=True).encode()
+        pq_priv, pq_pub = dilithium.generate_keypair()
+        pq_signature = dilithium.sign(pq_priv, cert_bytes)
+        backend_info = dilithium.get_backend_info()
+        certificate["post_quantum"] = {
+            "algorithm": "ML-DSA-65 (Dilithium3)",
+            "status": "signed",
+            "backend": backend_info["backend"],
+            "public_key": pq_pub.hex(),
+            "signature": pq_signature.hex(),
+        }
+        logger.info(f"🔐 Dilithium3 signature added (backend: {backend_info['backend']})")
+    else:
+        certificate["post_quantum"] = {
+            "algorithm": "ML-DSA-65 (Dilithium3)",
+            "status": "unavailable",
+            "note": "Install liboqs-python or dilithium-py for PQ signatures",
+        }
+        logger.piqrypt_warn("⚠️ Dilithium3 backend not available — PQ signature skipped")
+
+    # 9. Create .pqz archive (standard zip for now)
 
     # 10. Update badge
     badge = generate_cert_badge(result["cert_id"], "pq_bundle")
