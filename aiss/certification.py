@@ -193,7 +193,7 @@ def certify_simple(
         for file in bundle_dir.iterdir():
             zf.write(file, file.name)
 
-    logger.success(f"✅ Simple certification complete: {cert_id}")
+    logger.piqrypt(f"✅ Simple certification complete: {cert_id}")
 
     return {
         "cert_id": cert_id,
@@ -269,8 +269,8 @@ def certify_timestamp(
         logger.info(f"✅ TSA timestamp obtained from {tsa_url}")
 
     except Exception as e:
-        logger.warning(f"⚠️ TSA timestamp failed: {e}")
-        logger.warning("⚠️ Falling back to simple certification")
+        logger.piqrypt_warn(f"⚠️ TSA timestamp failed: {e}")
+        logger.piqrypt_warn("⚠️ Falling back to simple certification")
         # Continue without TSA (degrade gracefully)
         tsa_token = None
 
@@ -303,7 +303,7 @@ def certify_timestamp(
         for file in bundle_dir.iterdir():
             zf.write(file, file.name)
 
-    logger.success(f"✅ Timestamp certification complete: {cert_id}")
+    logger.piqrypt(f"✅ Timestamp certification complete: {cert_id}")
 
     return {
         "cert_id": cert_id,
@@ -367,7 +367,7 @@ def certify_pq_bundle(
     # 10. Update badge
     badge = generate_cert_badge(result["cert_id"], "pq_bundle")
 
-    logger.success(f"✅ Post-Quantum certification complete: {result['cert_id']}")
+    logger.piqrypt(f"✅ Post-Quantum certification complete: {result['cert_id']}")
 
     return {
         **result,

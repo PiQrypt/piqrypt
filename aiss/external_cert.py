@@ -294,29 +294,30 @@ def validate_and_certify(
 
 # ─── User Side: Verify PiQrypt Certification ─────────────────────────────────
 
-def verify_piqrypt_certification(certified_path: str) -> Dict[str, Any]:
+def verify_piqrypt_certification(
+    certified_path: str,
+    ca_public_key: bytes = None,
+    ca_key_id: str = None,
+) -> Dict[str, Any]:
     """
     Verify a PiQrypt-certified export.
 
     Args:
         certified_path: Path to audit.json.piqrypt-certified
+        ca_public_key: Optional CA public key bytes (uses bundled key if None)
+        ca_key_id: Optional CA ID string (used when ca_public_key is provided)
 
     Returns:
         Verification results dict
 
     Raises:
         CertificationError: If verification fails
-
-    Example:
-        >>> result = verify_piqrypt_certification("audit.piqrypt-certified")
-        >>> print(result["status"])  # "valid"
     """
     certified_path = Path(certified_path)
 
     if not certified_path.exists():
         raise CertificationError(f"File not found: {certified_path}")
 
-    # Load certified export
     certified = json.loads(certified_path.read_text())
 
     if certified.get("version") != "PIQRYPT-CERTIFIED-1.0":
@@ -326,8 +327,12 @@ def verify_piqrypt_certification(certified_path: str) -> Dict[str, Any]:
     if not attestation:
         raise CertificationError("Missing PiQrypt attestation")
 
-    # Load CA public key
-    ca_public, ca_id = load_ca_public_key()
+    # Load CA public key (use provided key or fall back to bundled key)
+    if ca_public_key is not None:
+        ca_public = ca_public_key
+        ca_id = ca_key_id or "custom"
+    else:
+        ca_public, ca_id = load_ca_public_key()
 
     # Verify CA signature
     ca_signature_b64 = attestation.pop("ca_signature", None)
