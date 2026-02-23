@@ -34,7 +34,6 @@ dependencies = [
     "base58>=2.1.0",
     "cryptography>=41.0.0",
 ]
-]
 
 [project.optional-dependencies]
 # AISS-2 Post-Quantum (optional, future)
