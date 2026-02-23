@@ -17,7 +17,6 @@ Usage:
 """
 
 import sys
-import os
 import json
 import hashlib
 import zipfile
@@ -57,25 +56,25 @@ class ArchiveReader:
         self.passphrase = None
         self.key = None
         self._events_cache = None
-    
+
     def unlock(self, passphrase: str = None):
         """Unlock encrypted archive."""
         if not self.encrypted:
             return
-        
+
         if passphrase is None:
             passphrase = getpass.getpass("🔒 Enter passphrase: ")
-        
+
         blob = self.zf.read('data.enc')
         salt = blob[:32]
         self.key = _derive_key(passphrase, salt)
         self.passphrase = passphrase
-    
+
     def load_all_events(self):
         """Load and decrypt all events (cached)."""
         if self._events_cache is not None:
             return self._events_cache
-        
+
         if self.encrypted:
             if self.key is None:
                 self.unlock()
@@ -85,10 +84,10 @@ class ArchiveReader:
             events = json.loads(plaintext.decode('utf-8'))
         else:
             events = json.loads(self.zf.read('data.json'))
-        
+
         self._events_cache = events
         return events
-    
+
     def search_index(self, query: str = None, event_type: str = None, limit: int = 100):
         """Search index without decrypting. Returns index entries."""
         results = []
@@ -105,7 +104,7 @@ class ArchiveReader:
             if len(results) >= limit:
                 break
         return results
-    
+
     def get_event_by_hash(self, hash_prefix: str):
         """Get full event by hash prefix."""
         events = self.load_all_events()
@@ -115,7 +114,7 @@ class ArchiveReader:
             if h.startswith(hash_prefix):
                 return e
         return None
-    
+
     def close(self):
         self.zf.close()
 
@@ -124,33 +123,33 @@ def cmd_stats(archive: ArchiveReader):
     """Show archive statistics."""
     meta = archive.metadata
     idx = archive.index
-    
-    print(f"\nPiQrypt Archive Statistics")
+
+    print("\nPiQrypt Archive Statistics")
     print("─" * 50)
     print(f"  Events      : {idx['total_events']}")
     print(f"  Period      : {idx['period']['start'][:10]} → {idx['period']['end'][:10]}")
     print(f"  Agent       : {idx['agent_id'][:16]}...")
     print(f"  Encrypted   : {'Yes (AES-256-GCM)' if meta['encrypted'] else 'No'}")
-    
+
     # Event types
     types = {}
     for e in idx['events_index']:
         t = e.get('event_type', 'unknown')
         types[t] = types.get(t, 0) + 1
-    
+
     if types:
-        print(f"\n  Event Types :")
+        print("\n  Event Types :")
         for t, count in sorted(types.items(), key=lambda x: -x[1])[:10]:
             print(f"    {t:30s} {count:5d}")
 
 def cmd_search(archive: ArchiveReader, query: str, event_type: str = None):
     """Search events by query."""
     results = archive.search_index(query=query, event_type=event_type, limit=50)
-    
+
     if not results:
         print(f"No events matching '{query}'")
         return
-    
+
     print(f"\nFound {len(results)} events matching '{query}':")
     print("─" * 80)
     for i, entry in enumerate(results, 1):
@@ -165,7 +164,7 @@ def cmd_show(archive: ArchiveReader, hash_prefix: str):
     if not event:
         print(f"Event {hash_prefix}... not found")
         return
-    
+
     print(f"\nEvent {hash_prefix}:")
     print("─" * 80)
     print(json.dumps(event, indent=2))
@@ -176,25 +175,25 @@ def cmd_export(archive: ArchiveReader, output: str, event_type: str = None, quer
         # Filtered export
         index_results = archive.search_index(query=query, event_type=event_type, limit=10000)
         events = archive.load_all_events()
-        
+
         # Match by hash
         hashes = {e['event_hash'] for e in index_results}
-        
+
         filtered = []
         for e in events:
             from hashlib import sha256
             h = sha256(json.dumps({k: v for k, v in e.items() if k != 'signature'}, sort_keys=True).encode()).hexdigest()[:16]
             if h in hashes:
                 filtered.append(e)
-        
+
         export_data = filtered
     else:
         # Full export
         export_data = archive.load_all_events()
-    
+
     with open(output, 'w') as f:
         json.dump(export_data, f, indent=2)
-    
+
     print(f"✓ Exported {len(export_data)} events to {output}")
 
 def cmd_interactive(archive: ArchiveReader):
@@ -209,21 +208,21 @@ def cmd_interactive(archive: ArchiveReader):
     print("  stats              — show statistics")
     print("  quit               — exit")
     print()
-    
+
     while True:
         try:
             cmd = input(">>> ").strip()
         except (EOFError, KeyboardInterrupt):
             print("\nBye!")
             break
-        
+
         if not cmd:
             continue
-        
+
         parts = cmd.split(None, 1)
         action = parts[0].lower()
         arg = parts[1] if len(parts) > 1 else None
-        
+
         if action == 'quit' or action == 'exit':
             break
         elif action == 'stats':
@@ -255,15 +254,15 @@ def main():
     parser.add_argument('--type', help='Filter by event_type')
     parser.add_argument('--stats', action='store_true', help='Show statistics')
     parser.add_argument('--passphrase', help='Passphrase (prompted if not provided)')
-    
+
     args = parser.parse_args()
-    
+
     archive = ArchiveReader(args.archive)
-    
+
     try:
         if archive.encrypted and args.passphrase:
             archive.unlock(args.passphrase)
-        
+
         if args.stats:
             cmd_stats(archive)
         elif args.search:

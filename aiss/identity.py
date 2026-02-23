@@ -59,13 +59,13 @@ def derive_agent_id(public_key: bytes) -> str:
     """
     # Hash the public key
     key_hash = hash_bytes(public_key)
-    
+
     # Convert hex to bytes for Base58 encoding
     hash_bytes_val = bytes.fromhex(key_hash)
-    
+
     # Encode to Base58 and truncate to 32 chars
     agent_id = ed25519.encode_base58(hash_bytes_val)[:32]
-    
+
     return agent_id
 
 
@@ -124,7 +124,7 @@ def export_identity(
     """
     # Verify agent_id matches public_key
     verify_agent_id(agent_id, public_key)
-    
+
     identity = {
         "version": "AISS-1.0",
         "agent_id": agent_id,
@@ -132,10 +132,10 @@ def export_identity(
         "algorithm": algorithm,
         "created_at": int(time.time())
     }
-    
+
     if metadata:
         identity["metadata"] = metadata
-    
+
     return identity
 
 
@@ -169,10 +169,10 @@ def create_rotation_attestation(
         'key_rotation'
     """
     from aiss.canonical import canonicalize
-    
+
     old_agent_id = derive_agent_id(old_public_key)
     new_agent_id = derive_agent_id(new_public_key)
-    
+
     # Build attestation (without signature)
     attestation = {
         "version": "AISS-1.0",
@@ -183,12 +183,12 @@ def create_rotation_attestation(
         "new_public_key": ed25519.encode_base64(new_public_key),
         "rotation_timestamp": int(time.time())
     }
-    
+
     # Sign with old key
     canonical = canonicalize(attestation)
     signature = ed25519.sign(old_private_key, canonical)
     attestation["rotation_signature"] = ed25519.encode_base64(signature)
-    
+
     return attestation
 
 
@@ -240,7 +240,6 @@ def create_rotation_pcp_event(
     import time
     import uuid
     from aiss.canonical import canonicalize
-    from aiss.chain import compute_event_hash
 
     old_agent_id = derive_agent_id(old_public_key)
     new_agent_id = derive_agent_id(new_public_key)

@@ -31,7 +31,6 @@ Example:
     >>> verify_handshake(response, {agent_a_id: pub_a, agent_b_id: pub_b})
 """
 
-import json
 import time
 import uuid
 from typing import Dict, Any, Optional, List
@@ -82,7 +81,7 @@ def initiate_handshake(
         ... )
     """
     timestamp = int(time.time())
-    
+
     handshake = {
         "version": "A2A-HANDSHAKE-1.0",
         "initiator_agent_id": initiator_agent_id,
@@ -93,16 +92,16 @@ def initiate_handshake(
         "payload": payload or {},
         "status": "pending"
     }
-    
+
     # Initiator signs
     canonical = canonicalize_json(handshake).encode()
     signature = ed25519.sign(initiator_private_key, canonical)
     handshake["signature_initiator"] = ed25519.encode_base64(signature)
-    
+
     logger.piqrypt(
         f"A2A handshake initiated: {initiator_agent_id} → {responder_agent_id}"
     )
-    
+
     return handshake
 
 
@@ -141,28 +140,28 @@ def accept_handshake(
             f"Handshake not for this agent (expected {responder_agent_id}, "
             f"got {handshake.get('responder_agent_id')})"
         )
-    
+
     # Check expiration
     if int(time.time()) > handshake.get("expires_at", 0):
         raise A2AError("Handshake expired")
-    
+
     # Add responder data
     handshake["nonce_responder"] = str(uuid.uuid4())
     handshake["status"] = "accepted"
     handshake["accepted_at"] = int(time.time())
-    
+
     if counter_payload:
         handshake["counter_payload"] = counter_payload
-    
+
     # Responder signs (including initiator signature)
     canonical = canonicalize_json(handshake).encode()
     signature = ed25519.sign(responder_private_key, canonical)
     handshake["signature_responder"] = ed25519.encode_base64(signature)
-    
+
     logger.piqrypt(
         f"A2A handshake accepted: {responder_agent_id} ← {handshake['initiator_agent_id']}"
     )
-    
+
     return handshake
 
 
@@ -187,23 +186,23 @@ def reject_handshake(
     # Verify responder matches
     if handshake.get("responder_agent_id") != responder_agent_id:
         raise A2AError("Handshake not for this agent")
-    
+
     # Mark rejected
     handshake["status"] = "rejected"
     handshake["rejected_at"] = int(time.time())
     handshake["rejection_reason"] = reason
     handshake["nonce_responder"] = str(uuid.uuid4())
-    
+
     # Sign rejection
     canonical = canonicalize_json(handshake).encode()
     signature = ed25519.sign(responder_private_key, canonical)
     handshake["signature_responder"] = ed25519.encode_base64(signature)
-    
+
     logger.piqrypt(
         f"A2A handshake rejected: {responder_agent_id} ← {handshake['initiator_agent_id']} "
         f"(reason: {reason})"
     )
-    
+
     return handshake
 
 
@@ -232,57 +231,57 @@ def verify_handshake(
     """
     initiator_id = handshake.get("initiator_agent_id")
     responder_id = handshake.get("responder_agent_id")
-    
+
     # Get public keys
     initiator_pub = public_keys.get(initiator_id)
     responder_pub = public_keys.get(responder_id)
-    
+
     if not initiator_pub:
         raise A2AError(f"Missing public key for initiator: {initiator_id}")
     if not responder_pub:
         raise A2AError(f"Missing public key for responder: {responder_id}")
-    
+
     # Verify initiator signature
     sig_init_b64 = handshake.get("signature_initiator")
     if not sig_init_b64:
         raise A2AError("Missing initiator signature")
-    
+
     sig_init = ed25519.decode_base64(sig_init_b64)
-    
+
     # Remove responder fields for initiator verification
     init_handshake = {
         k: v for k, v in handshake.items()
-        if k not in ["signature_responder", "nonce_responder", "accepted_at", 
+        if k not in ["signature_responder", "nonce_responder", "accepted_at",
                      "rejected_at", "rejection_reason", "counter_payload"]
     }
     init_handshake.pop("signature_initiator", None)
-    
+
     canonical_init = canonicalize_json(init_handshake).encode()
-    
+
     try:
         ed25519.verify(initiator_pub, canonical_init, sig_init)
     except Exception as e:
         raise A2AError(f"Initiator signature verification failed: {e}")
-    
+
     # Verify responder signature (if accepted/rejected)
     if handshake.get("status") in ["accepted", "rejected"]:
         sig_resp_b64 = handshake.get("signature_responder")
         if not sig_resp_b64:
             raise A2AError("Missing responder signature")
-        
+
         sig_resp = ed25519.decode_base64(sig_resp_b64)
-        
+
         # Remove responder signature for verification
         resp_handshake = {k: v for k, v in handshake.items() if k != "signature_responder"}
         canonical_resp = canonicalize_json(resp_handshake).encode()
-        
+
         try:
             ed25519.verify(responder_pub, canonical_resp, sig_resp)
         except Exception as e:
             raise A2AError(f"Responder signature verification failed: {e}")
-    
+
     logger.piqrypt(f"A2A handshake verified: {initiator_id} ↔ {responder_id}")
-    
+
     return True
 
 
@@ -297,10 +296,10 @@ class PeerRegistry:
     - Central registry server
     - Blockchain-based discovery
     """
-    
+
     def __init__(self):
         self._peers: Dict[str, Dict[str, Any]] = {}
-    
+
     def register(self, agent_id: str, public_key: bytes, metadata: Dict[str, Any] = None):
         """Register agent in registry."""
         self._peers[agent_id] = {
@@ -310,7 +309,7 @@ class PeerRegistry:
             "registered_at": int(time.time())
         }
         logger.piqrypt(f"Peer registered: {agent_id}")
-    
+
     def discover(self, agent_id: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Discover peers.
@@ -324,9 +323,9 @@ class PeerRegistry:
         if agent_id:
             peer = self._peers.get(agent_id)
             return [peer] if peer else []
-        
+
         return list(self._peers.values())
-    
+
     def get_public_key(self, agent_id: str) -> Optional[bytes]:
         """Get public key for agent."""
         peer = self._peers.get(agent_id)

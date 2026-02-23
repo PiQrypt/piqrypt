@@ -39,19 +39,19 @@ def generate_cert_badge_svg(cert_id: str, tier: str) -> str:
         "timestamp": "#ff9500",     # Orange
         "pq_bundle": "#ffd700"      # Gold
     }
-    
+
     tier_labels = {
         "simple": "Simple",
         "timestamp": "Timestamp",
         "pq_bundle": "Post-Quantum"
     }
-    
+
     color = colors.get(tier, colors["simple"])
     label = tier_labels.get(tier, "Verified")
-    
+
     # Truncate cert_id for display
     short_cert = cert_id if len(cert_id) <= 20 else cert_id[:20] + "..."
-    
+
     svg = f'''<svg width="240" height="80" xmlns="http://www.w3.org/2000/svg">
   <!-- Background -->
   <rect fill="{color}" width="240" height="80" rx="8"/>
@@ -84,7 +84,7 @@ def generate_cert_badge_svg(cert_id: str, tier: str) -> str:
     {short_cert}
   </text>
 </svg>'''
-    
+
     return svg
 
 
@@ -109,10 +109,10 @@ def generate_cert_badge(cert_id: str, tier: str) -> Dict[str, Any]:
     verify_url = f"https://verify.piqrypt.com/{cert_id}"
     badge_url = f"https://verify.piqrypt.com/badge/{cert_id}.svg"
     png_url = f"https://verify.piqrypt.com/badge/{cert_id}.png"
-    
+
     # Generate SVG
     svg = generate_cert_badge_svg(cert_id, tier)
-    
+
     # Tier display name
     tier_names = {
         "simple": "Simple",
@@ -120,7 +120,7 @@ def generate_cert_badge(cert_id: str, tier: str) -> Dict[str, Any]:
         "pq_bundle": "Post-Quantum"
     }
     tier_name = tier_names.get(tier, "Verified")
-    
+
     return {
         "cert_id": cert_id,
         "tier": tier,
@@ -128,12 +128,12 @@ def generate_cert_badge(cert_id: str, tier: str) -> Dict[str, Any]:
         "badge_url": badge_url,
         "verify_url": verify_url,
         "png_url": png_url,
-        
+
         # Embed codes
         "markdown": f"[![PiQrypt {tier_name} Certified]({badge_url})]({verify_url})",
         "html": f'<a href="{verify_url}"><img src="{badge_url}" alt="PiQrypt {tier_name} Certified"></a>',
         "rst": f".. image:: {badge_url}\n   :target: {verify_url}\n   :alt: PiQrypt {tier_name} Certified",
-        
+
         # Metadata
         "issued_at": int(time.time()),
         "tier_display": tier_name
@@ -152,7 +152,7 @@ def generate_badge_snippets(cert_id: str, tier: str) -> str:
         Formatted string with all embed codes
     """
     badge = generate_cert_badge(cert_id, tier)
-    
+
     snippets = f"""
 🎨 PiQrypt Certification Badge
 
@@ -187,7 +187,7 @@ PNG: {badge['png_url']}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 """
-    
+
     return snippets
 
 

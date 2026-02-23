@@ -38,8 +38,7 @@ RFC Compliance:
 import sqlite3
 import time
 from pathlib import Path
-from typing import List, Dict, Any, Optional, Tuple
-from datetime import datetime
+from typing import List, Dict, Any, Optional
 
 from aiss.logger import get_logger
 
@@ -81,7 +80,7 @@ class MemoryIndex:
     - Search by nonce (replay detection)
     - Export selected events
     """
-    
+
     def __init__(self, index_path: Path):
         """
         Initialize index.
@@ -91,40 +90,40 @@ class MemoryIndex:
         """
         self.index_path = index_path
         self.conn: Optional[sqlite3.Connection] = None
-        
+
         # Create index if not exists
         if not index_path.exists():
             index_path.parent.mkdir(parents=True, exist_ok=True)
             self._init_db()
-    
+
     def _init_db(self):
         """Create database schema."""
         conn = sqlite3.connect(str(self.index_path))
         conn.executescript(SCHEMA)
         conn.commit()
         conn.close()
-    
+
     def connect(self):
         """Open connection (reuse if already open)."""
         if self.conn is None:
             self.conn = sqlite3.connect(str(self.index_path))
             self.conn.row_factory = sqlite3.Row  # Dict-like access
-    
+
     def close(self):
         """Close connection."""
         if self.conn:
             self.conn.close()
             self.conn = None
-    
+
     def __enter__(self):
         self.connect()
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
-    
+
     # ─── Indexing ─────────────────────────────────────────────────────────────
-    
+
     def add_event(
         self,
         event_hash: str,
@@ -159,7 +158,7 @@ class MemoryIndex:
             (event_hash, timestamp, event_type, agent_id, nonce, file_path, offset, length, int(time.time()))
         )
         self.conn.commit()
-    
+
     def add_events_batch(self, events: List[Dict[str, Any]]):
         """
         Batch insert events (faster for migration).
@@ -184,9 +183,9 @@ class MemoryIndex:
             rows
         )
         self.conn.commit()
-    
+
     # ─── Search ───────────────────────────────────────────────────────────────
-    
+
     def search(
         self,
         agent_id: Optional[str] = None,
@@ -211,36 +210,36 @@ class MemoryIndex:
             List of index entries (dicts with event_hash, timestamp, file_path, offset, length)
         """
         self.connect()
-        
+
         query = "SELECT * FROM events_index WHERE 1=1"
         params = []
-        
+
         if agent_id:
             query += " AND agent_id = ?"
             params.append(agent_id)
-        
+
         if event_type:
             query += " AND event_type = ?"
             params.append(event_type)
-        
+
         if from_timestamp:
             query += " AND timestamp >= ?"
             params.append(from_timestamp)
-        
+
         if to_timestamp:
             query += " AND timestamp <= ?"
             params.append(to_timestamp)
-        
+
         if nonce:
             query += " AND nonce = ?"
             params.append(nonce)
-        
+
         query += " ORDER BY timestamp DESC LIMIT ?"
         params.append(limit)
-        
+
         cursor = self.conn.execute(query, params)
         return [dict(row) for row in cursor.fetchall()]
-    
+
     def search_by_hash_prefix(self, hash_prefix: str, limit: int = 20) -> List[Dict[str, Any]]:
         """
         Search events by partial hash (e.g., "a3f7e8").
@@ -258,7 +257,7 @@ class MemoryIndex:
             (hash_prefix + "%", limit)
         )
         return [dict(row) for row in cursor.fetchall()]
-    
+
     def find_by_nonce(self, nonce: str) -> Optional[Dict[str, Any]]:
         """
         Find event by nonce (for replay detection).
@@ -276,9 +275,9 @@ class MemoryIndex:
         )
         row = cursor.fetchone()
         return dict(row) if row else None
-    
+
     # ─── Stats ────────────────────────────────────────────────────────────────
-    
+
     def get_stats(self) -> Dict[str, Any]:
         """
         Get index statistics.
@@ -287,7 +286,7 @@ class MemoryIndex:
             Dict with total_events, earliest_timestamp, latest_timestamp, agents, event_types
         """
         self.connect()
-        
+
         cursor = self.conn.execute(
             """
             SELECT 
@@ -300,7 +299,7 @@ class MemoryIndex:
             """
         )
         row = cursor.fetchone()
-        
+
         return {
             "total_events": row["total"],
             "earliest_timestamp": row["earliest"],
@@ -308,7 +307,7 @@ class MemoryIndex:
             "agents_count": row["agents"],
             "event_types_count": row["event_types"],
         }
-    
+
     def get_event_types(self) -> List[str]:
         """Get list of all unique event types."""
         self.connect()
@@ -316,9 +315,9 @@ class MemoryIndex:
             "SELECT DISTINCT event_type FROM events_index WHERE event_type IS NOT NULL ORDER BY event_type"
         )
         return [row["event_type"] for row in cursor.fetchall()]
-    
+
     # ─── Maintenance ──────────────────────────────────────────────────────────
-    
+
     def rebuild_index(self, events: List[Dict[str, Any]]):
         """
         Rebuild entire index from scratch.
@@ -331,7 +330,7 @@ class MemoryIndex:
         self.conn.commit()
         self.add_events_batch(events)
         logger.piqrypt(f"Index rebuilt: {len(events)} events")
-    
+
     def vacuum(self):
         """Optimize database (reclaim space, rebuild indexes)."""
         self.connect()
@@ -352,12 +351,12 @@ def get_index(encrypted: bool = False) -> MemoryIndex:
         MemoryIndex instance
     """
     from aiss.memory import EVENTS_PLAIN_DIR, EVENTS_ENC_DIR
-    
+
     if encrypted:
         index_path = EVENTS_ENC_DIR / "index.db"
     else:
         index_path = EVENTS_PLAIN_DIR / "index.db"
-    
+
     return MemoryIndex(index_path)
 
 

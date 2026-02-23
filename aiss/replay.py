@@ -26,7 +26,7 @@ class NonceStore:
     AISS-1: Minimum 24-hour retention
     AISS-2: 7-year retention (audit period)
     """
-    
+
     def __init__(self, retention_hours: int = 24):
         """
         Initialize nonce store.
@@ -36,10 +36,10 @@ class NonceStore:
         """
         self.retention_hours = retention_hours
         self.retention_seconds = retention_hours * 3600
-        
+
         # Map: agent_id -> set of (nonce, timestamp) tuples
         self.nonces: Dict[str, Set[tuple]] = defaultdict(set)
-    
+
     def check_and_add(self, agent_id: str, nonce: str, timestamp: Optional[int] = None) -> None:
         """
         Check if nonce is unique and add to store.
@@ -55,20 +55,20 @@ class NonceStore:
         """
         if not nonce:
             raise NonceError("Nonce cannot be empty")
-        
+
         if timestamp is None:
             timestamp = int(time.time())
-        
+
         # Check if nonce already exists for this agent
         agent_nonces = self.nonces[agent_id]
-        
+
         for existing_nonce, _ in agent_nonces:
             if existing_nonce == nonce:
                 raise ReplayAttackDetected(agent_id, nonce)
-        
+
         # Add new nonce
         agent_nonces.add((nonce, timestamp))
-    
+
     def cleanup_expired(self) -> int:
         """
         Remove expired nonces (older than retention period).
@@ -85,26 +85,26 @@ class NonceStore:
         current_time = int(time.time())
         cutoff_time = current_time - self.retention_seconds
         removed_count = 0
-        
+
         for agent_id in list(self.nonces.keys()):
             agent_nonces = self.nonces[agent_id]
-            
+
             # Filter out expired nonces
             valid_nonces = {
                 (nonce, ts) for nonce, ts in agent_nonces
                 if ts >= cutoff_time
             }
-            
+
             removed_count += len(agent_nonces) - len(valid_nonces)
-            
+
             if valid_nonces:
                 self.nonces[agent_id] = valid_nonces
             else:
                 # Remove agent if no nonces left
                 del self.nonces[agent_id]
-        
+
         return removed_count
-    
+
     def get_nonce_count(self, agent_id: Optional[str] = None) -> int:
         """
         Get count of stored nonces.
@@ -119,11 +119,11 @@ class NonceStore:
             return len(self.nonces.get(agent_id, set()))
         else:
             return sum(len(nonces) for nonces in self.nonces.values())
-    
+
     def clear(self) -> None:
         """Clear all stored nonces."""
         self.nonces.clear()
-    
+
     def export_state(self) -> Dict[str, List[tuple]]:
         """
         Export nonce store state for persistence.
@@ -135,7 +135,7 @@ class NonceStore:
             agent_id: list(nonces)
             for agent_id, nonces in self.nonces.items()
         }
-    
+
     def import_state(self, state: Dict[str, List[tuple]]) -> None:
         """
         Import nonce store state from persistence.
@@ -167,20 +167,20 @@ def detect_replay_attacks(events: List[Dict]) -> List[ReplayAttackDetected]:
     """
     store = NonceStore()
     attacks = []
-    
+
     for event in events:
         agent_id = event.get('agent_id')
         nonce = event.get('nonce')
         timestamp = event.get('timestamp')
-        
+
         if not agent_id or not nonce:
             continue
-        
+
         try:
             store.check_and_add(agent_id, nonce, timestamp)
         except ReplayAttackDetected as e:
             attacks.append(e)
-    
+
     return attacks
 
 

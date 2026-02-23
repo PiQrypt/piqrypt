@@ -16,8 +16,6 @@ timestamp and a note that trusted timestamp is pending.
 import hashlib
 import base64
 import time
-import struct
-import json
 import urllib.request
 import urllib.error
 from typing import Dict, Any, Optional
@@ -88,21 +86,21 @@ def _build_tsr_request(data_hash: bytes, hash_algorithm: str = "sha256") -> byte
         0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x01,  # SHA-256 OID
         0x05, 0x00,          # NULL
     ])
-    
+
     # MessageImprint
     hash_octet = bytes([0x04, len(data_hash)]) + data_hash
     msg_imprint = bytes([0x30, len(sha256_oid) + len(hash_octet)]) + sha256_oid + hash_octet
-    
+
     # Version INTEGER 1
     version = bytes([0x02, 0x01, 0x01])
-    
+
     # certReq BOOLEAN TRUE (we want the cert)
     cert_req = bytes([0x01, 0x01, 0xff])
-    
+
     # TimeStampReq SEQUENCE
     inner = version + msg_imprint + cert_req
     tsr = bytes([0x30, len(inner)]) + inner
-    
+
     return tsr
 
 
@@ -116,20 +114,20 @@ def _parse_tsr_response(response_bytes: bytes) -> Dict[str, Any]:
     # Minimal check: first bytes should be SEQUENCE (0x30)
     if not response_bytes or response_bytes[0] != 0x30:
         raise TSAVerificationError("Invalid TSR response — not a DER SEQUENCE")
-    
+
     # PKIStatusInfo is first element — status 0x00 = granted
     # This is a simplified check; proper implementation needs full ASN.1 parser
     status_granted = b'\x02\x01\x00'  # INTEGER 0 (granted)
     status_granted_with_mods = b'\x02\x01\x01'  # INTEGER 1 (grantedWithMods)
-    
+
     response_b64 = base64.b64encode(response_bytes).decode("ascii")
-    
+
     # Minimal status extraction
     is_granted = (
         status_granted in response_bytes[:50] or
         status_granted_with_mods in response_bytes[:50]
     )
-    
+
     return {
         "status": "granted" if is_granted else "unknown",
         "token_b64": response_b64,
@@ -176,22 +174,22 @@ def request_timestamp(
     """
     from aiss.license import require_pro
     require_pro("trusted_timestamps")
-    
+
     url = tsa_url or DEFAULT_TSA_SERVERS[0]["url"]
     tsa_name = next(
         (s["name"] for s in DEFAULT_TSA_SERVERS if s["url"] == url),
         url
     )
-    
+
     # Hash the data
     data_hash = hashlib.sha256(data).digest()
     data_hash_hex = data_hash.hex()
-    
+
     # Build request
     tsr_request = _build_tsr_request(data_hash)
-    
+
     logger.info(f"Requesting trusted timestamp from {tsa_name}")
-    
+
     try:
         req = urllib.request.Request(
             url,
@@ -202,14 +200,14 @@ def request_timestamp(
             },
             method="POST"
         )
-        
+
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             if resp.status != 200:
                 raise TSAError(f"TSA returned HTTP {resp.status}")
             response_bytes = resp.read()
-        
+
         parsed = _parse_tsr_response(response_bytes)
-        
+
         result = {
             "authority": tsa_name,
             "url": url,
@@ -220,11 +218,11 @@ def request_timestamp(
             "status": parsed["status"],
             "token_size_bytes": parsed["token_size_bytes"],
         }
-        
-        logger.info(f"Trusted timestamp received")
-        
+
+        logger.info("Trusted timestamp received")
+
         return result
-    
+
     except urllib.error.URLError as e:
         raise TSAUnavailableError(
             f"TSA '{tsa_name}' unreachable: {e}\n"
@@ -263,16 +261,16 @@ def stamp_event_with_tsa(
         'freetsa.org'
     """
     from aiss.canonical import canonicalize
-    
+
     canonical_bytes = canonicalize(event)
-    
+
     try:
         tsa_token = request_timestamp(canonical_bytes, tsa_url=tsa_url)
         event = dict(event)
         event["trusted_timestamp"] = tsa_token
-        
+
         logger.info("Trusted timestamp added to event")
-        
+
     except TSAUnavailableError as e:
         if fail_gracefully:
             logger.warning(
@@ -286,7 +284,7 @@ def stamp_event_with_tsa(
             }
         else:
             raise
-    
+
     return event
 
 
@@ -308,21 +306,21 @@ def verify_tsa_token(
         Verification result dict
     """
     tsa = event.get("trusted_timestamp")
-    
+
     if not tsa:
         return {
             "verified": False,
             "status": "NO_TSA_TOKEN",
             "message": "No trusted_timestamp field in event"
         }
-    
+
     if tsa.get("status") == "pending":
         return {
             "verified": False,
             "status": "TSA_PENDING",
             "message": "Trusted timestamp was not obtained at stamp time"
         }
-    
+
     # Verify hash if data provided
     if expected_data:
         data_hash = hashlib.sha256(expected_data).hexdigest()
@@ -332,16 +330,16 @@ def verify_tsa_token(
                 "status": "HASH_MISMATCH",
                 "message": "TSA token data hash does not match event"
             }
-    
+
     token_b64 = tsa.get("token", "").replace("base64:", "")
-    
+
     if not token_b64:
         return {
             "verified": False,
             "status": "INVALID_TOKEN",
             "message": "TSA token is empty"
         }
-    
+
     try:
         token_bytes = base64.b64decode(token_b64)
     except Exception:
@@ -350,7 +348,7 @@ def verify_tsa_token(
             "status": "INVALID_TOKEN",
             "message": "TSA token is not valid base64"
         }
-    
+
     # Try cryptography library for full verification
     try:
         from cryptography.hazmat.primitives import hashes, serialization
@@ -358,7 +356,7 @@ def verify_tsa_token(
         # Full TSA token verification would require pkcs7/cms parsing
         # For now: basic structure check
         is_valid_der = token_bytes[0] == 0x30
-        
+
         return {
             "verified": is_valid_der,
             "status": "STRUCTURE_VALID" if is_valid_der else "INVALID_STRUCTURE",
@@ -405,17 +403,17 @@ def retry_pending_timestamps(
     """
     from aiss.memory import load_events, store_event
     from aiss.canonical import canonicalize
-    
+
     events = load_events(agent_id=agent_id)
     pending = [
         e for e in events
         if e.get("trusted_timestamp", {}).get("status") == "pending"
     ]
-    
+
     retried = 0
     succeeded = 0
     failed = 0
-    
+
     for event in pending:
         retried += 1
         try:
@@ -428,7 +426,7 @@ def retry_pending_timestamps(
         except (TSAError, TSAUnavailableError) as e:
             failed += 1
             logger.warning(f"Timestamp retry failed: {e}")
-    
+
     return {"retried": retried, "succeeded": succeeded, "failed": failed}
 
 

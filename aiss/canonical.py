@@ -17,7 +17,7 @@ WARNING: Standard json.dumps(sort_keys=True) is NOT RFC 8785 compliant.
 import json
 import hashlib
 import math
-from typing import Any, Dict
+from typing import Any
 
 from aiss.exceptions import InvalidCanonicalJSONError
 

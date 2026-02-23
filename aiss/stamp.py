@@ -81,11 +81,11 @@ def stamp_event(
         nonce = generate_nonce()
     elif not nonce:
         raise NonceError("Nonce cannot be empty")
-    
+
     # Generate timestamp if not provided (Unix UTC seconds)
     if timestamp is None:
         timestamp = int(time.time())
-    
+
     # Build event structure (without signature)
     event = {
         "version": "AISS-1.0",
@@ -95,14 +95,14 @@ def stamp_event(
         "payload": payload,
         "previous_hash": previous_hash
     }
-    
+
     # Canonicalize and sign
     canonical = canonicalize(event)
     signature = ed25519.sign(private_key, canonical)
-    
+
     # Add signature to event
     event["signature"] = ed25519.encode_base64(signature)
-    
+
     return event
 
 
@@ -142,10 +142,10 @@ def stamp_genesis_event(
         >>> genesis['previous_hash'][:16]  # Will be SHA256 of public key
     """
     from aiss.canonical import hash_bytes
-    
+
     # Compute genesis previous_hash from public key (RFC Section 9.3)
     genesis_hash = hash_bytes(public_key)
-    
+
     return stamp_event(
         private_key=private_key,
         agent_id=agent_id,

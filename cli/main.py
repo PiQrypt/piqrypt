@@ -17,7 +17,7 @@ import sys
 import json
 import argparse
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 try:
     import aiss
@@ -132,7 +132,7 @@ def cmd_stamp(args):
     else:
         print_json(event)
 
-    print(f"\n✓ Event stamped")
+    print("\n✓ Event stamped")
     print(f"  Nonce: {event['nonce']}")
     print(f"  Timestamp: {event['timestamp']}")
 
@@ -206,9 +206,9 @@ def cmd_export(args):
     print(f"Exporting {len(events)} events...")
     audit = aiss.export_audit_chain(identity, events)
     save_json(audit, args.audit_file)
-    print(f"✓ Audit export complete")
+    print("✓ Audit export complete")
     print(f"  Chain hash: {audit['chain_integrity_hash'][:16]}...")
-    
+
     # Certified export if requested (Pro)
     if hasattr(args, 'certified') and args.certified:
         from aiss.license import is_pro
@@ -216,16 +216,16 @@ def cmd_export(args):
             print("\n[PiQrypt] Certified export requires Pro license")
             print("[PiQrypt] Certified exports provide cryptographic proof for audits")
             return
-        
+
         # Load private key
         if not hasattr(args, 'identity') or not args.identity:
             print("Error: --certified requires --identity FILE", file=sys.stderr)
             sys.exit(1)
-        
+
         identity_data = load_json(args.identity)
         private_key = aiss.crypto.ed25519.decode_base64(identity_data['private_key'])
         agent_id = identity_data['identity']['agent_id']
-        
+
         from aiss.exports import certify_export
         cert_path = certify_export(args.audit_file, private_key, agent_id)
         print(f"\n✓ Certified export created: {cert_path}")
@@ -235,14 +235,14 @@ def cmd_export(args):
 def cmd_verify_export(args):
     """Verify a certified export (piqrypt verify-export AUDIT.json AUDIT.json.cert)"""
     from aiss.exports import verify_certified_export
-    
-    print(f"Verifying certified export...")
+
+    print("Verifying certified export...")
     print(f"  Export: {args.export_file}")
     print(f"  Cert:   {args.cert_file}")
-    
+
     try:
         is_valid = verify_certified_export(args.export_file, args.cert_file)
-        
+
         if is_valid:
             print("\n✅ Certified export VALID")
             print("  Export integrity    : ✓")
@@ -252,7 +252,7 @@ def cmd_verify_export(args):
         else:
             print("\n❌ Certified export INVALID")
             sys.exit(1)
-    
+
     except Exception as e:
         print(f"\n❌ Verification failed: {e}")
         sys.exit(1)
@@ -261,12 +261,12 @@ def cmd_verify_export(args):
 def cmd_certify_request(args):
     """Create certification request (piqrypt certify-request AUDIT.json AUDIT.json.cert --email user@company.com)"""
     from aiss.external_cert import create_certification_request
-    
+
     print("Creating PiQrypt certification request...")
     print(f"  Audit:  {args.audit}")
     print(f"  Cert:   {args.cert}")
     print(f"  Email:  {args.email}")
-    
+
     try:
         request_zip = create_certification_request(
             args.audit,
@@ -274,21 +274,21 @@ def cmd_certify_request(args):
             args.email,
             output_dir=args.output_dir if hasattr(args, 'output_dir') else "."
         )
-        
-        print(f"\n✅ Certification request created")
+
+        print("\n✅ Certification request created")
         print(f"   File: {request_zip}")
         print()
         print("📧 Next steps:")
         print(f"   1. Email {Path(request_zip).name} to: certify@piqrypt.com")
-        print(f"   2. Subject: Certification Request")
-        print(f"   3. Wait for PiQrypt to validate and return certified file")
-        print(f"   4. Verify with: piqrypt certify-verify <certified-file>")
+        print("   2. Subject: Certification Request")
+        print("   3. Wait for PiQrypt to validate and return certified file")
+        print("   4. Verify with: piqrypt certify-verify <certified-file>")
         print()
         print("💰 Pricing:")
         print("   - Pro users:  Included (unlimited)")
         print("   - Free users: $99 one-time per certification")
         print()
-    
+
     except Exception as e:
         print(f"\n❌ Request creation failed: {e}")
         sys.exit(1)
@@ -297,14 +297,14 @@ def cmd_certify_request(args):
 def cmd_certify_verify(args):
     """Verify PiQrypt-certified export (piqrypt certify-verify AUDIT.piqrypt-certified)"""
     from aiss.external_cert import verify_piqrypt_certification, CertificationError
-    
-    print(f"Verifying PiQrypt certification...")
+
+    print("Verifying PiQrypt certification...")
     print(f"  File: {args.certified_file}")
     print()
-    
+
     try:
         result = verify_piqrypt_certification(args.certified_file)
-        
+
         print("✅ PiQrypt Certification VALID")
         print("=" * 60)
         print(f"  Certificate ID : {result['certificate_id']}")
@@ -322,12 +322,12 @@ def cmd_certify_verify(args):
         print("✅ This export has been independently certified by PiQrypt Inc.")
         print("   Valid for legal and compliance purposes.")
         print()
-    
+
     except CertificationError as e:
-        print(f"❌ Certification verification FAILED")
+        print("❌ Certification verification FAILED")
         print(f"   Reason: {e}")
         sys.exit(1)
-    
+
     except Exception as e:
         print(f"❌ Unexpected error: {e}")
         import traceback
@@ -357,21 +357,21 @@ def cmd_authority_create(args):
     """piqrypt authority create ISSUER_KEY SUBJECT_ID --scope ACTION [ACTION...] --days N"""
     from aiss.authority import create_authority_statement
     import aiss
-    
+
     print("Loading issuer identity...")
     issuer_data = load_json(args.issuer_key)
     issuer_private = aiss.crypto.ed25519.decode_base64(issuer_data['private_key'])
     issuer_id = issuer_data['identity']['agent_id']
-    
+
     scope = args.scope if args.scope else ["*"]
     validity_days = args.days if args.days else 365
-    
-    print(f"Creating authority statement...")
+
+    print("Creating authority statement...")
     print(f"  Issuer  : {issuer_id[:16]}...")
     print(f"  Subject : {args.subject_id}")
     print(f"  Scope   : {', '.join(scope)}")
     print(f"  Valid   : {validity_days} days")
-    
+
     stmt = create_authority_statement(
         issuer_private,
         issuer_id,
@@ -380,11 +380,11 @@ def cmd_authority_create(args):
         validity_days=validity_days,
         revocation_reference=args.revocation_url,
     )
-    
+
     output = args.output or f"authority-{issuer_id[:8]}-to-{args.subject_id[:8]}.json"
     save_json(stmt, output)
-    
-    print(f"\n✓ Authority statement created")
+
+    print("\n✓ Authority statement created")
     print(f"  Statement ID: {stmt['statement_id']}")
     print(f"  Valid until : {stmt['validity_period']['end']}")
 
@@ -394,19 +394,19 @@ def cmd_authority_verify(args):
     from aiss.authority import verify_authority_statement
     from aiss.exceptions import InvalidSignatureError
     import aiss
-    
+
     print("Loading authority statement...")
     stmt = load_json(args.statement)
-    
+
     print("Loading issuer public key...")
     issuer_data = load_json(args.issuer_key)
     issuer_public = aiss.crypto.ed25519.decode_base64(issuer_data['identity']['public_key'])
-    
+
     action = args.action if hasattr(args, 'action') and args.action else None
-    
+
     try:
         verify_authority_statement(stmt, issuer_public, requested_action=action)
-        print(f"\n✅ Authority statement VALID")
+        print("\n✅ Authority statement VALID")
         print(f"  Issuer    : {stmt['issuer_id']}")
         print(f"  Subject   : {stmt['subject_id']}")
         print(f"  Scope     : {', '.join(stmt['scope'])}")
@@ -415,11 +415,11 @@ def cmd_authority_verify(args):
         if action:
             print(f"  Action    : '{action}' ✓ authorized")
     except InvalidSignatureError as e:
-        print(f"\n❌ Authority statement INVALID")
+        print("\n❌ Authority statement INVALID")
         print(f"  Reason: {e}")
         return 1
     except Exception as e:
-        print(f"\n❌ Authority verification failed")
+        print("\n❌ Authority verification failed")
         print(f"  Error: {e}")
         return 1
 
@@ -428,11 +428,11 @@ def cmd_authority_chain(args):
     """piqrypt authority chain STATEMENT1.json STATEMENT2.json ... --pubkeys KEYS.json"""
     from aiss.authority import validate_authority_chain, RESULT_VALID_AUTHORIZED
     import aiss
-    
+
     print("Loading authority statements...")
     chain = [load_json(f) for f in args.statements]
     print(f"  {len(chain)} statement(s) loaded")
-    
+
     print("\nLoading public keys...")
     pubkeys_data = load_json(args.pubkeys)
     pubkeys = {}
@@ -443,12 +443,12 @@ def cmd_authority_chain(args):
             pub = aiss.crypto.ed25519.decode_base64(key_info)
         pubkeys[issuer_id] = pub
     print(f"  {len(pubkeys)} key(s) loaded")
-    
+
     action = args.action if hasattr(args, 'action') and args.action else None
-    
+
     print("\nValidating chain...")
     result, errors = validate_authority_chain(chain, pubkeys, requested_action=action)
-    
+
     print(f"\nResult: {result}")
     if result == RESULT_VALID_AUTHORIZED:
         print("✅ Authority chain VALID and AUTHORIZED")
@@ -469,12 +469,12 @@ def cmd_authority_chain(args):
 # ─────────────────────────────────────────────
 
 def cmd_license_activate(args):
-    print(f"Activating license...")
+    print("Activating license...")
     if aiss.activate_license(args.key):
         info = aiss.get_license_info()
-        print(f"✓ License activated!")
+        print("✓ License activated!")
         print(f"\n  Tier: {info['tier'].upper()}")
-        print(f"\n  Features unlocked:")
+        print("\n  Features unlocked:")
         for feature, available in info['features'].items():
             if available:
                 print(f"    ✓ {feature}")
@@ -499,15 +499,15 @@ def cmd_license_status(args):
     if tier != "FREE":
         print(f"  License : {info.get('license_id', 'N/A')}")
 
-    print(f"\n  Features:")
+    print("\n  Features:")
     for feature, available in info['features'].items():
         icon = "✓" if available else "✗"
         print(f"    {icon}  {feature}")
 
     if tier == "FREE":
-        print(f"\n  Upgrade to Pro:")
-        print(f"    piqrypt.com/pro  –  $1,990/year")
-        print(f"    piqrypt.com/oss  –  Free for open-source")
+        print("\n  Upgrade to Pro:")
+        print("    piqrypt.com/pro  –  $1,990/year")
+        print("    piqrypt.com/oss  –  Free for open-source")
     print()
 
 
@@ -657,7 +657,7 @@ Examples:
     # ── authority (v1.2.0) ──
     auth_p = sub.add_parser('authority', help='Authority Binding Layer (RFC §5)')
     auth_s = auth_p.add_subparsers(dest='authority_command')
-    
+
     auth_create = auth_s.add_parser('create', help='Create authority statement')
     auth_create.add_argument('issuer_key', help='Issuer identity file (with private key)')
     auth_create.add_argument('subject_id', help='Subject agent ID or identity')
@@ -665,12 +665,12 @@ Examples:
     auth_create.add_argument('--days', type=int, default=365, help='Validity period in days (default: 365)')
     auth_create.add_argument('--revocation-url', help='Revocation list URL')
     auth_create.add_argument('--output', '-o', help='Output file (default: auto-generated)')
-    
+
     auth_verify = auth_s.add_parser('verify', help='Verify authority statement')
     auth_verify.add_argument('statement', help='Authority statement JSON file')
     auth_verify.add_argument('issuer_key', help='Issuer identity file (public key)')
     auth_verify.add_argument('--action', help='Check if specific action is authorized')
-    
+
     auth_chain = auth_s.add_parser('chain', help='Validate authority chain')
     auth_chain.add_argument('statements', nargs='+', help='Authority statement files (in order: top → agent)')
     auth_chain.add_argument('--pubkeys', required=True, help='JSON file mapping issuer_id → public_key')
@@ -886,30 +886,30 @@ def cmd_memory_status(args):
     from aiss.memory import get_memory_stats
     stats = get_memory_stats()
     tier = stats.get("tier", "free")
-    
-    print(f"\nPiQrypt Memory Status")
+
+    print("\nPiQrypt Memory Status")
     print(f"{'─'*40}")
     print(f"  Tier       : {tier.upper()}")
     print(f"  Encrypted  : {stats.get('encrypted', False)}")
     print(f"  Storage    : {stats.get('storage_path')}")
     print(f"  Retention  : {stats.get('retention_years', 10)} years")
-    
+
     if tier == "free":
         print(f"  Events     : {stats.get('total_events', 0)}")
         months = stats.get("months", [])
         if months:
-            print(f"\n  Monthly breakdown:")
+            print("\n  Monthly breakdown:")
             for m in months[-6:]:
                 print(f"    {m['month']}: {m['count']} events")
-        print(f"\n[PiQrypt] Agent operating with local-only trust")
+        print("\n[PiQrypt] Agent operating with local-only trust")
     else:
         print(f"  Session    : {'active' if stats.get('session_active') else 'locked'}")
         months = stats.get("months", [])
         if months:
             print(f"  Monthly files: {len(months)}")
         if not stats.get("session_active"):
-            print(f"\n[PiQrypt] Run: piqrypt memory unlock")
-    
+            print("\n[PiQrypt] Run: piqrypt memory unlock")
+
     print()
 
 
@@ -917,10 +917,10 @@ def cmd_memory_unlock(args):
     """piqrypt memory unlock [--permanent]"""
     import getpass
     from aiss.memory import unlock
-    
+
     passphrase = args.passphrase or getpass.getpass("🔒 Memory passphrase: ")
     permanent = getattr(args, 'permanent', False)
-    
+
     try:
         unlock(passphrase, permanent=permanent)
         mode = "permanently" if permanent else "for 1 hour"
@@ -941,17 +941,17 @@ def cmd_memory_search(args):
     """piqrypt memory search <query>"""
     from aiss.memory import search_events
     import json
-    
+
     results = search_events(
         participant=args.agent,
         event_type=args.type,
         limit=args.limit or 20
     )
-    
+
     if not results:
         print("No events found.")
         return
-    
+
     print(f"\nFound {len(results)} events:\n")
     for e in results:
         import datetime
@@ -963,7 +963,7 @@ def cmd_memory_search(args):
         et = e.get("payload", {}).get("event_type", "event")
         aid = e.get("agent_id", "")[:16]
         print(f"  {nonce} | {ts} | {aid} | {et}")
-    
+
     if args.json:
         print(f"\n{json.dumps(results, indent=2)}")
 
@@ -972,20 +972,20 @@ def cmd_memory_encrypt(args):
     """piqrypt memory encrypt — migrate Free events to encrypted Pro storage"""
     import getpass
     from aiss.memory import migrate_to_encrypted
-    
+
     print("⚠️  This will encrypt all plaintext events with AES-256-GCM.")
     print("   Original files will be renamed to .json.migrated")
     print()
-    
+
     passphrase = args.passphrase or getpass.getpass("🔒 Set encryption passphrase: ")
     confirm = getpass.getpass("🔒 Confirm passphrase: ")
-    
+
     if passphrase != confirm:
         print("❌ Passphrases do not match.")
         return 1
-    
+
     result = migrate_to_encrypted(passphrase)
-    print(f"\n✓ Migration complete:")
+    print("\n✓ Migration complete:")
     print(f"  Events migrated : {result['migrated']}")
     print(f"  Months migrated : {result['months']}")
     print(f"  Errors          : {result['errors']}")
@@ -995,70 +995,70 @@ def cmd_a2a_propose(args):
     """piqrypt a2a propose --identity IDENTITY_FILE"""
     import json
     from aiss.a2a import create_identity_proposal
-    
+
     identity_data = load_json(args.identity)
     priv = aiss.crypto.ed25519.decode_base64(identity_data["private_key"])
     pub = aiss.crypto.ed25519.decode_base64(identity_data["identity"]["public_key"])
     agent_id = identity_data["identity"]["agent_id"]
-    
+
     proposal = create_identity_proposal(
         priv, pub, agent_id,
         capabilities=["stamp", "verify", "a2a", "task_delegation"]
     )
-    
+
     if args.output:
         save_json(proposal, args.output)
     else:
         print(json.dumps(proposal, indent=2))
-    
+
     print(f"\n✓ Proposal created for: {agent_id[:16]}...")
     print(f"  Session nonce: {proposal['session_nonce'][:8]}...")
-    print(f"  Send this to peer agent.")
+    print("  Send this to peer agent.")
 
 
 def cmd_a2a_respond(args):
     """piqrypt a2a respond --identity MY_IDENTITY --proposal PROPOSAL_FILE"""
     import json
     from aiss.a2a import perform_handshake
-    
+
     identity_data = load_json(args.identity)
     priv = aiss.crypto.ed25519.decode_base64(identity_data["private_key"])
     pub = aiss.crypto.ed25519.decode_base64(identity_data["identity"]["public_key"])
     agent_id = identity_data["identity"]["agent_id"]
-    
+
     peer_proposal = load_json(args.proposal)
-    
+
     result = perform_handshake(
         priv, pub, agent_id, peer_proposal,
         store_in_memory=True
     )
-    
+
     if args.output:
         save_json(result["response"], args.output)
     else:
         print(json.dumps(result["response"], indent=2))
-    
-    print(f"\n✓ Handshake complete!")
+
+    print("\n✓ Handshake complete!")
     print(f"  Session ID : {result['session_id'][:8]}...")
     print(f"  Peer       : {result['peer_agent_id'][:16]}...")
-    print(f"  Stored in memory: yes")
+    print("  Stored in memory: yes")
 
 
 def cmd_a2a_peers(args):
     """piqrypt a2a peers"""
     from aiss.a2a import list_peers
-    
+
     peers = list_peers()
-    
+
     if not peers:
         print("No peers registered yet.")
         print("\n[PiQrypt] Use 'piqrypt a2a propose' to initiate A2A handshake")
         return
-    
+
     print(f"\nRegistered peers ({len(peers)}):\n")
     print(f"  {'Agent ID':<20} {'Interactions':>12} {'Trust Score':>12} {'Last Seen'}")
     print(f"  {'─'*68}")
-    
+
     for p in peers:
         import datetime
         ls = datetime.datetime.fromtimestamp(
@@ -1074,17 +1074,17 @@ def cmd_archive_create(args):
     import getpass
     from aiss.memory import load_events
     from aiss.archive import create_archive
-    
+
     identity_data = load_json(args.identity)
     identity = identity_data["identity"]
     agent_id = identity["agent_id"]
-    
+
     events = load_events(agent_id=agent_id)
-    
+
     if not events:
         print(f"No events found for agent {agent_id[:16]}...")
         return 1
-    
+
     passphrase = None
     if args.encrypt:
         from aiss.license import is_pro
@@ -1093,11 +1093,11 @@ def cmd_archive_create(args):
             print("[PiQrypt] Archive will be created without encryption")
         else:
             passphrase = args.passphrase or getpass.getpass("🔒 Archive passphrase: ")
-    
+
     output = args.output or f"piqrypt-archive-{agent_id[:8]}.pqz"
-    
+
     meta = create_archive(events, identity, output, passphrase=passphrase)
-    
+
     print(f"\n✓ Archive created: {output}")
     print(f"  Events     : {meta['events_count']}")
     print(f"  Encrypted  : {meta['encrypted']}")
@@ -1111,7 +1111,7 @@ def cmd_archive_import(args):
     """piqrypt import ARCHIVE.pqz"""
     import getpass
     from aiss.archive import import_archive
-    
+
     passphrase = args.passphrase
     if not passphrase and args.archive.endswith('.pqz'):
         try:
@@ -1120,9 +1120,9 @@ def cmd_archive_import(args):
                 passphrase = None
         except Exception:
             passphrase = None
-    
+
     result = import_archive(args.archive, passphrase=passphrase)
-    
+
     print(f"\n✓ Archive imported: {args.archive}")
     print(f"  Imported   : {result['imported']} events")
     print(f"  Agent      : {result.get('agent_id', '')[:16]}...")
@@ -1134,37 +1134,36 @@ def cmd_status(args):
     from aiss.memory import get_memory_stats, load_events
     from aiss.license import is_pro, get_tier
     from aiss.a2a import list_peers
-    
+
     tier = get_tier()
-    
-    print(f"\nPiQrypt Status")
+
+    print("\nPiQrypt Status")
     print(f"{'─'*40}")
-    
+
     stats = get_memory_stats()
     total_events = stats.get("total_events", 0)
     if total_events == 0 and stats.get("months"):
         # Pro: approximate from file sizes
         total_events = f"~{len(stats.get('months', []))} months encrypted"
-    
-    print(f"  Identity    : active")
+
+    print("  Identity    : active")
     print(f"  Tier        : {tier.upper()}")
     print(f"  Events      : {total_events}")
-    print(f"  Chain       : verified ✓")
+    print("  Chain       : verified ✓")
     print(f"  Protection  : {'encrypted (Pro)' if is_pro() and stats.get('encrypted') else 'local'}")
-    
+
     if args.deep if hasattr(args, 'deep') else False:
-        from aiss.license import require_pro
         if not is_pro():
-            print(f"\n[PiQrypt] Deep status available in Pro")
-            print(f"[PiQrypt] Network trust available (Pro)")
+            print("\n[PiQrypt] Deep status available in Pro")
+            print("[PiQrypt] Network trust available (Pro)")
             return
-        
+
         peers = list_peers()
         print(f"\n  Network peers : {len(peers)}")
         if peers:
             avg_trust = sum(p.get("trust_score", 1.0) for p in peers) / len(peers)
             print(f"  Avg trust     : {avg_trust:.2f}")
-        
+
         # Trust score for own chain
         from aiss.a2a import compute_trust_score
         events_raw = load_events()
@@ -1172,8 +1171,8 @@ def cmd_status(args):
             ts = compute_trust_score("", events_raw)
             print(f"  Trust score   : {ts['trust_score']} ({ts['tier']})")
     else:
-        print(f"\n[PiQrypt] Agent operating with local-only trust")
+        print("\n[PiQrypt] Agent operating with local-only trust")
         if not is_pro():
-            print(f"[PiQrypt] Network trust available (Pro)")
-    
+            print("[PiQrypt] Network trust available (Pro)")
+
     print()

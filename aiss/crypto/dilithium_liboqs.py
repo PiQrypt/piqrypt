@@ -71,7 +71,7 @@ def _check_available():
 def _check_license():
     """Check license and demo limits"""
     global EVENT_COUNT
-    
+
     if DEMO_MODE:
         EVENT_COUNT += 1
         if EVENT_COUNT > DEMO_LIMIT:
@@ -81,7 +81,7 @@ def _check_license():
                 f"Get free OSS license: https://piqrypt.com/oss\n"
                 f"Or set AISS2_LICENSE_KEY environment variable"
             )
-        
+
         # Warning every 100 events
         if EVENT_COUNT % 100 == 0:
             print(f"⚠️  AISS-2 Demo Mode: {EVENT_COUNT}/{DEMO_LIMIT} events used")
@@ -99,7 +99,7 @@ def generate_keypair() -> tuple[bytes, bytes]:
     """
     _check_available()
     _check_license()
-    
+
     try:
         if USE_LIBOQS:
             # liboqs backend
@@ -107,7 +107,7 @@ def generate_keypair() -> tuple[bytes, bytes]:
             public_key = signer.generate_keypair()
             private_key = signer.export_secret_key()
             return private_key, public_key
-            
+
         elif USE_DILITHIUM_PY:
             # dilithium-py backend
             # Note: returns (public, private), so we swap
@@ -115,7 +115,7 @@ def generate_keypair() -> tuple[bytes, bytes]:
             return private_key, public_key
         else:
             raise CryptoBackendError("Dilithium3", "No backend available")
-            
+
     except Exception as e:
         raise CryptoBackendError("Dilithium3", f"Key generation failed: {e}")
 
@@ -136,19 +136,19 @@ def sign(private_key: bytes, message: bytes) -> bytes:
     """
     _check_available()
     _check_license()
-    
+
     try:
         if USE_LIBOQS:
             # liboqs backend
             signer = oqs.Signature("Dilithium3", private_key)
             return signer.sign(message)
-            
+
         elif USE_DILITHIUM_PY:
             # dilithium-py backend
             return Dilithium3.sign(private_key, message)
         else:
             raise CryptoBackendError("Dilithium3", "No backend available")
-            
+
     except Exception as e:
         raise CryptoBackendError("Dilithium3", f"Signing failed: {e}")
 
@@ -169,19 +169,19 @@ def verify(public_key: bytes, message: bytes, signature: bytes) -> bool:
         CryptoBackendError: If backend not available
     """
     _check_available()
-    
+
     try:
         if USE_LIBOQS:
             # liboqs backend
             verifier = oqs.Signature("Dilithium3")
             return verifier.verify(message, signature, public_key)
-            
+
         elif USE_DILITHIUM_PY:
             # dilithium-py backend
             return Dilithium3.verify(public_key, message, signature)
         else:
             return False
-            
+
     except Exception:
         # Verification failure is not an error, just invalid signature
         return False
@@ -213,7 +213,7 @@ def get_backend_info() -> dict:
         "events_limit": DEMO_LIMIT if DEMO_MODE else None,
         "license_key_set": bool(os.getenv("AISS2_LICENSE_KEY"))
     }
-    
+
     if AVAILABLE:
         if USE_LIBOQS:
             info["implementation"] = "liboqs (C)"
@@ -221,7 +221,7 @@ def get_backend_info() -> dict:
         elif USE_DILITHIUM_PY:
             info["implementation"] = "dilithium-py (Python)"
             info["performance"] = "medium"
-        
+
     return info
 
 

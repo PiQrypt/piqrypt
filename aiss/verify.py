@@ -18,8 +18,6 @@ from aiss.replay import NonceStore
 from aiss.exceptions import (
     InvalidSignatureError,
     InvalidChainError,
-    ForkDetected,
-    ReplayAttackDetected,
 )
 
 
@@ -50,19 +48,19 @@ def verify_signature(event: Dict[str, Any], public_key: bytes) -> bool:
     signature_b58 = event.get('signature')
     if not signature_b58:
         raise InvalidSignatureError("Event missing signature field")
-    
+
     try:
         signature = ed25519.decode_base64(signature_b58)
     except Exception as e:
         raise InvalidSignatureError(f"Invalid signature encoding: {e}")
-    
+
     # Create event copy without signature
     event_copy = event.copy()
     event_copy.pop('signature')
-    
+
     # Canonicalize
     canonical = canonicalize(event_copy)
-    
+
     # Verify signature
     try:
         return ed25519.verify(public_key, canonical, signature)
@@ -99,23 +97,23 @@ def verify_event(
     """
     # Verify signature
     verify_signature(event, public_key)
-    
+
     # Check required fields
     required = ['version', 'agent_id', 'timestamp', 'nonce', 'payload', 'previous_hash']
     for field in required:
         if field not in event:
             raise InvalidChainError(f"Missing required field: {field}")
-    
+
     # Verify chain linkage if previous event provided
     if previous_event:
         expected_hash = compute_event_hash(previous_event)
         actual_hash = event.get('previous_hash')
-        
+
         if actual_hash != expected_hash:
             raise InvalidChainError(
                 f"Chain linkage broken: expected {expected_hash[:16]}..., got {actual_hash[:16]}..."
             )
-    
+
     return True
 
 
@@ -158,36 +156,36 @@ def verify_chain(
     """
     if not events:
         return True
-    
+
     # Extract public key from identity
     public_key_b58 = identity.get('public_key')
     if not public_key_b58:
         raise InvalidChainError("Identity missing public_key field")
-    
+
     try:
         public_key = ed25519.decode_base64(public_key_b58)
     except Exception as e:
         raise InvalidChainError(f"Invalid public key encoding: {e}")
-    
+
     # Verify all signatures
     for i, event in enumerate(events):
         try:
             verify_signature(event, public_key)
         except InvalidSignatureError as e:
             raise InvalidChainError(f"Signature verification failed at event {i}: {e}", i)
-    
+
     # Verify chain linkage
     verify_chain_linkage(events)
-    
+
     # Check timestamps if requested
     if check_timestamps:
         verify_monotonic_timestamps(events)
-    
+
     # Check for forks if requested
     if check_forks:
         detector = ForkDetector()
         detector.detect_and_raise(events)
-    
+
     # Check for replay attacks if requested
     if check_replay:
         nonce_store = NonceStore()
@@ -195,10 +193,10 @@ def verify_chain(
             agent_id = event.get('agent_id')
             nonce = event.get('nonce')
             timestamp = event.get('timestamp')
-            
+
             if agent_id and nonce:
                 nonce_store.check_and_add(agent_id, nonce, timestamp)
-    
+
     return True
 
 
@@ -233,10 +231,10 @@ def get_verification_report(
         "replay_attacks": [],
         "errors": []
     }
-    
+
     if not events:
         return report
-    
+
     # Verify signatures
     try:
         public_key = ed25519.decode_base64(identity.get('public_key'))
@@ -246,7 +244,7 @@ def get_verification_report(
         report["signatures_valid"] = False
         report["valid"] = False
         report["errors"].append(f"Signature error: {e}")
-    
+
     # Verify chain
     try:
         verify_chain_linkage(events)
@@ -254,7 +252,7 @@ def get_verification_report(
         report["chain_valid"] = False
         report["valid"] = False
         report["errors"].append(f"Chain error: {e}")
-    
+
     # Verify timestamps
     try:
         verify_monotonic_timestamps(events)
@@ -262,7 +260,7 @@ def get_verification_report(
         report["timestamps_valid"] = False
         report["valid"] = False
         report["errors"].append(f"Timestamp error: {e}")
-    
+
     # Check forks
     try:
         from aiss.fork import find_forks
@@ -272,7 +270,7 @@ def get_verification_report(
             report["valid"] = False
     except Exception as e:
         report["errors"].append(f"Fork detection error: {e}")
-    
+
     # Check replay attacks
     try:
         from aiss.replay import detect_replay_attacks
@@ -282,7 +280,7 @@ def get_verification_report(
             report["valid"] = False
     except Exception as e:
         report["errors"].append(f"Replay detection error: {e}")
-    
+
     return report
 
 

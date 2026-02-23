@@ -37,10 +37,10 @@ class ForkDetector:
     
     Scans event sequences to detect fork conditions.
     """
-    
+
     def __init__(self):
         self.previous_hash_map: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
-    
+
     def add_event(self, event: Dict[str, Any]) -> None:
         """
         Add event to fork detector.
@@ -51,7 +51,7 @@ class ForkDetector:
         prev_hash = event.get('previous_hash')
         if prev_hash:
             self.previous_hash_map[prev_hash].append(event)
-    
+
     def detect(self, events: List[Dict[str, Any]]) -> Optional[ForkDetected]:
         """
         Detect forks in event list.
@@ -67,18 +67,18 @@ class ForkDetector:
         """
         # Reset state
         self.previous_hash_map.clear()
-        
+
         # Build previous_hash -> events mapping
         for event in events:
             self.add_event(event)
-        
+
         # Check for multiple events with same previous_hash
         for prev_hash, event_list in self.previous_hash_map.items():
             if len(event_list) > 1:
                 return ForkDetected(prev_hash, event_list)
-        
+
         return None
-    
+
     def detect_and_raise(self, events: List[Dict[str, Any]]) -> None:
         """
         Detect forks and raise exception if found.
@@ -108,16 +108,16 @@ def find_forks(events: List[Dict[str, Any]]) -> List[ForkDetected]:
     """
     detector = ForkDetector()
     forks = []
-    
+
     # Build mapping
     for event in events:
         detector.add_event(event)
-    
+
     # Find all forks
     for prev_hash, event_list in detector.previous_hash_map.items():
         if len(event_list) > 1:
             forks.append(ForkDetected(prev_hash, event_list))
-    
+
     return forks
 
 
@@ -167,7 +167,7 @@ def get_fork_resolution_info(fork: ForkDetected) -> Dict[str, Any]:
         - branches: List of branch info dicts
     """
     branches = []
-    
+
     for i, event in enumerate(fork.events):
         branches.append({
             "branch_id": i,
@@ -176,7 +176,7 @@ def get_fork_resolution_info(fork: ForkDetected) -> Dict[str, Any]:
             "nonce": event.get('nonce'),
             "payload": event.get('payload')
         })
-    
+
     return {
         "hash": fork.hash,
         "branch_count": len(fork.events),

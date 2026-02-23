@@ -22,13 +22,9 @@ Usage:
         > search agent_z
 """
 
-import os
-import io
 import json
 import time
-import uuid
 import hashlib
-import secrets
 import zipfile
 from pathlib import Path
 from typing import Dict, Any, List, Optional
@@ -490,22 +486,22 @@ def create_archive(
         {"events_count": 1234, "encrypted": True, ...}
     """
     output_path = Path(output_path)
-    
+
     if passphrase is not None:
         from aiss.license import require_pro
         require_pro("encrypted_archives")
-    
+
     # Compute timestamps
     timestamps = [e.get("timestamp", 0) for e in events if e.get("timestamp")]
     period_start = min(timestamps) if timestamps else int(time.time())
     period_end = max(timestamps) if timestamps else int(time.time())
-    
+
     def fmt_ts(ts):
         return datetime.fromtimestamp(ts, tz=timezone.utc).isoformat()
-    
+
     # Prepare data
     data_bytes = json.dumps(events, indent=2).encode("utf-8")
-    
+
     # Encrypt if passphrase provided
     if passphrase is not None:
         from aiss.memory import _aes_gcm_encrypt, _derive_key_from_passphrase, SALT_SIZE
@@ -520,10 +516,10 @@ def create_archive(
         archive_data = data_bytes
         data_filename = "data.json"
         encrypted = False
-    
+
     # Archive checksum (of data before adding to zip)
     archive_checksum = hashlib.sha256(archive_data).hexdigest()
-    
+
     # Metadata (non-sensitive)
     metadata = {
         "piqrypt_version": "1.2.0",
@@ -541,7 +537,7 @@ def create_archive(
         "archive_checksum": archive_checksum,
         "label": label or f"archive-{datetime.now(tz=timezone.utc).strftime('%Y%m%d')}",
     }
-    
+
     # Build index.json (Sprint 3 — search without decrypting all)
     from aiss.chain import compute_event_hash
     index_entries = []
@@ -550,7 +546,7 @@ def create_archive(
         event_bytes = json.dumps(event).encode('utf-8')
         event_hash = compute_event_hash(event)
         event_type = event.get("payload", {}).get("event_type") or event.get("payload", {}).get("type")
-        
+
         index_entries.append({
             "offset": offset,
             "length": len(event_bytes),
@@ -560,7 +556,7 @@ def create_archive(
             "nonce": event.get("nonce", "")[:8],  # Prefix
         })
         offset += len(event_bytes)
-    
+
     index_data = {
         "version": "AISS-INDEX-1.0",
         "total_events": len(events),
@@ -572,11 +568,11 @@ def create_archive(
         "encrypted": encrypted,
         "events_index": index_entries,
     }
-    
+
     # Load decrypt.py template (Sprint 3 v2)
     template_dir = Path(__file__).parent / "templates"
     decrypt_script = (template_dir / "decrypt.py").read_text()
-    
+
     # Write ZIP
     with zipfile.ZipFile(output_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         zf.writestr(data_filename, archive_data)
@@ -585,11 +581,11 @@ def create_archive(
         zf.writestr("verify.py", _VERIFY_PY)
         zf.writestr("metadata.json", json.dumps(metadata, indent=2))
         zf.writestr("README.txt", _README_TXT)
-    
+
     size_mb = output_path.stat().st_size / (1024 * 1024)
-    
+
     logger.info("Archive created")
-    
+
     metadata["output_path"] = str(output_path)
     metadata["size_mb"] = round(size_mb, 2)
     return metadata
@@ -616,19 +612,19 @@ def import_archive(
         ArchiveCorruptedError: If archive integrity check fails
     """
     archive_path = Path(archive_path)
-    
+
     if not archive_path.exists():
         raise ArchiveError(f"Archive not found: {archive_path}")
-    
+
     with zipfile.ZipFile(archive_path, "r") as zf:
         files = zf.namelist()
-        
+
         if "metadata.json" not in files:
             raise ArchiveError("Invalid archive: missing metadata.json")
-        
+
         metadata = json.loads(zf.read("metadata.json"))
         encrypted = metadata.get("encrypted", False)
-        
+
         if encrypted:
             if passphrase is None:
                 raise ArchiveError(
@@ -636,11 +632,11 @@ def import_archive(
                     "Provide via: piqrypt import archive.pqz --passphrase <pass>\n"
                     "Or interactively in Python: import_archive('archive.pqz', passphrase='...')"
                 )
-            
-            from aiss.memory import _aes_gcm_decrypt, _derive_key_from_passphrase, SALT_SIZE
-            
+
+            from aiss.memory import _aes_gcm_decrypt, _derive_key_from_passphrase
+
             blob = zf.read("data.enc")
-            
+
             # Verify checksum
             expected_checksum = metadata.get("archive_checksum")
             if expected_checksum:
@@ -649,20 +645,20 @@ def import_archive(
                     raise ArchiveCorruptedError(
                         "Archive checksum mismatch — file may be tampered"
                     )
-            
+
             salt = blob[:32]
             cipher_blob = blob[32:]
             enc_key = _derive_key_from_passphrase(passphrase, salt)
-            
+
             try:
                 plaintext = _aes_gcm_decrypt(enc_key, cipher_blob)
             except Exception:
                 raise ArchiveError("Wrong passphrase or corrupted archive")
-            
+
             events = json.loads(plaintext.decode("utf-8"))
         else:
             blob = zf.read("data.json")
-            
+
             # Verify checksum
             expected_checksum = metadata.get("archive_checksum")
             if expected_checksum:
@@ -671,9 +667,9 @@ def import_archive(
                     raise ArchiveCorruptedError(
                         "Archive checksum mismatch — file may be tampered"
                     )
-            
+
             events = json.loads(blob.decode("utf-8"))
-    
+
     if store_in_memory:
         from aiss.memory import store_event
         imported = 0
@@ -685,9 +681,9 @@ def import_archive(
                 logger.warning(f"Could not store event: {e}")
     else:
         imported = len(events)
-    
+
     logger.info("Archive imported")
-    
+
     return {
         "imported": imported,
         "total_in_archive": len(events),
@@ -728,7 +724,9 @@ def verify_archive(archive_path: str, passphrase: str = None) -> bool:
     Returns:
         True if integrity check passes
     """
-    import zipfile, hashlib, json
+    import zipfile
+    import hashlib
+    import json
 
     try:
         with zipfile.ZipFile(archive_path, 'r') as zf:

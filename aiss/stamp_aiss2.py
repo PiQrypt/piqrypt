@@ -188,11 +188,11 @@ def stamp_genesis_event_aiss2_hybrid(
         AISS-2.0 genesis event
     """
     from aiss.canonical import hash_bytes
-    
+
     # Compute genesis previous_hash from Ed25519 public key
     # (maintains compatibility with AISS-1)
     genesis_hash = hash_bytes(public_key_ed25519)
-    
+
     return stamp_event_aiss2_hybrid(
         private_key_ed25519,
         private_key_dilithium,
@@ -218,32 +218,32 @@ def verify_aiss2_hybrid(event: Dict[str, Any], public_key_ed25519: bytes, public
         InvalidSignatureError: If either signature invalid
     """
     from aiss.exceptions import InvalidSignatureError
-    
+
     # Extract signatures
     signatures = event.get("signatures")
     if not signatures:
         raise InvalidSignatureError("AISS-2 event missing signatures field")
-    
+
     classical = signatures.get("classical")
     post_quantum = signatures.get("post_quantum")
-    
+
     if not classical or not post_quantum:
         raise InvalidSignatureError("AISS-2 event missing classical or post_quantum signature")
-    
+
     # Create event copy without signatures
     event_copy = event.copy()
     event_copy.pop("signatures")
-    
+
     # Canonicalize
     canonical = canonicalize(event_copy)
-    
+
     # Verify Ed25519
     try:
         sig_ed25519 = ed25519.decode_base58(classical["signature"])
         ed25519.verify(public_key_ed25519, canonical, sig_ed25519)
     except Exception as e:
         raise InvalidSignatureError(f"Ed25519 signature verification failed: {e}")
-    
+
     # Verify Dilithium3
     try:
         sig_dilithium = base64.b64decode(post_quantum["signature"])
@@ -251,12 +251,12 @@ def verify_aiss2_hybrid(event: Dict[str, Any], public_key_ed25519: bytes, public
             raise InvalidSignatureError("Dilithium3 signature verification failed")
     except Exception as e:
         raise InvalidSignatureError(f"Dilithium3 signature verification failed: {e}")
-    
+
     log_debug("aiss2_verified", "Hybrid signatures verified", {
         "ed25519": "valid",
         "dilithium3": "valid"
     })
-    
+
     return True
 
 

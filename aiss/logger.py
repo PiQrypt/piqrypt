@@ -43,11 +43,9 @@ Exact log messages per action (Mode Opératoire §7 LISTING):
 """
 
 import logging
-import json
 import sys
 import os
-from typing import Optional, Dict, Any
-from datetime import datetime
+from typing import Optional, Dict
 
 # ─── Custom PRO_HINT level ─────────────────────────────────────────────────────
 PRO_HINT_LEVEL = 25  # Between INFO(20) and WARNING(30)

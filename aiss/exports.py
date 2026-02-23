@@ -58,7 +58,7 @@ def export_audit_chain(
         "chain_integrity_hash": compute_chain_hash(events),
         "exported_at": int(time.time())
     }
-    
+
     if include_metadata:
         audit["metadata"] = {
             "event_count": len(events),
@@ -66,7 +66,7 @@ def export_audit_chain(
             "last_timestamp": events[-1].get('timestamp') if events else None,
             "exporter": "piqrypt/1.0.0"
         }
-    
+
     return audit
 
 
@@ -93,21 +93,21 @@ def validate_audit_export(audit: Dict[str, Any]) -> bool:
     for field in required:
         if field not in audit:
             raise ValueError(f"Missing required field: {field}")
-    
+
     # Check spec version
     if not audit['spec'].startswith('AISS-'):
         raise ValueError(f"Invalid spec version: {audit['spec']}")
-    
+
     # Verify chain integrity hash
     events = audit['events']
     expected_hash = compute_chain_hash(events)
     actual_hash = audit['chain_integrity_hash']
-    
+
     if expected_hash != actual_hash:
         raise ValueError(
             f"Chain integrity hash mismatch: expected {expected_hash[:16]}..., got {actual_hash[:16]}..."
         )
-    
+
     return True
 
 
@@ -133,7 +133,7 @@ def export_subset(
         New audit export with subset of events
     """
     events = audit['events'][start_index:end_index]
-    
+
     return export_audit_chain(
         agent_identity=audit['agent_identity'],
         events=events,
@@ -161,7 +161,7 @@ def export_by_timerange(
         e for e in audit['events']
         if start_timestamp <= e.get('timestamp', 0) <= end_timestamp
     ]
-    
+
     return export_audit_chain(
         agent_identity=audit['agent_identity'],
         events=events,
@@ -182,7 +182,7 @@ def get_audit_summary(audit: Dict[str, Any]) -> Dict[str, Any]:
         - export_date: Export timestamp
     """
     events = audit['events']
-    
+
     summary = {
         "spec": audit['spec'],
         "agent_id": audit['agent_identity'].get('agent_id'),
@@ -190,17 +190,17 @@ def get_audit_summary(audit: Dict[str, Any]) -> Dict[str, Any]:
         "chain_hash": audit['chain_integrity_hash'],
         "export_date": audit['exported_at']
     }
-    
+
     if events:
         first_ts = events[0].get('timestamp', 0)
         last_ts = events[-1].get('timestamp', 0)
-        
+
         summary.update({
             "first_timestamp": first_ts,
             "last_timestamp": last_ts,
             "timespan_seconds": last_ts - first_ts
         })
-    
+
     return summary
 
 
@@ -228,8 +228,6 @@ def export_certified(
     """
     from aiss.license import require_pro
     from aiss.crypto import ed25519
-    from aiss.canonical import hash_canonical
-    import base64
 
     @require_pro("Certified export")
     def _do_export():
@@ -286,7 +284,9 @@ def certify_export(export_path: str, private_key: bytes, agent_id: str) -> str:
         cert = certify_export("audit.json", private_key, agent_id)
         # Creates audit.json.cert
     """
-    import hashlib, time as _time, json as _json
+    import hashlib
+    import time as _time
+    import json as _json
     from aiss.crypto import ed25519
     from aiss.license import is_pro
 
@@ -336,9 +336,9 @@ def verify_certified_export(export_path: str, cert_path: str) -> bool:
         piqrypt verify-export audit.json audit.json.cert
         → Export integrity: VERIFIED
     """
-    import hashlib, json as _json
+    import hashlib
+    import json as _json
     from aiss.crypto import ed25519
-    from aiss.identity import derive_agent_id
     from aiss.exceptions import InvalidSignatureError
 
     try:

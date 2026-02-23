@@ -26,20 +26,20 @@ class License:
       - pk_pro_a3f29b4c_8d7e6f5a
       - pk_oss_12345678_abcdef01
     """
-    
+
     def __init__(self):
         self.config_dir = Path.home() / ".piqrypt"
         self.license_file = self.config_dir / "license.json"
         self._license_data = self._load_license()
-    
+
     def _load_license(self) -> Optional[Dict[str, Any]]:
         """Load license from environment variable or file"""
-        
+
         # Priority 1: Environment variable
         env_key = os.getenv("PIQRYPT_LICENSE_KEY") or os.getenv("AISS2_LICENSE_KEY")
         if env_key:
             return self._verify_license_key(env_key)
-        
+
         # Priority 2: License file
         if self.license_file.exists():
             try:
@@ -51,9 +51,9 @@ class License:
                     return data
             except:
                 pass
-        
+
         return None
-    
+
     def _verify_license_key(self, key: str) -> Optional[Dict[str, Any]]:
         """
         Verify license key format and signature
@@ -65,21 +65,21 @@ class License:
             parts = key.split("_")
             if len(parts) != 4 or parts[0] != "pk":
                 return None
-            
+
             tier = parts[1]  # "pro", "oss", "enterprise"
             license_id = parts[2]
             provided_sig = parts[3]
-            
+
             # Verify signature
             # NOTE: In production, use a proper secret stored securely
             secret = "piqrypt_hmac_secret_v1_change_in_production"
             expected_sig = hashlib.sha256(
                 f"{tier}:{license_id}:{secret}".encode()
             ).hexdigest()[:8]
-            
+
             if provided_sig != expected_sig:
                 return None
-            
+
             # Valid license
             return {
                 "tier": tier,
@@ -88,36 +88,36 @@ class License:
                 "verified": True,
                 "verified_at": datetime.utcnow().isoformat() + "Z"
             }
-        
+
         except Exception:
             return None
-    
+
     def is_pro(self) -> bool:
         """Check if Pro/OSS/Enterprise license is active"""
         if not self._license_data:
             return False
-        
+
         tier = self._license_data.get("tier", "")
         return tier in ["pro", "oss", "enterprise"]
-    
+
     def is_oss(self) -> bool:
         """Check if OSS license is active"""
         if not self._license_data:
             return False
-        
+
         return self._license_data.get("tier") == "oss"
-    
+
     def get_tier(self) -> str:
         """Get license tier: free, pro, oss, enterprise"""
         if not self._license_data:
             return "free"
-        
+
         return self._license_data.get("tier", "free")
-    
+
     def get_info(self) -> Dict[str, Any]:
         """Get detailed license information"""
         tier = self.get_tier()
-        
+
         # Feature matrix
         features = {
             "free": {
@@ -141,23 +141,23 @@ class License:
                 "trusted_timestamps": False,  # v1.2.0
             }
         }
-        
+
         # OSS and Enterprise have all Pro features
         features["oss"] = features["pro"].copy()
         features["enterprise"] = features["pro"].copy()
-        
+
         info = {
             "tier": tier,
             "features": features.get(tier, features["free"])
         }
-        
+
         if self._license_data:
             info["license_id"] = self._license_data.get("license_id", "N/A")
             info["verified"] = True
             info["verified_at"] = self._license_data.get("verified_at")
-        
+
         return info
-    
+
     def activate(self, license_key: str) -> bool:
         """
         Activate Pro license
@@ -169,24 +169,24 @@ class License:
             True if activation successful
         """
         license_data = self._verify_license_key(license_key)
-        
+
         if not license_data:
             return False
-        
+
         # Save to file
         self.config_dir.mkdir(exist_ok=True)
-        
+
         with open(self.license_file, 'w') as f:
             json.dump(license_data, f, indent=2)
-        
+
         self._license_data = license_data
         return True
-    
+
     def deactivate(self):
         """Deactivate license (return to Free tier)"""
         if self.license_file.exists():
             self.license_file.unlink()
-        
+
         self._license_data = None
 
 

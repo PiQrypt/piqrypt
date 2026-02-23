@@ -24,9 +24,8 @@ import time
 import hashlib
 import zipfile
 import uuid
-import os
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from datetime import datetime, timezone
 
 from aiss.crypto import ed25519
@@ -77,25 +76,25 @@ def validate_audit_for_certification(audit_path: str) -> Dict[str, Any]:
             audit = json.load(f)
     except Exception as e:
         raise CertificationError(f"Failed to load audit file: {e}")
-    
+
     # Basic structure validation
     if "events" not in audit:
         raise CertificationError("Audit missing 'events' field")
-    
+
     if not isinstance(audit["events"], list):
         raise CertificationError("Audit 'events' must be a list")
-    
+
     if len(audit["events"]) == 0:
         raise CertificationError("Audit contains no events")
-    
+
     # Verify chain integrity
     try:
         verify_audit_chain(audit["events"])
     except Exception as e:
         raise CertificationError(f"Chain verification failed: {e}")
-    
+
     logger.info(f"✅ Audit validation passed ({len(audit['events'])} events)")
-    
+
     return audit
 
 
@@ -138,16 +137,16 @@ def certify_simple(
         Certification result with cert_id and files
     """
     logger.info("🔹 Starting Simple Certification (€9)")
-    
+
     # 1. Validate audit
     audit = validate_audit_for_certification(audit_path)
-    
+
     # 2. Generate cert ID
     cert_id = generate_cert_id()
-    
+
     # 3. Compute audit hash
     audit_hash = compute_audit_hash(audit)
-    
+
     # 4. Create certificate
     certificate = {
         "version": "PIQRYPT-CERT-1.0",
@@ -162,40 +161,40 @@ def certify_simple(
             "ca_agent_id": ca_agent_id
         }
     }
-    
+
     # 5. Sign certificate with CA key
     cert_json = json.dumps(certificate, sort_keys=True)
     ca_signature = ed25519.sign(ca_private_key, cert_json.encode())
     certificate["ca_signature"] = "base64:" + ed25519.encode_base64(ca_signature)
-    
+
     # 6. Generate badge
     badge = generate_cert_badge(cert_id, "simple")
-    
+
     # 7. Create bundle
     bundle_dir = Path(output_dir) / cert_id
     bundle_dir.mkdir(exist_ok=True, parents=True)
-    
+
     # Save files
     with open(bundle_dir / "audit.json", 'w') as f:
         json.dump(audit, f, indent=2)
-    
+
     with open(bundle_dir / "certificate.json", 'w') as f:
         json.dump(certificate, f, indent=2)
-    
+
     with open(bundle_dir / "badge.svg", 'w') as f:
         f.write(badge["svg"])
-    
+
     with open(bundle_dir / "SNIPPETS.txt", 'w') as f:
         f.write(generate_badge_snippets(cert_id, "simple"))
-    
+
     # 8. Create ZIP
     bundle_path = Path(output_dir) / f"{cert_id}.piqrypt-certified"
     with zipfile.ZipFile(bundle_path, 'w', zipfile.ZIP_DEFLATED) as zf:
         for file in bundle_dir.iterdir():
             zf.write(file, file.name)
-    
+
     logger.success(f"✅ Simple certification complete: {cert_id}")
-    
+
     return {
         "cert_id": cert_id,
         "tier": "simple",
@@ -230,12 +229,12 @@ def certify_timestamp(
         Certification result
     """
     logger.info("🔸 Starting Timestamp Certification (€29)")
-    
+
     # 1-6. Same as simple
     audit = validate_audit_for_certification(audit_path)
     cert_id = generate_cert_id()
     audit_hash = compute_audit_hash(audit)
-    
+
     certificate = {
         "version": "PIQRYPT-CERT-1.0",
         "cert_id": cert_id,
@@ -249,63 +248,63 @@ def certify_timestamp(
             "ca_agent_id": ca_agent_id
         }
     }
-    
+
     # Sign certificate
     cert_json = json.dumps(certificate, sort_keys=True)
     ca_signature = ed25519.sign(ca_private_key, cert_json.encode())
     certificate["ca_signature"] = "base64:" + ed25519.encode_base64(ca_signature)
-    
+
     # 7. Get TSA timestamp
     try:
         from aiss.rfc3161 import get_tsa_timestamp
-        
+
         # Hash audit for TSA
         tsa_token = get_tsa_timestamp(audit_hash.encode(), tsa_url)
-        
+
         certificate["tsa"] = {
             "url": tsa_url,
             "token_size": len(tsa_token)
         }
-        
+
         logger.info(f"✅ TSA timestamp obtained from {tsa_url}")
-    
+
     except Exception as e:
         logger.warning(f"⚠️ TSA timestamp failed: {e}")
         logger.warning("⚠️ Falling back to simple certification")
         # Continue without TSA (degrade gracefully)
         tsa_token = None
-    
+
     # 8. Generate badge
     badge = generate_cert_badge(cert_id, "timestamp")
-    
+
     # 9. Create bundle
     bundle_dir = Path(output_dir) / cert_id
     bundle_dir.mkdir(exist_ok=True, parents=True)
-    
+
     with open(bundle_dir / "audit.json", 'w') as f:
         json.dump(audit, f, indent=2)
-    
+
     with open(bundle_dir / "certificate.json", 'w') as f:
         json.dump(certificate, f, indent=2)
-    
+
     if tsa_token:
         with open(bundle_dir / "tsa_token.tsr", 'wb') as f:
             f.write(tsa_token)
-    
+
     with open(bundle_dir / "badge.svg", 'w') as f:
         f.write(badge["svg"])
-    
+
     with open(bundle_dir / "SNIPPETS.txt", 'w') as f:
         f.write(generate_badge_snippets(cert_id, "timestamp"))
-    
+
     # 10. Create ZIP
     bundle_path = Path(output_dir) / f"{cert_id}.piqrypt-certified"
     with zipfile.ZipFile(bundle_path, 'w', zipfile.ZIP_DEFLATED) as zf:
         for file in bundle_dir.iterdir():
             zf.write(file, file.name)
-    
+
     logger.success(f"✅ Timestamp certification complete: {cert_id}")
-    
+
     return {
         "cert_id": cert_id,
         "tier": "timestamp",
@@ -340,7 +339,7 @@ def certify_pq_bundle(
         Certification result
     """
     logger.info("🔶 Starting Post-Quantum Bundle Certification (€99)")
-    
+
     # 1-7. Same as timestamp
     result = certify_timestamp(
         audit_path,
@@ -348,11 +347,11 @@ def certify_pq_bundle(
         ca_agent_id,
         output_dir
     )
-    
+
     # 8. Add Dilithium3 signature
     # TODO: Implement Dilithium3 when library stable
     # For now, document intention in certificate
-    
+
     certificate = result["certificate"]
     certificate["tier"] = "pq_bundle"
     certificate["post_quantum"] = {
@@ -360,16 +359,16 @@ def certify_pq_bundle(
         "status": "planned",
         "note": "Full PQ implementation in v1.6.0"
     }
-    
+
     # 9. Create .pqz archive
     # For now, use standard encrypted zip
     # TODO: Implement proper .pqz with AES-256-GCM
-    
+
     # 10. Update badge
     badge = generate_cert_badge(result["cert_id"], "pq_bundle")
-    
+
     logger.success(f"✅ Post-Quantum certification complete: {result['cert_id']}")
-    
+
     return {
         **result,
         "tier": "pq_bundle",
@@ -407,9 +406,9 @@ def certify_audit(
             )
         with open(ca_key_path, 'rb') as f:
             ca_private_key = f.read()
-        
+
         ca_agent_id = "4q3cQHcH1oJsNwLEtbUiaMZ19THREoji"  # PiQrypt CA ID
-    
+
     # Dispatch to tier
     if tier == "simple":
         return certify_simple(audit_path, ca_private_key, ca_agent_id, output_dir)
