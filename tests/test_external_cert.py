@@ -163,13 +163,13 @@ def test_certification_cli():
             assert len(request_zips) == 1
             request_zip = request_zips[0]
 
-           # Generate temp CA key and validate via Python API (no internal script)
-           ca_key_path, ca_pub_bytes, ca_key_id = _write_temp_ca_key(tmpdir)
+            # Generate temp CA key and validate via Python API (no internal script)
+            ca_key_path, ca_pub_bytes, ca_key_id = _write_temp_ca_key(tmpdir)
 
-           certified_path = validate_and_certify(
-               str(request_zip),
-               ca_key_path,
-               output_dir=str(tmpdir)
+            certified_path = validate_and_certify(
+                str(request_zip),
+                ca_key_path,
+                output_dir=str(tmpdir)
             )
 
             assert Path(certified_path).exists()
