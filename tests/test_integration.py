@@ -1,3 +1,4 @@
+"""
 Integration tests for complete AISS workflow
 
 Tests the full RFC-compliant workflow:
