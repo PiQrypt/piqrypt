@@ -21,7 +21,7 @@ REPO_ROOT = str(Path(__file__).parent.parent)
 def run_cli(cmd: list) -> tuple:
     """Execute CLI command, return (stdout, stderr, returncode)"""
     result = subprocess.run(
-        ["python3", "-m", "cli.main"] + cmd,
+        [sys.executable, "-m", "cli.main"] + cmd,
         cwd=REPO_ROOT,
         env={**os.environ, "PYTHONPATH": REPO_ROOT},
         capture_output=True,

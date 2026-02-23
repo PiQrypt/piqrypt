@@ -18,7 +18,7 @@ from aiss.crypto import ed25519
 def run_cli(cmd: list) -> tuple:
     """Execute CLI command"""
     result = subprocess.run(
-        ["python3", "-m", "cli.main"] + cmd,
+        [sys.executable, "-m", "cli.main"] + cmd,
         cwd=str(Path(__file__).parent.parent),
         env={**os.environ, "PYTHONPATH": str(Path(__file__).parent.parent)},
         capture_output=True,

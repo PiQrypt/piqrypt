@@ -40,7 +40,12 @@ class Telemetry:
     """
 
     def __init__(self):
-        self.config_dir = Path.home() / ".piqrypt"
+        # Respect HOME (Linux/Mac) or USERPROFILE (Windows) env var overrides,
+        # which pytest monkeypatch uses to isolate tests.
+        import os
+        home_override = os.environ.get("HOME") or os.environ.get("USERPROFILE")
+        home = Path(home_override) if home_override else Path.home()
+        self.config_dir = home / ".piqrypt"
         self.config_file = self.config_dir / "telemetry.json"
         self.enabled = self._check_enabled()
         self.installation_id = self._get_installation_id()

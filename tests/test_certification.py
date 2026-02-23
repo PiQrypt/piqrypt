@@ -430,9 +430,12 @@ class TestTelemetry:
 
     @pytest.fixture(autouse=True)
     def isolate_telemetry(self, tmp_path, monkeypatch):
-        """Redirect ~/.piqrypt to tmp dir and reset global Telemetry state."""
+        """Redirect ~/.piqrypt to tmp dir and reset global Telemetry state.
+        Sets both HOME (Linux/Mac) and USERPROFILE (Windows) for portability.
+        """
         monkeypatch.setenv("HOME", str(tmp_path))
-        # Force reimport so Telemetry reads our tmp HOME
+        monkeypatch.setenv("USERPROFILE", str(tmp_path))
+        # Force reimport so Telemetry reads our tmp HOME / USERPROFILE
         import importlib
         import aiss.telemetry as tel_mod
         importlib.reload(tel_mod)
