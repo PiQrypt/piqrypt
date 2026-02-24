@@ -4,12 +4,12 @@
 
 **Your AI acts. PiQrypt proves it. Forever.**
 
-[![PyPI](https://img.shields.io/pypi/v/piqrypt?color=blue&label=PyPI)](https://pypi.org/project/piqrypt/)
-[![Python](https://img.shields.io/badge/python-3.8%2B-blue)](https://pypi.org/project/piqrypt/)
+[![PyPI](https://img.shields.io/pypi/v/piqrypt)](https://pypi.org/project/piqrypt/)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/piqrypt)](https://pypi.org/project/piqrypt/)
+[![PyPI](https://img.shields.io/badge/PyPI-piqrypt-blue)](https://pypi.org/project/piqrypt/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![AISS](https://img.shields.io/badge/AISS-v1.1-orange)](https://github.com/piqrypt/aiss-spec)
 [![NIST FIPS 204](https://img.shields.io/badge/NIST-FIPS%20204-red)](https://csrc.nist.gov/pubs/fips/204/final)
-[![e-Soleau INPI](https://img.shields.io/badge/e--Soleau-DSO2026006483-lightgrey)](https://www.inpi.fr)
 
 *Signed · Hash-chained · Post-Quantum Ready · Court-admissible*
 
