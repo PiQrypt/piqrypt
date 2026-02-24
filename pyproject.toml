@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "piqrypt"
-version = "1.5.0"
+version = "1.5.1"
 description = "AISS (Agent Identity and Signature Standard) - RFC-compliant cryptographic identity for autonomous agents"
 readme = "README.md"
 license = {text = "MIT"}
