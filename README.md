@@ -20,6 +20,7 @@
 ```bash
 pip install piqrypt   # free forever, no signup, no cloud
 ```
+| 🔌 Integration Guide | [INTEGRATION.md](INTEGRATION.md) |
 
 ```
 Event created ──▶ SHA-256 hash ──▶ Ed25519 sign ──▶ Chain ──▶ Tamper-proof archive
@@ -440,6 +441,7 @@ HSM integration · REST API + GraphQL · Multi-tenant · SSO (SAML, OAuth) · SL
 | | |
 |---|---|
 | 🚀 Quick Start | [QUICK-START.md](QUICK-START.md) |
+| 🔌 Integration Guide | [INTEGRATION.md](INTEGRATION.md) |
 | 📐 AISS Spec | [docs/RFC.md](docs/RFC.md) |
 | 🤝 A2A Handshake | [docs/A2A_GUIDE.md](docs/A2A_GUIDE.md) |
 | 🔗 OpenClaw | [docs/OPENCLAW_INTEGRATION.md](docs/OPENCLAW_INTEGRATION.md) |
