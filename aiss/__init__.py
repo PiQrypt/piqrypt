@@ -160,3 +160,10 @@ from aiss.fork import (
 from aiss.stamp_aiss2 import (
     stamp_event_aiss2_hybrid, stamp_genesis_event_aiss2_hybrid, verify_aiss2_hybrid,
 )
+# Agent Context — system prompt for LLM agents (v1.5.0)
+from aiss.agent_context import (
+    get_system_prompt,
+    get_agent_metadata,
+    build_agent_context,
+)
+```

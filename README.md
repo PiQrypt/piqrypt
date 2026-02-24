@@ -299,6 +299,8 @@ LangChain / AutoGen / OpenClaw  →  produce the decision
 
 ## Instant certification — no integration needed
 
+(MARS 2026 for firsts certifications)
+
 Need a one-time certified proof without installing anything?
 
 ```
@@ -358,7 +360,7 @@ Need a one-time certified proof without installing anything?
 
 ---
 
-## Pricing
+## Pricing 
 
 ### 🆓 Free — forever
 
