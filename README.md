@@ -1,320 +1,319 @@
 # 🔐 PiQrypt — Cryptographic Proof for AI Agents
 
-**Prove what your AI did. Cryptographically.**
+<div align="center">
 
-Signed • Timestamped • Post-Quantum Ready • Tamper-Proof
+**Your AI acts. PiQrypt proves it. Forever.**
 
-[![PyPI](https://img.shields.io/badge/PyPI-piqrypt-blue)](https://pypi.org/project/piqrypt/)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/piqrypt?color=blue&label=PyPI)](https://pypi.org/project/piqrypt/)
+[![Python](https://img.shields.io/badge/python-3.8%2B-blue)](https://pypi.org/project/piqrypt/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![AISS](https://img.shields.io/badge/AISS-v1.1-orange)](https://github.com/piqrypt/aiss-spec)
+[![NIST FIPS 204](https://img.shields.io/badge/NIST-FIPS%20204-red)](https://csrc.nist.gov/pubs/fips/204/final)
+[![e-Soleau INPI](https://img.shields.io/badge/e--Soleau-DSO2026006483-lightgrey)](https://www.inpi.fr)
+
+*Signed · Hash-chained · Post-Quantum Ready · Court-admissible*
+
+</div>
 
 ---
 
-## ⚡ The Problem
-
-AI agents make **critical decisions autonomously**: trades, diagnoses, approvals, actions.
-
-But when something goes wrong:
-
-- **Who did what?**
-- **Can it be proven?**
-- **Is the log tamper-proof?**
-- **Is it quantum-resistant?**
-
-**Most systems rely on editable logs.** Trust is not cryptographic.
+```bash
+pip install piqrypt   # free forever, no signup, no cloud
+```
 
 ```
-❌ Traditional Logs
-   ├─ Modifiable after the fact
-   ├─ No cryptographic proof
-   ├─ No legal standing
-   └─ Vulnerable to quantum attacks
+Event created ──▶ SHA-256 hash ──▶ Ed25519 sign ──▶ Chain ──▶ Tamper-proof archive
+    2026-02-24T14:32:07Z            ✅ verified        ✅ linked      ✅ portable
 ```
 
 ---
 
-## ✅ The Solution
+## The problem, in one sentence
 
-PiQrypt creates **cryptographic audit trails** for autonomous systems.
-
-Every decision is:
-
-✅ **Cryptographically signed** (Ed25519 + Dilithium3)  
-✅ **Hash-chained** (tamper-proof, blockchain-like)  
-✅ **Timestamped** (RFC 3161 independent proof)  
-✅ **Post-quantum secured** (NIST FIPS 204)  
-✅ **Court-admissible** (legal standing)
-
-**No blockchain. No token. Just verifiable cryptography.**
+> AI agents take decisions that can cost millions, trigger lawsuits, or violate regulations —  
+> and most systems log them in **files that anyone can edit**.
 
 ```
-✅ PiQrypt Audit Trail
-   ├─ Cryptographically signed (Ed25519/Dilithium3)
-   ├─ Immutable hash chains (tamper-proof)
-   ├─ Legal standing (court-admissible)
-   └─ Quantum-resistant (50+ year proof)
+❌ Without PiQrypt          ✅ With PiQrypt
+─────────────────────       ─────────────────────────────────
+Log file: editable          Signed event: tamper-proof
+No timestamp proof          RFC 3161 TSA timestamp
+No identity binding         Unique cryptographic agent ID
+Agent trusts nobody         A2A co-signed handshake
+Quantum-vulnerable          Dilithium3 (NIST FIPS 204)
+"Our AI didn't do that"     Provable. Irrefutable.
 ```
 
 ---
 
-## 💡 Why PiQrypt?
+## Start in 2 minutes — free
 
-PiQrypt is the reference implementation of AISS and its Proof of Continuity Protocol (PCP).
+```bash
+# Install
+pip install piqrypt
 
-It provides:
+# Create your agent identity
+piqrypt identity create my-agent.json
 
-- Cryptographic profiles (Classical and Hybrid Post-Quantum)
-- Deterministic event validation
-- Canonical history enforcement
-- Audit-ready certification export
+# Sign your first event
+piqrypt stamp my-agent.json --payload '{"action": "trade", "symbol": "AAPL", "qty": 100}'
 
-### For Developers
+# Verify the chain
+piqrypt verify audit.json
 
-```python
-import piqrypt as aiss
-
-# Sign every decision
-event = aiss.stamp_event(
-    private_key,
-    agent_id,
-    payload={"action": "buy", "symbol": "AAPL", "quantity": 100}
-)
-
-# Tamper-proof storage
-aiss.store_event(event)
-
-# Export for auditors
-aiss.export_audit_chain("audit.json", certified=True)
+# ✅ Done. Signed. Chained. Tamper-proof.
 ```
 
-**<10ms per event. Local-first. No network dependency.**
+> **Free tier:** 3 agents · Ed25519 signatures · Local-first · No account · No cloud · No catch.  
+> **[→ Full Quick Start Guide](QUICK-START.md)**
 
 ---
 
-## 🎯 Real-World Use Cases
+## Who is PiQrypt for?
 
-### Who uses PiQrypt — and why?
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                     Who is PiQrypt for?                             │
-│                                                                     │
-│   👤 INDIVIDUAL          🏢 STARTUP              🏭 ENTERPRISE      │
-│   Creators, freelancers  Dev teams, SaaS IA      Banks, Industry    │
-│   3 agents (Free)        Up to 50 agents (Pro)   Unlimited          │
-└─────────────────────────────────────────────────────────────────────┘
-```
+| | 👤 Individual | 🏢 Startup / Dev team | 🏭 SME | 🏦 Enterprise |
+|---|---|---|---|---|
+| **Agents** | 3 (Free) | 50 (Pro) | 50 (Pro) | Unlimited |
+| **Use case** | Prove I created this | Prove our AI said that | Trace the incident | Govern all AI |
+| **Key value** | IP protection | Legal non-repudiation | Operational traceability | Global compliance |
+| **Tier** | Free | Pro | Pro | Enterprise |
 
 ---
 
-### 👤 Use Case 1 — Digital Creator (Free)
+## Real-world use cases
 
-**The problem:** You create content with AI tools. How do you prove you made it first?
+<details>
+<summary><strong>👤 Digital Creator — Prove prior existence of your work</strong></summary>
+
+**The problem:** You generate an ebook, a script, a design with AI tools. Someone claims they made it first.
 
 ```
-Your Creative Workflow
-        │
-  GPT / Canva / Script
-        │
-        ▼
-  ┌─────────────┐      ┌──────────────────────────────────┐
-  │  Your Work  │ ───▶ │         PiQrypt (local)          │
-  │  (ebook,    │      │  hash(document) → sign → chain   │
-  │   design,   │      └──────────────────────────────────┘
-  │   code...)  │                      │
-  └─────────────┘                      ▼
-                             Portable signed archive
-                             (USB, backup, anywhere)
+Your work (PDF, image, code)
+         │
+         ▼
+    SHA-256 hash           ← the document is NEVER stored
+         │
+         ▼
+  Ed25519 signature        ← your cryptographic identity
+         │
+         ▼
+    Hash chain             ← tamper-proof continuity
+         │
+         ▼
+  Portable .pqz archive   ← USB, backup, offline, forever
 ```
 
-**What PiQrypt proves:**
+**6 months later, dispute:** recompute the hash → it matches → **proof of prior existence**.
 
 > *"This content existed in this exact form, at this exact time, signed by this identity."*
 
-**Example:** You write an ebook. PiQrypt computes its SHA-256 hash and signs it. 6 months later, if someone claims they wrote it first — you run the hash again. It matches. **Proof of prior existence, no content storage, GDPR-friendly.**
+No content stored. GDPR-friendly. Zero third-party dependency.
 
-```
-Document created
-      │
-      ▼  SHA-256 hash
-      │
-      ▼  Ed25519 signature
-      │
-      ▼  Added to chain
-      │
-      ▼  Portable archive (.pqz)
+**Perfect for:** Freelancers · Content creators · Designers · Trainers · Influencers
 
-→ You own the proof. Stored locally. Zero third-party.
-```
+</details>
 
-**Perfect for:** Freelancers • Content creators • Trainers • Designers • Influencers
+<details>
+<summary><strong>🏢 AI SaaS Startup — Prove what your AI said</strong></summary>
 
----
-
-### 🏢 Use Case 2 — AI SaaS Startup (Pro)
-
-**The problem:** Your legal AI chatbot gives advice. A client disputes a recommendation. Can you prove what your AI said, and when?
+**The problem:** Your legal chatbot gives advice. A client disputes a recommendation. Your logs are editable.
 
 ```
 Client Request
       │
       ▼
-  Backend API
-      │
-      ▼
-    LLM (GPT, Claude, etc.)
-      │
-      ▼
-  ┌──────────────────────────────────┐
-  │         PiQrypt Layer            │
-  │  • Canonical JSON of response    │
-  │  • Ed25519 / ML-DSA signature    │
-  │  • Hash chain continuity         │
-  │  • Fork detection                │
-  └──────────────────────────────────┘
-      │
-      ▼
-  Secure Event Store
-      │
-      ▼
-  Exportable verified audit → court-admissible
+  Backend API  ──▶  LLM (GPT / Claude / Mistral)
+                          │
+                          ▼
+              ┌───────────────────────┐
+              │     PiQrypt Layer     │
+              │  Canonical JSON       │
+              │  Ed25519 / ML-DSA     │
+              │  Hash chain           │
+              │  Fork detection       │
+              └───────────────────────┘
+                          │
+                          ▼
+              Signed event store  ──▶  court-admissible export
 ```
 
-**What this gives you:**
+**What you gain:**
+- Legal proof in case of dispute
+- AI Act compliance (Article 13 — transparency)
+- *"We can prove exactly what our AI said."* — commercial differentiator
+- Behavioral drift detection when you switch model versions
 
-- ✅ Legal proof in case of dispute
-- ✅ AI Act compliance
-- ✅ Commercial differentiation: *"We can prove what our AI said."*
-- ✅ Behavioral drift detection between model versions
+**Perfect for:** Legal-tech · Fintech · Health-tech · B2B AI SaaS
 
-**Perfect for:** Legal-tech • Fintech • Health-tech • B2B AI SaaS
+</details>
+
+<details>
+<summary><strong>🏭 Industrial SME — Trace every machine decision</strong></summary>
+
+**The problem:** 4 AI agents run your production line. An incident happens. Who decided what, when?
+
+```
+  Robot AI ───┐
+              │
+ Planner AI ──┼──▶  PiQrypt Core  ──▶  Incident report:
+              │     (unique ID           "Quality agent flagged
+ Quality AI ──┤      per agent)           anomaly at 14:32:07.
+              │                           Logistics re-routed
+Logistics AI ─┘                           at 14:32:09. Signed."
+```
+
+**What you gain:**
+- Full production traceability
+- Cryptographic timestamps for insurance claims
+- ISO audit support
+- Machine drift detection over months
+
+**Perfect for:** Industry 4.0 · Robotics · Supply chain · Automated agri-food
+
+</details>
+
+<details>
+<summary><strong>🏦 Large Enterprise — Govern your entire AI ecosystem</strong></summary>
+
+**The problem:** 5 departments, multiple countries, dozens of AI agents. No unified audit layer.
+
+```
+Finance AI ──┐
+   HR AI ────┤
+Support AI ──┼──▶  PiQrypt Node  ──▶  Central Governance
+Supply AI ───┤     per entity          (Sentinel Enterprise)
+Compliance ──┘          │
+                   Authority binding
+                   A2A traceability         ──▶  GDPR · AI Act
+                   Post-quantum ready       ──▶  HIPAA · SEC
+                   Independent verification ──▶  ISO 27001
+```
+
+**What you gain:**
+- Global AI governance framework
+- Multi-country compliance (GDPR, AI Act, HIPAA, SEC/FINRA)
+- AI crisis management with full chronological proof
+- Post-quantum readiness for the next 50 years
+
+**Perfect for:** Banks · Insurers · Heavy industry · International groups
+
+</details>
 
 ---
 
-### 🏭 Use Case 3 — Industrial SME (Pro)
-
-**The problem:** Your factory runs 4 AI agents (robots, planner, quality, logistics). An incident happens on the production line. Who decided what?
-
-```
-  Robot ──┐
-          │
-Planner ──┼──▶  PiQrypt Core  ──▶  Internal Collector
-          │         │
-Quality ──┤    Unique identity        Continuous audit
-          │    per agent              trail per agent
-Logistics─┘    
-                    │
-                    ▼
-            Incident Report:
-            "Quality agent flagged
-             anomaly at 14:32:07.
-             Logistics agent re-routed
-             at 14:32:09. Signed."
-```
-
-**What this gives you:**
-
-- ✅ Full production traceability
-- ✅ Incident audit with cryptographic timestamps
-- ✅ Insurance and ISO certification support
-- ✅ Machine drift detection over time
-
-**Perfect for:** Industry 4.0 • Robotics • Supply chain • Automated agri-food
-
----
-
-### 🏦 Use Case 4 — Large Enterprise (Enterprise)
-
-**The problem:** 5 departments use AI (Finance, HR, Support, Supply Chain, Compliance). You need global governance across entities and countries.
-
-```
-  Finance AI ──────┐
-                   │
-  HR AI ───────────┤
-                   │
-  Support AI ──────┼──▶  PiQrypt Node     ──▶  Central Governance
-                   │     (per entity)            (Sentinel Enterprise)
-  Supply Chain AI ─┤          │
-                   │     Authority binding
-  Compliance AI ───┘     A2A traceability
-                          Post-quantum ready
-                               │
-                               ▼
-                    Independent verification
-                    Multi-country compliance
-                    Immutable chronological proof
-```
-
-**What this gives you:**
-
-- ✅ Global AI governance framework
-- ✅ Multi-country compliance (GDPR, AI Act, HIPAA, SEC...)
-- ✅ AI crisis management with full audit trail
-- ✅ Post-quantum readiness (50+ year proof)
-
-**Perfect for:** Banks • Insurers • Heavy industry • International groups
-
----
-
-### 🔑 The Core Principle (for all use cases)
+## The core principle
 
 **PiQrypt stores actions, not documents.**
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                                                     │
-│  ❌ PiQrypt does NOT store:  ✅ PiQrypt DOES store: │
-│                                                     │
-│   • Your PDF                  • hash(PDF)           │
-│   • Your image                • Timestamp           │
-│   • Your code                 • Ed25519 signature   │
-│   • Sensitive data            • Chain continuity    │
-│                                                     │
-│  Zero content leak. GDPR-friendly. Portable.        │
-└─────────────────────────────────────────────────────┘
+❌ DO NOT store             ✅ PiQrypt stores
+──────────────────          ──────────────────────────
+Your PDF                    hash(PDF)          → no content leak
+Your image                  Timestamp          → RFC 3161, independent
+Your patient data           Ed25519 signature  → cryptographic identity
+Sensitive API responses     Chain continuity   → tamper-proof history
 ```
 
-**Why this is more powerful:**
+Why this is smarter than storing the document:
 
 | Storing the document | Storing the hash (PiQrypt) |
-|---------------------|---------------------------|
-| GDPR risk | GDPR-friendly |
-| Massive storage | Lightweight |
-| Legal liability | Minimal exposure |
-| Content breach possible | Zero content leaked |
-| Hard to scale | Infinitely scalable |
+|---|---|
+| GDPR exposure | GDPR-friendly by design |
+| Massive storage cost | Negligible footprint |
+| Content breach risk | Zero content ever stored |
+| Hard to scale | Scales to millions of events |
+| Legal liability | Minimal surface |
 
 ---
 
-### For Businesses
+## 3-line integration
 
-| Industry | Problem | PiQrypt Solution |
-|----------|---------|------------------|
-| **Finance** | SEC requires 7-year audit trail | Cryptographic trade signatures |
-| **Healthcare** | HIPAA compliance for AI decisions | Immutable diagnosis records |
-| **HR** | GDPR Art. 22 (explain AI decisions) | Verifiable hiring audit |
-| **Autonomous Vehicles** | Legal liability for accidents | Black box with crypto proof |
-| **Supply Chain** | Track AI inventory decisions | Non-repudiable logistics trail |
+```python
+import piqrypt as aiss
 
-**Compliance:** SOC2 • ISO 27001 • HIPAA • GDPR • SEC/FINRA • NIST PQC
+# That's really it.
+event = aiss.stamp_event(private_key, agent_id, {"action": "approved", "amount": 50000})
+aiss.store_event(event)
+```
+
+**< 10ms per event. Local-first. No network required.**
+
+```python
+# More complete example
+private_key, public_key = aiss.generate_keypair()
+agent_id = aiss.derive_agent_id(public_key)
+
+event = aiss.stamp_event(private_key, agent_id, {
+    "event_type": "trade_executed",
+    "symbol": "AAPL",
+    "quantity": 100,
+    "price": 150.25,
+    "confidence": 0.95
+})
+
+aiss.store_event(event)
+aiss.export_audit_chain("audit-q1-2026.json", certified=True)
+```
 
 ---
 
-## 🎯 Quick Win: Instant Certification
+## Why PiQrypt — not just a logger
 
-**Need one-time proof without integration?**
+PiQrypt is the reference implementation of **AISS v1.1** (Agent Identity & Signature Standard) and its **Proof of Continuity Protocol (PCP)**.
 
-Upload your log → Pay → Get certified bundle instantly.
+Unlike structured logging or observability tools, PiQrypt provides:
 
-### Certification Tiers
+- **Cryptographic identity** — each agent has a unique, unforgeable ID derived from its keypair
+- **Non-repudiation** — a signed event cannot be denied; the agent cannot claim it didn't act
+- **Agent-to-agent trust** — A2A handshake co-signs interactions between agents, making multi-agent pipelines fully auditable end-to-end
+- **External certification** — export your audit trail and receive a CA-signed certified bundle in minutes, without sharing any content — for legal-grade third-party proof
+- **OpenClaw native** — plugs directly into OpenClaw orchestration pipelines with zero workflow changes ([integration guide](docs/OPENCLAW_INTEGRATION.md))
+- **Post-quantum readiness** — Dilithium3 (NIST FIPS 204) ensures your proofs remain valid for 50+ years
+
+```
+LangChain / AutoGen / OpenClaw  →  produce the decision
+              LLM               →  generates the content
+           PiQrypt              →  guarantees cryptographic continuity
+           Sentinel             →  monitors network stability
+```
+
+**Analogy that clicks:**
+- Git = versions your **code**
+- TLS = secures your **communication**
+- Kubernetes = orchestrates your **containers**
+- **PiQrypt = proves what your AI decided**
+
+---
+
+## Industry compliance at a glance
+
+| Industry | Regulation | What PiQrypt covers |
+|---|---|---|
+| **Finance** | SEC Rule 17a-4 | 7-year tamper-proof trade audit |
+| **Healthcare** | HIPAA | Immutable AI diagnosis records |
+| **HR** | GDPR Art. 22 | Explainable, verifiable hiring decisions |
+| **Automotive** | EU AI Act | Black-box with crypto proof |
+| **Supply chain** | ISO 27001 | Non-repudiable logistics decisions |
+
+---
+
+## Instant certification — no integration needed
+
+Need a one-time certified proof without installing anything?
+
+```
+1. piqrypt export audit.json       ← or skip if you have a log
+2. Paste JSON at checkout
+3. Pay
+4. Receive certified bundle by email (< 5 min)
+5. piqrypt certify-verify bundle.piqrypt-certified
+```
 
 <table>
 <tr>
 <td width="33%" align="center">
 
-**🔹 Simple**
-
-**€9**
+**🔹 Simple · €9**
 
 ✅ Cryptographic signature  
 ✅ Hash verification  
@@ -322,188 +321,72 @@ Upload your log → Pay → Get certified bundle instantly.
 ✅ Export bundle  
 
 <a href="https://buy.stripe.com/eVq28k6sIay13yfgN52VG05">
-<img src="https://img.shields.io/badge/Certify-€9-blue?style=for-the-badge&logo=stripe&logoColor=white" alt="Simple Certification €9">
+<img src="https://img.shields.io/badge/Certify_Now-€9-blue?style=for-the-badge&logo=stripe&logoColor=white" alt="Simple €9">
 </a>
 
 </td>
 <td width="33%" align="center">
 
-**🔸 Timestamp**
-
-**€29**
+**🔸 Timestamp · €29**
 
 ✅ Everything in Simple  
-✅ **RFC 3161 TSA timestamp**  
+✅ RFC 3161 TSA timestamp  
 ✅ Independent time proof  
 ✅ GDPR/HIPAA ready  
 
 <a href="https://buy.stripe.com/8x214g3gw8pT4Cj68r2VG04">
-<img src="https://img.shields.io/badge/Certify-€29-orange?style=for-the-badge&logo=stripe&logoColor=white" alt="Timestamp Certification €29">
+<img src="https://img.shields.io/badge/Certify_Now-€29-orange?style=for-the-badge&logo=stripe&logoColor=white" alt="Timestamp €29">
 </a>
 
 </td>
 <td width="33%" align="center">
 
-**🔶 Post-Quantum**
-
-**€99**
+**🔶 Post-Quantum · €99**
 
 ✅ Everything in Timestamp  
-✅ **Dilithium3 signature**  
+✅ Dilithium3 signature  
 ✅ Encrypted archive  
 ✅ 50+ year proof  
 
 <a href="https://buy.stripe.com/aFa14g4kA5dH4Cj68r2VG03">
-<img src="https://img.shields.io/badge/Certify-€99-gold?style=for-the-badge&logo=stripe&logoColor=white" alt="Post-Quantum Bundle €99">
+<img src="https://img.shields.io/badge/Certify_Now-€99-gold?style=for-the-badge&logo=stripe&logoColor=white" alt="Post-Quantum €99">
 </a>
 
 </td>
 </tr>
 </table>
 
-**How it works:**
-
-```
-1. Export your audit trail:
-   piqrypt export audit.json
-
-2. Copy the JSON content:
-   cat audit.json  # Copy output (Ctrl+A, Ctrl+C)
-
-3. Click certification tier below
-
-4. Stripe checkout opens → Paste JSON in "Audit Data" field
-
-5. Complete payment
-
-6. Receive certified bundle via email (< 5 minutes)
-
-7. Verify: piqrypt certify-verify bundle.piqrypt-certified
-```
-
-**That's it!** No upload page, no complications. Just copy/paste → pay → receive.
-
-**Perfect for:**
-- One-time audits
-- Proof of concept
-- Legal disputes
-- Compliance checks
-
 ---
 
-## 🚀 For Builders: Install & Integrate
+## Pricing
 
-**Want full control? Install PiQrypt and integrate into your agent.**
+### 🆓 Free — forever
 
-### Installation
-
-```bash
-pip install piqrypt
-```
-
-**Requirements:** Python 3.8+
-
-### Quick Start
-
-```python
-import piqrypt as aiss
-
-# 1. Create identity
-private_key, public_key = aiss.generate_keypair()
-agent_id = aiss.derive_agent_id(public_key)
-
-# 2. Sign decision
-event = aiss.stamp_event(
-    private_key,
-    agent_id,
-    payload={
-        "event_type": "trade_decision",
-        "action": "buy",
-        "symbol": "AAPL",
-        "quantity": 100,
-        "confidence": 0.95
-    }
-)
-
-# 3. Store (tamper-proof)
-aiss.store_event(event)
-
-# 4. Export for audit
-aiss.export_audit_chain("audit-q1-2026.json")
-```
-
-**CLI:**
+3 agents · Ed25519 · JSON storage · 50 exports/month · **1 free Simple certification/month**
 
 ```bash
-piqrypt identity create my-agent.json
-piqrypt stamp my-agent.json --payload '{"action": "test"}'
-piqrypt export audit.json --certified
-piqrypt verify audit.json
-```
-
-**Full docs:** [Quick Start Guide](QUICK-START.md)
-
----
-
-## 📊 Pricing: Free → Pro → Enterprise
-
-### 🆓 Free Tier
-
-**Perfect for:**
-- Indie developers
-- Prototypes
-- Testing PiQrypt
-
-**Includes:**
-- 3 agents max
-- Ed25519 signatures
-- JSON storage
-- 50 exports/month
-- **1 Simple certification/month FREE** 🔥
-
-```bash
-pip install piqrypt
-# Free tier active immediately
+pip install piqrypt   # that's it, free tier is immediate
 ```
 
 ---
 
-### ⚡ Early-Bird Pro — €290/year
+### ⚡ Early-Bird Pro — €290/year  *(limited slots)*
 
-**⏰ Limited-time adoption pricing**
+For startups, trading bots, compliance-critical workflows.
 
-Perfect for startups, trading bots, automation workflows.
-
-**Includes:**
-- ✅ **50** (vs 3 Free)
-- ✅ **Ed25519 + Dilithium3** (post-quantum)
-- ✅ **AES-256-GCM** encrypted storage
-- ✅ **Unlimited exports**
-- ✅ **10 Simple certifications/month FREE**
-- ✅ **TSA timestamps** (RFC 3161)
-- ✅ **A2A handshake** (agent-to-agent)
-- ✅ **Email support** (48h)
+✅ 50 agents · Ed25519 + Dilithium3 · AES-256-GCM encrypted storage  
+✅ Unlimited exports · 10 free Simple certifications/month  
+✅ TSA timestamps (RFC 3161) · A2A handshake · Email support (48h)
 
 <a href="https://buy.stripe.com/4gM6oAeZe9tX6KreEX2VG02">
 <img src="https://img.shields.io/badge/Get_Early--Bird_Pro-€290/year-blue?style=for-the-badge&logo=stripe&logoColor=white" alt="Early-Bird Pro €290/year">
 </a>
 
-**⏰ Lock in €290/year before Standard pricing. Limited slots.**
-
 ---
 
 ### 🔥 Standard Pro — €390/year
 
-**Full premium package**
-
-Perfect for growing startups, fintech, compliance-critical systems.
-
-**Includes:**
-- ✅ Everything in Early-Bird Pro
-- ✅ **50 certifications/month FREE** (vs 10)
-- ✅ **Trust scoring dashboard** (I/V/D/F) *[v1.6]*
-- ✅ **Visual badges** (custom branding)
-- ✅ **Priority support** (24h vs 48h)
+Everything in Early-Bird · 50 free certifications/month · Trust scoring dashboard *(v1.6)* · Visual badges · Priority support (24h)
 
 <a href="https://buy.stripe.com/00wcMY7wMeOhc4L2Wf2VG01">
 <img src="https://img.shields.io/badge/Get_Standard_Pro-€390/year-orange?style=for-the-badge&logo=stripe&logoColor=white" alt="Standard Pro €390/year">
@@ -511,281 +394,85 @@ Perfect for growing startups, fintech, compliance-critical systems.
 
 ---
 
-### 🏢 Enterprise — Custom Pricing
+### 🏢 Enterprise — from €10,000/year
 
-**Infrastructure de confiance**
-
-Perfect for banks, healthcare, government, autonomous vehicles.
-
-**Includes:**
-- ✅ Everything in Standard Pro
-- ✅ **HSM integration** (hardware security)
-- ✅ **REST API + GraphQL**
-- ✅ **Multi-tenant** deployment
-- ✅ **SSO** (SAML, OAuth)
-- ✅ **SLA 99.9%** uptime
-- ✅ **Dedicated support** (24h, Slack, Phone)
-- ✅ **On-premise** option
-- ✅ **SOC2/ISO 27001** audit support
+HSM integration · REST API + GraphQL · Multi-tenant · SSO (SAML, OAuth) · SLA 99.9% · On-premise · SOC2/ISO 27001 audit support
 
 <a href="mailto:piqrypt@gmail.com?subject=Enterprise Inquiry">
-<img src="https://img.shields.io/badge/Contact_Sales-Enterprise-gold?style=for-the-badge&logo=mail.ru&logoColor=white" alt="Enterprise Contact">
+<img src="https://img.shields.io/badge/Contact_Sales-Enterprise-gold?style=for-the-badge&logo=mail.ru&logoColor=white" alt="Enterprise">
 </a>
 
-**Pricing starts at €10,000/year.**
-
-**OSS Exemption:** Open-source projects get Pro for free. [Apply here](mailto:piqrypt@gmail.com?subject=OSS License Request).
+**OSS Exemption:** open-source projects get Pro for free — [apply here](mailto:piqrypt@gmail.com?subject=OSS License Request).
 
 ---
 
-## 🏗️ How It Works
-
-### System Architecture
-
-AISS → Identity Standard
-PCP → Continuity Enforcement
-PiQrypt → Reference Implementation
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│            Your AI Agent / Application                      │
-│  (Trading Bot, HR AI, Autonomous Vehicle, etc.)             │
-└──────────────────────────┬──────────────────────────────────┘
-                           ↓
-                   Makes Decision
-                           ↓
-┌─────────────────────────────────────────────────────────────┐
-│                 🔐 PIQRYPT LAYER                            │
-│  • Canonicalize (RFC 8785)                                  │
-│  • Sign (Ed25519 / Dilithium3)                              │
-│  • Timestamp (RFC 3161 TSA)                                 │
-│  • Chain (SHA-256 hash links)                               │
-│  • Store (encrypted if Pro)                                 │
-└──────────────────────────┬──────────────────────────────────┘
-                           ↓
-              Immutable Audit Trail
-                           ↓
-┌─────────────────────────────────────────────────────────────┐
-│              Export for Auditors/Regulators                 │
-│  • Certified bundles (.piqrypt-certified)                   │
-│  • Court-admissible proof                                   │
-│  • Compliance reports (SOC2, HIPAA, SEC)                    │
-└─────────────────────────────────────────────────────────────┘
-```
-
-**PiQrypt secures decision continuity — it doesn't replace your agent.**
-
-### Where PiQrypt fits in the AI ecosystem
-
-```
-LangChain / AutoGen / OpenClaw
-        │
-        ▼  produce the decision
-       LLM
-        │
-        ▼  generates the content
-    PiQrypt
-        │
-        ▼  guarantees cryptographic continuity
-     Sentinel
-        │
-        ▼  monitors network stability
-```
-
-**Analogy:**
-- Git = versions your code
-- TLS = secures communication
-- Kubernetes = orchestrates containers
-- **PiQrypt = proves what your AI decided**
-
----
-
-## 🌐 AISS Standard
-
-PiQrypt is the **reference implementation** of **AISS v1.1** (Agent Identity & Signature Standard).
-
-**What is AISS?**
-
-A vendor-neutral, open standard (MIT) for cryptographic audit trails of AI agents.
-
-**Repositories:**
-- **AISS Spec:** [github.com/piqrypt/aiss-spec](https://github.com/piqrypt/aiss-spec)
-- **PiQrypt Core:** [github.com/piqrypt/piqrypt](https://github.com/piqrypt/piqrypt)
-- **MCP Server:** [github.com/piqrypt/piqrypt-mcp-server](https://github.com/piqrypt/piqrypt-mcp-server)
-
-**Think:** TLS (standard) vs OpenSSL (implementation)
-
----
-
-## 🔒 Security
-
-### Cryptography
+## Security
 
 | Algorithm | Standard | Purpose |
-|-----------|----------|---------|
-| **Ed25519** | RFC 8032 | Classical signatures (128-bit) |
+|---|---|---|
+| **Ed25519** | RFC 8032 | Classical signatures (128-bit security) |
 | **Dilithium3** | NIST FIPS 204 | Post-quantum signatures (256-bit PQ) |
 | **SHA-256** | NIST FIPS 180-4 | Hash chains |
-| **AES-256-GCM** | NIST FIPS 197 | Encryption (Pro) |
+| **AES-256-GCM** | NIST FIPS 197 | Encrypted storage (Pro) |
 
-### Guarantees
-
-✅ **Integrity:** Modification breaks chain  
-✅ **Non-repudiation:** Agent can't deny actions  
-✅ **Authenticity:** Signatures prove authorship  
-✅ **Freshness:** Timestamps prove when  
-✅ **Post-quantum:** Dilithium3 (50+ years)
+✅ Integrity — modification breaks the chain  
+✅ Non-repudiation — agent cannot deny its actions  
+✅ Authenticity — signatures prove authorship  
+✅ Freshness — timestamps prove when  
+✅ Post-quantum — Dilithium3 holds for 50+ years
 
 ---
 
-## 🎯 Code Examples by Use Case
+## Roadmap
 
-### 1. Trading Bots (SEC Compliance)
-
-```python
-# Sign every trade
-event = aiss.stamp_event(priv, agent_id, {
-    "event_type": "trade_executed",
-    "symbol": "AAPL",
-    "quantity": 100,
-    "price": 150.25
-})
-```
-
-**Result:** SEC Rule 17a-4 compliant audit trail.
+| Version | Target | Features |
+|---|---|---|
+| **v1.5.0** ✅ | Now | A2A Handshake · AISS v1.1 · MCP Server · Pay-per certification |
+| **v1.6.0** | Q2 2026 | Trust Scoring (I/V/D/F) · Visual dashboard · A2A Network (DHT) |
+| **v1.7.0** | Q3 2026 | Witness network · HSM integration · Blockchain anchoring |
 
 ---
 
-### 2. Healthcare AI (HIPAA)
+## Documentation
 
-```python
-# Sign diagnosis
-event = aiss.stamp_event(priv, agent_id, {
-    "event_type": "diagnosis",
-    "condition": "pneumonia",
-    "confidence": 0.94,
-    "patient_id_hash": sha256(patient_id)  # HIPAA compliant
-})
-```
-
-**Result:** Court-admissible proof of AI recommendation.
+| | |
+|---|---|
+| 🚀 Quick Start | [QUICK-START.md](QUICK-START.md) |
+| 📐 AISS Spec | [docs/RFC.md](docs/RFC.md) |
+| 🤝 A2A Handshake | [docs/A2A_GUIDE.md](docs/A2A_GUIDE.md) |
+| 🔗 OpenClaw | [docs/OPENCLAW_INTEGRATION.md](docs/OPENCLAW_INTEGRATION.md) |
+| 🏷️ Badges | [docs/BADGES.md](docs/BADGES.md) |
+| 🖥️ CLI Reference | `piqrypt --help` |
+| 🐛 Issues | [GitHub Issues](https://github.com/piqrypt/piqrypt/issues) |
 
 ---
 
-### 3. HR Automation (GDPR Art. 22)
+## Contributing
 
-```python
-# Sign hiring decision
-event = aiss.stamp_event(priv, agent_id, {
-    "event_type": "candidate_evaluation",
-    "decision": "accept",
-    "reasons": ["Relevant experience", "Strong Python"],
-    "protected_attributes_used": False  # EEOC
-})
-```
+PiQrypt is MIT. Contributions welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-**Result:** GDPR-compliant audit with explanations.
+Found a security issue? See [SECURITY.md](SECURITY.md) for responsible disclosure.
 
 ---
 
-### 4. Content Creator (Prior Existence Proof)
+## License & Legal
 
-```python
-import hashlib
+**Core:** MIT License — [LICENSE](LICENSE)
 
-# Anchor your creative work without storing it
-with open("my-ebook.pdf", "rb") as f:
-    doc_hash = hashlib.sha256(f.read()).hexdigest()
+**Intellectual property:** registered e-Soleau DSO2026006483 (INPI, France — 19/02/2026).  
+*e-Soleau is a French IP registration system establishing a certified date of creation.*
 
-event = aiss.stamp_event(priv, agent_id, {
-    "event_type": "creation_anchor",
-    "document_hash": doc_hash,
-    "title": "My Ebook Q1 2026",
-    "version": "1.0"
-    # The PDF itself is never stored
-})
-```
-
-**Result:** Timestamped proof of prior existence. GDPR-friendly.
-
----
-
-## 📚 Documentation
-
-- **Quick Start:** [QUICK-START.md](QUICK-START.md)
-- **AISS Spec:** [docs/RFC.md](docs/RFC.md)
-- **A2A Handshake:** [docs/A2A_GUIDE.md](docs/A2A_GUIDE.md)
-- **OpenClaw:** [docs/OPENCLAW_INTEGRATION.md](docs/OPENCLAW_INTEGRATION.md)
-- **CLI Reference:** `piqrypt --help`
-
----
-
-## 🗺️ Roadmap
-
-### v1.5.0 (Current) ✅
-- A2A Handshake
-- AISS v1.1 separation
-- MCP Server
-- Pay-per certification
-
-### v1.6.0 (Q2 2026)
-- Trust Scoring (I/V/D/F)
-- Visual dashboard
-- A2A Network (DHT)
-
-### v1.7.0 (Q3 2026)
-- Witness network
-- HSM integration
-- Blockchain anchoring
-
----
-
-## 📧 Contact & Support
-
-- **Email:** piqrypt@gmail.com
-- **Issues:** [GitHub Issues](https://github.com/piqrypt/piqrypt/issues)
-- **Pro Support:** 48h response (Pro tier)
-- **Enterprise:** 24h response + Slack
-
----
-
-## 📄 License
-
-**Core:** MIT License — see [LICENSE](LICENSE)
-
-**e-Soleau:** DSO2026006483 (INPI, 19/02/2026)
+**Contact:** piqrypt@gmail.com · [GitHub Issues](https://github.com/piqrypt/piqrypt/issues)
 
 ---
 
 <div align="center">
 
-### 🚀 Get Started Today
+**Start free. No account. No cloud.**
 
-**One-time certification:**
-
-<a href="https://buy.stripe.com/eVq28k6sIay13yfgN52VG05">€9 Simple</a> • 
-<a href="https://buy.stripe.com/8x214g3gw8pT4Cj68r2VG04">€29 Timestamp</a> • 
-<a href="https://buy.stripe.com/aFa14g4kA5dH4Cj68r2VG03">€99 Post-Quantum</a>
-
-**Pro subscription:**
-
-<a href="https://buy.stripe.com/4gM6oAeZe9tX6KreEX2VG02">Early-Bird €290/year</a> • 
-<a href="https://buy.stripe.com/00wcMY7wMeOhc4L2Wf2VG01">Standard €390/year</a>
-
-**Enterprise:**
-
-<a href="mailto:piqrypt@gmail.com?subject=Enterprise">Contact Sales</a>
-
----
-
-**Free tier:**
 ```bash
 pip install piqrypt
 ```
-
----
-
-**Built with ❤️ for autonomous systems**
 
 *PiQrypt — Cryptographic Proof for AI Agents*
 
