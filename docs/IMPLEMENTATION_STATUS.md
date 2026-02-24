@@ -1,7 +1,7 @@
 # PiQrypt v1.5.0 — AISS RFC Implementation Status
 
 **Version:** 1.5.0  
-**Date:** 2026-02-21  
+**Date:** 2026-02-24  
 **AISS RFC:** v1.1  
 **Status:** Production Ready (Level 2)
 
@@ -80,7 +80,7 @@ PiQrypt is the reference implementation of the AISS (Agent Identity and Signatur
 | §16.1 | Handshake protocol | ✅ | `aiss/a2a.py` | v1.5.0 |
 | §16.2 | Co-signed events | ✅ | `aiss/a2a.py` | v1.5.0 |
 | §16.3 | Memory recording | ✅ | `aiss/a2a.py` | v1.5.0 |
-| §16.5 | Trust scoring | 🔲 Planned | — | v1.6.0 |
+| §16.5 | Trust scoring | ✅ Complete | `aiss/a2a.py` | v1.5.0 |
 
 ---
 
@@ -103,6 +103,16 @@ PiQrypt is the reference implementation of the AISS (Agent Identity and Signatur
 
 | Feature | Status | Module | Version |
 |---------|--------|--------|---------|
+| **External Certification** | ✅ Complete | `aiss/external_cert.py` | v1.3.0 |
+| CA-signed export (email workflow) | ✅ | `aiss/external_cert.py` | v1.3.0 |
+| Certification request (.zip) | ✅ | `aiss/external_cert.py` | v1.3.0 |
+| CA public key verification | ✅ | `aiss/ca/piqrypt-ca-public.key` | v1.3.0 |
+| **Verification Engine** | ✅ Complete | `aiss/verify.py` | v1.0.0 |
+| Signature verification | ✅ | `aiss/verify.py` | v1.0.0 |
+| Chain integrity report | ✅ | `aiss/verify.py` | v1.0.0 |
+| **Visual Badges (simple)** | ✅ Complete | `aiss/badges.py` | v1.5.0 |
+| Markdown/HTML embed codes | ✅ | `aiss/badges.py` | v1.5.0 |
+| Tier-aware badge generation | ✅ | `aiss/badges.py` | v1.5.0 |
 | **Memory System** | ✅ Complete | `aiss/memory.py` | v1.1.0 |
 | Free: JSON plaintext | ✅ | `aiss/memory.py` | v1.1.0 |
 | Pro: AES-256-GCM encrypted | ✅ | `aiss/memory.py` | v1.1.0 |
@@ -134,13 +144,20 @@ PiQrypt is the reference implementation of the AISS (Agent Identity and Signatur
 | | Distributed trust | 🔲 | v1.7.0 |
 | **§20.3** | **Blockchain Anchoring** | 🔲 Planned | v1.7.0 |
 | | Public ledger | 🔲 | v1.7.0 |
-| **Trust Scoring** | **Dashboard** | 🔲 Planned | v1.6.0 |
+| **Trust Scoring** | **Dashboard UI** | 🔲 Planned | v1.6.0 |
 | | Visual interface | 🔲 | v1.6.0 |
-| | I/V/D/F metrics | 🔲 | v1.6.0 |
+| | I/V/D/F metrics display | 🔲 | v1.6.0 |
 
 ---
 
-## Conformance Levels
+### Agent Examples
+
+| Feature | Status | Module | Version |
+|---------|--------|--------|---------|
+| **HR Assistant Agent** | ✅ Example | `agents/examples/hr-assistant.py` | v1.5.0 |
+| **Trading Bot Agent** | ✅ Example | `agents/examples/trading-bot.py` | v1.5.0 |
+
+---
 
 **Per RFC §22.1:**
 
@@ -157,14 +174,22 @@ PiQrypt is the reference implementation of the AISS (Agent Identity and Signatur
 ## Testing
 
 **Test Coverage:**
-- Unit tests: 38/38 passing ✅
-- Integration tests: 15/15 passing ✅
+- Unit tests: 135 test functions across 11 test files ✅
+- Integration tests: `test_integration.py` (12 tests) ✅
 - Coverage: 85%+
 
-**Test Vectors:**
-- RFC normative vectors: All passing ✅
-- Fork scenarios: All passing ✅
-- A2A handshake: All passing ✅
+**Test Files:**
+- `test_sprint1a.py` — Core AISS-1 features (12 tests)
+- `test_vectors.py` — RFC normative test vectors (14 tests)
+- `test_a2a.py` — A2A handshake protocol (22 tests)
+- `test_integration.py` — End-to-end integration (12 tests)
+- `test_certification.py` — Certification service (52 tests)
+- `test_external_cert.py` — External CA certification (12 tests)
+- `test_rfc3161_e2e.py` — RFC 3161 TSA (3 tests)
+- `test_cli_authority.py` — Authority CLI (3 tests)
+- `test_cli_certified_export.py` — Certified export CLI (1 test)
+- `test_archive_index.py` — Archive & index (2 tests)
+- `test_memory_index.py` — Memory indexing (2 tests)
 
 ---
 
@@ -177,13 +202,22 @@ pip install piqrypt
 
 **Commands:**
 ```bash
-piqrypt identity create <file>       # Generate keypair
-piqrypt stamp <identity> --payload   # Sign event
-piqrypt verify <audit>               # Verify chain
-piqrypt export <output>              # Export audit
-piqrypt a2a handshake <peer_id>      # A2A protocol [v1.5]
-piqrypt badge generate <cert_id>     # Badge generation [v1.5]
-piqrypt certify <audit> --tier       # External certification [v1.5]
+piqrypt identity create <file>            # Generate keypair
+piqrypt identity rotate <file>            # Rotate keys
+piqrypt stamp <identity> --payload        # Sign event
+piqrypt verify <audit>                    # Verify chain
+piqrypt export <audit>                    # Export audit (JSON)
+piqrypt certify-request <audit> <cert>    # Create external cert request (CA email workflow)
+piqrypt certify-verify <cert>             # Verify PiQrypt CA certification
+piqrypt hash <file>                       # Compute event hash
+piqrypt authority create/verify/chain     # Authority management
+piqrypt license activate/status/deactivate # License management
+piqrypt badge generate <cert_id>          # Badge generation [v1.5]
+piqrypt telemetry enable/disable/status   # Manage telemetry
+piqrypt memory status/unlock/lock/search/encrypt  # Memory management
+piqrypt a2a propose/respond/peers         # A2A protocol [v1.5]
+piqrypt archive create/import             # Portable .pqz archives
+piqrypt status                            # Show system status
 ```
 
 ---
@@ -230,24 +264,29 @@ piqrypt certify <audit> --tier       # External certification [v1.5]
 
 ---
 
-## Changelog v1.5.0 (2026-02-21)
+## Changelog v1.5.0 (2026-02-24)
 
 **New Features:**
-- ✅ A2A Handshake protocol (§16)
-- ✅ Certification pay-per service (€9/€29/€99)
-- ✅ Badge generation (SVG)
-- ✅ Webhook automation (Stripe + Google Drive)
+- ✅ A2A Handshake protocol (§16) — full implementation including trust scoring
+- ✅ Trust scoring (`compute_trust_score`, `update_peer_trust_score`) — implemented in v1.5.0
+- ✅ Certification pay-per service (€9/€29/€99) — `aiss/certification.py`
+- ✅ Badge generation (SVG) — `aiss/cert_badges.py` + `aiss/badges.py`
+- ✅ External CA certification (email workflow) — `aiss/external_cert.py`
 - ✅ Public verification pages
+- ✅ Webhook automation (Stripe + Google Drive)
+- ✅ Agent examples (HR Assistant, Trading Bot) — `agents/examples/`
 
 **Improvements:**
 - ✅ RFC vendor-neutrality
 - ✅ Documentation dated
 - ✅ Version coherence across repos
+- ✅ Expanded CLI with 16+ commands
 
 **Tests:**
-- ✅ 38/38 passing
-- ✅ A2A scenarios covered
-- ✅ Certification workflow tested
+- ✅ 135 test functions across 11 test files
+- ✅ A2A scenarios covered (22 tests)
+- ✅ Certification workflow tested (52 tests)
+- ✅ External certification tested (12 tests)
 
 ---
 
