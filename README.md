@@ -226,7 +226,23 @@ Why this is smarter than storing the document:
 | Legal liability | Minimal surface |
 
 ---
+## Verifiable AI Agent Memory — a first
 
+> *"What if every AI agent could prove what it did, when it did it, and with whom?"*
+
+PiQrypt introduces **Verifiable AI Agent Memory** — a cryptographic memory layer for AI agents, from individual actions to multi-agent sessions.
+
+```
+Single agent       →  every action signed, chained, tamper-proof
+Two agents         →  co-signed interactions, mutual non-repudiation
+N agents (session) →  shared session, all pairs handshaked before acting
+```
+
+Each agent keeps its own memory — its own view of what happened. Co-signed interactions link the memories cryptographically. No agent can deny what it did. No action can be fabricated or backdated.
+
+**[→ Full story: Verifiable AI Agent Memory](VERIFIABLE_MEMORY.md)**
+
+---
 ## 3-line integration
 
 ```python
