@@ -191,11 +191,11 @@ Raw values are never stored — only structured metadata and hashes.
 
 | Framework | Repo | Install |
 |---|---|---|
-| LangChain | [piqrypt-langchain](https://github.com/piqrypt/piqrypt-langchain) | `pip install piqrypt-langchain` |
-| AutoGen | [piqrypt-autogen](https://github.com/piqrypt/piqrypt-autogen) | `pip install piqrypt-autogen` |
-| CrewAI | [piqrypt-crewai](https://github.com/piqrypt/piqrypt-crewai) | `pip install piqrypt-crewai` |
-| OpenClaw | [piqrypt-openclaw](https://github.com/piqrypt/piqrypt-openclaw) | `pip install piqrypt-openclaw` |
-| Multi-agent | [piqrypt-session](https://github.com/piqrypt/piqrypt-session) | `pip install piqrypt-session` |
+| LangChain | [piqrypt-langchain](https://github.com/piqrypt/piqrypt-langchain-integration) | `pip install piqrypt-langchain` |
+| AutoGen | [piqrypt-autogen](https://github.com/piqrypt/piqrypt-autogen-integration) | `pip install piqrypt-autogen` |
+| CrewAI | [piqrypt-crewai](https://github.com/piqrypt/piqrypt-crewai-integration) | `pip install piqrypt-crewai` |
+| OpenClaw | [piqrypt-openclaw](https://github.com/piqrypt/piqrypt-openclaw-integration) | `pip install piqrypt-openclaw` |
+| Multi-agent | [piqrypt-session](https://github.com/piqrypt/piqrypt-session-integration) | `pip install piqrypt-session` |
 | Plain Python | [piqrypt](https://github.com/piqrypt/piqrypt) | `pip install piqrypt` |
 
 **[→ Integration Guide](INTEGRATION.md)**
