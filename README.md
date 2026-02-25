@@ -292,7 +292,6 @@ integration, and extended verification utilities.
 
 | | |
 |---|---|
-| 🧠 Verifiable Memory | [VERIFIABLE_MEMORY.md](VERIFIABLE_MEMORY.md) |
 | 🚀 Quick Start | [QUICK-START.md](QUICK-START.md) |
 | 🔌 Integration Guide | [INTEGRATION.md](INTEGRATION.md) |
 | 💰 Pricing & Tiers | [PRICING.md](PRICING.md) |
