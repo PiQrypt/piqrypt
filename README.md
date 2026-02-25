@@ -1,4 +1,4 @@
-# 🔐 PiQrypt — Verifiable AI Agent Memory_Cryptographic Proof for AI Agents
+# 🔐 PiQrypt — Verifiable AI Agent Memory_Cryptographic Proof
 
 <div align="center">
 
