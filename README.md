@@ -1,9 +1,4 @@
-<<<<<<< HEAD
 # PiQrypt
-=======
-# 🔐 PiQrypt — Verifiable AI Agent Memory.Cryptographic Proof
-
->>>>>>> fc895e0b3d5ed05fe27f10e593ae40ab1282dc16
 
 **Verifiable memory for AI agents.**
 
@@ -110,29 +105,43 @@ If an event is modified or removed, verification fails.
 
 When two agents interact, both sign the interaction.
 
-Each side stores its own signature, the peer identity,
-the peer signature, and a shared interaction hash.
+```
+  Agent A memory                    Agent B memory
+  ──────────────────────            ──────────────────────
+  a2a_handshake                     a2a_handshake
+  peer_id:        B.agent_id        peer_id:        A.agent_id
+  peer_signature: B.sig    ←───→   peer_signature: A.sig
+  interaction_hash: c7d2            interaction_hash: c7d2
+  signature: A.sig                  signature: B.sig
+```
 
 Both agents maintain independent but cryptographically correlated records.
+Neither side can deny the interaction without cryptographic inconsistency.
 This enables later reconstruction of who interacted, what was exchanged,
 and in what order.
 
 ### 3. Session Memory
 
-For multi-agent workflows, PiQrypt can establish:
-
-- Co-signed handshakes before execution
-- Correlated interaction hashes during execution
-
-This allows reconstruction of complex agent pipelines:
+For multi-agent workflows, PiQrypt establishes co-signed handshakes
+between all agent pairs before any action takes place.
 
 ```
-LLM → Tool → Executor
-Agent → Agent → External system
-Distributed multi-step automation
+  session.start()
+      ├── LLM ↔ TradingBot      co-signed ✅
+      ├── LLM ↔ OpenClaw        co-signed ✅
+      └── TradingBot ↔ OpenClaw co-signed ✅
+
+  During session — each agent keeps its own memory:
+  ─────────────────────────────────────────────────
+  LLM memory        "recommendation_sent"   interaction_hash: c7d2
+  TradingBot memory "recommendation_rcvd"   interaction_hash: c7d2
+                                                     ↑
+                                           same hash · both signed
 ```
 
 Session memory provides structural continuity across multiple actors.
+Complex pipelines — LLM → Tool → Executor, Agent → Agent → External system —
+can be fully reconstructed after the fact.
 
 ---
 
@@ -156,7 +165,7 @@ piqrypt verify audit.json
 
 Verification runs locally and deterministically.
 
-### Minimal Python example
+### Stamp an event — Python
 
 ```python
 import piqrypt as aiss
@@ -173,33 +182,21 @@ event = aiss.stamp_event(
 aiss.store_event(event)
 ```
 
----
-
-## Framework support
-
-| Framework | Install | What gets stamped |
-|---|---|---|
-| LangChain | `pip install piqrypt-langchain` | LLM calls · tool calls · chains |
-| AutoGen | `pip install piqrypt-autogen` | replies · code execution · group chat |
-| CrewAI | `pip install piqrypt-crewai` | tasks · crew kickoffs |
-| OpenClaw | `pip install piqrypt-openclaw` | reasoning · bash · file ops |
-| Multi-agent session | `pip install piqrypt-session` | handshakes · interactions |
-| Plain Python | `pip install piqrypt` | anything |
-
-**[→ Integration Guide](INTEGRATION.md)**
+Every event is signed, hash-linked to the previous one, and stored locally.
+Raw values are never stored — only structured metadata and hashes.
 
 ---
 
 ## Framework support
 
-| Framework | Install | What gets stamped |
+| Framework | Repo | Install |
 |---|---|---|
-| LangChain | `pip install piqrypt-langchain` | LLM calls · tool calls · chains |
-| AutoGen | `pip install piqrypt-autogen` | replies · code execution · group chat |
-| CrewAI | `pip install piqrypt-crewai` | tasks · crew kickoffs |
-| OpenClaw | `pip install piqrypt-openclaw` | reasoning · bash · file ops |
-| Multi-agent session | `pip install piqrypt-session` | handshakes · interactions |
-| Plain Python | `pip install piqrypt` | anything |
+| LangChain | [piqrypt-langchain](https://github.com/piqrypt/piqrypt-langchain) | `pip install piqrypt-langchain` |
+| AutoGen | [piqrypt-autogen](https://github.com/piqrypt/piqrypt-autogen) | `pip install piqrypt-autogen` |
+| CrewAI | [piqrypt-crewai](https://github.com/piqrypt/piqrypt-crewai) | `pip install piqrypt-crewai` |
+| OpenClaw | [piqrypt-openclaw](https://github.com/piqrypt/piqrypt-openclaw) | `pip install piqrypt-openclaw` |
+| Multi-agent | [piqrypt-session](https://github.com/piqrypt/piqrypt-session) | `pip install piqrypt-session` |
+| Plain Python | [piqrypt](https://github.com/piqrypt/piqrypt) | `pip install piqrypt` |
 
 **[→ Integration Guide](INTEGRATION.md)**
 
