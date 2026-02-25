@@ -1,9 +1,5 @@
-<<<<<<< HEAD
-# PiQrypt
-=======
-# 🔐 PiQrypt — Verifiable AI Agent Memory.Cryptographic Proof
 
->>>>>>> fc895e0b3d5ed05fe27f10e593ae40ab1282dc16
+# 🔐 PiQrypt — Verifiable AI Agent Memory.Cryptographic Proof
 
 **Verifiable memory for AI agents.**
 
