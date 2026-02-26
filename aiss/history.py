@@ -29,7 +29,7 @@ Architecture:
 """
 
 import time
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional
 
 from aiss.logger import get_logger
 

@@ -100,7 +100,7 @@ from aiss.a2a import (
     record_external_interaction,
     create_a2a_message,
     register_peer, get_peer, list_peers,
-    compute_trust_score, update_peer_trust_score,
+    update_peer_trust_score,
     A2AHandshakeError, A2APeerNotFound, A2ATrustError,
 )
 
