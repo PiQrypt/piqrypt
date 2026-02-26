@@ -225,7 +225,7 @@ Additional certifications available à la carte at the prices above.
 
 ## Related
 
-- Tier pricing and deployment options → [PRICING.md](PRICING.md)
+- Tier pricing and deployment options → [PRICING.md](TIERS_PRICING.md)
 - Technical architecture → [README.md](README.md)
 - Integration guide → [INTEGRATION.md](INTEGRATION.md)
 
