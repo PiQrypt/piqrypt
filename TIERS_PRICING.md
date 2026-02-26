@@ -191,7 +191,7 @@ that scales across departments, subsidiaries, and regulatory contexts.
 | Support | Community | Email | Dedicated SLA |
 | On-premise | — | — | ✅ |
 | SSO / multi-tenant | — | — | ✅ |
-| **Price** | **Free** | **€290–390/yr** | **From €10k/yr** |
+| **Price** | **Free** | **€290–390/yr** | **on demand** |
 
 ---
 
