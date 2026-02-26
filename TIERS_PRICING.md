@@ -49,7 +49,7 @@ and teams that need more than 3 agents.
 - Ed25519 + Dilithium3 (post-quantum)
 - AES-256-GCM encrypted local storage
 - Unlimited exports
-- 10–50 free Simple certifications / month
+- 50 free Simple certifications / month
 - TSA timestamps (RFC 3161)
 - A2A session support
 - Email support (48h / 24h depending on tier)
@@ -187,7 +187,7 @@ that scales across departments, subsidiaries, and regulatory contexts.
 | Exports / month | 50 | Unlimited | Unlimited |
 | RFC 3161 timestamps | — | ✅ | ✅ |
 | A2A session support | ✅ | ✅ | ✅ |
-| Certifications included | 1 Simple/mo | 10–50/mo | Custom |
+| Certifications included | 1 Simple/mo | 50/mo | Custom |
 | Support | Community | Email | Dedicated SLA |
 | On-premise | — | — | ✅ |
 | SSO / multi-tenant | — | — | ✅ |
