@@ -35,7 +35,6 @@ Hook Sentinel v1.7.0 :
 """
 
 import json
-import math
 import time
 import statistics
 from pathlib import Path
@@ -231,7 +230,7 @@ def _emit_sentinel_event(
 
     severity_map = {"UNSTABLE": "MEDIUM", "CRITICAL": "HIGH"}
 
-    event = {
+    _ = {
         "type":               "trust_drift",
         "severity":           severity_map.get(new_state, "MEDIUM"),
         "agent_id":           agent_id,
@@ -439,7 +438,6 @@ __all__ = [
     "get_tsi_history",
     "get_tsi_summary",
     "reset_tsi_baseline",
-    "temporal_weight",
     "TSI_STATES",
     "WINDOW_DAYS",
     "DRIFT_Z_THRESHOLD",

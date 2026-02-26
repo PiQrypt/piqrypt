@@ -1379,7 +1379,7 @@ def cmd_trust_score_compare(args):
 
     a_id = args.agent_a[:16]
     b_id = args.agent_b[:16]
-    print(f"\nComparaison Trust Score")
+    print("\nComparaison Trust Score")
     print(f"  {'Métrique':<22} {a_id:<18} {b_id:<18} {'Δ':>8}")
     print(f"  {'─'*22} {'─'*18} {'─'*18} {'─'*8}")
 
@@ -1437,9 +1437,9 @@ def cmd_sentinel_status(args):
         for r in reasons:
             print(f"    • {r}")
     else:
-        print(f"  Alertes       : 0 actives")
+        print("  Alertes       : 0 actives")
 
-    print(f"  A2C Risk      : N/A (disponible v1.7.0)")
+    print("  A2C Risk      : N/A (disponible v1.7.0)")
     print(f"  Snapshots     : {tsi['snapshot_count']} (fenêtre {tsi['window_days']}j)")
     print()
 

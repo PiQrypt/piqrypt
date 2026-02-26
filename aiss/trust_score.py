@@ -129,11 +129,13 @@ def compute_I(events: List[Dict[str, Any]]) -> Dict[str, Any]:
         )
         rotation_score = valid_rot / len(rotations)
 
-    I = (hash_chain_score * 0.30 + fork_score * 0.25
-         + sig_score * 0.25 + rotation_score * 0.20)
+    I_score = round(min(1.0, max(0.0,
+        hash_chain_score * 0.30 + fork_score * 0.25
+        + sig_score * 0.25 + rotation_score * 0.20
+    )), 4)
 
     return {
-        "score": round(min(1.0, max(0.0, I)), 4),
+        "score": I_score,
         "components": {
             "hash_chain": round(hash_chain_score, 4),
             "no_forks":   round(fork_score, 4),
@@ -475,14 +477,14 @@ def compute_trust_score(
     F_r  = compute_F(events)
     R_r  = compute_R(events, agent_id, current_time)
 
-    I   = I_r["score"]
+    I_score = I_r["score"]
     V_t = Vt_r["score"]
     D_t = Dt_r["score"]
     F   = F_r["score"]
     R   = R_r["score"]
 
     TS = round(min(1.0, max(0.0,
-        w["w_I"] * I + w["w_V"] * V_t + w["w_D"] * D_t
+        w["w_I"] * I_score + w["w_V"] * V_t + w["w_D"] * D_t
         + w["w_F"] * F + w["w_R"] * R
     )), 4)
 
@@ -491,7 +493,7 @@ def compute_trust_score(
         "trust_score": TS,
         "tier":        _tier(TS),
         "components": {
-            "I": I, "V_t": V_t, "D_t": D_t, "F": F, "R": R,
+            "I": I_score, "V_t": V_t, "D_t": D_t, "F": F, "R": R,
         },
         "component_details": {
             "I":   I_r["details"],
