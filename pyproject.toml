@@ -4,15 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "piqrypt"
-version = "1.5.1"
+version = "1.6.0"
 description = "AISS (Agent Identity and Signature Standard) - RFC-compliant cryptographic identity for autonomous agents"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
-    {name = "PiQrypt Contributors", email = "contact@piqrypt.org"}
+    {name = "PiQrypt Contributors", email = "piqrypt@gmail.com"}
 ]
 requires-python = ">=3.9"
-keywords = ["cryptography", "identity", "agents", "ai", "blockchain", "signatures", "audit"]
+keywords = ["cryptography", "identity", "agents", "ai", "signatures", "audit", "post-quantum", "langchain", "crewai", "autogen", "openclaw", "mpc-server"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",

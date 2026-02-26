@@ -27,7 +27,7 @@ Quick Start — Archive (Pro):
     >>> create_archive(events, identity, "backup.pqz", passphrase="strong-pass")
 """
 
-__version__ = "1.2.0"
+__version__ = "1.6.0"
 
 # Core AISS-1
 from aiss.identity import (
@@ -165,4 +165,30 @@ from aiss.agent_context import (
     get_system_prompt,
     get_agent_metadata,
     build_agent_context,
+)
+
+# Trust Score — v1.6.0
+from aiss.trust_score import (
+    compute_trust_score,
+    compute_I, compute_V_t, compute_D_t, compute_F, compute_R,
+    temporal_weight,
+    build_trust_signal,
+    get_a2c_risk,
+    DEFAULT_WEIGHTS,
+    TIERS,
+)
+
+# TSI — Trust Stability Index — v1.6.0
+from aiss.tsi_engine import (
+    compute_tsi,
+    get_tsi_history,
+    get_tsi_summary,
+    reset_tsi_baseline,
+    TSI_STATES,
+)
+
+# History — full rotation chain — v1.6.0
+from aiss.history import (
+    load_full_history,
+    get_history_summary,
 )
