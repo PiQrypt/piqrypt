@@ -703,6 +703,40 @@ Examples:
 
 
     # ── memory (v1.2.0) ──
+    # piqrypt history (v1.6)
+    hist_p = sub.add_parser('history', help='Full agent history across key rotations (v1.6)')
+    hist_p.add_argument('agent_id', help='Agent ID (any identity in the rotation chain)')
+    hist_p.add_argument('--chain', action='store_true', help='Show identity chain only')
+    hist_p.add_argument('--summary', action='store_true', help='Show statistics only')
+    hist_p.add_argument('--json', action='store_true', help='JSON output')
+    hist_p.add_argument('--limit', type=int, default=100, help='Max events to display')
+
+    # ── Trust Score (v1.6) ──────────────────────────────────────────────────
+    ts_p = sub.add_parser('trust-score', help='Trust Score & TSI (v1.6)')
+    ts_s = ts_p.add_subparsers(dest='ts_command')
+
+    ts_compute = ts_s.add_parser('compute', help='Compute Trust Score for an agent')
+    ts_compute.add_argument('agent_id', help='Agent ID to score')
+    ts_compute.add_argument('--json', action='store_true', help='JSON output')
+    ts_compute.add_argument('--full', action='store_true', help='Show component details')
+
+    ts_hist = ts_s.add_parser('history', help='Trust Score history (30 days)')
+    ts_hist.add_argument('agent_id', help='Agent ID')
+    ts_hist.add_argument('--days', type=int, default=30, help='Number of days')
+    ts_hist.add_argument('--json', action='store_true', help='JSON output')
+
+    ts_compare = ts_s.add_parser('compare', help='Compare Trust Scores of two agents')
+    ts_compare.add_argument('agent_a', help='First agent ID')
+    ts_compare.add_argument('agent_b', help='Second agent ID')
+    ts_compare.add_argument('--json', action='store_true', help='JSON output')
+
+    # ── Sentinel status (v1.6 — A2C disponible v1.7) ────────────────────────
+    sentinel_p = sub.add_parser('sentinel', help='Sentinel status — TS + TSI (v1.6)')
+    sentinel_s = sentinel_p.add_subparsers(dest='sentinel_command')
+    sent_status = sentinel_s.add_parser('status', help='Full Sentinel status for an agent')
+    sent_status.add_argument('agent_id', help='Agent ID')
+    sent_status.add_argument('--json', action='store_true', help='JSON output')
+
     mem_p = sub.add_parser('memory', help='Memory management')
     mem_s = mem_p.add_subparsers(dest='memory_command')
     mem_s.add_parser('status', help='Show memory statistics')
@@ -715,6 +749,8 @@ Examples:
     mem_search.add_argument('--type', help='Filter by event type')
     mem_search.add_argument('--limit', type=int, default=20, help='Max results')
     mem_search.add_argument('--json', action='store_true', help='Output full JSON')
+    mem_search.add_argument('--session', help='Filter by session_id (v1.6)')
+    mem_search.add_argument('--follow-rotation', dest='follow_rotation', action='store_true', help='Include key rotation chain (v1.6)')
     mem_enc = mem_s.add_parser('encrypt', help='Migrate Free memory to encrypted Pro')
     mem_enc.add_argument('--passphrase', help='Passphrase (prompted if not provided)')
 
@@ -851,6 +887,22 @@ Examples:
                 mem_p.print_help()
 
         # A2A (v1.2.0)
+        elif args.command == 'trust-score':
+            if args.ts_command == 'compute':
+                cmd_trust_score_compute(args)
+            elif args.ts_command == 'history':
+                cmd_trust_score_history(args)
+            elif args.ts_command == 'compare':
+                cmd_trust_score_compare(args)
+            else:
+                print("Usage: piqrypt trust-score {compute|history|compare}")
+        elif args.command == 'sentinel':
+            if args.sentinel_command == 'status':
+                cmd_sentinel_status(args)
+            else:
+                print("Usage: piqrypt sentinel status <agent_id>")
+        elif args.command == 'history':
+            cmd_history(args)
         elif args.command == 'a2a':
             if args.a2a_command == 'propose':
                 cmd_a2a_propose(args)
@@ -886,6 +938,95 @@ if __name__ == '__main__':
 # ─────────────────────────────────────────────────────────────────────────────
 # NOUVELLES COMMANDES v1.2.0
 # ─────────────────────────────────────────────────────────────────────────────
+
+
+
+def cmd_history(args):
+    """piqrypt history <agent_id> -- full history across key rotations (v1.6)"""
+    import json
+    from datetime import datetime, timezone
+    from aiss.history import load_full_history, get_history_summary
+
+    def fmt_ts(ts):
+        if not ts:
+            return "--"
+        return datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+
+    def short_id(aid, n=16):
+        return aid[:n] + "..." if len(aid) > n else aid
+
+    agent_id = args.agent_id
+    json_output = getattr(args, 'json', False)
+    chain_only = getattr(args, 'chain', False)
+    summary_only = getattr(args, 'summary', False)
+    limit = getattr(args, 'limit', 100)
+
+    summary = get_history_summary(agent_id)
+    chain = summary["identity_chain"]
+
+    if chain_only or summary_only:
+        print("\n Identity chain for " + short_id(agent_id))
+        print("-" * 60)
+        for i, aid in enumerate(chain):
+            per = next((p for p in summary["per_identity"] if p["agent_id"] == aid), {})
+            count = per.get("event_count", 0)
+            label = " (current)" if aid == chain[-1] else ""
+            arrow = "  -> " if i > 0 else "    "
+            print(arrow + short_id(aid, 24) + label)
+            print("      " + str(count) + " events  " + fmt_ts(per.get("oldest_timestamp")) + " -> " + fmt_ts(per.get("newest_timestamp")))
+            if i < len(chain) - 1:
+                print("      v key rotation")
+        total = summary["total_events"]
+        rots = summary["rotations"]
+        print("\n  Total: " + str(total) + " events  |  " + str(rots) + " rotation(s)")
+        print()
+        return
+
+    history = load_full_history(agent_id, include_markers=not json_output)
+
+    if json_output:
+        real_events = [e for e in history if not e.get("_marker")]
+        print(json.dumps({
+            "agent_id": agent_id,
+            "identity_chain": chain,
+            "total_events": len(real_events),
+            "rotations": summary["rotations"],
+            "events": real_events[:limit],
+        }, indent=2, default=str))
+        return
+
+    print("\n Full history: " + short_id(agent_id))
+    if len(chain) > 1:
+        print("   Chain: " + " -> ".join(short_id(a, 10) for a in chain))
+    print("   " + str(summary["total_events"]) + " events  |  "
+          + str(summary["rotations"]) + " rotation(s)  |  "
+          + fmt_ts(summary["earliest_timestamp"]) + " -> " + fmt_ts(summary["latest_timestamp"]))
+    print()
+
+    for event in history[:limit]:
+        if event.get("_marker"):
+            from_id = short_id(event.get("from_agent_id", "?"), 12)
+            to_id = short_id(event.get("to_agent_id", "?"), 12)
+            sep = "-" * 54
+            print("\n  " + sep)
+            print("  KEY ROTATION  " + fmt_ts(event.get("timestamp")))
+            print("     " + from_id + "  ->  " + to_id)
+            print("  " + sep + "\n")
+            continue
+        ts = fmt_ts(event.get("timestamp"))
+        aid = short_id(event.get("agent_id", "?"), 14)
+        p = event.get("payload", {})
+        etype = p.get("event_type") or p.get("type") or "event"
+        pstr = json.dumps({k: v for k, v in p.items() if k not in ("event_type", "type", "aiss_profile")}, default=str)
+        if len(pstr) > 80:
+            pstr = pstr[:77] + "..."
+        print("  [" + ts + "]  " + aid + "  " + etype)
+        print("    " + pstr)
+
+    if len(history) > limit:
+        remaining = len(history) - limit
+        print("\n  ... " + str(remaining) + " more (use --limit)")
+    print()
 
 def cmd_memory_status(args):
     """piqrypt memory status"""
@@ -944,14 +1085,18 @@ def cmd_memory_lock(args):
 
 
 def cmd_memory_search(args):
-    """piqrypt memory search <query>"""
+    """piqrypt memory search — v1.6: supports --session and --follow-rotation"""
     from aiss.memory import search_events
     import json
 
+    session_id = getattr(args, 'session', None)
+    follow_rotation = getattr(args, 'follow_rotation', False)
     results = search_events(
         participant=args.agent,
         event_type=args.type,
-        limit=args.limit or 20
+        limit=args.limit or 20,
+        session_id=session_id,
+        follow_rotation=follow_rotation,
     )
 
     if not results:
@@ -1133,6 +1278,170 @@ def cmd_archive_import(args):
     print(f"  Imported   : {result['imported']} events")
     print(f"  Agent      : {result.get('agent_id', '')[:16]}...")
     print(f"  Period     : {result.get('period_start', '')[:10]} → {result.get('period_end', '')[:10]}")
+
+
+def _ts_tier_icon(tier: str) -> str:
+    return {"Elite": "🏆", "A+": "✅", "A": "✅", "B": "⚠️", "At Risk": "❌"}.get(tier, "")
+
+
+def _tsi_state_icon(state: str) -> str:
+    return {"STABLE": "🟢", "WATCH": "🟡", "UNSTABLE": "🟠", "CRITICAL": "🔴"}.get(state, "⚪")
+
+
+def cmd_trust_score_compute(args):
+    """piqrypt trust-score compute <agent_id> [--json] [--full]"""
+    import json as _json
+    from aiss.trust_score import compute_trust_score
+    from aiss.tsi_engine import compute_tsi
+
+    result = compute_trust_score(args.agent_id)
+    tsi = compute_tsi(args.agent_id, current_score=result["trust_score"])
+
+    if args.json:
+        print(_json.dumps({"trust_score": result, "tsi": tsi}, indent=2))
+        return
+
+    ts = result["trust_score"]
+    tier = result["tier"]
+    icon = _ts_tier_icon(tier)
+    tsi_icon = _tsi_state_icon(tsi["tsi_state"])
+
+    print(f"\nTrust Score — {args.agent_id[:24]}...")
+    print(f"{'─'*44}")
+    print(f"  Score global  : {ts:.4f}  [{tier}] {icon}")
+    print(f"  TSI State     : {tsi['tsi_state']} {tsi_icon}")
+    print()
+    comps = result.get("components", {})
+    labels = {
+        "I":   ("I   (Integrity)      ", 1.00),
+        "V_t": ("V_t (Verified)       ", 0.80),
+        "D_t": ("D_t (Diversity)      ", 0.70),
+        "F":   ("F   (Finalization)   ", 0.80),
+        "R":   ("R   (Rotation Health)", 0.80),
+    }
+    for key, (label, warn_threshold) in labels.items():
+        val = comps.get(key, 1.0)
+        flag = "✅" if val >= warn_threshold else "⚠️"
+        print(f"  {label} : {val:.4f}  {flag}")
+
+    if args.full:
+        print()
+        print("  Détails composantes :")
+        for key, detail in result.get("component_details", {}).items():
+            print(f"    {key}: {detail}")
+
+    a2c = result.get("a2c_risk")
+    print(f"\n  A2C Risk      : {'N/A (disponible v1.7.0)' if a2c is None else a2c}")
+    print(f"  Événements    : {result['event_count']}")
+    print()
+
+
+def cmd_trust_score_history(args):
+    """piqrypt trust-score history <agent_id> [--days N] [--json]"""
+    import json as _json
+    from aiss.tsi_engine import get_tsi_history
+
+    history = get_tsi_history(args.agent_id, days=args.days)
+
+    if args.json:
+        print(_json.dumps(history, indent=2))
+        return
+
+    print(f"\nTrust Score History — {args.agent_id[:24]}... (derniers {args.days}j)")
+    print(f"  {'Date':<12} {'Score':>7}  {'Tier':<8}")
+    print(f"  {'─'*12} {'─'*7}  {'─'*8}")
+    for snap in history:
+        from aiss.trust_score import _tier
+        tier = _tier(snap["score"])
+        print(f"  {snap['date']:<12} {snap['score']:>7.4f}  {tier}")
+    if not history:
+        print("  Aucun historique disponible (premier calcul).")
+    print()
+
+
+def cmd_trust_score_compare(args):
+    """piqrypt trust-score compare AGENT_A AGENT_B [--json]"""
+    import json as _json
+    from aiss.trust_score import compute_trust_score
+    from aiss.tsi_engine import compute_tsi
+
+    ra = compute_trust_score(args.agent_a)
+    rb = compute_trust_score(args.agent_b)
+    tsi_a = compute_tsi(args.agent_a, current_score=ra["trust_score"])
+    tsi_b = compute_tsi(args.agent_b, current_score=rb["trust_score"])
+
+    if args.json:
+        print(_json.dumps({
+            "agent_a": {"trust_score": ra, "tsi": tsi_a},
+            "agent_b": {"trust_score": rb, "tsi": tsi_b},
+        }, indent=2))
+        return
+
+    a_id = args.agent_a[:16]
+    b_id = args.agent_b[:16]
+    print(f"\nComparaison Trust Score")
+    print(f"  {'Métrique':<22} {a_id:<18} {b_id:<18} {'Δ':>8}")
+    print(f"  {'─'*22} {'─'*18} {'─'*18} {'─'*8}")
+
+    rows = [
+        ("Score global", ra["trust_score"], rb["trust_score"]),
+        ("I  (Integrity)",      ra["components"].get("I", 0),   rb["components"].get("I", 0)),
+        ("V_t (Verified)",      ra["components"].get("V_t", 0), rb["components"].get("V_t", 0)),
+        ("D_t (Diversity)",     ra["components"].get("D_t", 0), rb["components"].get("D_t", 0)),
+        ("F  (Finalization)",   ra["components"].get("F", 0),   rb["components"].get("F", 0)),
+        ("R  (Rotation)",       ra["components"].get("R", 0),   rb["components"].get("R", 0)),
+    ]
+    for label, va, vb in rows:
+        delta = va - vb
+        sign = "+" if delta >= 0 else ""
+        print(f"  {label:<22} {va:<18.4f} {vb:<18.4f} {sign}{delta:>7.4f}")
+
+    print(f"\n  Tier A : {ra['tier']} {_ts_tier_icon(ra['tier'])}")
+    print(f"  Tier B : {rb['tier']} {_ts_tier_icon(rb['tier'])}")
+    print(f"  TSI  A : {tsi_a['tsi_state']} {_tsi_state_icon(tsi_a['tsi_state'])}")
+    print(f"  TSI  B : {tsi_b['tsi_state']} {_tsi_state_icon(tsi_b['tsi_state'])}")
+    print()
+
+
+def cmd_sentinel_status(args):
+    """piqrypt sentinel status <agent_id> [--json]"""
+    import json as _json
+    from aiss.trust_score import compute_trust_score
+    from aiss.tsi_engine import compute_tsi
+
+    result = compute_trust_score(args.agent_id)
+    tsi = compute_tsi(args.agent_id, current_score=result["trust_score"])
+
+    if args.json:
+        print(_json.dumps({"trust_score": result, "tsi": tsi}, indent=2))
+        return
+
+    ts = result["trust_score"]
+    tsi_state = tsi["tsi_state"]
+    tsi_icon = _tsi_state_icon(tsi_state)
+
+    print(f"\nSentinel Status — {args.agent_id[:24]}...")
+    print(f"{'─'*44}")
+    print(f"  Trust Score   : {ts:.4f}  [{result['tier']}] {_ts_tier_icon(result['tier'])}")
+    print(f"  TSI State     : {tsi_state} {tsi_icon}")
+    d24 = tsi.get("delta_24h")
+    d7  = tsi.get("delta_7d")
+    z   = tsi.get("z_score")
+    print(f"  Δ 24h         : {f'{d24:+.4f}' if d24 is not None else 'N/A (historique insuffisant)'}")
+    print(f"  Δ 7j          : {f'{d7:+.4f}'  if d7  is not None else 'N/A'}")
+    print(f"  Z-score       : {f'{z:.4f}'    if z   is not None else 'N/A'}")
+
+    reasons = tsi.get("drift_reasons", [])
+    if reasons:
+        print(f"  Alertes       : {len(reasons)}")
+        for r in reasons:
+            print(f"    • {r}")
+    else:
+        print(f"  Alertes       : 0 actives")
+
+    print(f"  A2C Risk      : N/A (disponible v1.7.0)")
+    print(f"  Snapshots     : {tsi['snapshot_count']} (fenêtre {tsi['window_days']}j)")
+    print()
 
 
 def cmd_status(args):
