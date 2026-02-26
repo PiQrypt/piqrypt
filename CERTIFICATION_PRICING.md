@@ -216,7 +216,7 @@ Relevant for: medical records · industrial certifications
 |---|---|
 | Free | 1 Simple / month |
 | Early-Bird Pro | 10 Simple / month |
-| Standard Pro | 50 / month (any level) |
+| Standard Pro | 50 Simple |
 | Enterprise | Custom volume |
 
 Additional certifications available à la carte at the prices above.
