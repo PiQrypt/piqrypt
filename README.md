@@ -195,7 +195,7 @@ Raw values are never stored — only structured metadata and hashes.
 | AutoGen | [piqrypt-autogen-integration](https://github.com/piqrypt/piqrypt-autogen-integration) | `pip install piqrypt-autogen-integration` |
 | CrewAI | [piqrypt-crewai-integration](https://github.com/piqrypt/piqrypt-crewai-integration) | `pip install piqrypt-crewai-integration` |
 | OpenClaw | [piqrypt-openclaw-integration](https://github.com/piqrypt/piqrypt-openclaw-integration) | `pip install piqrypt-openclaw-integration` |
-| Multi-agent | [piqrypt-session-integration](https://github.com/piqrypt/piqrypt-session-integration) | `pip install piqrypt-session-integration` |
+| Multi-agent | [piqrypt-session-integration](https://github.com/piqrypt/piqrypt-session-multi-ai-agents) | `pip install piqrypt-session-integration` |
 | Plain Python | [piqrypt](https://github.com/piqrypt/piqrypt) | `pip install piqrypt` |
 
 **[→ Integration Guide](INTEGRATION.md)**
