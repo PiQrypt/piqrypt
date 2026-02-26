@@ -73,7 +73,7 @@ and teams that need more than 3 agents.
 For organizations requiring governance at scale,
 on-premise deployment, or hardware-level security.
 
-- Unlimited agents
+- 50 agents
 - HSM integration
 - REST API + GraphQL
 - Multi-tenant architecture
@@ -180,7 +180,7 @@ that scales across departments, subsidiaries, and regulatory contexts.
 
 | | Free | Pro | Enterprise |
 |---|---|---|---|
-| Agents | 3 | 50 | Unlimited |
+| Agents | 3 | 50 | 50 |
 | Ed25519 signatures | ✅ | ✅ | ✅ |
 | Dilithium3 (post-quantum) | — | ✅ | ✅ |
 | Encrypted storage | — | ✅ AES-256-GCM | ✅ HSM |
