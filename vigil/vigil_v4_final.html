@@ -1,0 +1,1998 @@
+<!-- SPDX-License-Identifier: Elastic-2.0
+     Copyright (c) 2026 PiQrypt Inc.
+     e-Soleau: DSO2026006483 (19/02/2026) -- DSO2026009143 (12/03/2026)
+     Licensed under the Elastic License 2.0 (ELv2).
+     Commercial license: contact@piqrypt.com -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vigil — Continuous Identity Monitoring</title>
+<!-- VIGIL_TOKEN_PLACEHOLDER -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Epilogue:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:    #06080b;
+  --s1:    #0a0e14;
+  --s2:    #0e1520;
+  --s3:    #131c2a;
+  --b1:    #192535;
+  --b2:    #1f3045;
+  --tx:    #c5d8ec;
+  --txd:   #3a5570;
+  --txm:   #6a90a8;
+  --ac:    #00c8e0;
+  --ac2:   rgba(0,200,224,.1);
+
+  --safe:  #00e676; --safeb:  rgba(0,230,118,.09);
+  --watch: #ffb300; --watchb: rgba(255,179,0,.09);
+  --alert: #ff6200; --alertb: rgba(255,98,0,.09);
+  --crit:  #f5003c; --critb:  rgba(245,0,60,.09);
+
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Epilogue', sans-serif;
+  --r: 3px; --r2: 7px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--tx);font-family:var(--sans);font-size:13px;line-height:1.5;overflow:hidden}
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:radial-gradient(circle,var(--b1) 1px,transparent 1px);
+  background-size:28px 28px;opacity:.3;pointer-events:none;z-index:0;
+}
+.app{position:relative;z-index:1;display:flex;flex-direction:column;height:100vh}
+
+/* ── TOPBAR ── */
+.topbar{display:flex;align-items:stretch;height:50px;background:var(--s1);border-bottom:1px solid var(--b1);flex-shrink:0;z-index:200}
+.logo-zone{display:flex;align-items:center;gap:12px;width:224px;flex-shrink:0;padding:0 18px;border-right:1px solid var(--b1)}
+.logo-mark{width:30px;height:30px;border-radius:var(--r);border:1.5px dashed var(--b2);display:flex;align-items:center;justify-content:center;color:var(--txd);font-family:var(--mono);font-size:7px;letter-spacing:.06em;flex-shrink:0}
+.logo-name{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--ac);letter-spacing:.1em;line-height:1}
+.logo-by{font-size:9px;color:var(--txd);letter-spacing:.04em;margin-top:1px}
+.topbar-mid{flex:1;display:flex;align-items:center;padding:0 18px;gap:14px}
+.topbar-tag{font-size:11px;color:var(--txm);letter-spacing:.02em}
+.arch-pill{display:flex;align-items:center;font-family:var(--mono);font-size:9px;color:var(--txd);background:var(--s2);border:1px solid var(--b1);border-radius:100px;padding:3px 4px;gap:0}
+.arch-step{padding:2px 9px;border-radius:100px;transition:all .2s}
+.arch-step.lit{color:var(--ac);background:var(--ac2)}
+.arch-arr{color:var(--txd);padding:0 1px}
+.topbar-right{display:flex;align-items:stretch;border-left:1px solid var(--b1)}
+.tstat{display:flex;flex-direction:column;justify-content:center;padding:0 14px;border-right:1px solid var(--b1);min-width:70px}
+.tstat-v{font-family:var(--mono);font-size:16px;font-weight:700;line-height:1}
+.tstat-l{font-size:9px;color:var(--txd);letter-spacing:.06em;margin-top:2px}
+.live-pill{display:flex;align-items:center;gap:7px;padding:0 14px;font-family:var(--mono);font-size:9px;color:var(--txd);letter-spacing:.08em}
+.live-d{width:7px;height:7px;border-radius:50%;background:var(--safe);box-shadow:0 0 7px var(--safe);animation:lp 2.2s ease-in-out infinite}
+@keyframes lp{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── LAYOUT ── */
+.body{display:flex;flex:1;overflow:hidden}
+.sidebar{width:224px;flex-shrink:0;background:var(--s1);border-right:1px solid var(--b1);display:flex;flex-direction:column;overflow-y:auto}
+.sb-sec{padding:10px 16px 3px;font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--txd);text-transform:uppercase;margin-top:4px}
+.sb-item{display:flex;align-items:center;gap:9px;padding:7px 16px;cursor:pointer;font-size:12px;color:var(--txm);border-left:2px solid transparent;transition:all .12s;user-select:none}
+.sb-item:hover{color:var(--tx);background:rgba(255,255,255,.02)}
+.sb-item.active{color:var(--ac);border-left-color:var(--ac);background:var(--ac2)}
+.sb-icon{width:13px;font-size:11px;flex-shrink:0;opacity:.6}
+.sb-badge{margin-left:auto;font-family:var(--mono);font-size:9px;padding:1px 5px;border-radius:10px;background:var(--critb);color:var(--crit)}
+.sb-badge.ok{background:var(--safeb);color:var(--safe)}
+.sb-agents{padding:3px 8px}
+.sb-agent{display:flex;align-items:center;gap:7px;padding:5px 8px;border-radius:var(--r);cursor:pointer;transition:background .12s}
+.sb-agent:hover{background:var(--s2)}
+.sb-agent input{accent-color:var(--ac);cursor:pointer;flex-shrink:0}
+.ag-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.ag-nm{font-size:11px;color:var(--txm);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ag-vr{font-family:var(--mono);font-size:10px}
+.sb-foot{margin-top:auto;padding:12px 16px;border-top:1px solid var(--b1);font-family:var(--mono);font-size:9px;color:var(--txd);line-height:2}
+.content{flex:1;overflow-y:auto;padding:18px 20px}
+
+/* ── VIEWS ── */
+.view{display:none}
+.view.active{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.view.active>*{animation:fi .25s ease both}
+.view.active>*:nth-child(2){animation-delay:.04s}
+.view.active>*:nth-child(3){animation-delay:.08s}
+.view.active>*:nth-child(4){animation-delay:.12s}
+
+/* ── ELEMENTS ── */
+.slabel{font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--txd);text-transform:uppercase;display:flex;align-items:center;gap:8px;margin-bottom:11px}
+.slabel::after{content:'';flex:1;height:1px;background:var(--b1)}
+.card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r2);padding:14px}
+.card-p0{padding:0;overflow:hidden}
+.sbadge{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.1em;padding:2px 7px;border-radius:2px}
+.bs{background:var(--safeb);color:var(--safe);border:1px solid rgba(0,230,118,.18)}
+.bw{background:var(--watchb);color:var(--watch);border:1px solid rgba(255,179,0,.18)}
+.ba{background:var(--alertb);color:var(--alert);border:1px solid rgba(255,98,0,.18)}
+.bc{background:var(--critb);color:var(--crit);border:1px solid rgba(245,0,60,.18);animation:bk 1.3s infinite}
+@keyframes bk{0%,100%{opacity:1}50%{opacity:.5}}
+.chain-badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.07em;padding:3px 9px;border-radius:2px;border:1px solid}
+.cok{color:var(--safe);border-color:rgba(0,230,118,.2);background:var(--safeb)}
+.cfrk{color:var(--crit);border-color:rgba(245,0,60,.2);background:var(--critb);animation:bk 1.3s infinite}
+.crot{color:var(--watch);border-color:rgba(255,179,0,.2);background:var(--watchb)}
+.sbar{display:flex;align-items:center;gap:7px}
+.sbt{flex:1;height:3px;background:var(--b1);border-radius:2px;overflow:hidden}
+.sbf{height:100%;border-radius:2px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+.sbn{font-family:var(--mono);font-size:10px;width:34px;text-align:right}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{padding:8px 12px;text-align:left;font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--txd);text-transform:uppercase;border-bottom:1px solid var(--b1);background:var(--s2);white-space:nowrap}
+.tbl tbody tr{border-bottom:1px solid var(--b1);cursor:pointer;transition:background .1s}
+.tbl tbody tr:last-child{border-bottom:none}
+.tbl tbody tr:hover{background:rgba(0,200,224,.04)}
+.tbl tbody tr.sel{background:rgba(0,200,224,.06)}
+.tbl td{padding:10px 12px;vertical-align:middle}
+.tabs{display:flex;border-bottom:1px solid var(--b1);margin-bottom:14px}
+.tab{padding:8px 14px;font-family:var(--mono);font-size:10px;letter-spacing:.06em;cursor:pointer;color:var(--txd);border-bottom:2px solid transparent;transition:all .12s}
+.tab:hover{color:var(--tx)}
+.tab.active{color:var(--ac);border-bottom-color:var(--ac)}
+.tp{display:none}
+.tp.active{display:block}
+.arow{display:grid;grid-template-columns:90px 130px 1fr auto;align-items:center;gap:12px;padding:9px 14px;border-bottom:1px solid var(--b1);transition:background .1s}
+.arow:hover{background:rgba(255,255,255,.015)}
+.arow:last-child{border-bottom:none}
+.ar-sev{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.08em}
+.ar-ag{font-size:11px;color:var(--txm)}
+.ar-msg{font-size:11px}
+.ar-t{font-family:var(--mono);font-size:9px;color:var(--txd);white-space:nowrap}
+.narr{border-left:3px solid var(--alert);border-radius:var(--r2);background:var(--s2);border:1px solid var(--b1);padding:14px 16px;margin-bottom:10px}
+.narr.s{border-left-color:var(--safe)}.narr.w{border-left-color:var(--watch)}
+.narr.a{border-left-color:var(--alert)}.narr.c{border-left-color:var(--crit)}
+.narr-why{font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:var(--txd);text-transform:uppercase;margin-bottom:8px}
+.narr-title{font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.narr-items{display:flex;flex-direction:column;gap:6px}
+.narr-item{display:flex;align-items:flex-start;gap:9px;font-size:11px}
+.narr-bul{font-family:var(--mono);font-size:9px;font-weight:700;padding:1px 5px;border-radius:2px;flex-shrink:0;margin-top:1px}
+.narr-txt{color:var(--txm);line-height:1.5}
+.narr-txt strong{color:var(--tx);font-weight:500}
+.narr-txt code{font-family:var(--mono);font-size:10px;color:var(--ac)}
+.a2c-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.a2c-card{background:var(--s2);border:1px solid var(--b1);border-radius:var(--r);padding:11px;position:relative;overflow:hidden}
+.a2c-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.a2c-card.n::before{background:var(--b2)}.a2c-card.l::before{background:var(--watch);opacity:.4}
+.a2c-card.m::before{background:var(--watch)}.a2c-card.h::before{background:var(--alert)}.a2c-card.c::before{background:var(--crit)}
+.a2c-hdr{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.a2c-ico{font-size:13px}.a2c-nm{font-size:11px;color:var(--txm);flex:1}
+.a2c-sc{font-family:var(--mono);font-size:12px;font-weight:700}
+.a2c-sv{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.08em}
+.a2c-dt{font-size:10px;color:var(--txd);line-height:1.5;margin-top:5px}
+.tl-wrap{background:var(--s2);border:1px solid var(--b1);border-radius:var(--r2);padding:12px 16px}
+.tl-legend{display:flex;gap:16px;margin-top:10px;flex-wrap:wrap;font-family:var(--mono);font-size:9px;color:var(--txd)}
+.tl-li{display:flex;align-items:center;gap:5px}
+.tl-dot{width:10px;height:3px;border-radius:1px}
+
+/* ── EXPORT ── */
+.exp-search{
+  display:flex;gap:8px;margin-bottom:14px;
+}
+.exp-sinput{
+  flex:1;background:var(--s2);border:1px solid var(--b1);border-radius:var(--r);
+  color:var(--tx);font-family:var(--sans);font-size:12px;padding:7px 12px;outline:none;
+  transition:border-color .15s;
+}
+.exp-sinput:focus{border-color:var(--ac)}
+.exp-sinput::placeholder{color:var(--txd)}
+.exp-fsel{
+  background:var(--s2);border:1px solid var(--b1);color:var(--txm);
+  padding:7px 10px;font-family:var(--mono);font-size:9px;border-radius:var(--r);outline:none;
+}
+.exp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.exp-card{background:var(--s2);border:1px solid var(--b1);border-radius:var(--r2);padding:14px;display:flex;flex-direction:column;gap:10px;transition:border-color .15s,background .15s;cursor:pointer}
+.exp-card:hover{border-color:var(--b2);background:var(--s3)}
+.exp-icon{font-size:20px;line-height:1}
+.exp-name{font-size:12px;font-weight:600}
+.exp-desc{font-size:11px;color:var(--txm);line-height:1.4}
+.exp-tag{font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:2px;border:1px solid var(--b2);color:var(--txm);align-self:flex-start}
+.exp-warn{font-family:var(--mono);font-size:9px;color:var(--watch);background:var(--watchb);border:1px solid rgba(255,179,0,.15);border-radius:2px;padding:3px 7px;align-self:flex-start}
+.exp-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:7px 0;border-radius:var(--r);font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.06em;border:1px solid var(--b2);color:var(--txm);background:transparent;cursor:pointer;transition:all .15s}
+.exp-btn:hover{border-color:var(--ac);color:var(--ac);background:var(--ac2)}
+.exp-btn.primary{border-color:var(--ac);color:var(--ac);background:var(--ac2)}
+.exp-btn.primary:hover{background:rgba(0,200,224,.2)}
+
+/* ── WIZARD ── */
+.wizard-overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(6,8,11,.92);align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.wizard-overlay.open{display:flex}
+.wizard-box{background:var(--s1);border:1px solid var(--b2);border-radius:var(--r2);width:640px;max-height:90vh;overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,.6)}
+.wiz-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--b1)}
+.wiz-title{font-size:14px;font-weight:600}
+.wiz-close{width:28px;height:28px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--txd);font-size:16px;border:1px solid var(--b1);background:transparent;transition:all .12s}
+.wiz-close:hover{color:var(--tx);border-color:var(--b2)}
+.wiz-steps{display:flex;align-items:center;padding:12px 20px;border-bottom:1px solid var(--b1)}
+.wiz-step{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10px;color:var(--txd);padding:0 10px}
+.wiz-step:first-child{padding-left:0}
+.wiz-step-n{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;border:1px solid var(--b2);color:var(--txd);transition:all .2s}
+.wiz-step.active .wiz-step-n{background:var(--ac);color:var(--bg);border-color:var(--ac)}
+.wiz-step.done .wiz-step-n{background:var(--safe);color:var(--bg);border-color:var(--safe)}
+.wiz-step.active{color:var(--tx)}
+.wiz-step-sep{flex:1;height:1px;background:var(--b1);margin:0 4px}
+.wiz-body{padding:20px}
+.wiz-pane{display:none}
+.wiz-pane.active{display:block}
+.fgroup{margin-bottom:14px}
+.flabel{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--txd);text-transform:uppercase;margin-bottom:6px;display:block}
+.finput{width:100%;background:var(--s2);border:1px solid var(--b1);border-radius:var(--r);color:var(--tx);font-family:var(--sans);font-size:13px;padding:9px 12px;transition:border-color .15s;outline:none}
+.finput:focus{border-color:var(--ac)}
+.finput::placeholder{color:var(--txd)}
+.ftier{display:flex;gap:8px;margin-bottom:4px}
+.ftier-btn{flex:1;padding:10px;border-radius:var(--r);border:1px solid var(--b1);background:var(--s2);color:var(--txm);cursor:pointer;font-size:12px;text-align:center;transition:all .15s}
+.ftier-btn.sel{border-color:var(--ac);background:var(--ac2);color:var(--ac)}
+.ftier-name{font-weight:600;margin-bottom:2px}
+.ftier-desc{font-size:10px;color:var(--txd)}
+.bridge-cat-title{font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:var(--txd);text-transform:uppercase;margin-bottom:8px}
+.bridge-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.bridge-card{background:var(--s2);border:1px solid var(--b1);border-radius:var(--r);padding:11px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;gap:5px}
+.bridge-card:hover{border-color:var(--b2);background:var(--s3)}
+.bridge-card.sel{border-color:var(--ac);background:var(--ac2)}
+.bridge-logo{font-size:18px;line-height:1}
+.bridge-name{font-size:12px;font-weight:600}
+.bridge-pip{font-family:var(--mono);font-size:9px;color:var(--txd)}
+.snippet-code{background:var(--bg);border:1px solid var(--b1);border-radius:var(--r);padding:12px;font-family:var(--mono);font-size:10px;color:var(--txm);line-height:1.8;white-space:pre;overflow-x:auto}
+.snippet-kw{color:var(--ac)}.snippet-str{color:var(--safe)}.snippet-cm{color:var(--txd)}
+.copy-btn{font-family:var(--mono);font-size:9px;padding:3px 8px;border-radius:var(--r);border:1px solid var(--b2);color:var(--txm);background:transparent;cursor:pointer;transition:all .12s}
+.copy-btn:hover{border-color:var(--ac);color:var(--ac)}
+.wiz-footer{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-top:1px solid var(--b1)}
+.wiz-btn{padding:8px 18px;border-radius:var(--r);font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.06em;cursor:pointer;transition:all .15s;border:1px solid}
+.wiz-btn-ghost{border-color:var(--b2);color:var(--txm);background:transparent}
+.wiz-btn-ghost:hover{color:var(--tx)}
+.wiz-btn-primary{border-color:var(--ac);color:var(--bg);background:var(--ac)}
+.wiz-btn-primary:hover{background:rgba(0,200,224,.85)}
+
+/* ── STAR GRAPH ── */
+.star-wrap{
+  background:var(--s2);border:1px solid var(--b1);border-radius:var(--r2);
+  position:relative;overflow:hidden;
+}
+.star-controls{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;border-bottom:1px solid var(--b1);
+  font-family:var(--mono);font-size:9px;color:var(--txd);
+}
+.star-legend{display:flex;gap:12px;flex-wrap:wrap}
+.star-li{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;color:var(--txd)}
+.star-dot{width:8px;height:8px;border-radius:50%}
+.star-canvas{display:block;width:100%;cursor:grab}
+.star-canvas:active{cursor:grabbing}
+.star-info{
+  position:absolute;bottom:12px;right:12px;
+  background:var(--s1);border:1px solid var(--b2);border-radius:var(--r);
+  padding:10px 12px;font-family:var(--mono);font-size:10px;
+  display:none;max-width:200px;line-height:1.8;
+}
+.star-info.show{display:block}
+
+/* ── STAMP PANEL ── */
+.stamp-panel{
+  position:fixed; top:0; right:-420px; width:400px; height:100vh;
+  background:var(--s1); border-left:1px solid var(--b2);
+  z-index:400; display:flex; flex-direction:column;
+  transition:right .28s cubic-bezier(.4,0,.2,1);
+  box-shadow:-12px 0 40px rgba(0,0,0,.5);
+}
+.stamp-panel.open{ right:0; }
+.sp-header{
+  display:flex; align-items:center; gap:10px;
+  padding:14px 16px; border-bottom:1px solid var(--b1); flex-shrink:0;
+}
+.sp-title{ font-size:13px; font-weight:600; flex:1; font-family:var(--mono); }
+.sp-agent-dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.sp-close{
+  width:26px; height:26px; border-radius:var(--r); border:1px solid var(--b1);
+  background:transparent; color:var(--txd); cursor:pointer; font-size:14px;
+  display:flex; align-items:center; justify-content:center; transition:all .12s;
+}
+.sp-close:hover{ color:var(--tx); border-color:var(--b2); }
+.sp-meta{
+  padding:10px 16px; border-bottom:1px solid var(--b1); flex-shrink:0;
+  display:flex; gap:14px; flex-wrap:wrap;
+}
+.sp-meta-item{ display:flex; flex-direction:column; gap:2px; }
+.sp-meta-label{ font-family:var(--mono); font-size:8px; letter-spacing:.1em; color:var(--txd); text-transform:uppercase; }
+.sp-meta-value{ font-family:var(--mono); font-size:12px; font-weight:700; }
+.sp-filter{
+  padding:8px 16px; border-bottom:1px solid var(--b1); flex-shrink:0;
+  display:flex; gap:6px; align-items:center;
+}
+.sp-search{
+  flex:1; background:var(--s2); border:1px solid var(--b1); border-radius:var(--r);
+  color:var(--tx); font-family:var(--mono); font-size:10px; padding:5px 9px; outline:none;
+}
+.sp-search:focus{ border-color:var(--ac); }
+.sp-search::placeholder{ color:var(--txd); }
+.sp-list{ flex:1; overflow-y:auto; padding:8px 0; }
+.sp-empty{
+  padding:40px 20px; text-align:center;
+  font-family:var(--mono); font-size:11px; color:var(--txd);
+}
+.stamp-row{
+  padding:10px 16px; border-bottom:1px solid rgba(255,255,255,.03);
+  transition:background .1s; cursor:default;
+}
+.stamp-row:hover{ background:rgba(0,200,224,.03); }
+.stamp-row-header{
+  display:flex; align-items:center; gap:8px; margin-bottom:5px;
+}
+.stamp-seq{ font-family:var(--mono); font-size:9px; color:var(--txd); width:28px; flex-shrink:0; }
+.stamp-type{
+  font-family:var(--mono); font-size:9px; font-weight:700; letter-spacing:.08em;
+  padding:1px 6px; border-radius:2px; flex-shrink:0;
+}
+.stamp-time{ font-family:var(--mono); font-size:9px; color:var(--txd); margin-left:auto; }
+.stamp-sig{
+  display:inline-flex; align-items:center; gap:3px;
+  font-family:var(--mono); font-size:8px; font-weight:700;
+  padding:1px 5px; border-radius:2px; flex-shrink:0;
+}
+.sig-ok{ background:var(--safeb); color:var(--safe); border:1px solid rgba(0,230,118,.2); }
+.sig-bad{ background:var(--critb); color:var(--crit); border:1px solid rgba(245,0,60,.2); }
+.stamp-payload{
+  font-family:var(--mono); font-size:10px; color:var(--txm);
+  background:var(--s2); border:1px solid var(--b1); border-radius:var(--r);
+  padding:7px 10px; line-height:1.6; word-break:break-all; margin-bottom:5px;
+}
+.stamp-hashes{ display:flex; flex-direction:column; gap:2px; }
+.stamp-hash-row{ display:flex; gap:6px; align-items:center; }
+.stamp-hash-label{ font-family:var(--mono); font-size:8px; color:var(--txd); width:38px; flex-shrink:0; }
+.stamp-hash-val{
+  font-family:var(--mono); font-size:9px; color:var(--txd);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;
+}
+.stamp-hash-val:hover{ color:var(--txm); }
+
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
+
+.toast{position:fixed;bottom:20px;right:20px;z-index:900;background:var(--s1);border:1px solid var(--b2);border-radius:var(--r2);padding:10px 16px;font-family:var(--mono);font-size:11px;box-shadow:0 8px 24px rgba(0,0,0,.4);transform:translateY(60px);opacity:0;transition:all .25s cubic-bezier(.34,1.56,.64,1);pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ══ TOPBAR ══ -->
+<header class="topbar">
+  <div class="logo-zone">
+    <div class="logo-mark">LOGO</div>
+    <div><div class="logo-name">VIGIL</div><div class="logo-by">by PiQrypt</div></div>
+  </div>
+  <div class="topbar-mid">
+    <span class="topbar-tag">Continuous Identity Monitoring for Autonomous Agents</span>
+    <div class="arch-pill">
+      <span class="arch-step lit">IDENTITY</span><span class="arch-arr">→</span>
+      <span class="arch-step lit">CONTINUITY</span><span class="arch-arr">→</span>
+      <span class="arch-step lit">TRUST</span><span class="arch-arr">→</span>
+      <span class="arch-step lit">VIGIL</span><span class="arch-arr">→</span>
+      <span class="arch-step">RISK</span>
+    </div>
+    <span id="top-clock" style="font-family:var(--mono);font-size:10px;color:var(--txd);margin-left:auto"></span>
+    <span id="top-last-alert" style="display:none;align-items:center;background:rgba(245,0,60,.12);border:1px solid rgba(245,0,60,.3);border-radius:4px;padding:2px 8px;font-size:9px;color:#ff4d6d;font-family:var(--mono);margin-left:8px;cursor:pointer" onclick="sv('alerts',null)"></span>
+  </div>
+  <div class="topbar-right">
+    <div class="tstat"><div class="tstat-v" id="tv-vrs" style="color:var(--watch)">—</div><div class="tstat-l">GLOBAL VRS</div></div>
+    <div class="tstat"><div class="tstat-v" id="tv-st" style="color:var(--watch)">—</div><div class="tstat-l">INSTALL.</div></div>
+    <div class="tstat"><div class="tstat-v" id="tv-ag">0</div><div class="tstat-l">AGENTS</div></div>
+    <div class="tstat"><div class="tstat-v" id="tv-al" style="color:var(--txd)">—</div><div class="tstat-l">ALERTS</div></div>
+    <div class="tstat"><div class="tstat-v" id="tv-ev" style="color:var(--ac)">—</div><div class="tstat-l">EVENTS/MO</div></div>
+    <div class="tstat" style="border-right:none"><div class="tstat-v" id="tv-tier" style="color:var(--txm);font-size:11px">—</div><div class="tstat-l">TIER</div></div>
+    <div class="live-pill" id="live-pill" title=""><div class="live-d"></div>LIVE</div>
+  </div>
+</header>
+
+<div class="body">
+<!-- ══ SIDEBAR ══ -->
+<nav class="sidebar">
+  <div class="sb-sec">Views</div>
+  <div class="sb-item active" onclick="sv('overview',this)"><span class="sb-icon">◈</span>Overview</div>
+  <div class="sb-item" onclick="sv('agents',this)"><span class="sb-icon">⊞</span>All Agents</div>
+  <div class="sb-item" onclick="sv('star',this)"><span class="sb-icon">✦</span>Agent Network</div>
+  <div class="sb-item" onclick="sv('alerts',this)"><span class="sb-icon">⚑</span>Alerts<span class="sb-badge" id="sb-aln">0</span></div>
+  <div class="sb-item" onclick="sv('timeline',this)"><span class="sb-icon">▬</span>SOC Timeline</div>
+  <div class="sb-item" onclick="sv('export',this)"><span class="sb-icon">⬡</span>Export</div>
+  <div class="sb-sec" style="margin-top:6px">Agents</div>
+  <div class="sb-agents" id="sb-agents"></div>
+  <div style="padding:10px 12px 6px">
+    <button onclick="openWizard()" style="width:100%;padding:8px;border-radius:var(--r);font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.06em;border:1px solid var(--ac);color:var(--ac);background:var(--ac2);cursor:pointer;transition:background .15s;display:flex;align-items:center;justify-content:center;gap:7px"
+      onmouseover="this.style.background='rgba(0,200,224,.18)'" onmouseout="this.style.background='var(--ac2)'">+ NEW AGENT</button>
+  </div>
+  <div class="sb-foot">AISS v1.1 · PiQrypt v1.7.0<br><span id="sb-ref" style="color:var(--txd)">Refreshed just now</span></div>
+</nav>
+
+<!-- ══ CONTENT ══ -->
+<main class="content">
+
+<!-- OVERVIEW -->
+<div class="view active" id="view-overview">
+  <div style="display:grid;grid-template-columns:188px 1fr 200px;gap:12px;margin-bottom:14px">
+    <div class="card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px">
+      <div style="font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--txd)">VIGIL RISK SCORE</div>
+      <svg width="130" height="72" viewBox="0 0 130 72">
+        <path d="M 13 66 A 52 52 0 0 1 117 66" fill="none" stroke="var(--b1)" stroke-width="9" stroke-linecap="round"/>
+        <path id="vrs-arc" d="M 13 66 A 52 52 0 0 1 117 66" fill="none" stroke="var(--watch)" stroke-width="9" stroke-linecap="round" stroke-dasharray="163" stroke-dashoffset="163" style="transition:stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1),stroke .4s"/>
+        <text id="vrs-txt" x="65" y="62" text-anchor="middle" font-family="'JetBrains Mono'" font-size="21" font-weight="700" fill="var(--watch)">0.28</text>
+      </svg>
+      <div class="sbadge bw" id="vrs-badge">● WATCH</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+        <div class="card" style="border-left:2px solid var(--crit);text-align:center;padding:10px"><div style="font-family:var(--mono);font-size:24px;font-weight:700;color:var(--crit)" id="sc">0</div><div style="font-size:9px;color:var(--txd);letter-spacing:.06em">CRITICAL</div></div>
+        <div class="card" style="border-left:2px solid var(--alert);text-align:center;padding:10px"><div style="font-family:var(--mono);font-size:24px;font-weight:700;color:var(--alert)" id="sa">1</div><div style="font-size:9px;color:var(--txd);letter-spacing:.06em">ALERT</div></div>
+        <div class="card" style="border-left:2px solid var(--watch);text-align:center;padding:10px"><div style="font-family:var(--mono);font-size:24px;font-weight:700;color:var(--watch)" id="sw">1</div><div style="font-size:9px;color:var(--txd);letter-spacing:.06em">WATCH</div></div>
+        <div class="card" style="border-left:2px solid var(--safe);text-align:center;padding:10px"><div style="font-family:var(--mono);font-size:24px;font-weight:700;color:var(--safe)" id="ss">2</div><div style="font-size:9px;color:var(--txd);letter-spacing:.06em">SAFE</div></div>
+      </div>
+      <div id="mini-agents" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px"></div>
+    </div>
+    <div class="card" style="display:flex;flex-direction:column;gap:9px">
+      <div style="font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--txd)">CHAIN INTEGRITY</div>
+      <div id="chain-badges" style="display:flex;flex-direction:column;gap:7px"></div>
+      <div style="margin-top:auto;padding-top:8px;border-top:1px solid var(--b1);font-size:10px;color:var(--txd)">Powered by <span style="color:var(--ac);font-family:var(--mono)">AISS v1.1</span></div>
+    </div>
+  </div>
+  <div class="slabel">Risk Narrative — Root Cause</div>
+  <div id="risk-narr" style="margin-bottom:14px"></div>
+  <div class="slabel">A2C — Agent-to-Agent Collusion Risk</div>
+  <div id="a2c-ov" style="margin-bottom:14px"></div>
+  <div class="slabel">VRS Trend — 30 days</div>
+  <div id="sparks" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:9px;margin-bottom:14px"></div>
+  <div class="slabel">Active Alerts</div>
+  <div class="card card-p0" id="ov-alerts"></div>
+</div>
+
+<!-- ALL AGENTS -->
+<div class="view" id="view-agents">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px">
+    <div class="slabel" style="margin-bottom:0">All Agents</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <label style="font-family:var(--mono);font-size:9px;color:var(--txd);display:flex;align-items:center;gap:5px;cursor:pointer">
+        <input type="checkbox" id="sel-all" onchange="selAll(this)" style="accent-color:var(--ac)"> ALL
+      </label>
+      <span style="font-family:var(--mono);font-size:9px;color:var(--txd)" id="sel-info"></span>
+    </div>
+  </div>
+  <div class="card card-p0" style="margin-bottom:14px">
+    <table class="tbl"><thead><tr>
+      <th style="width:28px"></th><th>Agent</th><th>State</th><th>VRS</th>
+      <th>Trust Score</th><th>TSI</th><th>A2C</th><th>Chain</th><th>Alerts</th><th>Last seen</th>
+    </tr></thead><tbody id="tbl-body"></tbody></table>
+  </div>
+  <div id="agent-detail"></div>
+</div>
+
+<!-- STAR GRAPH -->
+<div class="view" id="view-star">
+  <div class="slabel">Agent Network — Relational View</div>
+  <div class="star-wrap">
+    <div class="star-controls">
+      <span>Click an agent to inspect · Edge thickness = A2C correlation · Color = risk level</span>
+      <div style="flex:1"></div>
+      <div class="star-legend">
+        <div class="star-li"><div class="star-dot" style="background:var(--safe)"></div>SAFE</div>
+        <div class="star-li"><div class="star-dot" style="background:var(--watch)"></div>WATCH</div>
+        <div class="star-li"><div class="star-dot" style="background:var(--alert)"></div>ALERT</div>
+        <div class="star-li"><div class="star-dot" style="background:var(--crit)"></div>CRITICAL</div>
+      </div>
+      <select id="star-center" onchange="drawStar()" style="background:var(--s2);border:1px solid var(--b1);color:var(--txm);padding:3px 8px;font-family:var(--mono);font-size:9px;border-radius:var(--r);outline:none;margin-left:10px">
+        <option value="">All agents</option>
+      </select>
+    </div>
+    <canvas id="star-canvas" class="star-canvas" height="440"></canvas>
+    <div class="star-info" id="star-info"></div>
+  </div>
+  <div style="margin-top:10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px" id="star-agent-cards"></div>
+</div>
+
+<!-- ALERTS -->
+<div class="view" id="view-alerts">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:11px">
+    <div class="slabel" style="margin-bottom:0;flex:1">Alert Journal</div>
+    <select id="f-sev" onchange="renderAV()" class="exp-fsel"><option value="">ALL</option><option>CRITICAL</option><option>HIGH</option><option>ALERT</option><option>MEDIUM</option><option>WATCH</option></select>
+    <select id="f-ag" onchange="renderAV()" class="exp-fsel"><option value="">ALL AGENTS</option></select>
+  </div>
+  <div class="card card-p0"><div id="alerts-list"></div></div>
+</div>
+
+<!-- SOC TIMELINE -->
+<div class="view" id="view-timeline">
+  <div class="slabel">SOC Event Timeline — All Agents</div>
+  <div id="soc-wrap"></div>
+</div>
+
+<!-- EXPORT -->
+<div class="view" id="view-export">
+  <div class="slabel">Export — Memory & Certification</div>
+
+  <!-- Search bar -->
+  <div class="exp-search">
+    <input class="exp-sinput" id="exp-search" placeholder="Search by agent name, type or date…" oninput="filterExports()">
+    <select class="exp-fsel" id="exp-type" onchange="filterExports()">
+      <option value="">All types</option>
+      <option value="pqz-cert">.pqz Certified</option>
+      <option value="pqz-memory">.pqz Memory</option>
+      <option value="pdf">PDF Report</option>
+    </select>
+    <select class="exp-fsel" id="exp-tier" onchange="filterExports()">
+      <option value="">All tiers</option>
+      <option value="Pro">Pro</option>
+      <option value="Free">Free</option>
+    </select>
+  </div>
+
+  <!-- Per-agent -->
+  <div id="exp-agent-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px"></div>
+
+  <!-- Global -->
+  <div class="slabel">Global Export — All Agents</div>
+  <div class="exp-grid">
+    <div class="exp-card" onclick="doExport('all','pqz-cert')">
+      <div class="exp-icon"></div>
+      <div class="exp-name">Full Installation — Certified</div>
+      <div class="exp-desc">All agents · signed events · TSA RFC 3161 · hash chains verified</div>
+      <div class="exp-tag">.pqz CERTIFIED</div>
+      <button class="exp-btn primary">↓ EXPORT ALL .pqz</button>
+    </div>
+    <div class="exp-card" onclick="doExport('all','pqz-memory')">
+      <div class="exp-icon"></div>
+      <div class="exp-name">Full Memory Archive</div>
+      <div class="exp-desc">All agents · complete history · self-consultable · portable · migration-ready</div>
+      <div class="exp-tag">.pqz MEMORY</div>
+      <button class="exp-btn">↓ EXPORT ALL MEMORY</button>
+    </div>
+    <div class="exp-card" onclick="doExport('all','pdf')">
+      <div class="exp-icon"></div>
+      <div class="exp-name">Audit Report PDF</div>
+      <div class="exp-desc">All agents · VRS history · alerts · chain status · readable format</div>
+      <div class="exp-tag">PDF REPORT</div>
+      <div class="exp-warn">⚠ Export local — non certifié PiQrypt</div>
+      <button class="exp-btn">↓ EXPORT REPORT</button>
+    </div>
+  </div>
+
+  <div style="margin-top:12px;padding:11px 14px;background:var(--s2);border:1px solid var(--b1);border-radius:var(--r2);font-size:11px;color:var(--txm);line-height:1.7">
+    <div style="display:flex;gap:16px;flex-wrap:wrap">
+      <div><span style="font-family:var(--mono);color:var(--ac);font-size:9px"> .pqz CERTIFIED</span><span style="color:var(--txd)"> · Valeur probante · TSA RFC 3161 · signature Ed25519 · utilisable en audit légal</span></div>
+      <div><span style="font-family:var(--mono);color:var(--txm);font-size:9px"> .pqz MEMORY</span><span style="color:var(--txd)"> · L'agent emporte sa mémoire · self-consultable · portable · migration système</span></div>
+      <div><span style="font-family:var(--mono);color:var(--watch);font-size:9px"> PDF</span><span style="color:var(--txd)"> · Rapport lisible local · non certifié · pour communication interne uniquement</span></div>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+</div>
+
+<!-- WIZARD -->
+<div class="wizard-overlay" id="wizard">
+<div class="wizard-box">
+  <div class="wiz-header">
+    <div class="wiz-title">New Agent — Setup Wizard</div>
+    <button class="wiz-close" onclick="closeWizard()">✕</button>
+  </div>
+  <div class="wiz-steps">
+    <div class="wiz-step active" id="ws1"><div class="wiz-step-n">1</div>Identity</div>
+    <div class="wiz-step-sep"></div>
+    <div class="wiz-step" id="ws2"><div class="wiz-step-n">2</div>Bridge</div>
+    <div class="wiz-step-sep"></div>
+    <div class="wiz-step" id="ws3"><div class="wiz-step-n">3</div>Install</div>
+  </div>
+  <div class="wiz-body">
+    <div class="wiz-pane active" id="wp1">
+      <div class="fgroup">
+        <label class="flabel">Agent Name</label>
+        <input class="finput" id="w-name" placeholder="e.g. trading_bot_A" oninput="updateSnippet()">
+      </div>
+      <div class="fgroup">
+        <label class="flabel">Tier</label>
+        <div class="ftier">
+          <div class="ftier-btn sel" id="tier-free" onclick="setTier('free')"><div class="ftier-name">Free</div><div class="ftier-desc">Basic identity · local events · no encryption</div></div>
+          <div class="ftier-btn" id="tier-pro" onclick="setTier('pro')"><div class="ftier-name">Pro ⭐</div><div class="ftier-desc">Encrypted keys · TSA anchors · Vigil monitoring</div></div>
+        </div>
+      </div>
+      <div class="fgroup" id="passphrase-group" style="display:none">
+        <label class="flabel">Passphrase (Pro — encrypts private key)</label>
+        <input class="finput" id="w-pass" type="password" placeholder="Minimum 12 characters">
+      </div>
+    </div>
+    <div class="wiz-pane" id="wp2">
+      <div class="bridge-cat-title">LLM Multi-Agent Frameworks</div>
+      <div class="bridge-grid">
+        <div class="bridge-card sel" onclick="selBridge('crewai',this)"><div class="bridge-logo"></div><div class="bridge-name">CrewAI</div><div class="bridge-pip">piqrypt-crewai</div></div>
+        <div class="bridge-card" onclick="selBridge('autogen',this)"><div class="bridge-logo"></div><div class="bridge-name">AutoGen</div><div class="bridge-pip">piqrypt-autogen</div></div>
+        <div class="bridge-card" onclick="selBridge('langchain',this)"><div class="bridge-logo"></div><div class="bridge-name">LangChain</div><div class="bridge-pip">piqrypt-langchain</div></div>
+        <div class="bridge-card" onclick="selBridge('ollama',this)"><div class="bridge-logo"></div><div class="bridge-name">Ollama</div><div class="bridge-pip">piqrypt-ollama</div></div>
+      </div>
+      <div class="bridge-cat-title">Interfaces & Protocoles</div>
+      <div class="bridge-grid">
+        <div class="bridge-card" onclick="selBridge('mcp',this)"><div class="bridge-logo">⚡</div><div class="bridge-name">MCP</div><div class="bridge-pip">piqrypt-mcp</div></div>
+        <div class="bridge-card" onclick="selBridge('openclaw',this)"><div class="bridge-logo"></div><div class="bridge-name">OpenClaw</div><div class="bridge-pip">piqrypt-openclaw</div></div>
+        <div class="bridge-card" onclick="selBridge('session',this)"><div class="bridge-logo"></div><div class="bridge-name">Session</div><div class="bridge-pip">piqrypt-session</div></div>
+      </div>
+      <div class="bridge-cat-title">Edge & Robotique</div>
+      <div class="bridge-grid">
+        <div class="bridge-card" onclick="selBridge('ros',this)"><div class="bridge-logo"></div><div class="bridge-name">ROS2</div><div class="bridge-pip">piqrypt-ros</div></div>
+        <div class="bridge-card" onclick="selBridge('rpi',this)"><div class="bridge-logo"></div><div class="bridge-name">Raspberry Pi</div><div class="bridge-pip">piqrypt-rpi</div></div>
+      </div>
+    </div>
+    <div class="wiz-pane" id="wp3">
+      <div style="margin-bottom:14px">
+        <div class="flabel">Install Command</div>
+        <div style="background:var(--s2);border:1px solid var(--b1);border-radius:var(--r);padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span id="install-cmd" style="font-family:var(--mono);font-size:11px;color:var(--ac)">pip install piqrypt piqrypt-crewai</span>
+          <button class="copy-btn" onclick="copyInstall()">COPY</button>
+        </div>
+      </div>
+      <div style="margin-bottom:14px">
+        <div class="flabel" style="display:flex;align-items:center;justify-content:space-between">
+          Integration Snippet
+          <button class="copy-btn" onclick="copySnippet()">COPY SNIPPET</button>
+        </div>
+        <div class="snippet-code" id="code-snippet"></div>
+      </div>
+      <div style="padding:10px 12px;background:var(--safeb);border:1px solid rgba(0,230,118,.15);border-radius:var(--r);font-size:11px;color:var(--txm)">
+        ✅ Identity will be created at <code id="identity-path" style="font-family:var(--mono);font-size:10px;color:var(--ac)">~/.piqrypt/agents/my_agent/</code>
+      </div>
+    </div>
+  </div>
+  <div class="wiz-footer">
+    <button class="wiz-btn wiz-btn-ghost" id="wiz-back" onclick="wizBack()" style="visibility:hidden">← Back</button>
+    <div style="font-family:var(--mono);font-size:9px;color:var(--txd)" id="wiz-ind">Step 1 of 3</div>
+    <button class="wiz-btn wiz-btn-primary" id="wiz-next" onclick="wizNext()">Next →</button>
+  </div>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- STAMP PANEL -->
+<div class="stamp-panel" id="stamp-panel">
+  <div class="sp-header">
+    <div class="sp-agent-dot" id="sp-dot"></div>
+    <div class="sp-title" id="sp-title">Agent Stamps</div>
+    <button class="sp-close" onclick="_closeStampPanel()">✕</button>
+  </div>
+  <div class="sp-meta" id="sp-meta"></div>
+  <div class="sp-filter">
+    <input class="sp-search" id="sp-search" placeholder="Filter by type, payload…" oninput="_filterStamps()">
+    <span id="sp-count" style="font-family:var(--mono);font-size:9px;color:var(--txd);white-space:nowrap"></span>
+  </div>
+  <div class="sp-list" id="sp-list">
+    <div class="sp-empty">Click an agent on the network graph<br>to inspect its stamps</div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════
+// DATA
+// ════════════════════════════════════════════
+const N = Date.now()/1000;
+
+let AGENTS = [];
+let ALL_ALERTS = [];
+let TIER_INFO = null;
+// ════════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════════
+function genH(b,n){const r=[];for(let i=30;i>=0;i--){const v=Math.max(0,Math.min(1,b+(Math.random()-.5)*n*2));r.push({t:N-i*86400,v:+v.toFixed(3)})}return r}
+function sc(s){return{SAFE:'#00e676',WATCH:'#ffb300',ALERT:'#ff6200',CRITICAL:'#f5003c',STABLE:'#00e676',UNSTABLE:'#ff6200',NONE:'#3a5570',LOW:'#ffb300',MEDIUM:'#ff6200',HIGH:'#ff6200',OK:'#00e676',stable:'#00e676',watch:'#ffb300',alert:'#ff6200',cluster:'#ff6200',fork:'#f5003c',rotation:'#ffb300',critical:'#f5003c'}[s]||'#3a5570'}
+function scls(s){return{SAFE:'bs',WATCH:'bw',ALERT:'ba',CRITICAL:'bc',STABLE:'bs',UNSTABLE:'ba'}[s]||'bs'}
+function fv(v){return typeof v==='number'?v.toFixed(3):'—'}
+function rt(ts){const s=Math.floor(N-ts);if(s<60)return`${s}s ago`;if(s<3600)return`${Math.floor(s/60)}m ago`;if(s<86400)return`${Math.floor(s/3600)}h ago`;return`${Math.floor(s/86400)}d ago`}
+function sbar(v,col,mw){mw=mw||100;return`<div class="sbar"><div class="sbt" style="max-width:${mw}px"><div class="sbf" style="width:${v*100}%;background:${col}"></div></div><span class="sbn" style="color:${col}">${fv(v)}</span></div>`}
+function sparkPts(vals,W,H){if(vals.length<2)return{l:'',a:''};const xs=vals.map((_,i)=>i/(vals.length-1)*W);const ys=vals.map(v=>H-v*H);const l=`M ${xs.map((x,i)=>`${x},${ys[i]}`).join(' L ')}`;const a=`M ${xs[0]},${H} L ${xs.map((x,i)=>`${x},${ys[i]}`).join(' L ')} L ${xs[xs.length-1]},${H} Z`;return{l,a}}
+function aRow(a){const c=sc(a.sev);return`<div class="arow"><span class="ar-sev" style="color:${c}">${a.sev}</span><span class="ar-ag">${a.ag||''}</span><span class="ar-msg">${a.msg||''}</span><span class="ar-t">${rt(a.t)}</span></div>`}
+
+const sel={};AGENTS.forEach(a=>sel[a.name]=true);
+setInterval(()=>{document.getElementById('top-clock').textContent=new Date().toISOString().replace('T',' ').slice(0,19)+' UTC'},1000);
+
+// ════════════════════════════════════════════
+// OVERVIEW
+// ════════════════════════════════════════════
+function renderOverview(){
+  // Global VRS = max agent VRS (worst case), pas la moyenne
+  const gv=AGENTS.length?Math.max(...AGENTS.map(a=>a.vrs)):0;
+  const vrs=+gv.toFixed(3),state=vrs>=0.75?'CRITICAL':vrs>=0.50?'ALERT':vrs>=0.25?'WATCH':'SAFE',col=sc(state);
+  const arc=document.getElementById('vrs-arc');
+  const AL=163;arc.style.strokeDashoffset=AL;
+  setTimeout(()=>{arc.style.strokeDashoffset=AL-(vrs*AL);arc.style.stroke=col},100);
+  document.getElementById('vrs-txt').textContent=fv(vrs);
+  document.getElementById('vrs-txt').setAttribute('fill',col);
+  document.getElementById('vrs-badge').className=`sbadge ${scls(state)}`;
+  document.getElementById('vrs-badge').textContent=`● ${state}`;
+  ['tv-vrs','tv-st'].forEach((id,i)=>{const el=document.getElementById(id);el.textContent=i?state:fv(vrs);el.style.color=col});
+  document.getElementById('tv-ag').textContent=AGENTS.length;
+  document.getElementById('tv-al').textContent=ALL_ALERTS.length;
+  document.getElementById('sb-aln').textContent=ALL_ALERTS.length;
+
+  // ── KPIs : events/mois + tier + uptime ─────────────────────────────
+  const totalEv = AGENTS.reduce((s,a)=>s+(a.event_count||a.events||0),0);
+  const evEl = document.getElementById('tv-ev');
+  if(evEl){ evEl.textContent = totalEv>1e6?(totalEv/1e6).toFixed(1)+'M':totalEv>1e3?(totalEv/1e3).toFixed(0)+'k':String(totalEv||'—'); }
+  const tierEl = document.getElementById('tv-tier');
+  if(tierEl && TIER_INFO){
+    const tierLabels={free:'FREE',pro:'PRO ⭐',team:'TEAM',business:'BIZ',enterprise:'ENT ◆'};
+    const tierColors={free:'var(--txd)',pro:'var(--ac)',team:'#a78bfa',business:'#f59e0b',enterprise:'#e879f9'};
+    tierEl.textContent = tierLabels[TIER_INFO.tier]||TIER_INFO.tier.toUpperCase();
+    tierEl.style.color = tierColors[TIER_INFO.tier]||'var(--txm)';
+  }
+  // Uptime in live-pill tooltip
+  const pillEl = document.getElementById('live-pill');
+  if(pillEl && _serverStart){ const up=Math.floor((Date.now()-_serverStart)/1000); const h=Math.floor(up/3600),m=Math.floor((up%3600)/60); pillEl.title=`Uptime: ${h}h ${m}m`; }
+
+  // Dernière alerte dans topbar si CRITICAL/HIGH
+  const lastCrit = ALL_ALERTS.filter(a=>['CRITICAL','HIGH'].includes((a.sev||a.severity||'').toUpperCase())).sort((a,b)=>(b.ts||b.timestamp||0)-(a.ts||a.timestamp||0))[0];
+  const alertPill = document.getElementById('top-last-alert');
+  if(alertPill){ alertPill.style.display=lastCrit?'flex':'none'; if(lastCrit) alertPill.textContent='⚡ '+((lastCrit.agent_name||lastCrit.agent||'?').split('_')[0])+' '+((lastCrit.type||lastCrit.event_type||'alert').replace(/_/g,' ')); }
+  document.getElementById('sc').textContent=AGENTS.filter(a=>a.state==='CRITICAL').length;document.getElementById('sa').textContent=AGENTS.filter(a=>a.state==='ALERT').length;
+  document.getElementById('sw').textContent=AGENTS.filter(a=>a.state==='WATCH').length;document.getElementById('ss').textContent=AGENTS.filter(a=>a.state==='SAFE').length;
+
+  document.getElementById('mini-agents').innerHTML=AGENTS.length===0?'<div style="padding:28px 16px;text-align:center;color:var(--txd);font-size:11px"><div style="font-size:24px;margin-bottom:8px">◎</div><div style="color:var(--txm);font-weight:500;margin-bottom:6px">Aucun agent enregistré</div><div style="line-height:1.8">Créez votre premier agent :<br><code style=\"color:var(--ac)\">piqrypt identity create mon_agent</code></div></div>':AGENTS.map(a=>{const c=sc(a.state);return`<div style="background:var(--s2);border:1px solid ${c}22;border-left:2px solid ${c};border-radius:var(--r);padding:8px 10px;cursor:pointer" onclick="openAgent('${a.name}')"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px">${a.name}</span><span class="sbadge ${scls(a.state)}" style="font-size:8px">${a.state}</span></div><div style="display:flex;gap:10px;font-family:var(--mono);font-size:12px;font-weight:700"><div><div style="color:${c}">${fv(a.vrs)}</div><div style="font-size:9px;color:var(--txd);font-weight:400">VRS</div></div><div><div>${fv(a.ts)}</div><div style="font-size:9px;color:var(--txd);font-weight:400">TS</div></div><div style="margin-left:auto;text-align:right;font-size:9px;color:var(--txd);font-weight:400"><div>${a.tier}</div><div>${rt(a.last_seen)}</div></div></div></div>`}).join('');
+
+  document.getElementById('chain-badges').innerHTML=AGENTS.map(a=>{const cls=a.chain_label==='CANONICAL CHAIN'?'cok':a.chain_label==='FORKED IDENTITY'?'cfrk':'crot';const ico=a.chain_label==='CANONICAL CHAIN'?'✔':a.chain_label==='FORKED IDENTITY'?'✖':'⚠';return`<div><div style="font-size:10px;color:var(--txd);margin-bottom:3px">${a.name}</div><span class="chain-badge ${cls}">${ico} ${a.chain_label}</span></div>`}).join('');
+
+  const top2=[...AGENTS].sort((a,b)=>b.vrs-a.vrs).slice(0,2);
+  const sc_={HIGH:'var(--alert)',MEDIUM:'var(--watch)',LOW:'var(--watch)',OK:'var(--safe)',CRITICAL:'var(--crit)'};
+  const sb_={HIGH:'var(--alertb)',MEDIUM:'var(--watchb)',LOW:'var(--watchb)',OK:'var(--safeb)',CRITICAL:'var(--critb)'};
+  document.getElementById('risk-narr').innerHTML=top2.map(a=>`<div class="narr ${a.narr_cls}" style="margin-bottom:8px"><div class="narr-why">WHY IS VRS ${fv(a.vrs)}? — ${a.name}</div><div class="narr-title" style="color:${sc(a.state)}"><span class="sbadge ${scls(a.state)}">● ${a.state}</span>${a.narr_title}</div><div class="narr-items">${a.narr_items.map(ni=>`<div class="narr-item"><span class="narr-bul" style="background:${sb_[ni.s]||'var(--b1)'};color:${sc_[ni.s]||'var(--txd)'}">${ni.s}</span><span class="narr-txt">${ni.t}</span></div>`).join('')}</div></div>`).join('');
+
+  document.getElementById('a2c-ov').innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px">${AGENTS.map(a=>{const worst=Object.entries(a.a2c_ind).reduce((w,[k,v])=>v.score>w.score?{k,...v}:w,{score:0});const c=sc(worst.sev||'NONE');const cls={NONE:'n',LOW:'l',MEDIUM:'m',HIGH:'h',CRITICAL:'c'}[worst.sev||'NONE']||'n';return`<div class="a2c-card ${cls}" style="cursor:pointer" onclick="openAgent('${a.name}')"><div class="a2c-hdr"><span class="a2c-ico">${worst.icon||'·'}</span><span class="a2c-nm">${a.name}</span><span class="a2c-sc" style="color:${c}">${fv(a.a2c)}</span><span class="a2c-sv" style="color:${c}">${worst.sev||'NONE'}</span></div><div class="sbar"><div class="sbt"><div class="sbf" style="width:${a.a2c*100}%;background:${c}"></div></div></div><div class="a2c-dt">${worst.detail||'No anomaly'}</div></div>`}).join('')}</div>`;
+
+  document.getElementById('sparks').innerHTML=AGENTS.map(a=>{const c=sc(a.state);const {l,a:ar}=sparkPts(a.hist.map(h=>h.v),210,34);const mn=Math.min(...a.hist.map(h=>h.v)).toFixed(2),mx=Math.max(...a.hist.map(h=>h.v)).toFixed(2);return`<div class="card" style="padding:11px;cursor:pointer" onclick="openAgent('${a.name}')"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:7px"><div><div style="font-size:11px;font-weight:500">${a.name}</div><div style="font-size:9px;color:var(--txd);margin-top:1px">${a.tier} · TSI ${a.tsi}</div></div><div style="text-align:right"><div style="font-family:var(--mono);font-size:15px;font-weight:700;color:${c}">${fv(a.vrs)}</div><span class="sbadge ${scls(a.state)}" style="font-size:8px">${a.state}</span></div></div><svg width="100%" height="34" viewBox="0 0 210 34" preserveAspectRatio="none"><defs><linearGradient id="sg${a.name.replace(/\W/g,'')}"><stop offset="0%" stop-color="${c}" stop-opacity=".22"/><stop offset="100%" stop-color="${c}" stop-opacity="0"/></linearGradient></defs><path d="${ar}" fill="url(#sg${a.name.replace(/\W/g,'')})"/><path d="${l}" fill="none" stroke="${c}" stroke-width="1.5" stroke-linejoin="round"/></svg><div style="display:flex;justify-content:space-between;margin-top:3px;font-family:var(--mono);font-size:9px;color:var(--txd)"><span>↓${mn}</span><span>30d</span><span>↑${mx}</span></div></div>`}).join('');
+
+  const srt=[...ALL_ALERTS].sort((a,b)=>{const o={CRITICAL:4,HIGH:3,ALERT:3,MEDIUM:2,WATCH:1};return(o[b.sev]||0)-(o[a.sev]||0)});
+  document.getElementById('ov-alerts').innerHTML=srt.length?srt.map(aRow).join(''):`<div style="padding:18px 14px;font-family:var(--mono);font-size:10px;color:var(--txd)">All systems nominal</div>`;
+}
+
+// ════════════════════════════════════════════
+// STAR GRAPH — Agent Network (Dynamic Live)
+// ════════════════════════════════════════════
+let hoveredNode = null;
+
+// ── Stamp flash system ─────────────────────────────────────────────────────
+// Tracks per-agent stamp activity to drive blink + flash effects
+const _stampFlash   = {};   // agentName → {t, intensity}  (t=0..1, decays)
+const _stampHistory = [];   // [{src, dst, t, col, id}]  cross-agent stamps
+let   _lastEventCounts = {};
+let   _serverStart = null;
+
+function _injectStampFlash(agentName, intensity=1.0){
+  _stampFlash[agentName] = { t: 1.0, intensity };
+}
+function _decayFlashes(dt){
+  for(const k of Object.keys(_stampFlash)){
+    _stampFlash[k].t -= dt * 1.8;
+    if(_stampFlash[k].t <= 0) delete _stampFlash[k];
+  }
+}
+function _detectNewStamps(){
+  // Compare current event counts to previous — trigger flash on delta
+  AGENTS.forEach(a=>{
+    const cur = a.event_count||a.events||0;
+    const prev = _lastEventCounts[a.name]||0;
+    if(cur > prev && prev > 0){
+      const delta = cur - prev;
+      _injectStampFlash(a.name, Math.min(1.0, 0.5 + delta*0.1));
+    }
+    _lastEventCounts[a.name] = cur;
+  });
+}
+
+// ── Particle burst on stamp ────────────────────────────────────────────────
+const _burstParticles = [];  // [{x,y,vx,vy,life,col,r}]
+function _spawnBurst(x, y, col, count=6){
+  for(let i=0;i<count;i++){
+    const angle = Math.random()*Math.PI*2;
+    const speed = 1.5 + Math.random()*3;
+    _burstParticles.push({
+      x, y,
+      vx: Math.cos(angle)*speed,
+      vy: Math.sin(angle)*speed,
+      life: 1.0,
+      col,
+      r: 1.5 + Math.random()*2,
+    });
+  }
+}
+
+function drawStar(){
+  if(_starRaf){ cancelAnimationFrame(_starRaf); _starRaf = null; }
+
+  const canvas = document.getElementById('star-canvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.parentElement.clientWidth || 600;
+  canvas.width = W;
+  const H = 520;
+  canvas.height = H;
+
+  const agents = AGENTS;
+  const n = agents.length;
+  if(!n){ ctx.clearRect(0,0,W,H); return; }
+
+  const centerFilter = document.getElementById('star-center').value;
+  const cx = W/2, cy = H/2;
+  // Internal ring: keep agents well within canvas with margin for labels
+  const margin = 70; // room for node label below + stamp rings
+  const R = Math.min(W/2 - margin, H/2 - margin) * 0.72;
+
+  // ── Node positions ─────────────────────────────────────────────────
+  const positions = {};
+  const internalAgents = agents.filter(a=>!a.is_external);
+  const externalAgents = agents.filter(a=>a.is_external);
+  // External ring: fits INSIDE canvas — max radius constrained to canvas bounds
+  const Rext = Math.min(W/2 - 36, H/2 - 36, R + 90);
+  if(centerFilter){
+    const center = agents.find(a=>a.name===centerFilter);
+    const others = internalAgents.filter(a=>a.name!==centerFilter);
+    if(center) positions[center.name] = {x:cx, y:cy, r:28};
+    others.forEach((a,i)=>{
+      const angle = (i/others.length)*Math.PI*2 - Math.PI/2;
+      positions[a.name] = {x:cx+Math.cos(angle)*R, y:cy+Math.sin(angle)*R, r:20};
+    });
+  } else {
+    internalAgents.forEach((a,i)=>{
+      const angle = (i/Math.max(internalAgents.length,1))*Math.PI*2 - Math.PI/2;
+      positions[a.name] = {x:cx+Math.cos(angle)*R, y:cy+Math.sin(angle)*R, r:20};
+    });
+  }
+  // Peers externes — anneau extérieur, nœuds plus petits
+  externalAgents.forEach((a,i)=>{
+    const angle = (i/Math.max(externalAgents.length,1))*Math.PI*2 - Math.PI/2;
+    positions[a.name] = {x:cx+Math.cos(angle)*Rext, y:cy+Math.sin(angle)*Rext, r:11};
+  });
+
+  // ── Flow particles (A2C correlation edges) ─────────────────────────
+  const flowParticles = [];
+  agents.forEach(agent=>{
+    if(agent.is_external) return; // les externes n'émettent pas
+    (agent.peers||[]).forEach(([peer,corr])=>{
+      if(!corr || corr < 0.04) return;
+      const maxVrs = Math.max(agent.vrs, (agents.find(a=>a.name===peer)||{vrs:0}).vrs);
+      const col = maxVrs>0.5?'#ff6200':maxVrs>0.25?'#ffb300':'#00e676';
+      const count = Math.max(1, Math.round(corr*5));
+      for(let i=0;i<count;i++){
+        flowParticles.push({
+          src:agent.name, dst:peer,
+          t: i/count,
+          speed: 0.003 + corr*0.007,
+          col, size: 2+corr*2, op: 0.55+corr*0.4,
+        });
+      }
+    });
+    // Liens vers peers externes — particules fines bleues
+    (agent.a2c_peers||[]).forEach(([peer, corr])=>{
+      if(!positions[peer]) return; // pas positionné = pas externe enregistré
+      const extAgent = externalAgents.find(a=>a.name===peer);
+      if(!extAgent) return;
+      flowParticles.push({
+        src:agent.name, dst:peer,
+        t: Math.random(),
+        speed: 0.004,
+        col:'#4a9eff', size:1.5, op:0.45,
+      });
+    });
+  });
+
+  // ── Session particles (cross-agent stamps — directional) ────────────
+  // Simulated from peers with high correlation as "active A2A sessions"
+  const sessionStreams = [];
+  agents.forEach(agent=>{
+    (agent.peers||[]).filter(([,c])=>c>0.3).forEach(([peer,corr])=>{
+      if(positions[agent.name] && positions[peer]){
+        // Bidirectional — represent real A2A traffic
+        sessionStreams.push({src:agent.name, dst:peer, corr, col:'#00c8e0', t:Math.random(), speed:0.004+corr*0.005});
+        sessionStreams.push({src:peer, dst:agent.name, corr, col:'#a78bfa', t:Math.random(), speed:0.003+corr*0.004});
+      }
+    });
+  });
+
+  // ── Hover state ─────────────────────────────────────────────────────
+  let hovered = null;
+  canvas.onmousemove = e=>{
+    const rect=canvas.getBoundingClientRect();
+    const mx=(e.clientX-rect.left)*(W/rect.width);
+    const my=(e.clientY-rect.top)*(H/rect.height);
+    hovered = null;
+    for(const [name,pos] of Object.entries(positions)){
+      if((mx-pos.x)**2+(my-pos.y)**2 < pos.r**2*2.5){ hovered=name; break; }
+    }
+    canvas.style.cursor = hovered?'pointer':'default';
+  };
+  canvas.onmouseleave = ()=>{ hovered=null; };
+  canvas.onclick = e=>{
+    const rect=canvas.getBoundingClientRect();
+    const mx=(e.clientX-rect.left)*(W/rect.width);
+    const my=(e.clientY-rect.top)*(H/rect.height);
+    for(const [name,pos] of Object.entries(positions)){
+      if((mx-pos.x)**2+(my-pos.y)**2 < pos.r**2*2.5){
+        // If same agent clicked twice → deselect
+        const sel=document.getElementById('star-center');
+        if(sel.value===name){
+          sel.value=''; drawStar(); _closeStampPanel(); return;
+        }
+        sel.value=name; drawStar();
+        _openStampPanel(name); return;
+      }
+    }
+    document.getElementById('star-center').value='';
+    drawStar(); _closeStampPanel();
+  };
+
+  // ── Animation loop ─────────────────────────────────────────────────
+  let tick = 0;
+  let lastTime = performance.now();
+
+  function frame(now){
+    const dt = Math.min((now - lastTime)/1000, 0.1);
+    lastTime = now;
+    tick++;
+
+    ctx.clearRect(0,0,W,H);
+
+    // Detect new stamps every ~30 frames
+    if(tick % 30 === 0) _detectNewStamps();
+
+    // Decay flash states
+    _decayFlashes(dt);
+
+  // ── Background grid (subtle) ──────────────────────────────────────
+    ctx.save();
+    ctx.strokeStyle='rgba(0,200,224,0.04)';
+    ctx.lineWidth=0.5;
+    for(let gx=0;gx<W;gx+=40){ ctx.beginPath();ctx.moveTo(gx,0);ctx.lineTo(gx,H);ctx.stroke(); }
+    for(let gy=0;gy<H;gy+=40){ ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(W,gy);ctx.stroke(); }
+    ctx.restore();
+
+    // ── Internal zone circle (dashed) ────────────────────────────────
+    if(externalAgents.length>0){
+      ctx.save();
+      ctx.beginPath(); ctx.arc(cx,cy,R+32,0,Math.PI*2);
+      ctx.strokeStyle='rgba(0,200,224,0.08)'; ctx.lineWidth=1;
+      ctx.setLineDash([6,6]); ctx.stroke(); ctx.setLineDash([]);
+      ctx.font='9px monospace'; ctx.fillStyle='rgba(0,200,224,0.18)';
+      ctx.textAlign='left';
+      ctx.fillText('── INTERNAL ──', cx+R+36, cy-6);
+      ctx.fillText('── EXTERNAL ──', cx+Rext-20, cy-6);
+      ctx.restore();
+    }
+
+    // ── Edges (A2C correlation) ───────────────────────────────────────
+    const drawn = new Set();
+    agents.forEach(agent=>{
+      (agent.peers||[]).forEach(([peer,corr])=>{
+        const key=[agent.name,peer].sort().join('|');
+        if(drawn.has(key)) return;
+        drawn.add(key);
+        const p1=positions[agent.name], p2=positions[peer];
+        if(!p1||!p2) return;
+        const maxVrs=Math.max(agent.vrs,(agents.find(a=>a.name===peer)||{vrs:0}).vrs);
+        const col=maxVrs>0.5?'rgba(255,98,0,':maxVrs>0.25?'rgba(255,179,0,':'rgba(0,230,118,';
+        ctx.beginPath();
+        ctx.strokeStyle=`${col}${0.06+corr*0.25})`;
+        ctx.lineWidth=0.5+corr*2.5;
+        corr>0.5?ctx.setLineDash([5,4]):ctx.setLineDash([]);
+        ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke();
+        ctx.setLineDash([]);
+        if(corr>0.15){
+          ctx.font='9px monospace'; ctx.fillStyle=`${col}0.5)`; ctx.textAlign='center';
+          ctx.fillText(corr.toFixed(2),(p1.x+p2.x)/2,(p1.y+p2.y)/2-5);
+        }
+      });
+    });
+
+    // ── Session streams (directional — co-signed A2A) ─────────────────
+    sessionStreams.forEach(s=>{
+      const p1=positions[s.src], p2=positions[s.dst];
+      if(!p1||!p2){ s.t=0; return; }
+      s.t += s.speed;
+      if(s.t>1) s.t=0;
+      const x=p1.x+(p2.x-p1.x)*s.t;
+      const y=p1.y+(p2.y-p1.y)*s.t;
+      // Arrow head at tip
+      const dx=p2.x-p1.x, dy=p2.y-p1.y;
+      const len=Math.sqrt(dx*dx+dy*dy)||1;
+      const nx=dx/len, ny=dy/len;
+      // Glow
+      const g=ctx.createRadialGradient(x,y,0,x,y,6);
+      g.addColorStop(0,s.col+'cc'); g.addColorStop(1,s.col+'00');
+      ctx.beginPath(); ctx.arc(x,y,6,0,Math.PI*2);
+      ctx.fillStyle=g; ctx.fill();
+      // Core
+      ctx.beginPath(); ctx.arc(x,y,2,0,Math.PI*2);
+      ctx.fillStyle=s.col; ctx.globalAlpha=0.9; ctx.fill(); ctx.globalAlpha=1;
+      // Mini arrow
+      if(s.t>0.05 && s.t<0.95){
+        ctx.beginPath();
+        ctx.moveTo(x+nx*7-ny*3, y+ny*7+nx*3);
+        ctx.lineTo(x+nx*7+ny*3, y+ny*7-nx*3);
+        ctx.lineTo(x+nx*12, y+ny*12);
+        ctx.closePath();
+        ctx.fillStyle=s.col; ctx.globalAlpha=0.6; ctx.fill(); ctx.globalAlpha=1;
+      }
+    });
+
+    // ── A2C flow particles ─────────────────────────────────────────────
+    flowParticles.forEach(p=>{
+      const p1=positions[p.src], p2=positions[p.dst];
+      if(!p1||!p2){ p.t=0; return; }
+      const x=p1.x+(p2.x-p1.x)*p.t;
+      const y=p1.y+(p2.y-p1.y)*p.t;
+      const g=ctx.createRadialGradient(x,y,0,x,y,p.size*2.5);
+      g.addColorStop(0,p.col+'bb'); g.addColorStop(1,p.col+'00');
+      ctx.beginPath(); ctx.arc(x,y,p.size*2.5,0,Math.PI*2);
+      ctx.fillStyle=g; ctx.fill();
+      ctx.beginPath(); ctx.arc(x,y,p.size*0.7,0,Math.PI*2);
+      ctx.fillStyle=p.col; ctx.globalAlpha=p.op; ctx.fill(); ctx.globalAlpha=1;
+      p.t+=p.speed; if(p.t>1) p.t=0;
+    });
+
+    // ── Burst particles (stamp events) ────────────────────────────────
+    for(let i=_burstParticles.length-1;i>=0;i--){
+      const bp=_burstParticles[i];
+      bp.x+=bp.vx; bp.y+=bp.vy;
+      bp.vx*=0.92; bp.vy*=0.92;
+      bp.life-=0.04;
+      if(bp.life<=0){ _burstParticles.splice(i,1); continue; }
+      ctx.beginPath(); ctx.arc(bp.x,bp.y,bp.r*bp.life,0,Math.PI*2);
+      ctx.fillStyle=bp.col; ctx.globalAlpha=bp.life*0.8; ctx.fill(); ctx.globalAlpha=1;
+    }
+
+    // ── Alert pulse rings ──────────────────────────────────────────────
+    agents.forEach(agent=>{
+      const pos=positions[agent.name];
+      if(!pos) return;
+      if(agent.state==='ALERT'||agent.state==='CRITICAL'){
+        const col=agent.state==='CRITICAL'?'#f5003c':'#ff6200';
+        const phase=(tick*0.025)%1;
+        ctx.beginPath(); ctx.arc(pos.x,pos.y,pos.r+phase*24,0,Math.PI*2);
+        ctx.strokeStyle=col; ctx.globalAlpha=(1-phase)*0.5; ctx.lineWidth=1.5; ctx.stroke();
+        // Second ring offset
+        const phase2=(tick*0.025+0.5)%1;
+        ctx.beginPath(); ctx.arc(pos.x,pos.y,pos.r+phase2*24,0,Math.PI*2);
+        ctx.globalAlpha=(1-phase2)*0.25; ctx.stroke();
+        ctx.globalAlpha=1;
+      }
+    });
+
+    // ── Stamp flash rings (when agent stamps an event) ─────────────────
+    for(const [name, flash] of Object.entries(_stampFlash)){
+      const pos=positions[name];
+      if(!pos) continue;
+      const col='#00c8e0';
+      const radius = pos.r + (1-flash.t)*30;
+      ctx.beginPath(); ctx.arc(pos.x,pos.y,radius,0,Math.PI*2);
+      ctx.strokeStyle=col; ctx.globalAlpha=flash.t*flash.intensity*0.9;
+      ctx.lineWidth=2.5; ctx.stroke();
+      // Inner flash fill
+      const g2=ctx.createRadialGradient(pos.x,pos.y,0,pos.x,pos.y,pos.r);
+      g2.addColorStop(0,col+(Math.round(flash.t*flash.intensity*80).toString(16).padStart(2,'0')));
+      g2.addColorStop(1,col+'00');
+      ctx.beginPath(); ctx.arc(pos.x,pos.y,pos.r,0,Math.PI*2);
+      ctx.fillStyle=g2; ctx.globalAlpha=flash.t*flash.intensity; ctx.fill();
+      ctx.globalAlpha=1;
+      // Spawn burst if fresh stamp
+      if(flash.t>0.92 && flash.intensity>0.7){
+        _spawnBurst(pos.x, pos.y, col, 8);
+      }
+    }
+
+    // ── Nodes ──────────────────────────────────────────────────────────
+    agents.forEach(agent=>{
+      const pos=positions[agent.name];
+      if(!pos) return;
+
+      // ── Peer externe — nœud losange grisé ──────────────────────────
+      if(agent.is_external){
+        const r=pos.r;
+        ctx.save();
+        ctx.translate(pos.x, pos.y);
+        ctx.rotate(Math.PI/4);
+        ctx.beginPath();
+        ctx.rect(-r,-r,r*2,r*2);
+        ctx.fillStyle='#0d1420'; ctx.fill();
+        ctx.strokeStyle='#4a6080'; ctx.lineWidth=1.5; ctx.stroke();
+        ctx.restore();
+        // Icône éclair pour external
+        ctx.font='bold 9px monospace'; ctx.fillStyle='#4a9eff';
+        ctx.textAlign='center';
+        ctx.fillText('⇄', pos.x, pos.y+3);
+        // Nom court
+        const shortName = agent.name.replace(/_/g,' ').split(' ').slice(0,2).join(' ');
+        ctx.font='500 8px sans-serif'; ctx.fillStyle='#6b8aaa';
+        ctx.fillText(shortName, pos.x, pos.y+r+11);
+        // Latence si dispo
+        if(agent.avg_latency_ms){
+          ctx.font='500 7px monospace'; ctx.fillStyle='#3d5a73';
+          ctx.fillText(agent.avg_latency_ms+'ms', pos.x, pos.y+r+20);
+        }
+        return;
+      }
+
+      const col=sc(agent.state);
+      const r=pos.r;
+      const isCenter=centerFilter===agent.name;
+      const isHover=hovered===agent.name;
+      const flash=_stampFlash[agent.name];
+      const flashBoost = flash ? flash.t*flash.intensity : 0;
+
+      // Outer glow halo — brighter when stamping
+      const grd=ctx.createRadialGradient(pos.x,pos.y,r*0.3,pos.x,pos.y,r*2.8);
+      grd.addColorStop(0,col+(isHover||flashBoost>0.5?'66':'33'));
+      grd.addColorStop(0.5,col+(flashBoost>0?Math.round(flashBoost*30).toString(16).padStart(2,'0'):'11'));
+      grd.addColorStop(1,col+'00');
+      ctx.beginPath(); ctx.arc(pos.x,pos.y,r*2.8,0,Math.PI*2); ctx.fillStyle=grd; ctx.fill();
+
+      // Circle body
+      ctx.beginPath(); ctx.arc(pos.x,pos.y,r,0,Math.PI*2);
+      ctx.fillStyle='#0d1420'; ctx.fill();
+
+      // Stroke — blinks cyan when stamping
+      const strokeCol = flashBoost>0.3 ? `rgba(0,200,224,${0.5+flashBoost*0.5})` : col;
+      ctx.strokeStyle=strokeCol;
+      ctx.lineWidth=isCenter||isHover?3:flashBoost>0.3?2.5:1.5; ctx.stroke();
+
+      // VRS fill arc
+      ctx.beginPath(); ctx.moveTo(pos.x,pos.y);
+      ctx.arc(pos.x,pos.y,r*0.78,-Math.PI/2,-Math.PI/2+agent.vrs*Math.PI*2);
+      ctx.closePath(); ctx.fillStyle=col+'2e'; ctx.fill();
+
+      // Active stamp indicator — small cyan dot
+      if(flashBoost>0.1){
+        ctx.beginPath(); ctx.arc(pos.x+r*0.65,pos.y-r*0.65,3.5,0,Math.PI*2);
+        ctx.fillStyle='#00c8e0'; ctx.globalAlpha=flashBoost; ctx.fill(); ctx.globalAlpha=1;
+      }
+
+      // Labels
+      ctx.textAlign='center';
+      ctx.font='bold 9px monospace'; ctx.fillStyle=col;
+      ctx.fillText(fv(agent.vrs),pos.x,pos.y+4);
+      ctx.font='500 10px sans-serif'; ctx.fillStyle='#c5d8ec';
+      ctx.fillText(agent.name.replace(/_/g,' '),pos.x,pos.y+r+14);
+
+      // Event count badge (small)
+      const evCount=agent.event_count||agent.events||0;
+      if(evCount>0){
+        const badge=evCount>999?Math.floor(evCount/1000)+'k':String(evCount);
+        ctx.font='8px monospace'; ctx.fillStyle='rgba(0,200,224,0.6)';
+        ctx.fillText(badge,pos.x,pos.y+r+24);
+      }
+    });
+
+    // ── Legend ──────────────────────────────────────────────────────────
+    const leg=[
+      {col:'#00e676',label:'SAFE'},
+      {col:'#ffb300',label:'WATCH'},
+      {col:'#ff6200',label:'ALERT'},
+      {col:'#f5003c',label:'CRITICAL'},
+      {col:'#00c8e0',label:'◉ Stamping'},
+      {col:'#a78bfa',label:'⟶ A2A flow'},
+    ];
+    leg.forEach((l,i)=>{
+      const lx=12, ly=H-12-i*16;
+      ctx.beginPath(); ctx.arc(lx,ly,4,0,Math.PI*2);
+      ctx.fillStyle=l.col; ctx.globalAlpha=0.85; ctx.fill(); ctx.globalAlpha=1;
+      ctx.font='9px sans-serif'; ctx.fillStyle='rgba(197,216,236,0.6)'; ctx.textAlign='left';
+      ctx.fillText(l.label,lx+9,ly+3);
+    });
+    ctx.textAlign='center';
+
+    _starRaf=requestAnimationFrame(frame);
+  }
+  frame(performance.now());
+
+  // ── Cards below canvas ──────────────────────────────────────────────
+  document.getElementById('star-agent-cards').innerHTML=agents.map(a=>{
+    const c=sc(a.state);
+    const evCount=a.event_count||a.events||0;
+    return`<div class="card" style="border-left:2px solid ${c};padding:10px 12px;cursor:pointer" onclick="openAgent('${a.name}')">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <div id="node-dot-${a.name.replace(/\W/g,'_')}" style="width:8px;height:8px;border-radius:50%;background:${c};flex-shrink:0;transition:box-shadow .2s"></div>
+        <span style="font-size:12px;font-weight:500;flex:1">${a.name}</span>
+        <span class="sbadge ${scls(a.state)}" style="font-size:8px">● ${a.state}</span>
+        <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:${c}">${fv(a.vrs)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+        <span style="font-family:var(--mono);font-size:9px;color:var(--txd)">${evCount>0?evCount.toLocaleString()+' events':'no events'}</span>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--ac)">${a.bridge?a.bridge:a.tier||''}</span>
+      </div>
+      <div style="font-size:10px;color:var(--txd);font-family:var(--mono)">
+        ${(a.peers||[]).map(([p,v])=>`<span style="color:${v>.5?'var(--alert)':v>.2?'var(--watch)':'var(--txd)'}">${p.split('_')[0]} ${v.toFixed(2)}</span>`).join(' · ')||'<span style="color:var(--txd)">no peers yet</span>'}
+      </div>
+    </div>`;
+  }).join('');
+
+  // ── Pulse card dots when stamp events detected ──────────────────────
+  function _pulseCardDots(){
+    for(const [name, flash] of Object.entries(_stampFlash)){
+      const dotEl = document.getElementById('node-dot-'+name.replace(/\W/g,'_'));
+      if(dotEl && flash.t > 0.3){
+        const alpha=Math.round(flash.t*200).toString(16).padStart(2,'0');
+        dotEl.style.boxShadow=`0 0 ${Math.round(flash.t*12)}px #00c8e0${alpha}`;
+        dotEl.style.background='#00c8e0';
+      } else if(dotEl){
+        const agent=AGENTS.find(a=>a.name===name);
+        dotEl.style.boxShadow='none';
+        dotEl.style.background=agent?sc(agent.state):'var(--txd)';
+      }
+    }
+    requestAnimationFrame(_pulseCardDots);
+  }
+  _pulseCardDots();
+}
+function populateStarSelect(){
+  const s=document.getElementById('star-center');
+  AGENTS.forEach(a=>{const o=document.createElement('option');o.value=a.name;o.textContent=a.name;s.appendChild(o)});
+}
+
+// ════════════════════════════════════════════
+// AGENTS TABLE + DETAIL
+// ════════════════════════════════════════════
+function renderAgentsTable(){
+  document.getElementById('tbl-body').innerHTML=AGENTS.map(a=>{
+    const c=sc(a.state);
+    const cc=a.chain_label==='CANONICAL CHAIN'?'var(--safe)':a.chain_label==='FORKED IDENTITY'?'var(--crit)':'var(--watch)';
+    const ci=a.chain_label==='CANONICAL CHAIN'?'✔':a.chain_label==='FORKED IDENTITY'?'✖':'⚠';
+    return`<tr onclick="showDetail('${a.name}')" class="${sel[a.name]?'sel':''}">
+      <td onclick="event.stopPropagation()"><input type="checkbox" ${sel[a.name]?'checked':''} style="accent-color:var(--ac)" onchange="sel['${a.name}']=this.checked;updSelInfo()"></td>
+      <td><div style="font-size:12px;font-weight:500">${a.name}</div><div style="font-family:var(--mono);font-size:9px;color:var(--txd)">${a.id.slice(0,14)}… · ${a.tier}</div></td>
+      <td><span class="sbadge ${scls(a.state)}" style="color:${c}">● ${a.state}</span></td>
+      <td>${sbar(a.vrs,c,80)}</td>
+      <td>${sbar(a.ts,sc(a.ts>.8?'SAFE':a.ts>.6?'WATCH':'ALERT'),80)}</td>
+      <td><span style="font-family:var(--mono);font-size:10px;color:${sc(a.tsi)}">${a.tsi}</span></td>
+      <td>${sbar(a.a2c,sc(a.a2c<.25?'SAFE':a.a2c<.5?'WATCH':'ALERT'),80)}</td>
+      <td><span style="font-family:var(--mono);font-size:9px;color:${cc};font-weight:700">${ci} ${a.chain_label.split(' ').pop()}</span></td>
+      <td><span style="font-family:var(--mono);font-size:11px;color:${a.alerts>0?'var(--alert)':'var(--txd)'}">${a.alerts}</span></td>
+      <td><span style="font-family:var(--mono);font-size:9px;color:var(--txd)">${rt(a.last_seen)}</span></td>
+    </tr>`;
+  }).join('');
+  updSelInfo();
+}
+function selAll(cb){AGENTS.forEach(a=>sel[a.name]=cb.checked);renderAgentsTable();renderSbAgents()}
+function updSelInfo(){const n=Object.values(sel).filter(Boolean).length;document.getElementById('sel-info').textContent=`${n}/${AGENTS.length} selected`}
+
+function showDetail(name){
+  const a=AGENTS.find(x=>x.name===name);if(!a)return;
+  const c=sc(a.state);
+  const sc_={HIGH:'var(--alert)',MEDIUM:'var(--watch)',LOW:'var(--watch)',OK:'var(--safe)',CRITICAL:'var(--crit)'};
+  const sb_={HIGH:'var(--alertb)',MEDIUM:'var(--watchb)',LOW:'var(--watchb)',OK:'var(--safeb)',CRITICAL:'var(--critb)'};
+
+  const tsRows=Object.entries(a.ts_d).map(([k,v])=>{const lb={I:'Integrity',V_t:'Verified peers',D_t:'Diversity',F:'Finalization',R:'Rotation'};const cc=sc(v>.85?'SAFE':v>.65?'WATCH':'ALERT');return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="font-family:var(--mono);font-size:10px;color:var(--txd);width:22px">${k}</span><span style="font-size:10px;color:var(--txm);width:110px">${lb[k]||k}</span><div class="sbt" style="flex:1"><div class="sbf" style="width:${v*100}%;background:${cc}"></div></div><span class="sbn" style="color:${cc}">${fv(v)}</span></div>`}).join('');
+
+  const a2cRows=Object.entries(a.a2c_ind).map(([k,v])=>{const cc=sc(v.sev);const cls={NONE:'n',LOW:'l',MEDIUM:'m',HIGH:'h',CRITICAL:'c'}[v.sev]||'n';return`<div class="a2c-card ${cls}"><div class="a2c-hdr"><span class="a2c-ico">${v.icon}</span><span class="a2c-nm">${k.replace(/_/g,' ')}</span><span class="a2c-sc" style="color:${cc}">${fv(v.score)}</span><span class="a2c-sv" style="color:${cc}">${v.sev}</span></div><div class="sbar"><div class="sbt"><div class="sbf" style="width:${v.score*100}%;background:${cc}"></div></div></div><div class="a2c-dt">${v.detail}</div></div>`}).join('');
+
+  const tl=agentTimeline(a,440,50);
+  const narr=a.narr_items.map(ni=>`<div class="narr-item"><span class="narr-bul" style="background:${sb_[ni.s]||'var(--b1)'};color:${sc_[ni.s]||'var(--txd)'}">${ni.s}</span><span class="narr-txt">${ni.t}</span></div>`).join('');
+
+  document.getElementById('agent-detail').innerHTML=`
+  <div class="card card-p0">
+    <div style="padding:14px 16px;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:12px">
+      <div style="flex:1"><div style="font-size:14px;font-weight:600;margin-bottom:2px">${a.name}</div><div style="font-family:var(--mono);font-size:9px;color:var(--txd)">${a.id} · ${a.tier} · ${rt(a.last_seen)}</div></div>
+      <span class="chain-badge ${a.chain_label==='CANONICAL CHAIN'?'cok':a.chain_label==='FORKED IDENTITY'?'cfrk':'crot'}">${a.chain_label==='CANONICAL CHAIN'?'✔':a.chain_label==='FORKED IDENTITY'?'✖':'⚠'} ${a.chain_label}</span>
+      <div style="text-align:right"><div style="font-family:var(--mono);font-size:22px;font-weight:700;color:${c}">${fv(a.vrs)}</div><span class="sbadge ${scls(a.state)}">● ${a.state}</span></div>
+    </div>
+    <div class="tabs" style="padding:0 16px">
+      <div class="tab active" onclick="stab(this,'dt1${a.name}')">Why VRS ${fv(a.vrs)}?</div>
+      <div class="tab" onclick="stab(this,'dt2${a.name}')">Trust Score</div>
+      <div class="tab" onclick="stab(this,'dt3${a.name}')">A2C Detail</div>
+      <div class="tab" onclick="stab(this,'dt4${a.name}')">Timeline</div>
+      <div class="tab" onclick="stab(this,'dt5${a.name}')">Export</div>
+    </div>
+    <div style="padding:14px 16px">
+      <div id="dt1${a.name}" class="tp active"><div class="narr ${a.narr_cls}"><div class="narr-why">ROOT CAUSE ANALYSIS</div><div class="narr-title" style="color:${c}"><span class="sbadge ${scls(a.state)}">● ${a.state}</span>${a.narr_title}</div><div class="narr-items">${narr}</div></div></div>
+      <div id="dt2${a.name}" class="tp"><div style="font-family:var(--mono);font-size:9px;color:var(--txd);margin-bottom:10px">TS ${fv(a.ts)} · TSI ${a.tsi} · z=${a.tsi_d.z} · Δ24h=${a.tsi_d.d24}</div>${tsRows}</div>
+      <div id="dt3${a.name}" class="tp"><div class="a2c-grid">${a2cRows}</div></div>
+      <div id="dt4${a.name}" class="tp"><div class="tl-wrap">${tl}</div><div class="tl-legend"><div class="tl-li"><div class="tl-dot" style="background:var(--crit)"></div> Fork</div><div class="tl-li"><div class="tl-dot" style="background:var(--watch)"></div> Rotation anomaly</div><div class="tl-li"><div class="tl-dot" style="background:var(--alert)"></div> Peer cluster spike</div><div class="tl-li"><div class="tl-dot" style="background:var(--safe)"></div>● Stable</div></div></div>
+      <div id="dt5${a.name}" class="tp">
+        <div style="font-size:11px;color:var(--txm);margin-bottom:12px">Export options for <strong style="color:var(--tx)">${a.name}</strong></div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+          <div class="exp-card" onclick="doExport('${a.name}','pqz-cert')"><div class="exp-icon" style="font-size:16px"></div><div class="exp-name" style="font-size:11px">.pqz Certified</div><div class="exp-desc" style="font-size:10px">Signed events · TSA · hash chain</div><button class="exp-btn primary" style="font-size:9px">↓ EXPORT</button></div>
+          <div class="exp-card" onclick="doExport('${a.name}','pqz-memory')"><div class="exp-icon" style="font-size:16px"></div><div class="exp-name" style="font-size:11px">.pqz Memory</div><div class="exp-desc" style="font-size:10px">Full history · self-consultable · portable</div><button class="exp-btn" style="font-size:9px">↓ EXPORT</button></div>
+          <div class="exp-card" onclick="doExport('${a.name}','pdf')"><div class="exp-icon" style="font-size:16px"></div><div class="exp-name" style="font-size:11px">PDF Report</div><div class="exp-desc" style="font-size:10px">Rapport lisible local</div><div class="exp-warn" style="font-size:9px">⚠ Non certifié PiQrypt</div><button class="exp-btn" style="font-size:9px">↓ EXPORT</button></div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+function stab(btn,id){const p=btn.closest('.card');p.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));p.querySelectorAll('.tp').forEach(t=>t.classList.remove('active'));btn.classList.add('active');document.getElementById(id).classList.add('active')}
+
+// ════════════════════════════════════════════
+// SOC TIMELINE
+// ════════════════════════════════════════════
+function agentTimeline(agent,W,H){
+  const ev=agent.tl;if(!ev||ev.length<2)return'<div style="color:var(--txd);font-size:11px">No events</div>';
+  const tMin=ev[0].t,tMax=ev[ev.length-1].t,tR=tMax-tMin||1;
+  const pad=24;
+  const typeIcon={fork:'',rotation:'',cluster:'',alert:'',watch:'',stable:'●',critical:''};
+  let svg=`<svg width="100%" height="${H+32}" viewBox="0 0 ${W} ${H+36}" preserveAspectRatio="xMidYMid meet">`;
+  for(let i=0;i<ev.length-1;i++){const e=ev[i],en=ev[i+1];const x1=pad+(e.t-tMin)/tR*(W-pad*2);const x2=pad+(en.t-tMin)/tR*(W-pad*2);svg+=`<rect x="${x1}" y="${H/2-4}" width="${x2-x1}" height="8" fill="${sc(e.type)}" opacity="${e.type==='stable'?.1:.28}" rx="4"/>`}
+  svg+=`<line x1="${pad}" y1="${H/2}" x2="${W-pad}" y2="${H/2}" stroke="var(--b2)" stroke-width="1"/>`;
+  ev.forEach((e,i)=>{
+    const x=pad+(e.t-tMin)/tR*(W-pad*2);const c=sc(e.type);
+    const isAnom=['fork','alert','critical','rotation','cluster'].includes(e.type);
+    if(isAnom){
+      svg+=`<line x1="${x}" y1="${H/2-16}" x2="${x}" y2="${H/2+16}" stroke="${c}" stroke-width="2" ${e.type==='rotation'?'stroke-dasharray="4,3"':''} opacity=".9"/>`;
+      svg+=`<polygon points="${x},${H/2-21} ${x+5},${H/2-14} ${x},${H/2-7} ${x-5},${H/2-14}" fill="${c}"/>`;
+    } else {
+      svg+=`<circle cx="${x}" cy="${H/2}" r="5" fill="${c}" opacity=".9"/>`;
+      svg+=`<circle cx="${x}" cy="${H/2}" r="9" fill="${c}" opacity=".1"/>`;
+    }
+    const above=i%2===0;const ly=above?H/2-27:H/2+30;
+    const anchor=i===0?'start':i===ev.length-1?'end':'middle';
+    svg+=`<text x="${x}" y="${ly}" text-anchor="${anchor}" font-family="'JetBrains Mono'" font-size="8.5" fill="${c}" opacity=".9">${typeIcon[e.type]||''} ${e.label}</text>`;
+  });
+  svg+='</svg>';return svg;
+}
+function renderSOC(){
+  document.getElementById('soc-wrap').innerHTML=AGENTS.map(a=>{const c=sc(a.state);const tl=agentTimeline(a,540,44);return`<div class="card" style="margin-bottom:10px;padding:12px 14px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="font-size:12px;font-weight:500;min-width:130px">${a.name}</span><span class="sbadge ${scls(a.state)}" style="font-size:8px">● ${a.state}</span><span class="chain-badge ${a.chain_label==='CANONICAL CHAIN'?'cok':a.chain_label==='FORKED IDENTITY'?'cfrk':'crot'}" style="font-size:8px;padding:2px 7px">${a.chain_label==='CANONICAL CHAIN'?'✔':a.chain_label==='FORKED IDENTITY'?'✖':'⚠'} ${a.chain_label.split(' ').pop()}</span><span style="margin-left:auto;font-family:var(--mono);font-size:11px;font-weight:700;color:${c}">VRS ${fv(a.vrs)}</span></div><div class="tl-wrap">${tl}</div></div>`}).join('')+`<div class="tl-legend" style="margin-top:6px"><div class="tl-li"><div class="tl-dot" style="background:var(--crit)"></div> Fork detected</div><div class="tl-li"><div class="tl-dot" style="background:var(--watch)"></div> Rotation anomaly</div><div class="tl-li"><div class="tl-dot" style="background:var(--alert)"></div> Peer cluster spike</div><div class="tl-li"><div class="tl-dot" style="background:var(--safe)"></div>● Stable</div></div>`;
+}
+
+// ════════════════════════════════════════════
+// EXPORT
+// ════════════════════════════════════════════
+function renderExportAgents(agents){
+  document.getElementById('exp-agent-list').innerHTML=agents.map(a=>{const c=sc(a.state);return`<div class="card" style="border-left:2px solid ${c};padding:11px 14px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><div style="flex:1"><div style="font-size:12px;font-weight:500">${a.name}</div><div style="font-family:var(--mono);font-size:9px;color:var(--txd)">${a.tier} · ${a.id.slice(0,16)}… · VRS ${fv(a.vrs)}</div></div><span class="sbadge ${scls(a.state)}">● ${a.state}</span></div><div style="display:flex;gap:7px"><button class="exp-btn primary" style="flex:1;font-size:9px" onclick="doExport('${a.name}','pqz-cert')"> .pqz CERT</button><button class="exp-btn" style="flex:1;font-size:9px" onclick="doExport('${a.name}','pqz-memory')"> MEMORY</button><button class="exp-btn" style="flex:1;font-size:9px;border-color:rgba(255,179,0,.3);color:var(--watch)" onclick="doExport('${a.name}','pdf')"> PDF <span style="font-size:8px;opacity:.7">⚠ local</span></button></div></div>`}).join('');
+}
+
+function filterExports(){
+  const q=(document.getElementById('exp-search').value||'').toLowerCase();
+  const type=document.getElementById('exp-type').value;
+  const tier=document.getElementById('exp-tier').value;
+  const filtered=AGENTS.filter(a=>{
+    const matchQ=!q||a.name.toLowerCase().includes(q)||a.tier.toLowerCase().includes(q)||a.state.toLowerCase().includes(q);
+    const matchTier=!tier||a.tier===tier;
+    return matchQ&&matchTier;
+  });
+  renderExportAgents(filtered);
+}
+function doExport(agent, type){
+  if(agent === 'all'){
+    if(type === 'pdf'){
+      AGENTS.forEach((a,i)=>setTimeout(()=>_dlExport(a.name,'pdf'), i*600));
+    } else if(type === 'pqz-cert'){
+      showCertModal(AGENTS.length ? AGENTS[0].name : 'all');
+    } else {
+      showToast('Export global .pqz : piqrypt archive --all');
+    }
+    return;
+  }
+  if(type === 'pqz-cert'){
+    showCertModal(agent);
+    return;
+  }
+  _dlExport(agent, type);
+}
+function _dlExport(agent, type){
+  const url = '/api/agent/'+encodeURIComponent(agent)+'/export/'+type;
+  showToast('↓ Export '+agent+' ('+type+')…');
+  _vigilFetch(url)
+    .then(function(r){
+      if(!r.ok) return r.json().then(function(d){throw new Error(d.error||r.status);});
+      return r.blob();
+    })
+    .then(function(blob){
+      const ext = type==='pdf'?'.pdf':'.pqz';
+      const fname = agent+'_'+type+ext;
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = fname;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+      showToast('✓ Téléchargé : '+fname);
+    })
+    .catch(function(e){ showToast('⚠ Export échoué : '+e.message); });
+}
+
+// ── Certification modal ───────────────────────────────────────────────────
+var _certModalAgent = '';
+var _STRIPE_LINKS = {
+  simple:    'https://buy.stripe.com/00w7sKag8cDDgTKdC98bS04',
+  timestamp: 'https://buy.stripe.com/aFa4gy1JC7jjeLC2Xv8bS05',
+  pq_bundle: 'https://buy.stripe.com/5kQdR84VO1YZbzq9lT8bS06'
+};
+var _CERT_LABELS = {
+  simple:    'Simple  · €9',
+  timestamp: 'Timestamp · €29',
+  pq_bundle: 'Post-Quantum · €99'
+};
+
+function showCertModal(agent){
+  _certModalAgent = agent;
+  var m = document.getElementById('cert-modal');
+  document.getElementById('cert-modal-agent').textContent = 'Agent: ' + agent;
+  document.getElementById('cert-modal-buttons').innerHTML =
+    '<div style="font-size:10px;color:#4a7a99">Loading credits…</div>';
+  m.style.display = 'flex';
+  _loadCreditsForModal();
+}
+
+function closeCertModal(){
+  document.getElementById('cert-modal').style.display = 'none';
+}
+
+function _loadCreditsForModal(){
+  _vigilFetch('/api/credits')
+    .then(function(r){ return r.ok ? r.json() : Promise.reject(r.status); })
+    .then(function(credits){
+      var types = ['simple','timestamp','pq_bundle'];
+      var html = types.map(function(t){
+        var avail = (credits[t] && credits[t].available != null)
+                    ? credits[t].available : 0;
+        if(avail > 0){
+          return '<button onclick="closeCertModal();_doCertify(\''
+            + _certModalAgent + '\',\'' + t + '\')" '
+            + 'style="width:100%;padding:9px 12px;background:#0f2236;'
+            + 'border:1px solid #1a4060;border-radius:7px;color:#c5d8ec;'
+            + 'font-size:11px;cursor:pointer;text-align:left;display:flex;'
+            + 'justify-content:space-between;align-items:center">'
+            + '<span>' + _CERT_LABELS[t] + '</span>'
+            + '<span style="color:#00c8a0;font-size:10px">'
+            + avail + ' credit' + (avail>1?'s':'') + ' remaining</span>'
+            + '</button>';
+        } else {
+          return '<button onclick="window.open(\''
+            + _STRIPE_LINKS[t] + '?ref=vigil&agent='
+            + encodeURIComponent(_certModalAgent) + '\',\'_blank\')" '
+            + 'style="width:100%;padding:9px 12px;background:transparent;'
+            + 'border:1px solid #1a2740;border-radius:7px;color:#4a7a99;'
+            + 'font-size:11px;cursor:pointer;text-align:left;display:flex;'
+            + 'justify-content:space-between;align-items:center">'
+            + '<span>' + _CERT_LABELS[t] + '</span>'
+            + '<span style="color:#f59e0b;font-size:10px">0 credits · Buy ↗</span>'
+            + '</button>';
+        }
+      }).join('');
+      document.getElementById('cert-modal-buttons').innerHTML = html;
+    })
+    .catch(function(){
+      document.getElementById('cert-modal-buttons').innerHTML =
+        '<div style="font-size:10px;color:#f59e0b">'
+        + '⚠ Cannot reach trust-server — direct download only</div>';
+    });
+}
+
+function _doCertify(agent, certType){
+  showToast('⏳ Certifying ' + agent + ' (' + certType + ')…');
+  _vigilFetch('/api/certify', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({agent: agent, cert_type: certType})
+  })
+  .then(function(r){ return r.json().then(function(d){ return {ok:r.ok,d:d}; }); })
+  .then(function(res){
+    if(!res.ok){
+      showToast('⚠ Certification failed: ' + (res.d.message || res.d.error));
+      return;
+    }
+    var certId = res.d.cert_id || '';
+    var url    = res.d.registry_url || '';
+    showToast('✓ Certified: ' + certId);
+    if(url) setTimeout(function(){ window.open(url, '_blank'); }, 400);
+    _dlRawPqz(agent);
+  })
+  .catch(function(e){ showToast('⚠ ' + e.message); });
+}
+
+function _dlRawPqz(agent){
+  _dlExport(agent, 'pqz-cert');
+}
+
+// ════════════════════════════════════════════
+// ALERTS VIEW
+// ════════════════════════════════════════════
+function renderAV(){
+  const fs=document.getElementById('f-sev').value;
+  const fa=document.getElementById('f-ag').value;
+  const o={CRITICAL:4,HIGH:3,ALERT:3,MEDIUM:2,WATCH:1};
+  const list=[...ALL_ALERTS].filter(a=>(!fs||a.sev===fs)&&(!fa||a.ag===fa)).sort((a,b)=>(o[b.sev]||0)-(o[a.sev]||0)||(b.t||0)-(a.t||0));
+  document.getElementById('alerts-list').innerHTML=list.length?list.map(aRow).join(''):`<div style="padding:20px 14px;font-family:var(--mono);font-size:10px;color:var(--txd)">No alerts match filter</div>`;
+}
+function popAlertFilters(){const s=document.getElementById('f-ag');AGENTS.forEach(a=>{const o=document.createElement('option');o.value=a.name;o.textContent=a.name;s.appendChild(o)})}
+
+// ════════════════════════════════════════════
+// SIDEBAR
+// ════════════════════════════════════════════
+function renderSbAgents(){
+  document.getElementById('sb-agents').innerHTML=AGENTS.map(a=>`<div class="sb-agent"><input type="checkbox" ${sel[a.name]?'checked':''} style="accent-color:var(--ac)" onchange="sel['${a.name}']=this.checked"><div class="ag-dot" style="background:${sc(a.state)}"></div><span class="ag-nm" onclick="openAgent('${a.name}')" style="cursor:pointer">${a.name}</span><span class="ag-vr" style="color:${sc(a.state)}">${fv(a.vrs)}</span></div>`).join('');
+}
+
+// ════════════════════════════════════════════
+// VIEW ROUTING
+// ════════════════════════════════════════════
+let _starRaf = null;
+
+function sv(name,el){
+  // Stop star animation when leaving that view
+  if(name !== 'star' && _starRaf){ cancelAnimationFrame(_starRaf); _starRaf = null; }
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById(`view-${name}`).classList.add('active');
+  if(el)el.classList.add('active');
+  if(name==='agents'){renderAgentsTable()}
+  if(name==='star'){setTimeout(()=>drawStar(),50)}
+  if(name==='alerts'){renderAV()}
+  if(name==='timeline'){renderSOC()}
+  if(name==='export'){filterExports()}
+}
+function openAgent(name){
+  sv('agents',document.querySelectorAll('.sb-item')[1]);
+  renderAgentsTable();showDetail(name);
+  setTimeout(()=>document.getElementById('agent-detail').scrollIntoView({behavior:'smooth',block:'start'}),100);
+}
+
+// ════════════════════════════════════════════
+// WIZARD
+// ════════════════════════════════════════════
+let wizStep=1,wizTier='free',wizBridge='crewai';
+function openWizard(){document.getElementById('wizard').classList.add('open');setWizStep(1)}
+function closeWizard(){document.getElementById('wizard').classList.remove('open')}
+function setWizStep(s){
+  wizStep=s;
+  document.querySelectorAll('.wiz-pane').forEach((p,i)=>p.classList.toggle('active',i===s-1));
+  document.querySelectorAll('.wiz-step').forEach((st,i)=>{st.classList.toggle('active',i===s-1);st.classList.toggle('done',i<s-1)});
+  document.getElementById('wiz-ind').textContent=`Step ${s} of 3`;
+  document.getElementById('wiz-back').style.visibility=s>1?'visible':'hidden';
+  document.getElementById('wiz-next').textContent=s===3?'✓ Create Agent':'Next →';
+  if(s===3)updateSnippet();
+}
+function wizNext(){
+  if(wizStep<3){setWizStep(wizStep+1);}
+  else{
+    var name=(document.getElementById('w-name').value||'').trim()||'my_agent';
+    var tier=typeof wizTier!=='undefined'?wizTier:'free';
+    var bridge=typeof wizBridge!=='undefined'?wizBridge:'';
+    showToast('Création de l\'agent "'+name+'"...');
+    _vigilFetch('/api/agent/create',{
+      method:'POST',
+      body:JSON.stringify({name:name,tier:tier,bridge:bridge})
+    })
+    .then(function(r){return r.json();})
+    .then(function(d){
+      closeWizard();
+      if(d.status==='ok'){
+        showToast('✅ Agent "'+d.agent_name+'" créé !');
+        setTimeout(loadFromBackend,800);
+      } else {
+        showToast('❌ '+(d.error||'Erreur inconnue'));
+      }
+    })
+    .catch(function(e){
+      closeWizard();
+      showToast('❌ Réseau: '+e.message);
+    });
+  }
+}
+function wizBack(){if(wizStep>1)setWizStep(wizStep-1)}
+function setTier(t){wizTier=t;document.getElementById('tier-free').classList.toggle('sel',t==='free');document.getElementById('tier-pro').classList.toggle('sel',t==='pro');document.getElementById('passphrase-group').style.display=t==='pro'?'block':'none'}
+function selBridge(b,el){wizBridge=b;document.querySelectorAll('.bridge-card').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');if(wizStep===3)updateSnippet()}
+function updateSnippet(){
+  const name=(document.getElementById('w-name').value||'my_agent').replace(/[^a-z0-9_]/gi,'_');
+  const bm={
+    crewai:{
+      pkg:'piqrypt-crewai',
+      imp:'from piqrypt_crewai import AuditedAgent, AuditedCrew',
+      body:`agent = AuditedAgent(\n    role=<span class="snippet-str">"${name}"</span>,\n    goal=<span class="snippet-str">"..."</span>,\n    backstory=<span class="snippet-str">"..."</span>,\n    identity_file=<span class="snippet-str">"${name}.json"</span>\n)\ncrew = AuditedCrew(agents=[agent], tasks=[...])\nresult = crew.kickoff()`
+    },
+    autogen:{
+      pkg:'piqrypt-autogen',
+      imp:'from piqrypt_autogen import AuditedAssistant, AuditedUserProxy',
+      body:`assistant = AuditedAssistant(\n    name=<span class="snippet-str">"${name}"</span>,\n    llm_config={<span class="snippet-str">"model"</span>: <span class="snippet-str">"gpt-4o"</span>},\n    identity_file=<span class="snippet-str">"${name}.json"</span>\n)\nuser_proxy = AuditedUserProxy(\n    name=<span class="snippet-str">"user_proxy"</span>,\n    human_input_mode=<span class="snippet-str">"NEVER"</span>\n)\nuser_proxy.initiate_chat(assistant, message=<span class="snippet-str">"..."</span>)`
+    },
+    langchain:{
+      pkg:'piqrypt-langchain',
+      imp:'from piqrypt_langchain import PiQryptCallbackHandler',
+      body:`handler = PiQryptCallbackHandler(\n    identity_file=<span class="snippet-str">"${name}.json"</span>\n)\n<span class="snippet-cm"># Attach to any LangChain component</span>\nllm = ChatOpenAI(callbacks=[handler])\nagent = AgentExecutor(agent=agent, tools=tools, callbacks=[handler])`
+    },
+    ollama:{
+      pkg:'piqrypt-ollama',
+      imp:'from piqrypt_ollama import AuditedOllama',
+      body:`agent = AuditedOllama(\n    model=<span class="snippet-str">"llama3"</span>,\n    identity_file=<span class="snippet-str">"${name}.json"</span>\n)\nresponse = agent.chat(messages=[{<span class="snippet-str">"role"</span>: <span class="snippet-str">"user"</span>, <span class="snippet-str">"content"</span>: <span class="snippet-str">"..."</span>}])`
+    },
+    mcp:{
+      pkg:'piqrypt-mcp',
+      imp:'from piqrypt_mcp import PiQryptMCPServer',
+      body:`server = PiQryptMCPServer(\n    name=<span class="snippet-str">"${name}"</span>,\n    identity_file=<span class="snippet-str">"${name}.json"</span>\n)\nserver.run()`
+    },
+    openclaw:{
+      pkg:'piqrypt-openclaw',
+      imp:'from piqrypt_openclaw import AuditableOpenClaw',
+      body:`from openclaw import Agent\nbase_agent = Agent(config)\nagent = AuditableOpenClaw(\n    base_agent,\n    identity_file=<span class="snippet-str">"${name}.json"</span>\n)\nresult = agent.execute_task(task)`
+    },
+    session:{
+      pkg:'piqrypt-session',
+      imp:'from piqrypt_session import AgentSession',
+      body:`session = AgentSession([\n    {<span class="snippet-str">"name"</span>: <span class="snippet-str">"${name}"</span>,     <span class="snippet-str">"identity_file"</span>: <span class="snippet-str">"${name}.json"</span>},\n    {<span class="snippet-str">"name"</span>: <span class="snippet-str">"agent_2"</span>, <span class="snippet-str">"identity_file"</span>: <span class="snippet-str">"agent_2.json"</span>},\n])\nsession.start()\nsession.stamp(<span class="snippet-str">"${name}"</span>, <span class="snippet-str">"action"</span>, {<span class="snippet-str">"key"</span>: <span class="snippet-str">"value"</span>}, peer=<span class="snippet-str">"agent_2"</span>)\nsession.end()`
+    },
+    ros:{
+      pkg:'piqrypt-ros',
+      imp:'from piqrypt_ros import AuditedNode',
+      body:`node = AuditedNode(\n    node_name=<span class="snippet-str">"${name}"</span>,\n    identity_file=<span class="snippet-str">"${name}.json"</span>\n)\nnode.spin()`
+    },
+    rpi:{
+      pkg:'piqrypt-rpi',
+      imp:'from piqrypt_rpi import AuditedPiAgent',
+      body:`agent = AuditedPiAgent(\n    name=<span class="snippet-str">"${name}"</span>,\n    identity_file=<span class="snippet-str">"${name}.json"</span>\n)\nagent.run()`
+    }
+  };
+  const b=bm[wizBridge]||bm.crewai;
+  // Mise à jour commande pip — utilise les extras piqrypt[bridge] si disponible
+  const pipExtra = wizBridge==='session'?'session':wizBridge==='mcp'?'mcp':wizBridge;
+  document.getElementById('install-cmd').textContent=`pip install piqrypt[${pipExtra}]`;
+  document.getElementById('identity-path').textContent=`~/.piqrypt/agents/${name}/`;
+  document.getElementById('code-snippet').innerHTML=
+    `<span class="snippet-cm"># Auto-generated by Vigil · PiQrypt v1.7.0</span>\n`+
+    `<span class="snippet-kw">import</span> piqrypt <span class="snippet-kw">as</span> aiss\n`+
+    `${b.imp}\n\n`+
+    `<span class="snippet-cm"># Identity (créée par le wizard)</span>\n`+
+    b.body;
+}
+function copyInstall(){navigator.clipboard.writeText(document.getElementById('install-cmd').textContent).then(()=>showToast('✓ Copied'))}
+function copySnippet(){navigator.clipboard.writeText(document.getElementById('code-snippet').textContent).then(()=>showToast('✓ Snippet copied'))}
+
+// ════════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════════
+let toastT;
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2800)}
+
+// ════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════
+renderOverview();
+renderSbAgents();
+popAlertFilters();
+renderAV();
+populateStarSelect();
+updateSnippet();
+// resize star on window resize
+window.addEventListener('resize',()=>{if(document.getElementById('view-star').classList.contains('active'))drawStar()});
+</script>
+
+<script>
+// PiQrypt Vigil — Backend connection
+
+// ── Auth helper ──────────────────────────────────────────────────────────────
+// Le token est injecté par vigil_server.py au moment de servir le HTML.
+// window.VIGIL_TOKEN est donc disponible dès le chargement de la page.
+// Fallback : localStorage pour les sessions longues (rechargement de page).
+(function(){
+  if(window.VIGIL_TOKEN && window.VIGIL_TOKEN !== '__NO_TOKEN__'){
+    try{ localStorage.setItem('_vt', window.VIGIL_TOKEN); }catch(e){}
+  } else {
+    try{
+      var stored = localStorage.getItem('_vt');
+      if(stored) window.VIGIL_TOKEN = stored;
+    }catch(e){}
+  }
+})();
+
+function _authHeaders(extra){
+  var h = Object.assign({'Content-Type':'application/json'}, extra||{});
+  if(window.VIGIL_TOKEN && window.VIGIL_TOKEN !== '__NO_TOKEN__'){
+    h['Authorization'] = 'Bearer ' + window.VIGIL_TOKEN;
+  }
+  return h;
+}
+
+// Wrapper fetch authentifié — utiliser partout à la place de fetch()
+function _vigilFetch(url, opts){
+  opts = opts || {};
+  opts.headers = _authHeaders(opts.headers||{});
+  return fetch(url, opts).then(function(r){
+    if(r.status === 401){
+      showToast('❌ Auth: VIGIL_TOKEN invalide ou absent — vérifiez la config serveur');
+      throw new Error('Unauthorized');
+    }
+    if(r.status === 403){
+      return r.json().then(function(d){
+        showToast('🔒 ' + (d.message || 'Feature non disponible sur ce tier'));
+        throw new Error('Forbidden');
+      });
+    }
+    return r;
+  });
+}
+
+function _mapAgent(a){
+  var vrs=+(a.vrs||0).toFixed(3);
+  var state=(a.state||'SAFE').toUpperCase();
+  var ts=+(a.ts_score||1).toFixed(3);
+  var tsi=(a.tsi_state||'STABLE').toUpperCase();
+  var a2c=+(a.a2c_risk||0).toFixed(3);
+  var td=a.tsi_detail||{},ad=a.a2c_detail||{};
+  // Peers : inclure a2c_peers_computed (qui contient les peers externes par nom)
+  var rawPeers=(a.a2c_peers||a.peers||[]).map(function(p){return Array.isArray(p)?p:[p.name,p.score||0]});
+  return{
+    name:a.agent_name||a.name, id:a.agent_id||a.name, tier:a.tier||'Pro',
+    vrs:vrs, state:state, ts:ts, tsi:tsi, a2c:a2c,
+    is_external:!!a.is_external,
+    avg_latency_ms:a.avg_latency_ms||0,
+    external_type:a.external_type||'',
+    chain_label:a.chain_label||'CANONICAL CHAIN',
+    last_seen:a.last_seen||(Date.now()/1000-60),
+    alerts:a.alert_count||0,
+    event_count:a.event_count||a.events||0,
+    ts_d:{I:ts,V_t:ts,D_t:ts,F:ts,R:1},
+    tsi_d:{z:td.z_score||0,d24:td.delta_24h||0,base:td.baseline_mean||ts},
+    a2c_ind:{
+      concentration:   {score:ad.concentration||0,   sev:ad.concentration_sev||'NONE',   icon:'⊙',detail:ad.concentration_detail||'No anomaly'},
+      entropy_drop:    {score:ad.entropy_drop||0,     sev:ad.entropy_drop_sev||'NONE',     icon:'↘',detail:ad.entropy_drop_detail||'No anomaly'},
+      synchronization: {score:ad.synchronization||0,  sev:ad.synchronization_sev||'NONE',  icon:'⇄',detail:ad.synchronization_detail||'No anomaly'},
+      silence_break:   {score:ad.silence_break||0,    sev:ad.silence_break_sev||'NONE',    icon:'◌',detail:ad.silence_break_detail||'No anomaly'}
+    },
+    narr_cls:state==='ALERT'?'a':state==='WATCH'?'w':state==='CRITICAL'?'c':'n',
+    narr_title:a.narrative_title||('VRS '+vrs.toFixed(2)+' — '+state),
+    narr_items:(a.narrative_items||[]).map(function(ni){return{s:ni.severity||ni.s||'LOW',t:ni.text||ni.t||''}}),
+    tl:(a.timeline||[]).map(function(e){return{t:e.timestamp||e.t,type:e.type,label:e.label}}),
+    hist:(a.history||a.vrs_history||[]).length>0
+      ?(a.history||a.vrs_history).map(function(h){return{t:h.timestamp||h.t,v:+(h.vrs||h.v||0)}})
+      :genH(vrs,0.04),
+    peers:rawPeers,
+    a2c_peers:rawPeers
+  };
+}
+
+function loadFromBackend(){
+  _vigilFetch('/api/summary')
+    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+    .then(function(d){
+      var raw=d.agents||[];
+      console.log('[Vigil] /api/summary -> '+raw.length+' agents', raw);
+
+      // ── Detect stamp activity before updating AGENTS ──────────────
+      var prevCounts={};
+      AGENTS.forEach(function(a){ prevCounts[a.name]=a.event_count||a.events||0; });
+
+      AGENTS=raw.map(_mapAgent);
+
+      // ── Trigger flash on agents with new events ────────────────────
+      AGENTS.forEach(function(a){
+        var cur=a.event_count||a.events||0;
+        var prev=prevCounts[a.name]||0;
+        if(cur>prev && prev>0){ _injectStampFlash(a.name, Math.min(1.0, 0.5+(cur-prev)*0.05)); }
+      });
+
+      // ── Ingest tier info + server start ───────────────────────────
+      if(d.tier_info){
+        TIER_INFO = d.tier_info;
+        if(!_serverStart && d.tier_info.server_start) _serverStart = d.tier_info.server_start*1000;
+      }
+      if(!_serverStart) _serverStart = Date.now();
+
+      // Refresh star graph if currently visible
+      if(document.getElementById('view-star').classList.contains('active')){
+        if(_starRaf){ cancelAnimationFrame(_starRaf); _starRaf=null; }
+        drawStar();
+      }
+      ALL_ALERTS=(d.active_alerts||[]).map(function(a){
+        return{ag:a.agent_name||a.agent||'',sev:(a.severity||a.sev||'LOW').toUpperCase(),
+               msg:a.message||a.msg||'',t:a.timestamp||a.t||Date.now()/1000};
+      });
+      renderOverview();
+      renderSbAgents();
+      popAlertFilters();
+      renderAV();
+      populateStarSelect();
+      updateSnippet();
+      showToast(AGENTS.length===0
+        ?'Backend LIVE — aucun agent (utilisez le wizard +)'
+        :'Backend LIVE — '+AGENTS.length+' agent(s)');
+    })
+    .catch(function(e){
+      console.error('[Vigil] Backend error:',e.message);
+    });
+}
+
+// ── Demo mode: simulate stamp activity when no backend ─────────────────────
+function _demoStampLoop(){
+  if(!AGENTS.length) return;
+  // Random agent stamps every 1.5–4s
+  const a=AGENTS[Math.floor(Math.random()*AGENTS.length)];
+  _injectStampFlash(a.name, 0.6+Math.random()*0.4);
+  setTimeout(_demoStampLoop, 1500+Math.random()*2500);
+}
+
+// ════════════════════════════════════════════
+// STAMP PANEL
+// ════════════════════════════════════════════
+let _stampPanelAgent = null;
+let _stampPanelData  = [];
+
+function _openStampPanel(agentName){
+  _stampPanelAgent = agentName;
+  const agent = AGENTS.find(a=>a.name===agentName);
+  const col = agent ? sc(agent.state) : 'var(--txd)';
+
+  // Header
+  document.getElementById('sp-dot').style.background = col;
+  document.getElementById('sp-title').textContent = agentName.replace(/_/g,' ');
+
+  // Meta row
+  if(agent){
+    document.getElementById('sp-meta').innerHTML = `
+      <div class="sp-meta-item">
+        <span class="sp-meta-label">State</span>
+        <span class="sp-meta-value" style="color:${col}">${agent.state}</span>
+      </div>
+      <div class="sp-meta-item">
+        <span class="sp-meta-label">VRS</span>
+        <span class="sp-meta-value" style="color:${col}">${fv(agent.vrs)}</span>
+      </div>
+      <div class="sp-meta-item">
+        <span class="sp-meta-label">Events</span>
+        <span class="sp-meta-value" style="color:var(--ac)">${(agent.event_count||0).toLocaleString()}</span>
+      </div>
+      <div class="sp-meta-item">
+        <span class="sp-meta-label">Chain</span>
+        <span class="sp-meta-value" style="color:var(--safe)">✓ ${agent.chain_label||'CANONICAL'}</span>
+      </div>
+    `;
+  }
+
+  document.getElementById('sp-search').value = '';
+  document.getElementById('stamp-panel').classList.add('open');
+
+  // Fetch stamps from backend
+  _fetchStamps(agentName);
+}
+
+function _closeStampPanel(){
+  document.getElementById('stamp-panel').classList.remove('open');
+  _stampPanelAgent = null;
+}
+
+function _fetchStamps(agentName){
+  document.getElementById('sp-list').innerHTML = '<div class="sp-empty">Loading stamps…</div>';
+  _vigilFetch('/api/events?agent='+encodeURIComponent(agentName)+'&limit=100')
+    .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .then(d=>{
+      _stampPanelData = d.events || d || [];
+      _renderStamps(_stampPanelData);
+    })
+    .catch(()=>{
+      // Fallback: use timeline data already in AGENTS
+      const agent = AGENTS.find(a=>a.name===agentName);
+      _stampPanelData = agent && agent.tl && agent.tl.length
+        ? agent.tl.map((e,i)=>({
+            seq: i+1,
+            timestamp: e.t,
+            event_type: e.type||e.label||'event',
+            payload: e.label ? {action: e.label} : {},
+            hash: '—',
+            prev_hash: '—',
+            sig_status: 'valid',
+            algorithm: 'Ed25519',
+          }))
+        : _generateDemoStamps(agentName, agent);
+      _renderStamps(_stampPanelData);
+    });
+}
+
+function _generateDemoStamps(agentName, agent){
+  // Generate plausible demo stamps when no backend
+  const now = Date.now()/1000;
+  const types = ['action','decision','observation','alert','a2a_handshake','trust_update','chain_verify'];
+  const count = agent ? Math.min(agent.event_count||12, 20) : 12;
+  const stamps = [];
+  for(let i=count;i>=1;i--){
+    const t = types[Math.floor(Math.random()*types.length)];
+    const h = Array.from({length:16},()=>Math.floor(Math.random()*16).toString(16)).join('');
+    stamps.push({
+      seq: i,
+      timestamp: now - i*180 - Math.random()*60,
+      event_type: t,
+      payload: _demoPayload(t, agentName),
+      hash: h+'...'+h.slice(0,8),
+      prev_hash: i>1 ? (h.slice(2)+'...'+h.slice(0,6)) : 'GENESIS',
+      sig_status: Math.random()>0.04 ? 'valid' : 'invalid',
+      algorithm: agent && agent.tier==='Pro' ? 'Ed25519+Dilithium3' : 'Ed25519',
+    });
+  }
+  return stamps.reverse();
+}
+
+function _demoPayload(type, agent){
+  const p = {
+    action:         {action:'execute', target:'market_eval', confidence:+(Math.random()).toFixed(3)},
+    decision:       {decision:'buy', symbol:['AAPL','MSFT','ETH'][Math.floor(Math.random()*3)], amount:Math.floor(Math.random()*1000)},
+    observation:    {observation:'market_shift', delta:+(Math.random()-.5).toFixed(4), source:'feed'},
+    alert:          {alert:'threshold_exceeded', vrs:+(Math.random()*.3+.5).toFixed(3), escalated:true},
+    a2a_handshake:  {handshake:'init', peer:agent+'_peer', session_id:'ses_'+Math.random().toString(36).slice(2,8)},
+    trust_update:   {trust_score:+(Math.random()).toFixed(3), delta:+(Math.random()*.1-.05).toFixed(4)},
+    chain_verify:   {chain:'ok', depth:Math.floor(Math.random()*50+5), fork_detected:false},
+  };
+  return p[type] || {type};
+}
+
+function _renderStamps(stamps){
+  const q = (document.getElementById('sp-search').value||'').toLowerCase();
+  const filtered = q
+    ? stamps.filter(s=>
+        (s.event_type||'').toLowerCase().includes(q) ||
+        JSON.stringify(s.payload||{}).toLowerCase().includes(q))
+    : stamps;
+
+  document.getElementById('sp-count').textContent = filtered.length+' / '+stamps.length+' stamps';
+
+  if(!filtered.length){
+    document.getElementById('sp-list').innerHTML =
+      '<div class="sp-empty">No stamps match the filter.</div>';
+    return;
+  }
+
+  // Show most recent first
+  const sorted = [...filtered].reverse();
+
+  document.getElementById('sp-list').innerHTML = sorted.map((s,idx)=>{
+    const isValid = (s.sig_status||'valid') === 'valid';
+    const col = sc(s.event_type==='alert'?'ALERT':s.event_type==='a2a_handshake'?'WATCH':'SAFE');
+    const typeCol = s.event_type==='alert'?'var(--alert)':s.event_type==='decision'?'var(--watch)':'var(--ac)';
+    const typeBg  = s.event_type==='alert'?'var(--alertb)':s.event_type==='decision'?'var(--watchb)':'var(--ac2)';
+    const ts = s.timestamp ? new Date(s.timestamp*1000).toISOString().replace('T',' ').slice(0,19)+' UTC' : '—';
+    const payload = s.payload ? JSON.stringify(s.payload, null, 2) : '{}';
+    const hash = s.hash||'—';
+    const prev = s.prev_hash||'—';
+    const algo = s.algorithm||'Ed25519';
+    const seq  = s.seq || (sorted.length - idx);
+    return `<div class="stamp-row">
+      <div class="stamp-row-header">
+        <span class="stamp-seq">#${seq}</span>
+        <span class="stamp-type" style="color:${typeCol};background:${typeBg}">${(s.event_type||'event').toUpperCase()}</span>
+        <span class="stamp-sig ${isValid?'sig-ok':'sig-bad'}">${isValid?'✓ '+algo:'✗ INVALID'}</span>
+        <span class="stamp-time">${ts}</span>
+      </div>
+      <div class="stamp-payload">${payload}</div>
+      <div class="stamp-hashes">
+        <div class="stamp-hash-row">
+          <span class="stamp-hash-label">HASH</span>
+          <span class="stamp-hash-val" title="${hash}">${hash}</span>
+        </div>
+        <div class="stamp-hash-row">
+          <span class="stamp-hash-label">PREV</span>
+          <span class="stamp-hash-val" title="${prev}" style="color:${prev==='GENESIS'?'var(--ac)':'var(--txd)'}">${prev}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function _filterStamps(){
+  _renderStamps(_stampPanelData);
+}
+
+// Auto-refresh stamp panel if open
+setInterval(()=>{
+  if(_stampPanelAgent && document.getElementById('stamp-panel').classList.contains('open')){
+    _fetchStamps(_stampPanelAgent);
+  }
+}, 8000);
+
+loadFromBackend();
+setInterval(loadFromBackend,5000);
+// Start demo stamp simulation — will be overridden by real data when backend is live
+setTimeout(_demoStampLoop, 2000);
+</script>
+
+<!-- ── Certification modal ───────────────────────────────────────────── -->
+<div id="cert-modal" style="display:none;position:fixed;inset:0;
+     background:rgba(0,0,0,.72);z-index:9999;align-items:center;
+     justify-content:center">
+  <div style="background:#0d1117;border:1px solid #1a2740;border-radius:12px;
+              padding:24px 26px;min-width:320px;max-width:400px;
+              box-shadow:0 8px 32px rgba(0,0,0,.5)">
+    <div style="font-size:13px;font-weight:600;color:#c5d8ec;margin-bottom:4px">
+      Certify this export with PiQrypt?
+    </div>
+    <div id="cert-modal-agent"
+         style="font-size:11px;color:#4a7a99;margin-bottom:18px"></div>
+    <div style="font-size:11px;color:#8aa8bf;margin-bottom:10px">
+      Choose certification level :
+    </div>
+    <div id="cert-modal-buttons"
+         style="display:flex;flex-direction:column;gap:7px;margin-bottom:16px">
+      <div style="font-size:10px;color:#4a7a99">Loading credits…</div>
+    </div>
+    <button onclick="closeCertModal();_dlRawPqz(_certModalAgent)"
+            style="width:100%;padding:8px 0;background:transparent;
+                   border:1px solid #1a2740;border-radius:6px;
+                   color:#4a7a99;font-size:11px;cursor:pointer;margin-top:2px">
+      Cancel — download without certification
+    </button>
+  </div>
+</div>
+</body>
+</html>
