@@ -6,7 +6,7 @@ Signed • Timestamped • Post-Quantum Ready • Tamper-Proof
 
 [![PyPI](https://img.shields.io/badge/PyPI-piqrypt-blue)](https://pypi.org/project/piqrypt/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![AISS](https://img.shields.io/badge/AISS-v1.1-orange)](https://github.com/piqrypt/aiss-spec)
+[![AISS](https://img.shields.io/badge/AISS-v2.0-orange)](https://github.com/piqrypt/aiss-spec)
 
 ---
 
@@ -101,7 +101,9 @@ aiss.export_audit_chain("audit.json", certified=True)
 | **Autonomous Vehicles** | Legal liability for accidents | Black box with crypto proof |
 | **Supply Chain** | Track AI inventory decisions | Non-repudiable logistics trail |
 
-**Compliance:** SOC2 • ISO 27001 • HIPAA • GDPR • SEC/FINRA • NIST PQC
+**Compliance:** SOC2 • ISO 27001 • HIPAA • GDPR • SEC/FINRA • EU AI Act Art.14 • NIST AI RMF • ANSSI 2024
+
+**v1.7.1 — New:** TrustGate governance engine · AgentSession cross-framework sessions · 9 framework bridges (LangChain, CrewAI, AutoGen, OpenClaw, Session, MCP, Ollama, ROS2, RPi)
 
 ---
 
@@ -264,6 +266,7 @@ piqrypt verify audit.json
 - Ed25519 signatures
 - JSON storage
 - 50 exports/month
+- ✅ **A2A handshake** — pairwise agent-to-agent identity
 - **1 Simple certification/month FREE** 🔥
 
 ```bash
@@ -286,7 +289,7 @@ Perfect for startups, trading bots, automation workflows.
 - ✅ **Unlimited exports**
 - ✅ **10 Simple certifications/month FREE**
 - ✅ **TSA timestamps** (RFC 3161)
-- ✅ **A2A handshake** (agent-to-agent)
+- ✅ **AgentSession** — N-agent cross-framework co-signed sessions
 - ✅ **Email support** (48h)
 
 <a href="https://buy.stripe.com/4gM6oAeZe9tX6KreEX2VG02">
@@ -333,13 +336,13 @@ Perfect for banks, healthcare, government, autonomous vehicles.
 - ✅ **On-premise** option
 - ✅ **SOC2/ISO 27001** audit support
 
-<a href="mailto:piqrypt@gmail.com?subject=Enterprise Inquiry">
+<a href="mailto:contact@piqrypt.com?subject=Enterprise Inquiry">
 <img src="https://img.shields.io/badge/Contact_Sales-Enterprise-gold?style=for-the-badge&logo=mail.ru&logoColor=white" alt="Enterprise Contact">
 </a>
 
 **Pricing starts at €10,000/year.**
 
-**OSS Exemption:** Open-source projects get Pro for free. [Apply here](mailto:piqrypt@gmail.com?subject=OSS License Request).
+**OSS Exemption:** Open-source projects get Pro for free. [Apply here](mailto:contact@piqrypt.com?subject=OSS License Request).
 
 ---
 
@@ -347,9 +350,12 @@ Perfect for banks, healthcare, government, autonomous vehicles.
 
 ### System Architecture
 
-AISS → Identity Standard
-PCP → Continuity Enforcement
-PiQrypt → Reference Implementation
+TRUSTGATE  → Policy / Governance Engine   (Layer 4)
+VIGIL      → Behavioural Monitoring         (Layer 3)
+PIQRYPT    → Continuity Engine              (Layer 2)
+AISS       → Agent Identity Standard        (Layer 1)
+
+PCP → The protocol. PiQrypt → The reference implementation.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -384,7 +390,7 @@ PiQrypt → Reference Implementation
 
 ## 🌐 AISS Standard
 
-PiQrypt is the **reference implementation** of **AISS v1.1** (Agent Identity & Signature Standard).
+PiQrypt is the **reference implementation** of **AISS v2.0** (Agent Identity & Signature Standard).
 
 **What is AISS?**
 
@@ -474,7 +480,7 @@ event = aiss.stamp_event(priv, agent_id, {
 
 - **Quick Start:** [QUICK-START.md](QUICK-START.md)
 - **AISS Spec:** [docs/RFC.md](docs/RFC.md)
-- **A2A Handshake:** [docs/A2A_GUIDE.md](docs/A2A_GUIDE.md)
+- **A2A Handshake:** [docs/A2A_SESSION_GUIDE.md](docs/A2A_SESSION_GUIDE.md)
 - **OpenClaw:** [docs/OPENCLAW_INTEGRATION.md](docs/OPENCLAW_INTEGRATION.md)
 - **CLI Reference:** `piqrypt --help`
 
@@ -482,27 +488,33 @@ event = aiss.stamp_event(priv, agent_id, {
 
 ## 🗺️ Roadmap
 
-### v1.5.0 (Current) ✅
+### v1.7.1 (Current) ✅
 - A2A Handshake
-- AISS v1.1 separation
+- AISS v2.0 separation
 - MCP Server
 - Pay-per certification
 
-### v1.6.0 (Q2 2026)
+### v1.6.0 ✅
 - Trust Scoring (I/V/D/F)
 - Visual dashboard
 - A2A Network (DHT)
 
-### v1.7.0 (Q3 2026)
+### v1.7.0 ✅
 - Witness network
 - HSM integration
 - Blockchain anchoring
 
 ---
 
+### v1.8.0 (Q2 2026)
+- OIDC/SSO for Vigil + TrustGate authentication
+- Full CMS/PKCS7 TSA token verification
+- PostgreSQL event storage backend
+- PiQrypt Ambassador Agent (Ollama-based)
+
 ## 📧 Contact & Support
 
-- **Email:** piqrypt@gmail.com
+- **Email:** contact@piqrypt.com
 - **Issues:** [GitHub Issues](https://github.com/piqrypt/piqrypt/issues)
 - **Pro Support:** 48h response (Pro tier)
 - **Enterprise:** 24h response + Slack
@@ -534,7 +546,7 @@ event = aiss.stamp_event(priv, agent_id, {
 
 **Enterprise:**
 
-<a href="mailto:piqrypt@gmail.com?subject=Enterprise">Contact Sales</a>
+<a href="mailto:contact@piqrypt.com?subject=Enterprise">Contact Sales</a>
 
 ---
 
@@ -550,3 +562,22 @@ pip install piqrypt
 *PiQrypt — Cryptographic Proof for AI Agents*
 
 </div>
+
+---
+
+**Intellectual Property Notice**
+
+Core protocol concepts described in this document were deposited
+via e-Soleau with the French National Institute of Industrial Property (INPI):
+
+Primary deposit:  DSO2026006483 — 19 February 2026
+Addendum:         DSO2026009143 — 12 March 2026
+
+These deposits establish proof of authorship and prior art
+for the PCP protocol specification and PiQrypt reference implementation.
+
+PCP (Proof of Continuity Protocol) is an open protocol specification.
+It may be implemented independently by any compliant system.
+PiQrypt is the reference implementation.
+
+© 2026 PiQrypt — contact@piqrypt.com

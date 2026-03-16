@@ -1,3 +1,10 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 PiQrypt Inc.
+# e-Soleau: DSO2026006483 (19/02/2026) -- DSO2026009143 (12/03/2026)
+#
+# Licensed under the Apache License, Version 2.0.
+# See bridges/LICENSE or cli/LICENSE for full terms.
+
 """
 PiQrypt CLI - AISS Command Line Interface v1.1.0
 
@@ -49,25 +56,150 @@ def print_json(data: Dict[str, Any]) -> None:
 # ─────────────────────────────────────────────
 
 def cmd_identity_create(args):
-    print("Generating Ed25519 keypair...")
-    private_key, public_key = aiss.generate_keypair()
-    agent_id = aiss.derive_agent_id(public_key)
-    identity = aiss.export_identity(agent_id, public_key)
+    """Création d'une identité agent v1.7.0 — nom + passphrase + stockage isolé."""
+    import getpass, os
 
-    output_data = {
-        "identity": identity,
-        "private_key": aiss.crypto.ed25519.encode_base64(private_key),
-        "WARNING": "Keep private_key secret! Never share or commit to version control."
-    }
+    # Récupérer le nom
+    agent_name = getattr(args, 'name', None)
+    non_interactive = getattr(args, 'non_interactive', False)
 
-    if args.output:
-        save_json(output_data, args.output)
+    if non_interactive:
+        agent_name = agent_name or os.environ.get("PIQRYPT_AGENT_NAME", "default")
+        passphrase = os.environ.get("PIQRYPT_PASSPHRASE")
     else:
-        print_json(output_data)
+        if not agent_name:
+            try:
+                agent_name = input("Nom de l'agent : ").strip()
+                if not agent_name:
+                    agent_name = "default"
+            except (KeyboardInterrupt, EOFError):
+                print("\nAnnulé.")
+                return
 
-    print(f"\n✓ Agent ID: {agent_id}")
-    aiss.log_identity_created(agent_id, "Ed25519")
+        # Passphrase optionnelle
+        passphrase = None
+        try:
+            pp = getpass.getpass("Passphrase (optionnel, Entrée = sans) : ")
+            if pp:
+                pp2 = getpass.getpass("Confirmer la passphrase : ")
+                if pp != pp2:
+                    print("⚠️  Passphrases différentes — clé stockée sans chiffrement.")
+                else:
+                    passphrase = pp
+        except (KeyboardInterrupt, EOFError):
+            passphrase = None
+
+    print(f"\nGénération des clés Ed25519 pour '{agent_name}'...")
+
+    try:
+        result = aiss.create_agent_identity(
+            agent_name=agent_name,
+            passphrase=passphrase,
+            tier=aiss.get_tier(),
+        )
+    except Exception as e:
+        print(f"❌ Erreur : {e}")
+        return
+
+    print(f"\n✅ Identité créée !")
+    print(f"   Nom       : {result['agent_name']}")
+    print(f"   Agent ID  : {result['agent_id']}")
+    print(f"   Clé       : {'🔒 chiffrée' if result['encrypted'] else '⚠️  non chiffrée'}")
+    print(f"   Stockage  : {result['key_path']}")
+
+    if not result['encrypted']:
+        print("\n   💡 Conseil : protégez la clé avec :")
+        print(f"      piqrypt identity secure --name {agent_name}")
+
+    if getattr(args, 'output', None):
+        save_json({"identity": result['identity'], "agent_id": result['agent_id']}, args.output)
+        print(f"   Export    : {args.output}")
+
+    aiss.log_identity_created(result['agent_id'], "Ed25519")
     aiss.track("identity_created", algorithm="Ed25519", tier=aiss.get_tier())
+
+
+def cmd_identity_list(args):
+    """Liste tous les agents enregistrés."""
+    try:
+        from aiss.agent_registry import list_agents, format_agent_list
+        agents = list_agents()
+        print(format_agent_list(agents))
+    except Exception as e:
+        print(f"❌ Erreur : {e}")
+
+
+def cmd_identity_secure(args):
+    """Chiffre ou rechiffre la clé privée d'un agent."""
+    import getpass, os
+
+    agent_name = getattr(args, 'name', None) or os.environ.get("PIQRYPT_AGENT_NAME")
+    if not agent_name:
+        try:
+            agent_name = input("Nom de l'agent : ").strip()
+        except (KeyboardInterrupt, EOFError):
+            print("\nAnnulé.")
+            return
+
+    try:
+        new_pp = getpass.getpass(f"Nouvelle passphrase pour '{agent_name}' : ")
+        if not new_pp:
+            print("❌ Passphrase vide — annulé.")
+            return
+        confirm = getpass.getpass("Confirmer : ")
+        if new_pp != confirm:
+            print("❌ Passphrases différentes — annulé.")
+            return
+
+        old_pp = None
+        from aiss.key_store import is_encrypted
+        from aiss.agent_registry import get_agent_dir
+        agent_dir = get_agent_dir(agent_name)
+        enc_path = agent_dir / "private.key.enc"
+        if enc_path.exists() and is_encrypted(enc_path):
+            old_pp = getpass.getpass("Ancienne passphrase : ")
+
+        aiss.secure_agent_key(agent_name, new_pp, old_pp)
+        print(f"✅ Clé de '{agent_name}' chiffrée avec succès.")
+    except Exception as e:
+        print(f"❌ Erreur : {e}")
+
+
+def cmd_unlock(args):
+    """Déverrouille une session agent (affiche les infos de session)."""
+    import getpass, os
+
+    agent_name = getattr(args, 'agent', None) or os.environ.get("PIQRYPT_AGENT_NAME")
+    if not agent_name:
+        try:
+            agent_name = input("Nom de l'agent : ").strip()
+        except (KeyboardInterrupt, EOFError):
+            print("\nAnnulé.")
+            return
+
+    try:
+        from aiss.identity_session import IdentitySession
+        with IdentitySession().unlock_interactive(agent_name) as session:
+            print(f"\n✅ Session ouverte pour '{agent_name}'")
+            print(f"   Agent ID : {session.agent_id}")
+            print(f"   Statut   : déverrouillée")
+            input("\n   Appuyez sur Entrée pour verrouiller...")
+        print("🔒 Session verrouillée.")
+    except Exception as e:
+        print(f"❌ Erreur : {e}")
+
+
+def cmd_migrate(args):
+    """Migration manuelle v1.6.0 → v1.7.0."""
+    try:
+        from aiss.migration import prompt_migration, needs_migration
+        if not needs_migration():
+            print("✅ Aucune migration nécessaire — structure déjà en v1.7.0.")
+            return
+        non_interactive = getattr(args, 'non_interactive', False)
+        prompt_migration(non_interactive=non_interactive)
+    except Exception as e:
+        print(f"❌ Erreur de migration : {e}")
 
 
 def cmd_identity_rotate(args):
@@ -577,6 +709,14 @@ def main():
     if hasattr(sys.stderr, 'reconfigure'):
         sys.stderr.reconfigure(encoding='utf-8')
 
+    # Vérification migration v1.6.0 → v1.7.0 au démarrage
+    try:
+        from aiss.migration import needs_migration, prompt_migration
+        if needs_migration():
+            prompt_migration()
+    except Exception:
+        pass  # Migration non critique — ne bloque pas le démarrage
+
     parser = argparse.ArgumentParser(
         description=f"PiQrypt v{aiss.__version__} – AISS Command Line Interface",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -599,13 +739,31 @@ Examples:
     id_p = sub.add_parser('identity', help='Identity management')
     id_s = id_p.add_subparsers(dest='identity_command')
 
-    id_create = id_s.add_parser('create', help='Create new identity')
-    id_create.add_argument('--output', '-o', help='Output file (default: stdout)')
+    id_create = id_s.add_parser('create', help='Create new agent identity')
+    id_create.add_argument('--name', '-n', help='Agent name')
+    id_create.add_argument('--output', '-o', help='Export identity JSON to file')
+    id_create.add_argument('--non-interactive', action='store_true',
+                           help='Use env vars PIQRYPT_AGENT_NAME + PIQRYPT_PASSPHRASE')
+
+    id_list = id_s.add_parser('list', help='List registered agents')
+
+    id_secure = id_s.add_parser('secure', help='Encrypt/re-encrypt agent private key')
+    id_secure.add_argument('--name', '-n', help='Agent name')
 
     id_rotate = id_s.add_parser('rotate', help='Rotate agent key')
     id_rotate.add_argument('old_key', help='Old identity file')
     id_rotate.add_argument('new_key', help='New identity output file')
     id_rotate.add_argument('--output', '-o', help='Attestation output file')
+
+    # ── stamp ──
+    # ── unlock (v1.7.0) ──
+    unlock_p = sub.add_parser('unlock', help='Unlock agent identity session')
+    unlock_p.add_argument('--agent', '-a', help='Agent name')
+
+    # ── migrate (v1.7.0) ──
+    migrate_p = sub.add_parser('migrate', help='Migrate v1.6.0 structure to v1.7.0')
+    migrate_p.add_argument('--non-interactive', action='store_true',
+                           help='Use env vars, no prompts')
 
     # ── stamp ──
     stamp_p = sub.add_parser('stamp', help='Stamp an event')
@@ -793,10 +951,22 @@ Examples:
         if args.command == 'identity':
             if args.identity_command == 'create':
                 cmd_identity_create(args)
+            elif args.identity_command == 'list':
+                cmd_identity_list(args)
+            elif args.identity_command == 'secure':
+                cmd_identity_secure(args)
             elif args.identity_command == 'rotate':
                 cmd_identity_rotate(args)
             else:
                 id_p.print_help()
+
+        # unlock (v1.7.0)
+        elif args.command == 'unlock':
+            cmd_unlock(args)
+
+        # migrate (v1.7.0)
+        elif args.command == 'migrate':
+            cmd_migrate(args)
 
         # Stamp
         elif args.command == 'stamp':

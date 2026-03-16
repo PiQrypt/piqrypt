@@ -1,0 +1,63 @@
+# NIST Balanced Profile — Trust Gate
+# Aligned with NIST AI RMF 1.0 + AI 600-1
+# Designed for: US enterprise, moderate risk tolerance
+#
+# Key characteristics:
+# - Standard VRS thresholds
+# - More autonomy for trusted roles
+# - External calls allowed with logging
+# - Escalate (not reject) on timeout
+
+version: "1.0"
+name: "nist_balanced"
+profile: "nist_balanced"
+author: "system"
+
+thresholds:
+  vrs_require_human: 0.60
+  vrs_block: 0.85
+  tsi_unstable_action: "REQUIRE_HUMAN"
+  tsi_critical_action: "BLOCK"
+
+roles:
+  read_only:
+    allowed_tools: [read_db, list_files, search, query, http_get]
+    blocked_tools: [write_db, shell, admin, delete, create_user]
+
+  operator:
+    allowed_tools: [read_db, write_db, http_get, http_post, query, list_files]
+    blocked_tools: [shell, admin, create_user, financial_transfer]
+
+  trusted:
+    allowed_tools: ["*"]
+    blocked_tools: [shell, admin]
+
+escalation:
+  max_watch_events: 5
+  auto_restrict_after: 8
+  restrict_duration_minutes: 60
+
+network:
+  allowed_domains: []
+  block_external: false         # allowed with logging
+  log_external_calls: true
+
+dangerous_patterns:
+  - "rm\\s+-rf"
+  - "DROP\\s+TABLE"
+  - "DROP\\s+DATABASE"
+  - "curl.*\\|.*bash"
+  - "base64.*decode.*exec"
+  - "financial_transfer"
+
+notification:
+  timeout_seconds: 300          # 5 minutes
+  on_timeout: "ESCALATE"        # escalate to L2 approver
+  require_justification: false
+  channels: []
+  principals: []
+
+logging:
+  retention_days: 730
+  log_allow: false
+  payload_mode: "hash"

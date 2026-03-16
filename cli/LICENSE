@@ -1,0 +1,18 @@
+Apache License, Version 2.0
+
+Copyright (c) 2026 PiQrypt Inc.
+e-Soleau primary deposit : DSO2026006483 — 19 February 2026
+e-Soleau addendum        : DSO2026009143 — 12 March 2026
+
+Component : PiQrypt CLI + SDK (cli/)
+Scope     : Command-line interface, public API surface, quickstart tools
+
+Licensed under the Apache License, Version 2.0.
+Full text : https://www.apache.org/licenses/LICENSE-2.0
+
+You may use, reproduce, and distribute this component freely,
+including in commercial and proprietary products, subject to
+Apache License 2.0 conditions.
+
+NOTICE: This software includes components developed by PiQrypt Inc.
+Attribution required when distributing modified versions.

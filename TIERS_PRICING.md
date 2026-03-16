@@ -1,36 +1,38 @@
-# PiQrypt — Pricing & Tiers
+# PiQrypt — Tiers & Pricing
 
-**Verifiable memory for AI agents.**
-
-PiQrypt is free to use. Paid tiers unlock additional agents,
-encrypted storage, post-quantum signatures, and priority support.
+> **Source de vérité unique** — ce fichier est synchronisé avec `aiss/license.py → TIERS{}`
+> et `auth_middleware.py → VIGIL_TIER_FEATURES{}`.
 
 ---
 
-## Who is this for?
-
-| Profile | Typical need | Recommended tier |
-|---|---|---|
-| Independent developer | Prove authorship · personal projects | Free |
-| AI startup | Production audit trail · compliance | Pro |
-| Trading / fintech | High-volume · encrypted · regulatory | Pro |
-| Industrial / IoT | Multi-agent · long-term traceability | Pro |
-| Enterprise | Governance · multi-tenant · SLA | Enterprise |
-
----
-
-## Tiers
-
-### Free — forever
+## Free — forever
 
 For individuals, open-source projects, and evaluation.
 
-- 3 agents
-- Ed25519 signatures
+**Quotas**
+- **3 agents** · **10,000 events/month**
+
+**Core features (local, offline)**
+- Ed25519 signatures + hash-linked chains
+- Fork detection · A2A handshake
 - Plaintext local storage
-- 50 exports / month
-- 1 free Simple certification / month
-- Community support
+- `.pqz` memory export (basic)
+
+**Vigil dashboard**
+- ✅ Dashboard read + write (agents connect and send events)
+- ✅ Live network graph
+- ✅ Alerts — CRITICAL severity only
+- ✅ PDF audit report (local, non-certified)
+- 🔒 Alerts MEDIUM/LOW — Pro+
+- 🔒 `.pqz` certified export — Pro+
+- 🔒 VRS history > 7 days — Pro+
+
+**Bridges**
+- **2 bridge types max** (e.g. LangChain + CrewAI)
+- All 9 bridges available to choose from: LangChain, CrewAI, AutoGen, MCP,
+  OpenClaw, AgentSession, Ollama, ROS2, RPi
+
+**Support:** Community
 
 ```bash
 pip install piqrypt   # immediate · no account · no cloud
@@ -40,168 +42,212 @@ No credit card. No expiry.
 
 ---
 
-### Pro — €290 / year (Early-Bird) · €390 / year (Standard)
+## Pro — €290/year (Early-Bird) · €390/year (Standard)
 
-For production workloads, compliance-sensitive environments,
-and teams that need more than 3 agents.
+For production workloads, freelancers, consultants, and compliance-sensitive environments.
 
-- 50 agents
-- Ed25519 + Dilithium3 (post-quantum)
-- AES-256-GCM encrypted local storage
-- Unlimited exports
-- 50 free Simple certifications / month
-- TSA timestamps (RFC 3161)
-- A2A session support
-- Email support (48h / 24h depending on tier)
+**Quotas**
+- **50 agents** · **500,000 events/month**
 
-<div align="center">
+**Everything in Free, plus:**
+- Ed25519 + **Dilithium3** post-quantum signatures (NIST FIPS 204)
+- **AES-256-GCM** encrypted local storage (scrypt N=2¹⁷)
+- **RFC 3161** trusted timestamps (TSA)
+- **AgentSession** — cross-framework co-signed sessions
+- All 9 bridges — **unlimited bridge types**
 
-<a href="https://buy.stripe.com/4gM6oAeZe9tX6KreEX2VG02">
-<img src="https://img.shields.io/badge/Early--Bird_Pro-€290/year-blue?style=for-the-badge&logo=stripe&logoColor=white" alt="Early-Bird Pro €290/year">
-</a>
-&nbsp;
-<a href="https://buy.stripe.com/00wcMY7wMeOhc4L2Wf2VG01">
-<img src="https://img.shields.io/badge/Standard_Pro-€390/year-orange?style=for-the-badge&logo=stripe&logoColor=white" alt="Standard Pro €390/year">
-</a>
+**Vigil — full mode**
+- ✅ All alert severities (CRITICAL · HIGH · MEDIUM · LOW)
+- ✅ Alert filters (by agent, severity, time range)
+- ✅ `.pqz` certified export + memory export
+- ✅ PDF audit report
+- ✅ VRS history — **90 days**
+- ✅ Trust Scoring · TSI · A2C anomaly detection
 
-</div>
+**TrustGate:** manual mode (REQUIRE_HUMAN flow)
+
+**Certifications included:** 10 × Simple/month *(à la carte available)*
+
+**Support:** Email — 48h response
+
+> **Pro tier — coming soon · contact@piqrypt.com**
 
 ---
 
-### Enterprise — from €10,000 / year
+## Startup — €990/year  *(nouveau)*
 
-For organizations requiring governance at scale,
-on-premise deployment, or hardware-level security.
+For small teams of 2–10 engineers, AI labs, early-stage startups.
 
-- 50 agents
-- HSM integration
-- REST API + GraphQL
-- Multi-tenant architecture
-- SSO (SAML, OAuth)
-- SLA 99.9%
-- On-premise deployment option
+**Quotas**
+- **50 agents** · **1,000,000 events/month**
+
+**Everything in Pro, plus:**
+- Team workspace (shared agent registry)
+- Shared Vigil dashboard (multi-user read)
+- Collaborative alert policies
+
+**TrustGate:** manual mode
+
+**Certifications included:** 5 × Timestamp/month
+
+**Support:** Priority email — 24h response
+
+---
+
+## Team — €2,990/year
+
+For AI product teams, robotics teams, quant teams.
+
+**Quotas**
+- **150 agents** · **5,000,000 events/month**
+
+**Everything in Startup, plus:**
+- Org-wide agent registry
+- Cross-team monitoring
+- Audit history search
+- Policy versioning
+
+**TrustGate:** manual mode
+
+**Certifications included:** 10 × Timestamp/month
+
+**Support:** Priority support
+
+---
+
+## Business — €14,990/year
+
+For organizations requiring governance at scale — regulated AI, robotics fleets, finance.
+
+**Quotas**
+- **500 agents** · **20,000,000 events/month**
+
+**Everything in Team, plus:**
+- **TrustGate full automated mode** (policy-driven, no human approval required)
+- Multi-organization support
+- SIEM integration
+- Compliance reporting (AI Act · GDPR Article 22 · MiFID II)
+- Deployment templates
+- On-premise deployment (option)
+
+**Certifications included:** 5 × Post-Quantum/month
+
+**Support:** Dedicated support
+
+---
+
+## Enterprise — on demand
+
+For regulated industries, critical infrastructure, large deployments.
+
+**Quotas:** Unlimited agents and events
+
+**Everything in Business, plus:**
+- SSO (SAML, OAuth 2.0, OIDC)
+- HSM integration · Private signing service
+- On-premise deployment (standard)
 - SOC2 / ISO 27001 audit support
-- Dedicated support
+- Dedicated SLA · Architecture review
 
-<div align="center">
-
-<a href="mailto:piqrypt@gmail.com?subject=Enterprise Inquiry">
-<img src="https://img.shields.io/badge/Contact_Sales-Enterprise-gold?style=for-the-badge" alt="Enterprise">
-</a>
-
-</div>
+**Certifications:** Custom volume
 
 ---
 
-## Use cases by tier
+## Tiers at a glance
 
-### Free
+| | Free | Pro | Startup | Team | Business | Enterprise |
+|---|---|---|---|---|---|---|
+| **Agents** | 3 | 50 | 50 | 150 | 500 | ∞ |
+| **Events/month** | 10k | 500k | 1M | 5M | 20M | ∞ |
+| **Bridges** | 2 types | ∞ | ∞ | ∞ | ∞ | ∞ |
+| **Vigil** | read+write | full | full | full | full | full |
+| **Alerts** | CRITICAL | all | all | all | all | all |
+| **PDF export** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **.pqz export** | 🔒 | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **VRS history** | 7 days | 90 days | 90 days | 90 days | 90 days | ∞ |
+| **PQ signatures** | 🔒 | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **RFC 3161 TSA** | 🔒 | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **TrustGate** | 🔒 | manual | manual | manual | **full auto** | full auto |
+| **Multi-org** | 🔒 | 🔒 | 🔒 | 🔒 | ✅ | ✅ |
+| **SIEM** | 🔒 | 🔒 | 🔒 | 🔒 | ✅ | ✅ |
+| **SSO** | 🔒 | 🔒 | 🔒 | 🔒 | 🔒 | ✅ |
+| **HSM** | 🔒 | 🔒 | 🔒 | 🔒 | 🔒 | ✅ |
+| **Price/year** | Free | €290–390 | €990 | €2,990 | €14,990 | custom |
 
-**Independent developer — content authorship**
+---
 
-You generate documentation, code, or creative work with AI tools.
-A hash-signed, timestamped record proves prior existence
-without storing any content.
+## Certification Service — à la carte
 
+**Independent third-party certification for PiQrypt audit bundles.**
+
+See full details → [CERTIFICATION_PRICING.md](CERTIFICATION_PRICING.md)
+
+### Certifications included per tier
+
+| Tier | Simple (€9) | Timestamp (€29) | Post-Quantum (€99) |
+|---|---|---|---|
+| Free | 1 (activation) | — | — |
+| Pro (Early-Bird) | 10/month | — | — |
+| Pro (Standard) | 10/month | — | — |
+| Startup | — | 5/month | — |
+| Team | — | 10/month | — |
+| Business | — | — | 5/month |
+| Enterprise | custom | custom | custom |
+
+Additional certifications available à la carte at any tier.
+
+### Certification levels
+
+| | Simple · €9 | Timestamp · €29 | Post-Quantum · €99 |
+|---|---|---|---|
+| Independent CA signature | ✅ | ✅ | ✅ |
+| Hash chain verification | ✅ | ✅ | ✅ |
+| Public verification badge | ✅ | ✅ | ✅ |
+| Portable certified bundle | ✅ | ✅ | ✅ |
+| RFC 3161 TSA timestamp | — | ✅ | ✅ |
+| Dilithium3 (post-quantum) | — | — | ✅ |
+| Encrypted archive | — | — | ✅ |
+| Valid horizon | now | regulatory | 50+ years |
+
+**Verification — anyone, anywhere, no PiQrypt needed:**
 ```bash
-piqrypt identity create my-agent.json
-piqrypt stamp my-agent.json --payload '{"file": "contract_draft_v1", "hash": "..."}'
+piqrypt certify-verify bundle.piqrypt-certified
+# ✅ Certified by PiQrypt CA — chain intact — 2026-03-13T14:22:00Z
 ```
 
-**Open-source project — contribution traceability**
+---
 
-Each automated commit or release decision is signed by its agent identity.
-The audit trail is portable and verifiable by any contributor.
+## Project Badges *(viral growth — earned automatically)*
 
-> OSS exemption: open-source projects may apply for Pro at no cost.
-> Contact: piqrypt@gmail.com — Subject: OSS License Request
+Badges that appear in your README when your agents meet the criteria.
+No purchase required — earned by configuration.
+
+### 🔵 PiQrypt Verified
+```
+[![PiQrypt Verified](https://img.shields.io/badge/PiQrypt-Verified-blue)](https://piqrypt.com/verify)
+```
+**Requirements:** AISS-1 compliant · Ed25519 · hash chain · fork detection
+**Available:** Free tier and above
 
 ---
 
-### Pro
-
-**AI SaaS — production audit trail**
-
-Your product makes recommendations, decisions, or generates
-legally relevant content at scale.
-
-PiQrypt signs every agent action with a cryptographic identity.
-Encrypted storage protects sensitive payloads at rest.
-Exports are portable and independently verifiable.
-
-This directly supports:
-- AI Act Article 13 transparency obligations
-- GDPR Article 22 automated decision accountability
-- Contractual liability management
-
-**Trading / fintech — regulatory compliance**
-
-Automated trading systems, robo-advisors, and financial automation
-require tamper-proof records of every decision.
-
-PiQrypt provides:
-- Immutable decision logs bound to agent identity
-- RFC 3161 trusted timestamps for legal validity
-- Dilithium3 post-quantum signatures for long-term integrity
-- Export format compatible with regulatory review
-
-Relevant standards: SEC Rule 17a-4 · MiFID II · FINRA
-
-**Multi-agent coordination — session traceability**
-
-Complex pipelines involving LLMs, tool executors, and downstream
-systems require structural continuity across actors.
-
-PiQrypt session memory provides:
-- Co-signed handshakes before execution begins
-- Correlated interaction hashes across agent boundaries
-- Reconstructable timelines for incident analysis
+### 🟠 PiQrypt Production Ready
+```
+[![PiQrypt Production](https://img.shields.io/badge/PiQrypt-Production_Ready-orange)](https://piqrypt.com/verify)
+```
+**Requirements:** encrypted keys · Dilithium3 PQ · RFC 3161 · secure storage
+**Available:** Pro tier and above
 
 ---
 
-### Enterprise
-
-**Regulated industry — governance at scale**
-
-Banks, insurers, healthcare providers, and industrial groups
-operating across multiple jurisdictions require:
-
-- Unified audit layer across all AI systems
-- Independent verifiability without vendor dependency
-- Hardware-level key security (HSM)
-- Long-term cryptographic resilience (post-quantum)
-
-PiQrypt Enterprise provides a governance foundation
-that scales across departments, subsidiaries, and regulatory contexts.
+### 🥇 PiQrypt Regulated Infrastructure
+```
+[![PiQrypt Regulated](https://img.shields.io/badge/PiQrypt-Regulated_Infrastructure-gold)](https://piqrypt.com/verify)
+```
+**Requirements:** HSM · TrustGate full · compliance policies · certified audit export
+**Available:** Business tier and above
 
 ---
 
-## Tier comparison
-
-| | Free | Pro | Enterprise |
-|---|---|---|---|
-| Agents | 3 | 50 | 50 |
-| Ed25519 signatures | ✅ | ✅ | ✅ |
-| Dilithium3 (post-quantum) | — | ✅ | ✅ |
-| Encrypted storage | — | ✅ AES-256-GCM | ✅ HSM |
-| Exports / month | 50 | Unlimited | Unlimited |
-| RFC 3161 timestamps | — | ✅ | ✅ |
-| A2A session support | ✅ | ✅ | ✅ |
-| Certifications included | 1 Simple/mo | 50/mo | Custom |
-| Support | Community | Email | Dedicated SLA |
-| On-premise | — | — | ✅ |
-| SSO / multi-tenant | — | — | ✅ |
-| **Price** | **Free** | **€290–390/yr** | **on demand** |
-
----
-
-## Related
-
-- Independent audit certification → [CERTIFICATION.md](CERTIFICATION.md)
-- Integration with your framework → [INTEGRATION.md](INTEGRATION.md)
-- Technical architecture → [README.md](README.md)
-
----
-
-*PiQrypt — Verifiable memory for autonomous systems.*  
-*MIT License · piqrypt@gmail.com*
+*PiQrypt — Verifiable memory for autonomous systems.*
+*ELv2 Open Core — contact@piqrypt.com — https://piqrypt.com*

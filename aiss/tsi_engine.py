@@ -1,3 +1,18 @@
+# SPDX-License-Identifier: Elastic-2.0
+# Copyright (c) 2026 PiQrypt Inc.
+# e-Soleau: DSO2026006483 (19/02/2026) -- DSO2026009143 (12/03/2026)
+#
+# PROPRIETARY METHOD -- Dual License
+# This file contains original algorithmic methods protected by
+# e-Soleau deposits DSO2026006483 and DSO2026009143 (INPI France).
+#
+# Licensed under the Elastic License 2.0 (ELv2) for open/internal use.
+# A separate commercial license is required for:
+#   - SaaS or managed service deployment to third parties
+#   - Proprietary products embedding this method
+#   - OEM or white-label use
+# Commercial license: contact@piqrypt.com -- Subject: Commercial License Inquiry
+
 """
 TSI — Trust Stability Index — PiQrypt v1.6.0
 
@@ -344,6 +359,7 @@ def compute_tsi(
     return {
         "agent_id":        agent_id,
         "tsi_state":       new_state,
+        "tsi":             new_state,   # alias court pour compat tests et consumers
         "current_score":   current_score,
         "baseline_mean":   round(mean, 4) if mean is not None else None,
         "baseline_std":    round(std, 4) if std is not None else None,

@@ -443,3 +443,22 @@ def verify_handshake(
 ---
 
 **Questions?** piqrypt@gmail.com
+
+---
+
+**Intellectual Property Notice**
+
+Core protocol concepts described in this document were deposited
+via e-Soleau with the French National Institute of Industrial Property (INPI):
+
+Primary deposit:  DSO2026006483 — 19 February 2026
+Addendum:         DSO2026009143 — 12 March 2026
+
+These deposits establish proof of authorship and prior art
+for the PCP protocol specification and PiQrypt reference implementation.
+
+PCP (Proof of Continuity Protocol) is an open protocol specification.
+It may be implemented independently by any compliant system.
+PiQrypt is the reference implementation.
+
+© 2026 PiQrypt — contact@piqrypt.com

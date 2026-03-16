@@ -17,6 +17,9 @@ This guide answers the question the Quick Start doesn't: *"I already have an age
 | CrewAI | [→ CrewAI](#5-crewai) |
 | n8n or Make.com | [→ No-code](#6-n8n--makecom-no-code) |
 | A REST API / webhook | [→ REST / webhook](#7-rest-api--webhook) |
+| ROS2 robot | [→ ROS2](#9-ros2--robotics-pro) |
+| Raspberry Pi / edge | [→ RPi / Edge](#10-raspberry-pi--edge-iot) |
+| Ollama local LLM | [→ Ollama](#11-ollama--local-llm) |
 | Something else | [→ Universal pattern](#8-universal-pattern) |
 
 ---
@@ -206,7 +209,7 @@ client = anthropic.Anthropic()
 
 def ask_claude(prompt):
     message = client.messages.create(
-        model="claude-opus-4-5",
+        model="claude-sonnet-4-6",
         max_tokens=1024,
         messages=[{"role": "user", "content": prompt}]
     )
@@ -214,7 +217,7 @@ def ask_claude(prompt):
 
     aiss.store_event(aiss.stamp_event(private_key, agent_id, {
         "action": "llm_call",
-        "model": "claude-opus-4-5",
+        "model": "claude-sonnet-4-6",
         "prompt_hash": hashlib.sha256(prompt.encode()).hexdigest(),
         "response_hash": hashlib.sha256(reply.encode()).hexdigest(),
     }))
@@ -361,7 +364,8 @@ agent_a = AuditedAssistant(name="planner", ...)
 agent_b = AuditedAssistant(name="executor", ...)
 
 # Each agent signs its own decisions independently
-# A2A handshake available for cross-agent trust (Pro)
+# A2A handshake (pairwise, Free) — AgentSession cross-framework (Pro+)
+# See: docs/A2A_SESSION_GUIDE.md
 ```
 
 ---
@@ -544,7 +548,7 @@ async def decide(request: Request):
 ```python
 import hashlib
 import piqrypt as aiss
-from flask import Flask, request, g
+from flask import Flask, request
 from functools import wraps
 
 app = Flask(__name__)
@@ -621,6 +625,101 @@ stamp("model_output", prompt=prompt_text, reply=reply_text)
 
 ---
 
+## 9. ROS2 — Robotics (Pro)
+
+**Your situation:** you have a ROS2 node making autonomous decisions.
+
+```python
+import rclpy
+from rclpy.node import Node
+import piqrypt as aiss
+
+identity = aiss.load_identity("robot-agent.json")
+private_key = identity["private_key_bytes"]
+agent_id    = identity["agent_id"]
+
+class AuditedNode(Node):
+    def __init__(self):
+        super().__init__("audited_node")
+        self.sub = self.create_subscription(
+            String, "/commands", self.on_command, 10
+        )
+
+    def on_command(self, msg):
+        result = self.execute_command(msg.data)
+
+        aiss.store_event(aiss.stamp_event(private_key, agent_id, {
+            "action":       "ros2_command",
+            "node":         self.get_name(),
+            "command_hash": hashlib.sha256(msg.data.encode()).hexdigest(),
+            "result":       str(result),
+        }))
+```
+
+---
+
+## 10. Raspberry Pi / Edge (IoT)
+
+**Your situation:** you have a Python agent running on a Raspberry Pi or edge device.
+
+```python
+import piqrypt as aiss
+# RPi.GPIO optional — bridge works without hardware too
+
+identity = aiss.load_identity("rpi-agent.json")
+private_key = identity["private_key_bytes"]
+agent_id    = identity["agent_id"]
+
+def on_sensor_event(sensor_id: str, value: float):
+    # Your existing sensor logic
+    decision = process_sensor(sensor_id, value)
+
+    aiss.store_event(aiss.stamp_event(private_key, agent_id, {
+        "action":    "sensor_event",
+        "sensor_id": sensor_id,
+        "value":     round(value, 4),
+        "decision":  str(decision),
+    }))
+
+    return decision
+```
+
+Tip: on constrained hardware, use `--no-quantum` to skip Dilithium3 and reduce CPU/RAM usage.
+
+---
+
+## 11. Ollama — local LLM
+
+**Your situation:** you run a local LLM via Ollama and want to audit its outputs.
+
+```python
+import hashlib
+import ollama
+import piqrypt as aiss
+
+identity = aiss.load_identity("ollama-agent.json")
+private_key = identity["private_key_bytes"]
+agent_id    = identity["agent_id"]
+
+def ask_ollama(prompt: str, model: str = "llama3") -> str:
+    response = ollama.chat(
+        model=model,
+        messages=[{"role": "user", "content": prompt}]
+    )
+    reply = response["message"]["content"]
+
+    aiss.store_event(aiss.stamp_event(private_key, agent_id, {
+        "action":        "ollama_call",
+        "model":         model,
+        "prompt_hash":   hashlib.sha256(prompt.encode()).hexdigest(),
+        "response_hash": hashlib.sha256(reply.encode()).hexdigest(),
+    }))
+
+    return reply
+```
+
+---
+
 ## Export and verify — same for all patterns
 
 ```bash
@@ -658,12 +757,24 @@ Upgrade path is seamless — same API, same patterns, stronger crypto.
 |---|---|
 | 🚀 Quick Start | [QUICK-START.md](QUICK-START.md) |
 | 🤖 Agent self-install | [agents/AGENT_PROMPT.md](agents/AGENT_PROMPT.md) |
-| 🤝 A2A between agents | [docs/A2A_GUIDE.md](docs/A2A_GUIDE.md) |
+| 🤝 A2A between agents | [docs/A2A_HANDSHAKE_GUIDE.md](docs/A2A_HANDSHAKE_GUIDE.md) |
 | 🔗 OpenClaw pipeline | [docs/OPENCLAW_INTEGRATION.md](docs/OPENCLAW_INTEGRATION.md) |
 | 📐 AISS specification | [docs/RFC.md](docs/RFC.md) |
 | 🐛 Issues / questions | [GitHub Issues](https://github.com/piqrypt/piqrypt/issues) |
-| 📧 Support | piqrypt@gmail.com |
+| 📧 Support | contact@piqrypt.com |
 
 ---
 
-*PiQrypt v1.5.0 — AISS v1.1 Reference Implementation*
+*PiQrypt v1.7.1 — AISS v2.0 Reference Implementation*
+
+---
+
+**Intellectual Property Notice**
+
+Primary deposit:  DSO2026006483 — 19 February 2026
+Addendum:         DSO2026009143 — 12 March 2026
+
+PCP is an open protocol specification.
+PiQrypt is the reference implementation.
+
+© 2026 PiQrypt — contact@piqrypt.com

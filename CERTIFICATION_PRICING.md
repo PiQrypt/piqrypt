@@ -214,9 +214,11 @@ Relevant for: medical records · industrial certifications
 
 | Tier | Certifications included |
 |---|---|
-| Free | 1 Simple / month |
-| Early-Bird Pro | 10 Simple / month |
-| Standard Pro | 50 Simple |
+| Free | 1 Simple (à l'activation) |
+| Pro (Early-Bird €290) | 10 Simple / month |
+| Pro (Standard €390) | 50 Simple / month |
+| Team | 100 Simple / month |
+| Business | Custom volume |
 | Enterprise | Custom volume |
 
 Additional certifications available à la carte at the prices above.
@@ -225,11 +227,23 @@ Additional certifications available à la carte at the prices above.
 
 ## Related
 
-- Tier pricing and deployment options → [PRICING.md](TIERS_PRICING.md)
+- Tier pricing and deployment options → [TIERS_PRICING.md](TIERS_PRICING.md)
 - Technical architecture → [README.md](README.md)
 - Integration guide → [INTEGRATION.md](INTEGRATION.md)
 
 ---
 
-*PiQrypt — Verifiable memory for autonomous systems.*  
-*MIT License · piqrypt@gmail.com*
+*PiQrypt — Verifiable memory for autonomous systems.*
+*MIT License · contact@piqrypt.com*
+
+---
+
+**Intellectual Property Notice**
+
+Primary deposit:  DSO2026006483 — 19 February 2026
+Addendum:         DSO2026009143 — 12 March 2026
+
+PCP is an open protocol specification.
+PiQrypt is the reference implementation.
+
+© 2026 PiQrypt — contact@piqrypt.com

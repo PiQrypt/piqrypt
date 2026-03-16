@@ -4,20 +4,29 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "piqrypt"
-version = "1.6.0"
-description = "AISS (Agent Identity and Signature Standard) - RFC-compliant cryptographic identity for autonomous agents"
+version = "1.7.1"
+description = "Trust infrastructure for autonomous AI agents — identity, observability, governance"
 readme = "README.md"
-license = {text = "MIT"}
+license = {text = "MIT (AISS spec/bridges) AND Apache-2.0 (cli) AND Elastic-2.0 (aiss/vigil/trustgate)"}
 authors = [
-    {name = "PiQrypt Contributors", email = "piqrypt@gmail.com"}
+    {name = "PiQrypt Inc.", email = "contact@piqrypt.com"}
 ]
 requires-python = ">=3.9"
-keywords = ["cryptography", "identity", "agents", "ai", "signatures", "audit", "post-quantum", "langchain", "crewai", "autogen", "openclaw", "mpc-server"]
+keywords = [
+    "cryptography", "identity", "agents", "ai", "signatures",
+    "audit", "post-quantum", "langchain", "crewai", "autogen",
+    "openclaw", "mcp", "trustgate", "vigil", "aiss",
+    "observability", "governance", "ai-act", "anssi",
+    "ros2", "raspberry-pi", "edge", "robotics", "iot"
+]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
+    "Intended Audience :: Information Technology",
     "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License",
+    "License :: Other/Proprietary License",  # Elastic License 2.0 (ELv2) for core/vigil/trustgate
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -28,17 +37,57 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 
+# Core dependencies
 dependencies = [
     "PyNaCl>=1.5.0",
     "canonicaljson>=2.0.0",
     "base58>=2.1.0",
     "cryptography>=41.0.0",
+    "pyyaml>=6.0.0",
 ]
 
 [project.optional-dependencies]
-aiss2 = [
+
+# Bridges framework — installables directement depuis piqrypt
+langchain = [
+    "langchain>=0.1.0",
+]
+crewai = [
+    "crewai>=0.1.0",
+]
+autogen = [
+    "pyautogen>=0.2.0",
+]
+openclaw = []
+session  = []
+mcp = [
+    "mcp>=0.1.0",
+]
+ollama = [
+    "ollama>=0.1.0",
+]
+ros = []   # requires: ROS2 (Humble/Iron/Jazzy) + rclpy installed via rosdep
+rpi = [
+    "RPi.GPIO>=0.7.0; sys_platform == 'linux'",
+]
+
+# Tous les bridges Python en une commande
+all-bridges = [
+    "langchain>=0.1.0",
+    "crewai>=0.1.0",
+    "pyautogen>=0.2.0",
+    "ollama>=0.1.0",
+    "RPi.GPIO>=0.7.0; sys_platform == 'linux'",
+]
+
+# Post-quantum (Dilithium3 — NIST FIPS 204)
+post-quantum = [
     "liboqs-python>=0.8.0",
 ]
+post-quantum-py = [
+    "dilithium-py>=0.1.0",
+]
+
 dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
@@ -51,27 +100,40 @@ dev = [
 piqrypt = "cli.main:main"
 
 [project.urls]
-Homepage = "https://github.com/piqrypt/piqrypt"
-Documentation = "https://github.com/piqrypt/piqrypt#readme"
-Repository = "https://github.com/piqrypt/piqrypt"
+Homepage      = "https://piqrypt.com"
+Documentation = "https://docs.piqrypt.com"
+Repository    = "https://github.com/piqrypt/piqrypt"
 "Bug Tracker" = "https://github.com/piqrypt/piqrypt/issues"
+Standard      = "https://aiss-standard.org"
 
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["aiss*", "cli*"]
-exclude = ["tests*", "docs*"]
+where   = ["."]
+include = [
+    "aiss*",
+    "cli*",
+    "vigil*",
+    "trustgate*",
+    "bridges*",
+]
+exclude = ["tests*", "docs*", "*.tests", "*.tests.*"]
+
+[tool.setuptools.package-data]
+"vigil"     = ["*.html"]
+"trustgate" = ["profiles/*.yaml", "console/*.html"]
+"aiss"      = ["schemas/*.json", "ca/*.key", "templates/*.py"]
+"docs"      = ["RFC_AISS_v2.0.md"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths    = ["tests"]
 python_files = ["test_*.py"]
-addopts = "--cov=aiss --cov-report=term-missing --cov-report=html -v"
+addopts      = "--cov=aiss --cov-report=term-missing --cov-report=html -v"
 
 [tool.black]
-line-length = 100
+line-length    = 100
 target-version = ["py39"]
 
 [tool.ruff]
-line-length = 100
+line-length    = 100
 target-version = "py39"
 
 [tool.ruff.lint]
@@ -79,14 +141,15 @@ select = ["E", "F", "W"]
 
 [tool.ruff.lint.per-file-ignores]
 "aiss/__init__.py" = ["F401"]
-"cli/__init__.py" = ["F401"]
-"cli/main.py" = ["E501"]
-"aiss/*.py" = ["E501", "E722"]
-"aiss/rfc3161.py" = ["F401"]
+"cli/__init__.py"  = ["F401"]
+"cli/main.py"      = ["E501"]
+"aiss/*.py"        = ["E501", "E722"]
+"aiss/rfc3161.py"  = ["F401"]
+"bridges/**/*.py"  = ["E501"]
 
 [tool.mypy]
-python_version = "3.9"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = false
+python_version         = "3.9"
+warn_return_any        = true
+warn_unused_configs    = true
+disallow_untyped_defs  = false
 ignore_missing_imports = true

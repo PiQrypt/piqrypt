@@ -53,23 +53,72 @@ dmypy.json
 # Jupyter
 .ipynb_checkpoints
 
-# Private keys (CRITICAL - never commit!)
+# ════════════════════════════════════════════════════════════════
+# PIQRYPT — DONNÉES SENSIBLES (NE JAMAIS COMMITTER)
+# ════════════════════════════════════════════════════════════════
+
+# Répertoire de données agents (clés, événements, registry)
+.piqrypt/
+
+# Clés privées — toutes formes
+**/private.key.json
+**/private.key.enc
+**/private_key*
+**/*.key.json
+**/*.key.enc
+
+# Fichiers identité agent
 **/agent.json
 **/demo-agent.json
 **/*-agent.json
-**/private_key*
 **/test-agent.json
+**/identity.json
 
-# Build artifacts
+# Archives certifiées
+*.pqz
+
+# Registre local des agents
+**/registry.json
+
+# Index SQLite par agent
+**/index.db
+
+# Événements
+**/events/plain/
+**/events/encrypted/
+
+# Baseline TSI
+**/tsi/
+
+# Fichiers de licence
+**/license.jwt
+**/license.grace
+**/license.json
+**/*.lic
+
+# Variables d'environnement
+.env
+.env.*
+*.env
+
+# ════════════════════════════════════════════════════════════════
+# BUILD & ARTIFACTS
+# ════════════════════════════════════════════════════════════════
 *.tar.gz
 *.zip
 *.whl
-
-# Documentation
 docs/_build/
 site/
-
-# Temporary files
 *.tmp
 *.log
 *.bak
+
+piqrypt_keypair.json
+
+CLAUDE.md
+
+COMMANDES_VALIDEES.md
+
+ANALYSE_DIFFERENCIANTS.md
+
+ANALYSE_PROTOCOLE_BRIDGES.md

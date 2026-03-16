@@ -1,0 +1,82 @@
+# ANSSI Strict Profile — Trust Gate
+# Full compliance with ANSSI 2024 — 35 recommendations
+# Designed for: French public sector, OIV, critical infrastructure
+#
+# Key characteristics:
+# - Lower VRS thresholds → more human oversight (R9)
+# - Faster escalation (R27)
+# - All external domains blocked by default (R28)
+# - Mandatory justification for approvals (R9)
+# - Auto-reject on timeout (Zero Trust default)
+# - Full payload logging — note: set to hash-only if RGPD applies
+
+version: "1.0"
+name: "anssi_strict"
+profile: "anssi_strict"
+author: "system"
+
+# ── Thresholds — R9, R27 ──────────────────────────────────────────────────────
+thresholds:
+  vrs_require_human: 0.40     # lower = more supervision
+  vrs_block: 0.70
+  tsi_unstable_action: "REQUIRE_HUMAN"
+  tsi_critical_action: "BLOCK"
+
+# ── Roles — R26, R30 — Least privilege ────────────────────────────────────────
+roles:
+  read_only:
+    allowed_tools: [read_db, list_files, search, query]
+    blocked_tools: [write_db, shell, admin, http_post, delete, create_user]
+
+  operator:
+    allowed_tools: [read_db, write_db, http_get, query, list_files]
+    blocked_tools: [shell, admin, create_user, delete_user, financial_transfer]
+
+  trusted:
+    allowed_tools: [read_db, write_db, http_get, http_post, query]
+    blocked_tools: [shell, admin, create_user, financial_transfer]
+
+  # No role has shell or admin by default — ANSSI R26
+
+# ── Escalation — R27 ──────────────────────────────────────────────────────────
+escalation:
+  max_watch_events: 2           # faster escalation than default
+  auto_restrict_after: 3
+  restrict_duration_minutes: 120
+
+# ── Network — R28 Zero Trust ──────────────────────────────────────────────────
+network:
+  allowed_domains: []           # empty — explicit whitelist required per deployment
+  block_external: true
+  log_external_calls: true
+
+# ── Dangerous patterns — R25 ──────────────────────────────────────────────────
+dangerous_patterns:
+  - "rm\\s+-rf"
+  - "DROP\\s+TABLE"
+  - "DROP\\s+DATABASE"
+  - "curl.*\\|.*bash"
+  - "curl.*\\|.*sh"
+  - "wget.*\\|.*bash"
+  - "base64.*decode"
+  - "exec\\("
+  - "eval\\("
+  - "CREATE\\s+USER"
+  - "GRANT\\s+ALL"
+  - "financial_transfer"
+  - "__import__"
+  - "subprocess"
+
+# ── Notification — R9 — human in loop ─────────────────────────────────────────
+notification:
+  timeout_seconds: 180          # 3 minutes — strict
+  on_timeout: "REJECT"          # safe default — auto-reject
+  require_justification: true   # mandatory justification for audit
+  channels: []                  # configure per deployment
+  principals: []                # configure per deployment
+
+# ── Logging — R29 ─────────────────────────────────────────────────────────────
+logging:
+  retention_days: 1095          # 3 years
+  log_allow: false              # only log non-ALLOW outcomes
+  payload_mode: "hash"          # hash only — RGPD Art.5

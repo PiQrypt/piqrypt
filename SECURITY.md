@@ -1,184 +1,142 @@
-# Security Policy
+# Security Policy — PiQrypt
 
 ## Supported Versions
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.4.x   | :white_check_mark: |
-| 1.3.x   | :white_check_mark: |
-| 1.2.x   | :white_check_mark: |
-| < 1.2   | :x:                |
+| Version | Supported | Notes |
+|---------|-----------|-------|
+| 1.7.1 | ✅ Current stable | AISS-1 + AISS-2, VRS, TSI, A2C, Vigil, TrustGate, 9 bridges |
+| 1.7.x | ✅ Security patches only | |
+| 1.6.x | ✅ Security patches only | |
+| 1.5.x | ⚠️ End of support | Upgrade recommended |
+| < 1.5 | ❌ Not supported | |
 
 ---
 
 ## Reporting a Vulnerability
 
-**We take security seriously.** If you discover a security vulnerability, please report it responsibly.
+PiQrypt handles cryptographic identities and audit chains for autonomous AI agents.
+Any vulnerability in these areas has potential legal and operational impact for our users.
 
-### 🔒 Private Disclosure
-
-**Email:** piqrypt@gmail.com  
+**Email:** security@piqrypt.com
 **Subject:** `[SECURITY] Vulnerability Report`
+**PGP:** Available on request at security@piqrypt.com
 
-**Include:**
-- Description of the vulnerability
+**Include in your report:**
+- Affected version and component (aiss, rfc3161, key_store, chain, vigil, trustgate…)
 - Steps to reproduce
 - Potential impact
-- Suggested fix (if any)
+- Suggested fix if any
 
-**Please DO NOT:**
-- ❌ Open a public GitHub issue
-- ❌ Disclose publicly before we've had a chance to fix
-- ❌ Exploit the vulnerability
+**Please do NOT:**
+- Open a public GitHub issue before coordinated disclosure
+- Disclose publicly before a fix is available
+- Test against third-party production systems
 
 ---
 
 ## Response Timeline
 
-| Step | Timeline |
-|------|----------|
-| **Acknowledgment** | Within 24 hours |
-| **Initial assessment** | Within 3 business days |
-| **Fix & patch** | Within 14 days (critical), 30 days (medium) |
-| **Public disclosure** | After patch release |
+| Stage | Target |
+|-------|--------|
+| Acknowledgement | 48 hours |
+| Initial assessment | 5 business days |
+| Fix or workaround | 15 business days |
+| Public disclosure | After fix + 30 days |
 
 ---
 
-## Security Guarantees
+## Cryptographic Primitives
 
-### Cryptography
+| Component | Algorithm | Standard | Quantum-resistant |
+|-----------|-----------|----------|:-----------------:|
+| Agent signatures (AISS-1, default) | Ed25519 | RFC 8032 | ❌ |
+| Agent signatures (AISS-2, Pro+) | Dilithium3 | NIST FIPS 204 | ✅ |
+| Key encryption at rest | AES-256-GCM | NIST FIPS 197 | — |
+| Key derivation | scrypt N=2¹⁷ | RFC 7914 | — |
+| Hash chain | SHA-256 | NIST FIPS 180-4 | — |
+| Trusted timestamps | RFC 3161 | IETF | — |
+| JSON canonicalization | RFC 8785 | IETF | — |
+| Licence JWT | Ed25519 | RFC 8032 | — |
 
-**Algorithms:**
-- Ed25519 (AISS-1.0): 128-bit security, NIST approved
-- Dilithium3 (AISS-2.0): 256-bit PQ security, NIST FIPS 204
-- SHA-256: Collision resistance 2^128
-- AES-256-GCM: Authenticated encryption, NIST approved
-
-**Key Management:**
-- Private keys: 0600 permissions (Unix), encrypted at rest (Pro)
-- Master key: PBKDF2-SHA256 (100k iterations)
-- No keys transmitted over network
-- No keys logged
-
-### Audit Trail
-
-**Guarantees:**
-- Hash chain: Any modification detectable (SHA-256 collision resistance)
-- Signatures: Non-repudiation (Ed25519/Dilithium3)
-- Fork detection: Double-spend temporal attempts detected
-- Canonical history: Deterministic resolution (RFC §6)
-
-**No guarantees against:**
-- ❌ Compromise of private key (user responsibility)
-- ❌ Physical access to unlocked memory (Pro)
-- ❌ Side-channel attacks (timing, power analysis)
+> **Note on post-quantum:** AISS-1 (Free/Pro default) uses Ed25519 which is **not**
+> quantum-resistant. AISS-2 (Pro+, `pip install piqrypt[post-quantum]`) adds
+> Dilithium3 for post-quantum signatures.
 
 ---
 
-## Known Limitations
+## Threat Model
 
-### Free Tier
+### What PiQrypt protects against
+- Post-event log modification or deletion
+- Identity repudiation between agents (Ed25519 / Dilithium3 signatures)
+- Timeline alteration when TSA RFC 3161 timestamps are used
+- Behavioural anomalies: concentration, entropy drop, synchronisation, silence break
+- Unsupervised critical agent actions (TrustGate — Pro+)
 
-- **Plaintext storage:** Events stored unencrypted in `~/.piqrypt/events/plain/`
-  - **Mitigation:** Use Pro tier for AES-256-GCM encryption
-  
-- **Limited replay protection:** Local nonce tracking only
-  - **Mitigation:** Use Pro + A2A network (v1.6) for network-wide detection
-
-### Pro Tier
-
-- **Passphrase security:** Master key strength = passphrase strength
-  - **Mitigation:** Use strong passphrase (min 16 chars, high entropy)
-  
-- **Memory unlocked session:** Master key in RAM while unlocked
-  - **Mitigation:** Lock session when not in use (`piqrypt memory lock`)
-
-### All Tiers
-
-- **Quantum attacks (Ed25519):** AISS-1.0 vulnerable to Shor's algorithm
-  - **Mitigation:** Migrate to AISS-2.0 (Dilithium3 hybrid)
-  
-- **Trusted timestamp attacks:** TSA compromise could forge timestamps
-  - **Mitigation:** Use multiple TSAs (future), cross-verify
+### What PiQrypt does NOT protect against
+- Compromised private keys — if the host is compromised before stamping, all bets are off
+- Malicious logic executing before the event is stamped
+- Fully compromised host environments
+- Vulnerabilities in underlying libraries (PyNaCl, cryptography)
+- Network attacks against TSA servers (graceful degradation applies)
 
 ---
 
-## Security Best Practices
+## Key Storage
 
-### For Users
+| Tier | Storage | Protection |
+|------|---------|-----------|
+| Free | `private.key.json` plaintext | OS file permissions only |
+| Pro+ | `private.key.enc` encrypted | AES-256-GCM + scrypt N=2¹⁷ (~128 MB RAM/attempt) |
+| Enterprise | HSM integration available | Contact sales@piqrypt.com |
 
-1. **Protect private keys**
-   - 0600 permissions on identity files
-   - Never commit to git
-   - Backup securely (offline, encrypted)
-
-2. **Use strong passphrases (Pro)**
-   - Min 16 characters
-   - High entropy (mix uppercase, lowercase, numbers, symbols)
-   - Use password manager
-
-3. **Lock memory when idle (Pro)**
-   ```bash
-   piqrypt memory lock
-   ```
-
-4. **Verify exports**
-   ```bash
-   piqrypt verify-export audit.json audit.json.cert
-   ```
-
-5. **Enable 2FA** (future: account management)
-
-### For Developers
-
-1. **Validate inputs**
-   - Sanitize payloads before signing
-   - Check event structure (JSON schema)
-
-2. **Handle errors gracefully**
-   - Don't leak private keys in error messages
-   - Don't log sensitive data
-
-3. **Use authority chains**
-   - Delegate minimal scope
-   - Short validity periods (days, not years)
-   - Revoke compromised delegations
-
-4. **Monitor for forks**
-   - Alert on fork detection
-   - Investigate immediately
+**CRITICAL:** Never commit `private.key.json` or `private.key.enc` to version control.
+The provided `.gitignore` excludes all key files — verify before every push.
 
 ---
 
-## Compliance
+## Known Limitations (v1.7.1)
 
-**PiQrypt helps meet:**
-- SOC2 Type 2 (audit controls)
-- ISO 27001 (event logging)
-- HIPAA (audit trail, encryption)
-- GDPR (transparency, integrity)
-- NIST PQC (post-quantum readiness)
-
-**Certifications:**
-- ⏳ SOC2 Type 2 (in progress, Q3 2026)
-- ⏳ ISO 27001 (planned, Q4 2026)
+| Limitation | Impact | Planned fix |
+|-----------|--------|-------------|
+| `verify_tsa_token()` checks DER structure only — does not verify TSA signature (CMS/PKCS7) | A forged token could pass as "verified" | v1.8.0 — full CMS verification |
+| JSON flat-file event storage — not designed for >100k events/agent | High-frequency agents (>10 events/s) will degrade | v2.0 — PostgreSQL backend |
+| Vigil/TrustGate use static `VIGIL_TOKEN`/`TRUSTGATE_TOKEN` env var | No per-user auth | v1.8.0 — OIDC/SSO |
+| `license.py` HMAC validation (Free) is client-side | Motivated developer can bypass | By design for Free tier — Pro+ uses Ed25519 JWT |
 
 ---
 
-## Responsible Disclosure Hall of Fame
+## Licence Security Model
 
-*Thank you to the following researchers for responsible disclosure:*
-
-(None yet — be the first!)
-
----
-
-## Contact
-
-**Security issues:** piqrypt@gmail.com  
-**General support:** piqrypt@gmail.com  
-**GitHub:** https://github.com/piqrypt/piqrypt/security
+- **Free tier:** HMAC local token — offline, no server calls, bypassable by a motivated developer. Acceptable for a free tier — no payment data at risk.
+- **Pro+ tiers:** Ed25519 JWT signed by PiQrypt's private key (never leaves `api.piqrypt.com`). Verification is 100% offline using the embedded public key. Cannot be forged without the private key.
+- **Network calls:** Only at renewal time (monthly/annual). Zero heartbeat, zero telemetry, zero data about your agents leaves your infrastructure.
 
 ---
 
-**Last updated:** 2026-02-19
+## Responsible Disclosure
+
+We appreciate responsible security research.
+Researchers who report valid vulnerabilities will be credited in our changelog (with permission).
+
+**Contact:** security@piqrypt.com
+
+**PiQrypt Inc.**
+e-Soleau primary deposit: DSO2026006483 — 19 February 2026
+e-Soleau addendum:        DSO2026009143 — 12 March 2026
+
+---
+
+**Intellectual Property Notice**
+
+Core protocol concepts described in this document were deposited
+via e-Soleau with the French National Institute of Industrial Property (INPI):
+
+Primary deposit:  DSO2026006483 — 19 February 2026
+Addendum:         DSO2026009143 — 12 March 2026
+
+PCP (Proof of Continuity Protocol) is an open protocol specification.
+It may be implemented independently by any compliant system.
+PiQrypt is the reference implementation.
+
+© 2026 PiQrypt — contact@piqrypt.com

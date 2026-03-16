@@ -1,388 +1,334 @@
 # PiQrypt License System
 
+**Version:** 1.7.1
+**Last Updated:** 2026-03-12
+
+---
+
 ## Overview
 
-PiQrypt implements a three-tier licensing system designed to support sustainable open-source development while ensuring accessibility for all use cases.
+PiQrypt uses a five-tier licensing system. The core AISS-1 protocol is free forever. Paid tiers unlock additional agents, encrypted storage, post-quantum signatures, behavioral monitoring, governance, and professional support.
 
-## License Tiers
+License validation is **local-first** — no internet required after activation. Free tier requires no license key at all.
 
-### 🆓 Free Tier
+---
+
+## Tiers
+
+### 🆓 Free — forever
+
+**Quotas:** 3 agents · 10,000 events/month
 
 **Features:**
-- ✅ Complete AISS-1 implementation
-- ✅ Ed25519 signatures (RFC 8032)
-- ✅ Hash-linked event chains
-- ✅ Fork detection
-- ✅ Anti-replay protection
-- ✅ Export audit format
+- ✅ Complete AISS-1 (Ed25519, SHA-256, RFC 8785, anti-replay)
+- ✅ Fork detection + Canonical History Rule
+- ✅ Audit export (.pqz memory format)
 - ✅ Full CLI access
-- ✅ Unlimited events
-- ✅ No time restrictions
+- ✅ A2A handshake (Ed25519 co-signed)
+- ✅ All 9 framework bridges (LangChain, CrewAI, AutoGen, OpenClaw, Session, MCP, Ollama, ROS2, RPi)
+- ✅ Vigil — read-only (dashboard view)
+- ⚠️ TrustGate — manual mode only (no automated enforcement)
 
-**Ideal For:**
-- Individual developers
-- Small projects
-- Learning and experimentation
-- Open source projects (non-commercial)
-
-**License Key:** Not required
+**License key:** Not required.
 
 ---
 
-### 💼 Pro Tier - $390/year
+### 💼 Pro — €290/year (Early-Bird) · €390/year (Standard)
+
+**Quotas:** 50 agents · 500,000 events/month · 1,000 API req/hour
 
 **Everything in Free, plus:**
+- ✅ AISS-2 — Dilithium3 post-quantum signatures (NIST FIPS 204)
+- ✅ AISS-2 — Hybrid signatures (Ed25519 + Dilithium3)
+- ✅ RFC 3161 trusted timestamps (TSA integration)
+- ✅ Encrypted key storage (scrypt N=2¹⁷ + AES-256-GCM)
+- ✅ Certified export (.pqz certified — eIDAS Art.26)
+- ✅ AgentSession — cross-framework co-signed sessions (N agents)
+- ✅ TrustGate — manual mode (REQUIRE_HUMAN flow, policy evaluation)
+- ✅ Vigil — full mode (write API, event injection)
+- ✅ Trust Scoring (TS) — 5-component weighted score
+- ✅ Trust State Index (TSI) — 4 statistical stability indicators
+- ✅ A2C relational anomaly detection (16 scenarios)
+- ✅ VRS — Vigil Risk Score (composite 4-dimension score)
+- ✅ Email support — 48h response
 
-#### AISS-2 Features
-- ✅ **Post-quantum signatures** (Dilithium3)
-- ✅ **Hybrid signatures** (Ed25519 + Dilithium3)
-- ✅ Future-proof cryptography
-- ✅ NIST PQC compliant
-
-#### Professional Features
-- ✅ **RFC 3161 Trusted Timestamping**
-  - Legal-grade time proofs
-  - Third-party attestation
-  - Court-admissible evidence
-
-- ✅ **Witness Network**
-  - Distributed proof of existence
-  - 5+ independent attestors
-  - Non-repudiation guarantees
-
-- ✅ **Blockchain Anchoring**
-  - Bitcoin/Ethereum anchoring
-  - Public proof of existence
-  - Immutable timestamps
-
-- ✅ **Priority Support**
-  - Direct email support
-  - 24-hour response time
-  - Video calls available
-
-- ✅ **Commercial Use Rights**
-  - Full commercial deployment
-  - White-label options
-  - Custom integrations
-
-**Ideal For:**
-- Regulated industries (finance, healthcare)
-- Enterprise deployments
-- Mission-critical systems
-- Legal/compliance requirements
-
-**License Key:** Required (validated offline)
+**License key:** Required — JWT Ed25519, offline validation.
 
 ---
 
-### 🌟 OSS Tier - Free
+### 👥 Team — €1,990/year
 
-**All Pro features for qualified open source projects**
+**Quotas:** 100 agents · 1,000,000 events/month · 10,000 API req/hour
 
-**Requirements:**
-- ✅ OSI-approved open source license
-- ✅ Public repository
-- ✅ Active development (3+ commits/month)
-- ✅ Clear documentation
-- ✅ Proper attribution to PiQrypt
-
-**Application Process:**
-1. Submit application at piqrypt.org/oss
-2. Provide repository link
-3. Receive license key within 48h
-4. Renew annually (automatic if requirements met)
-
-**Ideal For:**
-- Open source projects
-- Academic research
-- Non-profit organizations
-- Community tools
-
-**License Key:** Required (free, annually renewed)
+Everything in Pro. Designed for shared team deployments.
 
 ---
 
-## License Verification
+### 🏢 Business — €14,990/year
 
-### Offline Validation
+**Quotas:** 500 agents · 10,000,000 events/month · 100,000 API req/hour
 
-PiQrypt validates licenses **entirely offline** using cryptographic signatures:
+**Everything in Team, plus:**
+- ✅ TrustGate — **full automated mode** (no human approval required)
+- ✅ Multi-organization support
+- ✅ SIEM integration
+- ✅ On-premise deployment (option)
+- ✅ Priority support
 
-```python
-from piqrypt import verify_license
+---
 
-# License key is signed by PiQrypt
-license_info = verify_license("YOUR_LICENSE_KEY")
+### 🌟 Enterprise — on demand
 
-if license_info.tier == "pro":
-    # Enable Pro features
-    enable_dilithium()
-    enable_witness_network()
-    enable_timestamping()
-```
+**Quotas:** Unlimited agents · unlimited events · unlimited API
 
-### No Phone Home
+**Everything in Business, plus:**
+- ✅ SSO (SAML, OAuth 2.0, OIDC)
+- ✅ HSM integration
+- ✅ On-premise deployment
+- ✅ SOC2 / ISO 27001 audit support
+- ✅ Dedicated SLA + support
 
-- ✅ **No internet required** for validation
-- ✅ **No tracking** of usage
-- ✅ **No telemetry** unless explicitly opted-in
-- ✅ **Privacy-first** design
+**Contact:** piqrypt@gmail.com — Subject: Enterprise Inquiry
 
-### License Key Format
+---
 
-```
-PIQRYPT-v1-PRO-{SIGNATURE}
-PIQRYPT-v1-OSS-{SIGNATURE}
-```
+### 🌱 OSS — Free (Pro features for qualified open-source projects)
 
-Keys are:
-- Cryptographically signed
-- Contain tier information
-- Include expiration date (Pro/OSS only)
-- Validated using PiQrypt's public key
+All Pro features at no cost. Requirements: OSI-approved license · public repo · active development (3+ commits/month) · attribution in README.
+
+**Apply:** piqrypt@gmail.com — Subject: OSS License Request
 
 ---
 
 ## Feature Matrix
 
-| Feature | Free | Pro | OSS |
-|---------|------|-----|-----|
-| **AISS-1** |
-| Ed25519 signatures | ✅ | ✅ | ✅ |
-| Event chains | ✅ | ✅ | ✅ |
-| Fork detection | ✅ | ✅ | ✅ |
-| Anti-replay | ✅ | ✅ | ✅ |
-| Audit export | ✅ | ✅ | ✅ |
-| CLI access | ✅ | ✅ | ✅ |
-| **AISS-2** |
-| Dilithium3 signatures | ❌ | ✅ | ✅ |
-| Hybrid signatures | ❌ | ✅ | ✅ |
-| Post-quantum ready | ❌ | ✅ | ✅ |
-| **Professional** |
-| RFC 3161 timestamps | ❌ | ✅ | ✅ |
-| Witness network | ❌ | ✅ | ✅ |
-| Blockchain anchoring | ❌ | ✅ | ✅ |
-| Priority support | ❌ | ✅ | ❌ |
-| Commercial use | ⚠️ | ✅ | ❌ |
-| White-label | ❌ | ✅ | ❌ |
+| Feature | Free | Pro | Team | Business | Enterprise |
+|---------|:----:|:---:|:----:|:--------:|:----------:|
+| **Quotas** | | | | | |
+| Agents | 3 | 50 | 100 | 500 | ∞ |
+| Events / month | 10k | 500k | 1M | 10M | ∞ |
+| API req / hour | 100 | 1k | 10k | 100k | ∞ |
+| **AISS-1** | | | | | |
+| Ed25519 · chains · fork · anti-replay | ✅ | ✅ | ✅ | ✅ | ✅ |
+| A2A handshake | ✅ | ✅ | ✅ | ✅ | ✅ |
+| All 9 framework bridges | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **AISS-2** | | | | | |
+| Dilithium3 (post-quantum) | — | ✅ | ✅ | ✅ | ✅ |
+| Hybrid signatures Ed25519 + Dilithium3 | — | ✅ | ✅ | ✅ | ✅ |
+| RFC 3161 trusted timestamps | — | ✅ | ✅ | ✅ | ✅ |
+| **Storage** | | | | | |
+| Plaintext local storage | ✅ | ✅ | ✅ | ✅ | ✅ |
+| AES-256-GCM encrypted storage | — | ✅ | ✅ | ✅ | ✅ |
+| HSM integration | — | — | — | option | ✅ |
+| **Export** | | | | | |
+| .pqz memory export | ✅ | ✅ | ✅ | ✅ | ✅ |
+| .pqz certified (eIDAS Art.26) | — | ✅ | ✅ | ✅ | ✅ |
+| **Vigil** | | | | | |
+| Dashboard read-only | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Vigil full mode (write API) | — | ✅ | ✅ | ✅ | ✅ |
+| Trust Scoring (TS) | — | ✅ | ✅ | ✅ | ✅ |
+| TSI — stability index (4 indicators) | — | ✅ | ✅ | ✅ | ✅ |
+| A2C anomaly detection (16 scenarios) | — | ✅ | ✅ | ✅ | ✅ |
+| VRS composite score | — | ✅ | ✅ | ✅ | ✅ |
+| **TrustGate** | | | | | |
+| Manual mode (policy eval + REQUIRE_HUMAN) | ⚠️ | ✅ | ✅ | ✅ | ✅ |
+| Full automated enforcement | — | — | — | ✅ | ✅ |
+| **Enterprise** | | | | | |
+| AgentSession cross-framework | — | ✅ | ✅ | ✅ | ✅ |
+| Multi-organization | — | — | — | ✅ | ✅ |
+| SIEM integration | — | — | — | ✅ | ✅ |
+| SSO | — | — | — | — | ✅ |
+| On-premise | — | — | — | option | ✅ |
+| **Support** | Community | Email 48h | Email 48h | Priority | Dedicated SLA |
+| **Price** | **Free** | **€290–390/yr** | **€1,990/yr** | **€14,990/yr** | **on demand** |
 
-⚠️ Free tier allows commercial use with attribution
-
----
-
-## Purchasing Pro License
-
-### Individual License - $1,990/year
-- 1 developer
-- Unlimited projects
-- Commercial use
-- Priority support
-
-### Team License - $4,990/year
-- Up to 5 developers
-- Shared license key
-- Unlimited projects
-- Priority support
-- Quarterly calls
-
-### Enterprise License - Custom
-- Unlimited developers
-- On-premises deployment
-- Custom SLA
-- Dedicated support
-- Training included
-
-**Purchase at:** https://piqrypt.org/pricing
+⚠️ Free: TrustGate manual mode — evaluation works, automated enforcement requires Pro+.
 
 ---
 
-## Applying for OSS License
+## License Verification
 
-### Eligibility Criteria
+### Architecture
 
-Your project qualifies if it:
-1. **Uses OSI-approved license** (MIT, Apache 2.0, GPL, etc.)
-2. **Public repository** on GitHub/GitLab/Bitbucket
-3. **Active development** (3+ commits in last 30 days)
-4. **Clear documentation** (README with usage examples)
-5. **Proper attribution** ("Powered by PiQrypt" in README)
-
-### Application Form
-
-```markdown
-# OSS License Application
-
-**Project Name:**
-**Repository URL:**
-**License:** (e.g., MIT)
-**Primary Language:**
-**Description:** (2-3 sentences)
-**Use Case:** How will you use PiQrypt?
-**Contributors:** Number of active contributors
+```
+Free    →  HMAC local (free.<id>.<hmac8>)         — zéro réseau, jamais
+Pro+    →  JWT Ed25519 — vérifié offline           — réseau au renouvellement seulement
+                                                     Grace period 72h si réseau absent
 ```
 
-**Submit to:** oss@piqrypt.org
+### Validation mechanism
 
-**Response time:** 48 hours
+- **Free tier:** HMAC-SHA256 local, aucune dépendance réseau
+- **Pro+ tiers:** JWT signé Ed25519 (clé publique embarquée dans le binaire). Aucun appel réseau pour valider — la clé privée ne quitte jamais `api.piqrypt.com`.
+- **Grace period:** 72 heures après expiration avant dégradation vers Free. Jamais de blocage brutal.
+- **Dégradation gracieuse:** expiration → Free tier automatiquement. Zéro perte de données. Les signatures existantes restent valides.
+
+### No phone-home
+
+- ✅ Validation offline complète après activation
+- ✅ Aucun tracking d'usage
+- ✅ Aucune télémétrie sauf opt-in explicite
+- ✅ Free tier : zéro réseau, jamais
 
 ---
 
-## License Enforcement
+## Activation
 
-### Technical Enforcement
+### Vérifier la licence actuelle
+
+```bash
+piqrypt license info
+# License Tier:   free
+# Agents:         0 / 3
+# Events/month:   847 / 10,000
+# Expires:        never
+# Upgrade:        https://piqrypt.com/pricing
+```
+
+### Activer une licence Pro
+
+```bash
+# Variable d'environnement (recommandé — Docker, CI/CD, Kubernetes)
+export PIQRYPT_LICENSE_KEY="<jwt_token>"
+
+# Ou écriture dans ~/.piqrypt/license.jwt
+piqrypt license activate <jwt_token>
+```
 
 ```python
-# Pro features are gated
-from piqrypt.pro import TrustedTimestamp
-
-try:
-    ts = TrustedTimestamp()
-except LicenseRequiredError as e:
-    print("Pro license required for trusted timestamps")
-    print("Upgrade at: https://piqrypt.org/pricing")
+from piqrypt import activate_license
+activate_license("<jwt_token>")
 ```
 
-### Ethical Use Policy
+### Vérifier les features dans le code
 
-We trust our users. License enforcement is:
-- ✅ **Technical** (features gated by license)
-- ✅ **Transparent** (clear error messages)
-- ❌ **Not invasive** (no phone-home checks)
-- ❌ **Not punitive** (graceful degradation)
+```python
+from aiss.license import get_license, require, FeatureNotAvailableError
 
-### Violations
+lic = get_license()
 
-We reserve the right to:
-- Revoke license keys for violations
-- Request proof of eligibility (OSS tier)
-- Audit commercial use (on request)
+# Tier et quotas
+print(lic.tier)              # "free" | "pro" | "team" | "business" | "enterprise"
+print(lic.agents_max)        # 3 | 50 | 100 | 500 | None (Enterprise = illimité)
+print(lic.events_month)      # 10000 | 500000 | ... | None
 
-**However**, we prioritize trust and community over enforcement.
+# Vérifier une feature
+print(lic.has_feature("quantum"))           # False (Free) | True (Pro+)
+print(lic.has_feature("tsa_rfc3161"))       # False (Free) | True (Pro+)
+print(lic.get_feature_level("trustgate"))   # None | "manual" | "full"
+print(lic.get_feature_level("vigil"))       # "readonly" | "full"
+
+# Lever une exception si feature absente
+try:
+    require("quantum")
+except FeatureNotAvailableError as e:
+    print(e)
+    # 'quantum' requires tier 'pro' or higher.
+    # Current tier: 'free'
+    # Upgrade: https://piqrypt.com/pricing
+
+# TrustGate — vérifier le niveau
+lic.require_trustgate(level="manual")   # OK sur Pro+
+lic.require_trustgate(level="full")     # lève si < Business
+
+# Vérifier un quota
+from aiss.license import check_quota, QuotaExceededError
+try:
+    check_quota("agents", current_count=45)   # alerte à 80%, bloque à 100%
+except QuotaExceededError as e:
+    print(e)
+    # Quota exceeded: agents (50/50 used, tier 'pro').
+```
+
+### Décorateur `@require_pro`
+
+```python
+from aiss.license import require_pro
+
+@require_pro("Trusted timestamps")
+def stamp_with_tsa(event):
+    # accessible Pro+ uniquement
+    ...
+```
 
 ---
 
-## Upgrading Your License
+## Purchasing
 
-### Free → Pro
+### Pro
 
-```bash
-# Add your license key
-export PIQRYPT_LICENSE="PIQRYPT-v1-PRO-{YOUR_KEY}"
+<div align="center">
 
-# Or configure in code
-from piqrypt import set_license
-set_license("PIQRYPT-v1-PRO-{YOUR_KEY}")
+[![Early-Bird Pro €290/year](https://img.shields.io/badge/Early--Bird_Pro-€290/year-blue?style=for-the-badge&logo=stripe)](https://buy.stripe.com/4gM6oAeZe9tX6KreEX2VG02)
+&nbsp;
+[![Standard Pro €390/year](https://img.shields.io/badge/Standard_Pro-€390/year-orange?style=for-the-badge&logo=stripe)](https://buy.stripe.com/00wcMY7wMeOhc4L2Wf2VG01)
 
-# Pro features now enabled
-```
+</div>
 
-### Free → OSS
-
-After receiving your OSS license key:
+Après paiement, le JWT de licence est envoyé par email. Activation :
 
 ```bash
-export PIQRYPT_LICENSE="PIQRYPT-v1-OSS-{YOUR_KEY}"
+piqrypt license activate <token>
 ```
 
-### Checking Current License
+### Enterprise
 
-```bash
-piqrypt license info
-# License Tier: Free
-# Features: AISS-1 (Ed25519)
-# Upgrade: https://piqrypt.org/pricing
+**piqrypt@gmail.com** — Subject: Enterprise Inquiry
 
-piqrypt license info
-# License Tier: Pro
-# Expires: 2026-02-16
-# Features: AISS-1, AISS-2, Timestamping, Witness Network
-```
+### OSS (open-source projects)
+
+**piqrypt@gmail.com** — Subject: OSS License Request
 
 ---
 
 ## FAQ
 
-### Why not fully free?
+**Les 9 bridges sont-ils gratuits ?**
+Oui. LangChain, CrewAI, AutoGen, OpenClaw, Session, MCP, Ollama, ROS2, RPi — tous MIT/Apache-2.0, disponibles sur tous les tiers.
 
-PiQrypt is a complex cryptographic library requiring:
-- Ongoing security audits ($$$)
-- Maintenance and bug fixes
-- Feature development
-- Infrastructure (witness network, etc.)
+**AgentSession est-il gratuit ?**
+Non. AgentSession (co-signature cross-framework entre N agents) requiert Pro+.
 
-**Free tier ensures accessibility. Pro tier ensures sustainability.**
+**TrustGate est-il disponible en Free ?**
+Oui, en mode manual — évaluation de politique et flow REQUIRE_HUMAN fonctionnent. L'enforcement automatisé sans intervention humaine requiert Business+.
 
-### Can I use Free commercially?
+**Que se passe-t-il à l'expiration ?**
+Grace period de 72h, puis dégradation gracieuse vers Free. Zéro perte de données. Les signatures existantes restent valides indéfiniment.
 
-**Yes!** Free tier allows commercial use with attribution:
-- Add "Powered by PiQrypt" to your README
-- Link to https://piqrypt.org
-- No revenue sharing required
+**Puis-je utiliser Free en production commerciale ?**
+Oui, avec attribution ("Powered by PiQrypt" + lien vers piqrypt.com).
 
-### What if I can't afford Pro?
-
-Apply for **OSS license** if your project is open source.
-Otherwise, Free tier is very capable for most use cases.
-
-### Can I try Pro before buying?
-
-**Yes!** 30-day free trial:
-```bash
-piqrypt license trial --email your@email.com
-```
-
-### Is the license key secure?
-
-Yes:
-- Cryptographically signed (Ed25519)
-- Cannot be forged
-- Validated offline
-- Contains expiration date
-- Specific to license tier
-
-### What happens when license expires?
-
-**Pro/OSS licenses:**
-- Graceful degradation to Free tier
-- No data loss
-- Existing signatures remain valid
-- New Pro features disabled
-- 30-day grace period for renewal
+**Le token JWT est-il sécurisé ?**
+Stocké dans `~/.piqrypt/license.jwt` (chmod 600). La clé privée de signature ne quitte jamais `api.piqrypt.com`. Validation locale via clé publique Ed25519 embarquée.
 
 ---
 
-## Support
+## Philosophy
 
-### Free Tier
-- GitHub Issues
-- Community Discussions
-- Documentation
+> Core cryptographic identity should be accessible to everyone.
+> Advanced features fund sustainable development.
 
-### Pro Tier
-- support@piqrypt.org
-- 24-hour response time
-- Video calls available
-
-### OSS Tier
-- oss@piqrypt.org
-- Best-effort support
-- Community priority
+- ✅ AISS-1 core — gratuit, toujours, sans régression
+- ✅ No phone-home sur Free tier
+- ✅ Local-first — pas de dépendance cloud forcée
+- ✅ Grace period — jamais de blocage brutal
+- ✅ Open-source program pour les projets OSS
 
 ---
 
-## License Philosophy
+**Intellectual Property Notice**
 
-> "We believe cryptographic identity should be accessible to everyone, while advanced features fund sustainable development."
+Core protocol concepts described in this document were deposited
+via e-Soleau with the French National Institute of Industrial Property (INPI):
 
-**Our commitments:**
-- ✅ Core features always free
-- ✅ No vendor lock-in (MIT license)
-- ✅ Open source forever
-- ✅ Privacy-first (no tracking)
-- ✅ Transparent pricing
-- ✅ Support open source community
+Primary deposit:  DSO2026006483 — 19 February 2026
+Addendum:         DSO2026009143 — 12 March 2026
 
----
+These deposits establish proof of authorship and prior art
+for the PCP protocol specification and PiQrypt reference implementation.
 
-**Last Updated:** February 16, 2025
-**Version:** 1.1.0
+PCP (Proof of Continuity Protocol) is an open protocol specification.
+It may be implemented independently by any compliant system.
+PiQrypt is the reference implementation.
+
+© 2026 PiQrypt — contact@piqrypt.com
