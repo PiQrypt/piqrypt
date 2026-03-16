@@ -1,11 +1,10 @@
 # Visual Badges System
 
-**Version:** 1.5.0  
-**Date:** 2026-02-21  
+**Version:** 1.7.1
+**Date:** 2026-03-12
 **Status:** Current
 
 ---
-
 
 Visual badges for your README files, documentation, and websites.
 
@@ -19,19 +18,21 @@ Visual badges for your README files, documentation, and websites.
 ```markdown
 [![PiQrypt Free](https://img.shields.io/badge/PiQrypt-Free-blue)](https://piqrypt.org)
 ```
-[![PiQrypt Free](https://img.shields.io/badge/PiQrypt-Free-blue)](https://piqrypt.org)
 
 **Pro Tier:**
 ```markdown
 [![PiQrypt Pro](https://img.shields.io/badge/PiQrypt-Pro-gold)](https://piqrypt.org)
 ```
-[![PiQrypt Pro](https://img.shields.io/badge/PiQrypt-Pro-gold)](https://piqrypt.org)
+
+**PCP Protocol:**
+```markdown
+[![PCP](https://img.shields.io/badge/PCP-Proof_of_Continuity-purple)](https://piqrypt.com/pcp)
+```
 
 **OSS Tier:**
 ```markdown
 [![PiQrypt OSS](https://img.shields.io/badge/PiQrypt-OSS-green)](https://piqrypt.org)
 ```
-[![PiQrypt OSS](https://img.shields.io/badge/PiQrypt-OSS-green)](https://piqrypt.org)
 
 ---
 
@@ -41,19 +42,16 @@ Visual badges for your README files, documentation, and websites.
 ```markdown
 [![AISS-1](https://img.shields.io/badge/AISS--1-Compliant-green)](https://piqrypt.org/docs/AISS-1)
 ```
-[![AISS-1](https://img.shields.io/badge/AISS--1-Compliant-green)](https://piqrypt.org/docs/AISS-1)
 
 **AISS-2 Ready:**
 ```markdown
 [![AISS-2](https://img.shields.io/badge/AISS--2-Ready-brightgreen)](https://piqrypt.org/docs/AISS-2)
 ```
-[![AISS-2](https://img.shields.io/badge/AISS--2-Ready-brightgreen)](https://piqrypt.org/docs/AISS-2)
 
 **Post-Quantum:**
 ```markdown
 [![Post-Quantum](https://img.shields.io/badge/Post--Quantum-Ready-purple)](https://piqrypt.org/docs/AISS-2)
 ```
-[![Post-Quantum](https://img.shields.io/badge/Post--Quantum-Ready-purple)](https://piqrypt.org/docs/AISS-2)
 
 ---
 
@@ -63,19 +61,26 @@ Visual badges for your README files, documentation, and websites.
 ```markdown
 [![Ed25519](https://img.shields.io/badge/Ed25519-RFC%208032-blue)](https://datatracker.ietf.org/doc/html/rfc8032)
 ```
-[![Ed25519](https://img.shields.io/badge/Ed25519-RFC%208032-blue)](https://datatracker.ietf.org/doc/html/rfc8032)
 
 **Dilithium3:**
 ```markdown
-[![Dilithium3](https://img.shields.io/badge/Dilithium3-NIST%20PQC-purple)](https://csrc.nist.gov/projects/post-quantum-cryptography)
+[![Dilithium3](https://img.shields.io/badge/Dilithium3-NIST%20FIPS%20204-purple)](https://csrc.nist.gov/projects/post-quantum-cryptography)
 ```
-[![Dilithium3](https://img.shields.io/badge/Dilithium3-NIST%20PQC-purple)](https://csrc.nist.gov/projects/post-quantum-cryptography)
+
+**scrypt N=2¹⁷:**
+```markdown
+[![scrypt](https://img.shields.io/badge/scrypt-N%3D2%5E17-blue)](https://piqrypt.org/docs)
+```
+
+**Behavioral Monitoring:**
+```markdown
+[![Vigil](https://img.shields.io/badge/Vigil-TSI%2FVRS%2FA2C-orange)](https://piqrypt.org/docs)
+```
 
 **Fork Detection:**
 ```markdown
 [![Fork Detection](https://img.shields.io/badge/Fork-Detection-orange)](https://piqrypt.org/docs)
 ```
-[![Fork Detection](https://img.shields.io/badge/Fork-Detection-orange)](https://piqrypt.org/docs)
 
 ---
 
@@ -85,19 +90,16 @@ Visual badges for your README files, documentation, and websites.
 ```markdown
 [![RFC 8032](https://img.shields.io/badge/RFC%208032-Compliant-blue)](https://datatracker.ietf.org/doc/html/rfc8032)
 ```
-[![RFC 8032](https://img.shields.io/badge/RFC%208032-Compliant-blue)](https://datatracker.ietf.org/doc/html/rfc8032)
 
 **RFC 8785 (Canonical JSON):**
 ```markdown
 [![RFC 8785](https://img.shields.io/badge/RFC%208785-Compliant-blue)](https://datatracker.ietf.org/doc/html/rfc8785)
 ```
-[![RFC 8785](https://img.shields.io/badge/RFC%208785-Compliant-blue)](https://datatracker.ietf.org/doc/html/rfc8785)
 
-**RFC 3161 (Trusted Timestamps - Pro):**
+**RFC 3161 (Trusted Timestamps — Pro):**
 ```markdown
 [![RFC 3161](https://img.shields.io/badge/RFC%203161-Supported-gold)](https://datatracker.ietf.org/doc/html/rfc3161)
 ```
-[![RFC 3161](https://img.shields.io/badge/RFC%203161-Supported-gold)](https://datatracker.ietf.org/doc/html/rfc3161)
 
 ---
 
@@ -105,21 +107,23 @@ Visual badges for your README files, documentation, and websites.
 
 **Version:**
 ```markdown
-[![Version](https://img.shields.io/badge/version-1.1.0-blue)](https://github.com/piqrypt/piqrypt/releases)
+[![Version](https://img.shields.io/badge/version-1.7.0-blue)](https://github.com/piqrypt/piqrypt/releases)
 ```
-[![Version](https://img.shields.io/badge/version-1.1.0-blue)](https://github.com/piqrypt/piqrypt/releases)
 
 **License:**
 ```markdown
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 ```
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **Python:**
 ```markdown
 [![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 ```
-[![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+
+**Tests:**
+```markdown
+[![Tests](https://img.shields.io/badge/tests-136%2F143-brightgreen)](https://github.com/piqrypt/piqrypt)
+```
 
 ---
 
@@ -129,7 +133,7 @@ Visual badges for your README files, documentation, and websites.
 
 **Full Stack:**
 ```markdown
-[![PiQrypt](https://img.shields.io/badge/PiQrypt-v1.1.0-blue)](https://piqrypt.org)
+[![PiQrypt](https://img.shields.io/badge/PiQrypt-v1.7.0-blue)](https://piqrypt.org)
 [![AISS-1](https://img.shields.io/badge/AISS--1-Compliant-green)](https://piqrypt.org/docs/AISS-1)
 [![AISS-2](https://img.shields.io/badge/AISS--2-Ready-brightgreen)](https://piqrypt.org/docs/AISS-2)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -145,8 +149,14 @@ Visual badges for your README files, documentation, and websites.
 **Pro User:**
 ```markdown
 [![PiQrypt Pro](https://img.shields.io/badge/PiQrypt-Pro-gold)](https://piqrypt.org)
+```
+
+**PCP Protocol:**
+```markdown
+[![PCP](https://img.shields.io/badge/PCP-Proof_of_Continuity-purple)](https://piqrypt.com/pcp)
 [![AISS-2](https://img.shields.io/badge/AISS--2-Enabled-purple)](https://piqrypt.org/docs/AISS-2)
 [![Post-Quantum](https://img.shields.io/badge/Post--Quantum-Protected-purple)](https://piqrypt.org)
+[![Vigil](https://img.shields.io/badge/Vigil-Monitoring-orange)](https://piqrypt.org)
 ```
 
 ---
@@ -170,19 +180,9 @@ Visual badges for your README files, documentation, and websites.
 [![Stars](https://img.shields.io/github/stars/piqrypt/piqrypt?style=social)](https://github.com/piqrypt/piqrypt)
 ```
 
-**GitHub Issues:**
-```markdown
-[![Issues](https://img.shields.io/github/issues/piqrypt/piqrypt)](https://github.com/piqrypt/piqrypt/issues)
-```
-
 **Build Status:**
 ```markdown
 [![Build](https://img.shields.io/github/actions/workflow/status/piqrypt/piqrypt/test.yml?branch=main)](https://github.com/piqrypt/piqrypt/actions)
-```
-
-**Coverage:**
-```markdown
-[![Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen)](https://github.com/piqrypt/piqrypt)
 ```
 
 ---
@@ -207,16 +207,16 @@ https://img.shields.io/badge/<LABEL>-<MESSAGE>-<COLOR>
 
 ### Colors
 
-| Color | Hex | Use Case |
-|-------|-----|----------|
-| blue | `#007ec6` | Info, versions |
-| green | `#4c1` | Success, compliance |
-| brightgreen | `#44cc11` | Active, ready |
-| yellow | `#dfb317` | Warning, license |
-| orange | `#fe7d37` | Alert, detection |
-| red | `#e05d44` | Error, critical |
-| purple | `#9f5dc2` | Quantum, special |
-| gold | `#ffd700` | Pro, premium |
+| Color | Use Case |
+|-------|----------|
+| blue | Info, versions |
+| green | Success, compliance |
+| brightgreen | Active, ready |
+| yellow | Warning, license |
+| orange | Alert, detection, Vigil |
+| red | Error, critical |
+| purple | Quantum, special |
+| gold | Pro, premium |
 
 ---
 
@@ -236,18 +236,6 @@ https://img.shields.io/badge/<LABEL>-<MESSAGE>-<COLOR>
 </a>
 ```
 
-### Embed Code
-
-```html
-<!-- Responsive badge -->
-<div style="display: inline-block; margin: 10px;">
-  <a href="https://piqrypt.org">
-    <img src="https://img.shields.io/badge/PiQrypt-Powered-blue?style=for-the-badge" 
-         alt="PiQrypt Powered">
-  </a>
-</div>
-```
-
 ---
 
 ## Badge Styles
@@ -262,19 +250,9 @@ https://img.shields.io/badge/<LABEL>-<MESSAGE>-<COLOR>
 [![PiQrypt](https://img.shields.io/badge/PiQrypt-Powered-blue?style=flat-square)](https://piqrypt.org)
 ```
 
-### Plastic
-```markdown
-[![PiQrypt](https://img.shields.io/badge/PiQrypt-Powered-blue?style=plastic)](https://piqrypt.org)
-```
-
 ### For the Badge
 ```markdown
 [![PiQrypt](https://img.shields.io/badge/PiQrypt-Powered-blue?style=for-the-badge)](https://piqrypt.org)
-```
-
-### Social
-```markdown
-[![PiQrypt](https://img.shields.io/badge/PiQrypt-Powered-blue?style=social)](https://piqrypt.org)
 ```
 
 ---
@@ -301,7 +279,7 @@ This project uses [PiQrypt](https://piqrypt.org) for cryptographic agent identit
 
 ### Pro Tier
 
-**Optional:** Attribution appreciated but not required
+**Optional:** Attribution appreciated but not required.
 
 ### OSS Tier
 
@@ -313,54 +291,7 @@ This project uses [PiQrypt](https://piqrypt.org) for cryptographic agent identit
 
 ---
 
-## Marketing Materials
-
-### Social Media
-
-**Twitter/X:**
-```
-🔐 Built with #PiQrypt - RFC-compliant cryptographic identity for autonomous agents
-
-https://piqrypt.org
-```
-
-**LinkedIn:**
-```
-Our new product uses PiQrypt (https://piqrypt.org) for secure agent identity management. 
-AISS-1 compliant, post-quantum ready. #security #AI #crypto
-```
-
-### Product Pages
-
-**Footer:**
-```html
-<div class="powered-by">
-  Secured by <a href="https://piqrypt.org">PiQrypt</a>
-  <img src="https://img.shields.io/badge/PiQrypt-Powered-blue" alt="PiQrypt">
-</div>
-```
-
-### Documentation
-
-**Security page:**
-```markdown
-## Cryptographic Identity
-
-We use [PiQrypt](https://piqrypt.org) for agent identity management:
-
-- ✅ RFC 8032 Ed25519 signatures
-- ✅ Tamper-evident event chains
-- ✅ Fork detection
-- ✅ Post-quantum ready (AISS-2)
-
-[![AISS-1](https://img.shields.io/badge/AISS--1-Compliant-green)](https://piqrypt.org)
-```
-
----
-
-## Generator Tool
-
-### CLI Badge Generator
+## CLI Badge Generator
 
 ```bash
 # Generate badge markdown
@@ -373,70 +304,25 @@ piqrypt badge generate --tier free --style flat
 piqrypt badge generate --tier pro --copy
 ```
 
-### Python API
-
-```python
-from piqrypt.badges import generate_badge
-
-# Generate badge URL
-url = generate_badge(
-    label="PiQrypt",
-    message="Pro",
-    color="gold",
-    style="flat"
-)
-
-# Generate markdown
-md = generate_badge_markdown(
-    label="PiQrypt",
-    message="AISS-2 Ready",
-    color="purple",
-    link="https://piqrypt.org/docs/AISS-2"
-)
-```
-
 ---
 
 ## Best Practices
 
 ### Placement
 
-**README.md:**
-- Top of file (below title)
-- "Badges" section
-- "Built With" section
-
-**Documentation:**
-- Security/Compliance pages
-- Footer
-- Sidebar
-
-**Website:**
-- Homepage footer
-- Product page
-- About/Credits page
+**README.md:** Top of file, "Badges" section, "Built With" section  
+**Documentation:** Security/Compliance pages, Footer  
+**Website:** Homepage footer, Product page
 
 ### Don't Overdo It
 
-**Good (5-7 badges):**
-```markdown
-[![PiQrypt](...)
-[![AISS-1](...)
-[![License](...)
-[![Python](...)
-[![Build](...)
-```
-
-**Too Many (15+ badges):**
-```markdown
-[![Badge1] [![Badge2] [![Badge3] [![Badge4] ...
-```
+5–7 badges is a good maximum. More than that degrades readability.
 
 ### Keep Updated
 
 ```markdown
 <!-- Update version when upgrading -->
-[![Version](https://img.shields.io/badge/version-1.1.0-blue)](...)
+[![Version](https://img.shields.io/badge/version-1.7.0-blue)](...)
 
 <!-- Update tier if licensing changes -->
 [![PiQrypt Pro](https://img.shields.io/badge/PiQrypt-Pro-gold)](...)
@@ -448,16 +334,9 @@ md = generate_badge_markdown(
 
 ### Badge Not Showing
 
-**Check:**
 1. URL is correct
 2. No typos in markdown syntax
 3. shields.io is accessible
-4. Image isn't blocked by firewall
-
-### Badge Outdated
-
-**Dynamic badges** update automatically (PyPI, GitHub).  
-**Static badges** need manual updates.
 
 ### Custom Badge Not Working
 
@@ -465,9 +344,29 @@ Verify URL encoding:
 ```
 Spaces: %20
 Dashes: --
+Caret:  %5E
 ```
 
 ---
 
-**Last Updated:** February 16, 2025
-**Version:** 1.1.0
+**Last Updated:** 2026-03-12
+**Version:** 1.7.1
+
+---
+
+**Intellectual Property Notice**
+
+Core protocol concepts described in this document were deposited
+via e-Soleau with the French National Institute of Industrial Property (INPI):
+
+Primary deposit:  DSO2026006483 — 19 February 2026
+Addendum:         DSO2026009143 — 12 March 2026
+
+These deposits establish proof of authorship and prior art
+for the PCP protocol specification and PiQrypt reference implementation.
+
+PCP (Proof of Continuity Protocol) is an open protocol specification.
+It may be implemented independently by any compliant system.
+PiQrypt is the reference implementation.
+
+© 2026 PiQrypt — contact@piqrypt.com

@@ -1,3 +1,10 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 PiQrypt Inc.
+# e-Soleau: DSO2026006483 (19/02/2026) -- DSO2026009143 (12/03/2026)
+#
+# Part of the AISS protocol specification.
+# Free to use, modify, and redistribute -- see root LICENSE for details.
+
 """
 Agent Identity Management (RFC Sections 5-6)
 
@@ -5,14 +12,24 @@ This module implements:
 - Deterministic agent ID derivation (Section 5.1)
 - Identity document generation (Section 6)
 - Key rotation attestation (Section 12)
+
+v1.7.0 additions:
+- create_agent_identity() : création complète avec nom + passphrase + stockage
+- load_agent_identity()   : chargement depuis ~/.piqrypt/agents/<n>/
+- list_agent_identities() : liste tous les agents enregistrés
 """
 
+import json
 import time
-from typing import Dict, Any, Tuple
+from pathlib import Path
+from typing import Dict, Any, Tuple, Optional
 
 from aiss.crypto import ed25519
 from aiss.canonical import hash_bytes
 from aiss.exceptions import InvalidAgentIDError
+from aiss.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def generate_keypair() -> Tuple[bytes, bytes]:
@@ -275,3 +292,206 @@ def create_rotation_pcp_event(
             pass  # Memory may not be initialized
 
     return event
+
+
+# ─── v1.7.0 : Création identité avec stockage isolé ──────────────────────────
+
+def create_agent_identity(
+    agent_name: str,
+    passphrase: Optional[str] = None,
+    metadata: Optional[Dict[str, Any]] = None,
+    tier: str = "free",
+    base_dir: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Crée une identité complète pour un agent et la stocke dans
+    ~/.piqrypt/agents/<agent_name>/ (ou base_dir/agents/<agent_name>/ si fourni).
+
+    Args:
+        agent_name: Nom lisible de l'agent (ex: "trading_bot_A")
+        passphrase: Passphrase pour chiffrer la clé privée.
+                    None = stockage en clair (Free tier, déconseillé en prod)
+        metadata:   Métadonnées optionnelles (description, version, etc.)
+        tier:       "free" ou "pro"
+        base_dir:   Répertoire racine optionnel (utile en tests/CI).
+                    Si omis, utilise ~/.piqrypt/agents/.
+
+    Returns:
+        Dict avec identity, agent_id, agent_name, key_path, encrypted
+
+    Raises:
+        ValueError: Si agent_name est vide ou invalide
+    """
+    if not agent_name or not agent_name.strip():
+        raise ValueError("Le nom de l'agent ne peut pas être vide")
+
+    # Générer les clés
+    private_key, public_key = generate_keypair()
+    agent_id = derive_agent_id(public_key)
+
+    # Créer le document d'identité
+    identity = export_identity(agent_id, public_key, metadata=metadata)
+
+    # Créer la structure de répertoires
+    from aiss.agent_registry import init_agent_dirs, register_agent, get_agent_dir
+
+    if base_dir is not None:
+        # Mode test : stockage dans base_dir/agents/<agent_name>/
+        agent_dir = Path(base_dir) / "agents" / agent_name
+        agent_dir.mkdir(parents=True, exist_ok=True)
+    else:
+        init_agent_dirs(agent_name)
+        agent_dir = get_agent_dir(agent_name)
+
+    # Sauvegarder identity.json
+    identity_path = agent_dir / "identity.json"
+    identity_path.write_text(json.dumps(identity, indent=2))
+    identity_path.chmod(0o644)
+
+    # Sauvegarder la clé privée
+    if passphrase:
+        from aiss.key_store import save_encrypted_key
+        key_path = agent_dir / "private.key.enc"
+        save_encrypted_key(private_key, passphrase, key_path)
+        encrypted = True
+    else:
+        from aiss.key_store import save_plaintext_key
+        key_path = agent_dir / "private.key.json"
+        save_plaintext_key(private_key, key_path)
+        encrypted = False
+        if tier == "pro":
+            logger.warning(
+                f"[Identity] Clé de '{agent_name}' non chiffrée en Pro tier. "
+                f"Utilisez piqrypt identity secure pour chiffrer."
+            )
+
+    # Enregistrer dans le registre (sauf en mode base_dir test)
+    if base_dir is None:
+        register_agent(
+            agent_name=agent_name,
+            agent_id=agent_id,
+            tier=tier,
+            metadata=metadata,
+        )
+
+    logger.info(
+        f"[Identity] Agent '{agent_name}' créé — "
+        f"ID: {agent_id[:16]}... — "
+        f"Clé: {'chiffrée' if encrypted else 'non chiffrée'}"
+    )
+
+    return {
+        "agent_name":  agent_name,
+        "agent_id":    agent_id,
+        "identity":    identity,
+        "key_path":    str(key_path),
+        "encrypted":   encrypted,
+        "tier":        tier,
+        "created_at":  identity["created_at"],
+    }
+
+
+def load_agent_identity(agent_name: str) -> Dict[str, Any]:
+    """
+    Charge le document d'identité d'un agent depuis le disque.
+
+    Args:
+        agent_name: Nom de l'agent
+
+    Returns:
+        Dict identity (agent_id, public_key, algorithm, created_at)
+
+    Raises:
+        FileNotFoundError: Agent introuvable
+    """
+    from aiss.agent_registry import get_agent_dir
+
+    identity_path = get_agent_dir(agent_name) / "identity.json"
+
+    if not identity_path.exists():
+        raise FileNotFoundError(
+            f"Identité introuvable pour '{agent_name}'. "
+            f"Créez l'agent avec : piqrypt identity create"
+        )
+
+    identity = json.loads(identity_path.read_text())
+    identity["agent_name"] = agent_name
+    return identity
+
+
+def list_agent_identities() -> list:
+    """
+    Liste tous les agents enregistrés avec leurs identités.
+
+    Returns:
+        Liste de dicts {agent_name, agent_id, tier, created_at, last_seen}
+    """
+    from aiss.agent_registry import list_agents
+    return list_agents()
+
+
+def secure_agent_key(
+    agent_name: str,
+    new_passphrase: str,
+    old_passphrase: Optional[str] = None,
+) -> bool:
+    """
+    Chiffre (ou rechiffre) la clé privée d'un agent avec une passphrase.
+
+    Utilisé par `piqrypt identity secure` pour protéger une clé
+    précédemment stockée en clair.
+
+    Args:
+        agent_name:     Nom de l'agent
+        new_passphrase: Nouvelle passphrase
+        old_passphrase: Ancienne passphrase (si clé déjà chiffrée)
+
+    Returns:
+        True si succès
+    """
+    from aiss.agent_registry import get_agent_dir
+    from aiss.key_store import (
+        re_encrypt_key, is_encrypted,
+        load_plaintext_key, save_encrypted_key,
+    )
+
+    agent_dir = get_agent_dir(agent_name)
+    enc_path   = agent_dir / "private.key.enc"
+    plain_path = agent_dir / "private.key.json"
+
+    key_path = enc_path if enc_path.exists() else plain_path
+
+    if not key_path.exists():
+        raise FileNotFoundError(f"Clé introuvable pour '{agent_name}'")
+
+    if is_encrypted(key_path):
+        # Rechiffrement : déchiffrer avec l'ancienne, chiffrer avec la nouvelle
+        from aiss.key_store import load_encrypted_key
+        raw_key = load_encrypted_key(key_path, old_passphrase)
+        key_path.unlink()
+        save_encrypted_key(raw_key, new_passphrase, enc_path)
+    else:
+        # Clé en clair → chiffrement initial
+        raw_key = load_plaintext_key(key_path)
+        plain_path_bak = plain_path.with_suffix(".json.bak")
+        plain_path.rename(plain_path_bak)
+        save_encrypted_key(raw_key, new_passphrase, enc_path)
+
+    logger.info(f"[Identity] Clé de '{agent_name}' (re)chiffrée avec succès")
+    return True
+
+
+# ─── Public API update ────────────────────────────────────────────────────────
+__all__ = [
+    "generate_keypair",
+    "derive_agent_id",
+    "verify_agent_id",
+    "export_identity",
+    "create_rotation_attestation",
+    "create_rotation_pcp_event",
+    # v1.7.0
+    "create_agent_identity",
+    "load_agent_identity",
+    "list_agent_identities",
+    "secure_agent_key",
+]

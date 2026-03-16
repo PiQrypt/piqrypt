@@ -1,3 +1,10 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 PiQrypt Inc.
+# e-Soleau: DSO2026006483 (19/02/2026) -- DSO2026009143 (12/03/2026)
+#
+# Part of the AISS protocol specification.
+# Free to use, modify, and redistribute -- see root LICENSE for details.
+
 """
 RFC 8785 - JSON Canonicalization Scheme (JCS)
 

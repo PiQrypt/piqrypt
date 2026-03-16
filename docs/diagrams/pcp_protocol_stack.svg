@@ -1,0 +1,59 @@
+<svg width="100%" viewBox="0 0 680 440" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+</defs>
+<!-- Title -->
+<text font-family="sans-serif" font-weight="500" font-size="14" x="340" y="26" text-anchor="middle" fill="#2C2C2A">Non-intrusive integration — your agent unchanged</text>
+<!-- BEFORE -->
+<text font-family="sans-serif" font-size="12" x="150" y="60" text-anchor="middle" fill="#88878060">Before</text>
+<rect x="60" y="70" width="180" height="52" rx="10" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.5"/>
+<text font-family="sans-serif" font-weight="500" font-size="14" x="150" y="91" text-anchor="middle" fill="#444441">Your agent</text>
+<text font-family="sans-serif" font-size="12" x="150" y="109" text-anchor="middle" fill="#5F5E5A">LangChain / CrewAI / any</text>
+<line x1="150" y1="122" x2="150" y2="160" stroke="#88878080" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="60" y="160" width="180" height="44" rx="10" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.5"/>
+<text font-family="sans-serif" font-weight="500" font-size="14" x="150" y="181" text-anchor="middle" fill="#444441">Output</text>
+<text font-family="sans-serif" font-size="12" x="150" y="197" text-anchor="middle" fill="#5F5E5A">No proof. No trail.</text>
+<!-- 1 line badge -->
+<rect x="280" y="116" width="120" height="40" rx="20" fill="none" stroke="#88878040" stroke-width="1" stroke-dasharray="4 3"/>
+<text font-family="sans-serif" font-size="12" x="340" y="140" text-anchor="middle" fill="#5F5E5A">1 line of code</text>
+<!-- AFTER -->
+<text font-family="sans-serif" font-size="12" x="530" y="60" text-anchor="middle" fill="#88878060">After</text>
+<rect x="430" y="62" width="200" height="68" rx="14" fill="none" stroke="#88878040" stroke-width="1" stroke-dasharray="5 3"/>
+<text font-family="sans-serif" font-size="12" x="435" y="76" fill="#88878070">PiQrypt bridge</text>
+<rect x="440" y="70" width="180" height="52" rx="10" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.5"/>
+<text font-family="sans-serif" font-weight="500" font-size="14" x="530" y="91" text-anchor="middle" fill="#444441">Your agent</text>
+<text font-family="sans-serif" font-size="12" x="530" y="109" text-anchor="middle" fill="#5F5E5A">unchanged</text>
+<line x1="530" y1="130" x2="530" y2="160" stroke="#88878080" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="440" y="160" width="180" height="44" rx="10" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+<text font-family="sans-serif" font-weight="500" font-size="14" x="530" y="181" text-anchor="middle" fill="#0C447C">Signed output</text>
+<text font-family="sans-serif" font-size="12" x="530" y="197" text-anchor="middle" fill="#185FA5">Hash-chained · Verifiable</text>
+<!-- Separator -->
+<line x1="40" y1="230" x2="640" y2="230" stroke="#88878030" stroke-width="0.5" stroke-dasharray="4 4"/>
+<!-- What the bridge captures -->
+<text font-family="sans-serif" font-weight="500" font-size="14" x="340" y="258" text-anchor="middle" fill="#2C2C2A">What the bridge captures — without storing content</text>
+<!-- 4 capture boxes -->
+<rect x="48" y="272" width="132" height="56" rx="10" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text font-family="sans-serif" font-weight="500" font-size="14" x="114" y="295" text-anchor="middle" fill="#085041">Agent action</text>
+<text font-family="sans-serif" font-size="12" x="114" y="313" text-anchor="middle" fill="#0F6E56">sha256(input)</text>
+<text font-family="sans-serif" font-size="12" x="114" y="327" text-anchor="middle" fill="#0F6E56">sha256(output)</text>
+<rect x="196" y="272" width="132" height="56" rx="10" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text font-family="sans-serif" font-weight="500" font-size="14" x="262" y="295" text-anchor="middle" fill="#085041">Timestamp</text>
+<text font-family="sans-serif" font-size="12" x="262" y="313" text-anchor="middle" fill="#0F6E56">Unix epoch</text>
+<text font-family="sans-serif" font-size="12" x="262" y="327" text-anchor="middle" fill="#0F6E56">RFC 3161 (Pro+)</text>
+<rect x="344" y="272" width="132" height="56" rx="10" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text font-family="sans-serif" font-weight="500" font-size="14" x="410" y="295" text-anchor="middle" fill="#085041">Chain link</text>
+<text font-family="sans-serif" font-size="12" x="410" y="313" text-anchor="middle" fill="#0F6E56">previous_hash</text>
+<text font-family="sans-serif" font-size="12" x="410" y="327" text-anchor="middle" fill="#0F6E56">Ed25519 signature</text>
+<rect x="492" y="272" width="140" height="56" rx="10" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text font-family="sans-serif" font-weight="500" font-size="14" x="562" y="295" text-anchor="middle" fill="#085041">Agent identity</text>
+<text font-family="sans-serif" font-size="12" x="562" y="313" text-anchor="middle" fill="#0F6E56">Persistent agent_id</text>
+<text font-family="sans-serif" font-size="12" x="562" y="327" text-anchor="middle" fill="#0F6E56">Derived from pub key</text>
+<!-- Arrow down -->
+<line x1="340" y1="328" x2="340" y2="360" stroke="#88878080" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- Result -->
+<rect x="130" y="360" width="420" height="52" rx="12" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
+<text font-family="sans-serif" font-weight="500" font-size="14" x="340" y="383" text-anchor="middle" fill="#3C3489">Portable proof — .piqrypt-certified</text>
+<text font-family="sans-serif" font-size="12" x="340" y="401" text-anchor="middle" fill="#534AB7">Verifiable without PiQrypt · Offline · Legally admissible</text>
+</svg>

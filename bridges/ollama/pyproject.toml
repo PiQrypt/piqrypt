@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "piqrypt-ollama"
+version = "1.0.0"
+description = "PiQrypt cryptographic audit trail bridge for Ollama"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "PiQrypt Contributors", email = "contact@piqrypt.org"}
+]
+requires-python = ">=3.9"
+keywords = ["cryptography", "ollama", "audit", "ai-agents", "aiss", "llm", "compliance"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security :: Cryptography",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "piqrypt>=1.6.0",
+    "ollama>=0.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/piqrypt/piqrypt-ollama"
+Documentation = "https://github.com/piqrypt/piqrypt-ollama#readme"
+Repository = "https://github.com/piqrypt/piqrypt-ollama"
+"Bug Tracker" = "https://github.com/piqrypt/piqrypt/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["piqrypt_ollama*"]

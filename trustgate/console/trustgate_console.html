@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trust Gate Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;400;500;600&family=Barlow+Condensed:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  /* ── Reset & Variables ─────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:         #090b0f;
+    --surface:    #0e1117;
+    --surface2:   #141820;
+    --border:     #1e2530;
+    --border2:    #2a3345;
+    --text:       #c8d4e8;
+    --text-dim:   #5a6a82;
+    --text-bright:#eaf0fc;
+    --mono:       'Share Tech Mono', monospace;
+    --sans:       'Barlow', sans-serif;
+    --cond:       'Barlow Condensed', sans-serif;
+
+    --allow:      #00e5a0;
+    --allow-dim:  rgba(0,229,160,0.12);
+    --warn:       #f5a623;
+    --warn-dim:   rgba(245,166,35,0.12);
+    --danger:     #ff3b5c;
+    --danger-dim: rgba(255,59,92,0.12);
+    --human:      #4d9fff;
+    --human-dim:  rgba(77,159,255,0.12);
+    --restrict:   #b066ff;
+    --restrict-dim: rgba(176,102,255,0.12);
+
+    --scan-speed: 4s;
+  }
+
+  html, body { height: 100%; background: var(--bg); color: var(--text);
+    font-family: var(--sans); font-size: 13px; overflow: hidden; }
+
+  /* ── Scanline overlay ──────────────────────────────────────────────── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 9999; pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 2px,
+      rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px
+    );
+  }
+
+  /* ── Layout ────────────────────────────────────────────────────────── */
+  .shell { display: grid; height: 100vh;
+    grid-template-rows: 48px 1fr;
+    grid-template-columns: 220px 1fr 280px; }
+
+  /* ── Header ────────────────────────────────────────────────────────── */
+  header {
+    grid-column: 1 / -1;
+    display: flex; align-items: center; gap: 20px;
+    padding: 0 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  header::after {
+    content: '';
+    position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg,
+      transparent, var(--danger) 20%, var(--human) 50%, var(--allow) 80%, transparent);
+    opacity: 0.4;
+  }
+
+  .logo {
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--cond); font-weight: 700; font-size: 16px;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-bright);
+  }
+  .logo-icon {
+    width: 24px; height: 24px; position: relative; flex-shrink: 0;
+  }
+  .logo-icon svg { width: 100%; height: 100%; }
+
+  .header-sep { width: 1px; height: 24px; background: var(--border); }
+
+  .policy-tag {
+    font-family: var(--mono); font-size: 11px; color: var(--text-dim);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .policy-tag span { color: var(--allow); }
+
+  .header-stats { display: flex; gap: 20px; margin-left: auto; }
+  .hstat {
+    display: flex; align-items: center; gap: 6px;
+    font-family: var(--mono); font-size: 11px; color: var(--text-dim);
+  }
+  .hstat strong { color: var(--text-bright); font-size: 14px; }
+  .hstat.warn strong { color: var(--warn); }
+  .hstat.danger strong { color: var(--danger); }
+  .hstat.ok strong { color: var(--allow); }
+
+  .pulse {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--allow); box-shadow: 0 0 6px var(--allow);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+  .pulse.danger { background: var(--danger); box-shadow: 0 0 6px var(--danger); }
+  .pulse.warn   { background: var(--warn);   box-shadow: 0 0 6px var(--warn); }
+
+  /* ── Sidebar ────────────────────────────────────────────────────────── */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .sidebar-section { padding: 16px 0; border-bottom: 1px solid var(--border); }
+  .sidebar-label {
+    font-family: var(--cond); font-size: 10px; font-weight: 500;
+    letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-dim);
+    padding: 0 16px 8px;
+  }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 16px; cursor: pointer;
+    font-family: var(--sans); font-size: 13px; color: var(--text-dim);
+    transition: all 0.15s; position: relative;
+    border-left: 2px solid transparent;
+  }
+  .nav-item:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+  .nav-item.active {
+    color: var(--text-bright); background: rgba(77,159,255,0.07);
+    border-left-color: var(--human);
+  }
+  .nav-item .badge {
+    margin-left: auto; min-width: 18px; height: 18px;
+    padding: 0 5px; border-radius: 9px;
+    background: var(--danger); color: #fff;
+    font-family: var(--mono); font-size: 10px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 8px rgba(255,59,92,0.5);
+    animation: badge-pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes badge-pulse {
+    0%,100% { box-shadow: 0 0 8px rgba(255,59,92,0.5); }
+    50% { box-shadow: 0 0 16px rgba(255,59,92,0.8); }
+  }
+
+  .nav-icon { width: 14px; height: 14px; opacity: 0.7; flex-shrink: 0; }
+  .nav-item.active .nav-icon { opacity: 1; }
+
+  /* Agent list in sidebar */
+  .agent-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 16px; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .agent-item:hover { background: rgba(255,255,255,0.03); }
+  .agent-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .agent-name { font-family: var(--mono); font-size: 11px; color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .agent-vrs { font-family: var(--mono); font-size: 10px; }
+
+  /* ── Main content ───────────────────────────────────────────────────── */
+  .main { overflow-y: auto; background: var(--bg); }
+  .main::-webkit-scrollbar { width: 4px; }
+  .main::-webkit-scrollbar-track { background: transparent; }
+  .main::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  /* ── Panels ─────────────────────────────────────────────────────────── */
+  .panel { display: none; padding: 20px; animation: fadeIn 0.2s ease; }
+  .panel.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  .panel-title {
+    font-family: var(--cond); font-size: 18px; font-weight: 700;
+    letter-spacing: 0.06em; color: var(--text-bright);
+    margin-bottom: 4px; display: flex; align-items: center; gap: 10px;
+  }
+  .panel-sub {
+    font-size: 12px; color: var(--text-dim); margin-bottom: 20px;
+    font-family: var(--mono);
+  }
+
+  /* ── KPI row ────────────────────────────────────────────────────────── */
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  .kpi {
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 14px 16px; position: relative; overflow: hidden;
+  }
+  .kpi::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  }
+  .kpi.ok::before   { background: var(--allow); }
+  .kpi.warn::before { background: var(--warn); }
+  .kpi.danger::before { background: var(--danger); }
+  .kpi.info::before { background: var(--human); }
+
+  .kpi-label { font-family: var(--cond); font-size: 10px; font-weight: 500;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 8px; }
+  .kpi-value { font-family: var(--mono); font-size: 28px; color: var(--text-bright); line-height: 1; }
+  .kpi.warn .kpi-value { color: var(--warn); }
+  .kpi.danger .kpi-value { color: var(--danger); }
+  .kpi-sub { font-family: var(--mono); font-size: 10px; color: var(--text-dim); margin-top: 4px; }
+
+  /* ── Table ──────────────────────────────────────────────────────────── */
+  .tbl-wrap { background: var(--surface); border: 1px solid var(--border); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { border-bottom: 1px solid var(--border); }
+  thead th {
+    padding: 10px 14px; text-align: left;
+    font-family: var(--cond); font-size: 10px; font-weight: 500;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim);
+  }
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.12s; cursor: pointer;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(255,255,255,0.03); }
+  tbody td { padding: 11px 14px; font-size: 12px; }
+
+  /* ── Outcome badges ─────────────────────────────────────────────────── */
+  .badge-outcome {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 8px; border-radius: 2px;
+    font-family: var(--mono); font-size: 10px; font-weight: 400;
+    letter-spacing: 0.05em; white-space: nowrap;
+  }
+  .badge-ALLOW         { background: var(--allow-dim);    color: var(--allow);    border: 1px solid rgba(0,229,160,0.25); }
+  .badge-ALLOW_WITH_LOG{ background: var(--allow-dim);    color: var(--allow);    border: 1px solid rgba(0,229,160,0.15); opacity: 0.8; }
+  .badge-BLOCK         { background: var(--danger-dim);   color: var(--danger);   border: 1px solid rgba(255,59,92,0.25); }
+  .badge-QUARANTINE    { background: var(--danger-dim);   color: var(--danger);   border: 1px solid rgba(255,59,92,0.4);  box-shadow: 0 0 8px var(--danger-dim); }
+  .badge-REQUIRE_HUMAN { background: var(--human-dim);    color: var(--human);    border: 1px solid rgba(77,159,255,0.3); animation: rh-pulse 2s infinite; }
+  .badge-RESTRICTED    { background: var(--restrict-dim); color: var(--restrict); border: 1px solid rgba(176,102,255,0.25); }
+  .badge-MONITOR       { background: var(--warn-dim);     color: var(--warn);     border: 1px solid rgba(245,166,35,0.25); }
+  @keyframes rh-pulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(77,159,255,0.3); }
+    50% { box-shadow: 0 0 0 4px rgba(77,159,255,0); }
+  }
+
+  .badge-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+  /* ── VRS bar ────────────────────────────────────────────────────────── */
+  .vrs-cell { display: flex; align-items: center; gap: 8px; }
+  .vrs-bar-bg { flex: 1; height: 3px; background: var(--border); border-radius: 2px; max-width: 60px; }
+  .vrs-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+  .vrs-val { font-family: var(--mono); font-size: 11px; width: 32px; }
+
+  /* ── Decision Queue ─────────────────────────────────────────────────── */
+  .queue-card {
+    background: var(--surface); border: 1px solid var(--border2);
+    margin-bottom: 12px; position: relative; overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .queue-card:hover { border-color: var(--human); }
+  .queue-card::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    background: var(--human);
+  }
+  .queue-card-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px 10px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .queue-card-body { padding: 12px 20px; }
+  .queue-card-footer {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 20px; border-top: 1px solid var(--border);
+    background: rgba(0,0,0,0.2);
+  }
+
+  .qc-agent { font-family: var(--mono); font-size: 12px; color: var(--text-bright); }
+  .qc-action { font-family: var(--mono); font-size: 11px;
+    background: var(--surface2); border: 1px solid var(--border);
+    padding: 2px 7px; color: var(--text); }
+  .qc-time { font-family: var(--mono); font-size: 10px; color: var(--text-dim); margin-left: auto; }
+
+  .qc-reason { font-size: 12px; color: var(--text); margin-bottom: 8px; }
+  .qc-meta { display: flex; gap: 16px; }
+  .qc-metric { font-family: var(--mono); font-size: 11px; color: var(--text-dim); }
+  .qc-metric strong { color: var(--text); }
+
+  .btn { display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 14px; font-family: var(--sans); font-size: 12px; font-weight: 500;
+    cursor: pointer; border: 1px solid; transition: all 0.15s; }
+  .btn-approve {
+    background: var(--allow-dim); border-color: rgba(0,229,160,0.4); color: var(--allow);
+  }
+  .btn-approve:hover { background: rgba(0,229,160,0.2); box-shadow: 0 0 12px var(--allow-dim); }
+  .btn-reject {
+    background: var(--danger-dim); border-color: rgba(255,59,92,0.4); color: var(--danger);
+  }
+  .btn-reject:hover { background: rgba(255,59,92,0.2); }
+  .btn-detail {
+    background: transparent; border-color: var(--border2); color: var(--text-dim);
+    margin-left: auto;
+  }
+  .btn-detail:hover { color: var(--text); border-color: var(--border2); }
+
+  .timeout-bar {
+    height: 2px; background: var(--border);
+    position: absolute; bottom: 0; left: 0; right: 0;
+  }
+  .timeout-fill {
+    height: 100%; background: var(--human); transition: width 1s linear;
+  }
+  .timeout-fill.urgent { background: var(--danger); }
+
+  /* ── Policy editor ──────────────────────────────────────────────────── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  .editor-wrap {
+    background: var(--surface); border: 1px solid var(--border); height: 380px;
+    display: flex; flex-direction: column;
+  }
+  .editor-bar {
+    display: flex; align-items: center; padding: 8px 12px;
+    border-bottom: 1px solid var(--border); gap: 8px;
+    font-family: var(--mono); font-size: 10px; color: var(--text-dim);
+  }
+  .editor-bar .filename { color: var(--text); }
+  .editor-bar .hash { margin-left: auto; }
+  textarea.code-editor {
+    flex: 1; background: transparent; border: none; outline: none; resize: none;
+    font-family: var(--mono); font-size: 12px; color: var(--text);
+    padding: 12px; line-height: 1.6;
+  }
+  textarea.code-editor:focus { background: rgba(255,255,255,0.01); }
+
+  .sim-result {
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 16px; height: 380px; overflow-y: auto;
+    font-family: var(--mono); font-size: 11px;
+  }
+  .sim-line { padding: 3px 0; color: var(--text-dim); }
+  .sim-line.ok    { color: var(--allow); }
+  .sim-line.block { color: var(--danger); }
+  .sim-line.human { color: var(--human); }
+  .sim-line.head  { color: var(--text-bright); font-size: 12px; margin-bottom: 8px; }
+  .sim-line.dim   { opacity: 0.5; }
+
+  .editor-actions { display: flex; gap: 8px; margin-top: 12px; }
+  .btn-primary {
+    padding: 8px 20px; background: var(--human-dim); border: 1px solid rgba(77,159,255,0.4);
+    color: var(--human); font-family: var(--sans); font-size: 12px; font-weight: 500;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .btn-primary:hover { background: rgba(77,159,255,0.2); box-shadow: 0 0 12px var(--human-dim); }
+  .btn-sec {
+    padding: 8px 20px; background: transparent; border: 1px solid var(--border2);
+    color: var(--text-dim); font-family: var(--sans); font-size: 12px; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-sec:hover { color: var(--text); border-color: var(--text-dim); }
+
+  /* ── Audit journal ──────────────────────────────────────────────────── */
+  .audit-filters {
+    display: flex; gap: 10px; margin-bottom: 16px; align-items: center;
+  }
+  .filter-select {
+    background: var(--surface); border: 1px solid var(--border2);
+    color: var(--text); padding: 6px 10px; font-family: var(--mono); font-size: 11px;
+    outline: none; cursor: pointer;
+  }
+  .filter-select:focus { border-color: var(--human); }
+
+  .chain-valid {
+    display: flex; align-items: center; gap: 6px; margin-left: auto;
+    font-family: var(--mono); font-size: 11px;
+  }
+  .chain-valid .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--allow);
+    box-shadow: 0 0 6px var(--allow); }
+  .chain-valid span { color: var(--allow); }
+
+  .export-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 14px; background: transparent;
+    border: 1px solid var(--border2); color: var(--text-dim);
+    font-family: var(--sans); font-size: 11px; cursor: pointer; transition: all 0.15s;
+  }
+  .export-btn:hover { color: var(--text); border-color: var(--allow); color: var(--allow); }
+
+  /* ── Right panel ────────────────────────────────────────────────────── */
+  .rightpanel {
+    background: var(--surface); border-left: 1px solid var(--border);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .rp-header {
+    padding: 14px 16px; border-bottom: 1px solid var(--border);
+    font-family: var(--cond); font-size: 11px; font-weight: 500;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim);
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  /* Live feed */
+  .live-feed { flex: 1; overflow-y: auto; padding: 8px 0; }
+  .live-feed::-webkit-scrollbar { width: 3px; }
+  .live-feed::-webkit-scrollbar-thumb { background: var(--border2); }
+
+  .feed-item {
+    padding: 8px 14px; border-bottom: 1px solid rgba(30,37,48,0.5);
+    animation: slideIn 0.3s ease;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(8px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  .feed-time { font-family: var(--mono); font-size: 9px; color: var(--text-dim); margin-bottom: 3px; }
+  .feed-msg  { font-size: 11px; color: var(--text); }
+  .feed-msg .agent { font-family: var(--mono); color: var(--text-bright); }
+  .feed-msg .outcome-text { font-family: var(--mono); font-size: 10px; }
+  .feed-msg .outcome-text.ok  { color: var(--allow); }
+  .feed-msg .outcome-text.bad { color: var(--danger); }
+  .feed-msg .outcome-text.rh  { color: var(--human); }
+
+  /* Principals */
+  .principal-item {
+    padding: 10px 14px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .principal-avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--cond); font-size: 12px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .L1 { background: rgba(0,229,160,0.15); color: var(--allow); border: 1px solid rgba(0,229,160,0.3); }
+  .L2 { background: rgba(77,159,255,0.15); color: var(--human); border: 1px solid rgba(77,159,255,0.3); }
+  .L3 { background: rgba(245,166,35,0.15); color: var(--warn);  border: 1px solid rgba(245,166,35,0.3); }
+  .principal-info { flex: 1; min-width: 0; }
+  .principal-name { font-family: var(--mono); font-size: 11px; color: var(--text-bright); }
+  .principal-meta { font-size: 10px; color: var(--text-dim); }
+  .principal-cl { font-family: var(--mono); font-size: 10px; }
+
+  /* ── Compliance view ────────────────────────────────────────────────── */
+  .compliance-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+  .compliance-card {
+    background: var(--surface); border: 1px solid var(--border); padding: 16px;
+    position: relative;
+  }
+  .compliance-card h3 { font-family: var(--cond); font-size: 13px; font-weight: 700;
+    letter-spacing: 0.08em; color: var(--text-bright); margin-bottom: 12px; }
+  .req-item { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
+  .req-icon { font-size: 11px; flex-shrink: 0; margin-top: 1px; }
+  .req-text { font-size: 11px; color: var(--text); flex: 1; }
+  .req-ref  { font-family: var(--mono); font-size: 9px; color: var(--text-dim); margin-top: 2px; }
+  .score-ring { position: absolute; top: 14px; right: 14px; }
+  .score-ring text { font-family: var(--mono); font-size: 14px; fill: var(--allow); }
+
+  /* ── Modal ──────────────────────────────────────────────────────────── */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border2);
+    width: 560px; max-width: 95vw;
+    transform: translateY(20px); transition: transform 0.2s;
+    position: relative;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-header {
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .modal-title { font-family: var(--cond); font-size: 16px; font-weight: 700; color: var(--text-bright); }
+  .modal-close { margin-left: auto; background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 18px; }
+  .modal-close:hover { color: var(--text); }
+  .modal-body { padding: 20px; }
+  .modal-row { display: flex; gap: 8px; margin-bottom: 10px; align-items: baseline; }
+  .modal-key { font-family: var(--mono); font-size: 10px; color: var(--text-dim); width: 100px; flex-shrink: 0; }
+  .modal-val { font-family: var(--mono); font-size: 12px; color: var(--text); flex: 1; word-break: break-all; }
+  .modal-val.mono { font-size: 11px; }
+  textarea.justification {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border2);
+    color: var(--text); padding: 10px; font-family: var(--sans); font-size: 12px;
+    outline: none; resize: none; height: 80px; margin-top: 12px;
+  }
+  textarea.justification:focus { border-color: var(--human); }
+  .modal-footer { display: flex; gap: 10px; padding: 14px 20px; border-top: 1px solid var(--border); }
+
+  .principal-select {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border2);
+    color: var(--text); padding: 8px 10px; font-family: var(--mono); font-size: 12px;
+    outline: none; margin-top: 12px;
+  }
+  .principal-select:focus { border-color: var(--human); }
+
+  /* ── Empty states ───────────────────────────────────────────────────── */
+  .empty { text-align: center; padding: 40px 20px; }
+  .empty-icon { font-size: 32px; margin-bottom: 10px; opacity: 0.4; }
+  .empty-text { font-size: 12px; color: var(--text-dim); }
+
+  /* ── Scrollbar ──────────────────────────────────────────────────────── */
+  .main::-webkit-scrollbar { width: 4px; }
+
+  /* ── Notification toast ─────────────────────────────────────────────── */
+  .toast {
+    position: fixed; bottom: 20px; right: 20px; z-index: 2000;
+    background: var(--surface); border: 1px solid var(--border2);
+    padding: 12px 16px; max-width: 320px;
+    display: flex; align-items: center; gap: 10px;
+    transform: translateY(80px); opacity: 0;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast-icon { font-size: 16px; }
+  .toast-msg { font-size: 12px; color: var(--text); }
+
+  /* ── Mono text ──────────────────────────────────────────────────────── */
+  .mono { font-family: var(--mono); }
+  .dim  { color: var(--text-dim); }
+
+  .conn-banner { background:var(--danger-dim); border:1px solid rgba(255,59,92,.3);
+    padding:10px 16px; margin-bottom:16px; font-family:var(--mono); font-size:11px;
+    color:var(--danger); display:none; align-items:center; gap:10px; }
+  .conn-banner.show { display:flex; }
+  .feed-msg .outcome-text.warn { color:var(--warn); }
+  .badge-APPROVED  { background:var(--allow-dim);  color:var(--allow);  border:1px solid rgba(0,229,160,.2); opacity:.7; }
+  .badge-REJECTED  { background:var(--danger-dim); color:var(--danger); border:1px solid rgba(255,59,92,.2);  opacity:.7; }
+  .badge-TIMED_OUT { background:rgba(90,106,130,.15); color:var(--text-dim); border:1px solid var(--border2); }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ── Header ──────────────────────────────────────────────────────── -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L4 6V12C4 16.4 7.4 20.5 12 22C16.6 20.5 20 16.4 20 12V6L12 2Z"
+            stroke="#4d9fff" stroke-width="1.5" fill="rgba(77,159,255,0.1)"/>
+          <path d="M9 12L11 14L15 10" stroke="#4d9fff" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      TRUST GATE
+    </div>
+    <div class="header-sep"></div>
+    <div class="policy-tag">
+      POLICY <span id="policy-version"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="93f7f6fefcd3a2bda3">[email&#160;protected]</a></span>
+      &nbsp;·&nbsp; HASH <span id="policy-hash">abc1234…</span>
+    </div>
+    <div class="header-stats">
+      <div class="hstat danger" id="stat-pending">
+        <div class="pulse danger"></div>
+        <strong id="pending-count">3</strong> PENDING
+      </div>
+      <div class="hstat warn" id="stat-agents">
+        <strong id="agent-count">2</strong> WATCH
+      </div>
+      <div class="hstat ok">
+        <div class="pulse"></div>
+        <strong>LIVE</strong>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Sidebar ─────────────────────────────────────────────────────── -->
+  <nav class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Navigation</div>
+      <div class="nav-item active" onclick="showPanel('queue')">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="currentColor">
+          <rect x="2" y="2" width="5" height="5"/><rect x="9" y="2" width="5" height="5"/>
+          <rect x="2" y="9" width="5" height="5"/><rect x="9" y="9" width="5" height="5"/>
+        </svg>
+        Decision Queue
+        <span class="badge" id="badge-queue">3</span>
+      </div>
+      <div class="nav-item" onclick="showPanel('audit')">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="2" y="2" width="12" height="12" rx="1"/>
+          <line x1="5" y1="6" x2="11" y2="6"/><line x1="5" y1="9" x2="11" y2="9"/>
+          <line x1="5" y1="12" x2="8" y2="12"/>
+        </svg>
+        Audit Journal
+      </div>
+      <div class="nav-item" onclick="showPanel('policy')">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="8" cy="8" r="6"/>
+          <path d="M8 5v3l2 2"/>
+        </svg>
+        Policy Editor
+      </div>
+      <div class="nav-item" onclick="showPanel('compliance')">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M8 2L3 5v4c0 3 2.5 5.5 5 6.5C11 14.5 13 12 13 9V5L8 2z"/>
+        </svg>
+        Compliance
+      </div>
+    </div>
+
+    <div class="sidebar-section" style="flex:1;overflow-y:auto;">
+      <div class="sidebar-label">Agents</div>
+      <div id="agent-list"></div>
+    </div>
+  </nav>
+
+  <!-- ── Main panels ──────────────────────────────────────────────────── -->
+  <main class="main">
+
+    <!-- Decision Queue -->
+    <div class="panel active" id="panel-queue">
+      <div class="panel-title">
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="var(--human)">
+          <rect x="2" y="2" width="5" height="5"/><rect x="9" y="2" width="5" height="5"/>
+          <rect x="2" y="9" width="5" height="5"/><rect x="9" y="9" width="5" height="5"/>
+        </svg>
+        Decision Queue
+      </div>
+      <div class="panel-sub" id="queue-sub">Pending human approval — REQUIRE_HUMAN</div>
+
+      <div class="kpi-row">
+        <div class="kpi danger">
+          <div class="kpi-label">Pending Approval</div>
+          <div class="kpi-value" id="kpi-pending">3</div>
+          <div class="kpi-sub">require human action</div>
+        </div>
+        <div class="kpi warn">
+          <div class="kpi-label">Avg Wait Time</div>
+          <div class="kpi-value" id="kpi-wait">4m</div>
+          <div class="kpi-sub">time in queue</div>
+        </div>
+        <div class="kpi ok">
+          <div class="kpi-label">Resolved Today</div>
+          <div class="kpi-value" id="kpi-resolved">17</div>
+          <div class="kpi-sub">approved + rejected</div>
+        </div>
+        <div class="kpi info">
+          <div class="kpi-label">Approval Rate</div>
+          <div class="kpi-value" id="kpi-rate">82%</div>
+          <div class="kpi-sub">last 24h</div>
+        </div>
+      </div>
+
+      <div id="conn-banner" class="conn-banner">⚠ Serveur Trust Gate inaccessible — lancez : python trustgate/trustgate_server.py --demo</div>
+      <div id="queue-cards"></div>
+    </div>
+
+    <!-- Audit Journal -->
+    <div class="panel" id="panel-audit">
+      <div class="panel-title">Audit Journal</div>
+      <div class="panel-sub">Immutable hash-linked decision log — ANSSI R29 / AI Act Art.12</div>
+
+      <div class="audit-filters">
+        <select class="filter-select" onchange="filterAudit(this.value)" id="audit-filter-outcome">
+          <option value="">All outcomes</option>
+          <option value="BLOCK">BLOCK</option>
+          <option value="REQUIRE_HUMAN">REQUIRE_HUMAN</option>
+          <option value="ALLOW_WITH_LOG">ALLOW_WITH_LOG</option>
+          <option value="RESTRICTED">RESTRICTED</option>
+          <option value="QUARANTINE">QUARANTINE</option>
+        </select>
+        <select class="filter-select" onchange="filterAuditDays(this.value)">
+          <option value="1">Last 24h</option>
+          <option value="7">Last 7 days</option>
+          <option value="30" selected>Last 30 days</option>
+        </select>
+        <select class="filter-select" id="audit-filter-days" onchange="filterAuditDays()">
+          <option value="1">Last 24h</option>
+          <option value="7">Last 7 days</option>
+          <option value="30" selected>Last 30 days</option>
+        </select>
+        <div class="chain-valid">
+          <div class="dot"></div>
+          <span>CHAIN VALID</span>
+        </div>
+        <button class="export-btn" onclick="exportAudit()">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 12L3 7h3V2h4v5h3L8 12z"/><rect x="2" y="13" width="12" height="2"/>
+          </svg>
+          Export JSON
+        </button>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Decision ID</th>
+              <th>Agent</th>
+              <th>Action</th>
+              <th>Outcome</th>
+              <th>VRS</th>
+              <th>Policy</th>
+              <th>Timestamp</th>
+            </tr>
+          </thead>
+          <tbody id="audit-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Policy Editor -->
+    <div class="panel" id="panel-policy">
+      <div class="panel-title">Policy Editor</div>
+      <div class="panel-sub">Edit and simulate policy before activation — ANSSI R35</div>
+
+      <div class="two-col">
+        <div>
+          <div class="editor-wrap">
+            <div class="editor-bar">
+              <span>📄</span>
+              <span class="filename">policy.yaml</span>
+              <span class="hash" id="editor-hash">SHA-256: computing…</span>
+            </div>
+            <textarea class="code-editor" id="policy-editor" spellcheck="false" oninput="updateHash()"></textarea>
+          </div>
+        </div>
+        <div>
+          <div style="font-family:var(--cond);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">
+            Simulation Preview
+          </div>
+          <div class="sim-result" id="sim-result">
+            <div class="sim-line dim">// Run simulation to preview policy impact</div>
+          </div>
+        </div>
+      </div>
+      <div class="editor-actions">
+        <button class="btn-primary" onclick="runSimulation()">▶ Run Simulation</button>
+        <button class="btn-sec" onclick="activatePolicy()">Activate Policy</button>
+        <button class="btn-sec" onclick="loadDefaultPolicy()">Load Default</button>
+      </div>
+    </div>
+
+    <!-- Compliance -->
+    <div class="panel" id="panel-compliance">
+      <div class="panel-title">Compliance Dashboard</div>
+      <div class="panel-sub">ANSSI 2024 · NIST AI RMF 1.0 · EU AI Act — coverage map</div>
+
+      <div class="compliance-grid" id="compliance-grid"></div>
+    </div>
+
+  </main>
+
+  <!-- ── Right panel ──────────────────────────────────────────────────── -->
+  <aside class="rightpanel">
+    <div class="rp-header">
+      <div class="pulse"></div>
+      Live Feed
+    </div>
+    <div class="live-feed" id="live-feed"></div>
+
+    <div style="border-top:1px solid var(--border);">
+      <div class="rp-header" style="border-bottom:1px solid var(--border);">
+        Principals
+      </div>
+      <div id="principals-list"></div>
+    </div>
+  </aside>
+
+</div>
+
+<!-- ── Approve/Reject modal ─────────────────────────────────────────────── -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Approve Decision</div>
+      <button class="modal-close" onclick="closeModalBtn()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-row">
+        <span class="modal-key">decision_id</span>
+        <span class="modal-val mono" id="modal-decision-id">—</span>
+      </div>
+      <div class="modal-row">
+        <span class="modal-key">agent</span>
+        <span class="modal-val" id="modal-agent">—</span>
+      </div>
+      <div class="modal-row">
+        <span class="modal-key">action</span>
+        <span class="modal-val mono" id="modal-action">—</span>
+      </div>
+      <div class="modal-row">
+        <span class="modal-key">vrs</span>
+        <span class="modal-val mono" id="modal-vrs">—</span>
+      </div>
+      <div class="modal-row">
+        <span class="modal-key">reason</span>
+        <span class="modal-val" id="modal-reason">—</span>
+      </div>
+
+      <select class="principal-select" id="modal-principal">
+        <option value="">— Select principal —</option>
+      </select>
+      <textarea class="justification" id="modal-justification"
+        placeholder="Justification (required for ANSSI strict profile)…"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-approve" id="modal-confirm-btn" onclick="confirmAction()">
+        ✓ Confirm Approval
+      </button>
+      <button class="btn btn-reject" style="display:none" id="modal-reject-confirm" onclick="confirmAction()">
+        ✗ Confirm Rejection
+      </button>
+      <button class="btn btn-detail" onclick="closeModalBtn()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toast-icon">✓</span>
+  <span class="toast-msg" id="toast-msg">Decision approved</span>
+</div>
+
+<script>
+
+// Auto-detect API: file:// -> localhost:8422 | /console -> same origin
+const API = (window.location.protocol === 'file:')
+  ? 'http://127.0.0.1:8422'
+  : window.location.origin;
+
+const POLL_MS  = 3000;
+const AUDIT_MS = 7000;
+
+// ── Auth token — lu depuis ?token= dans l'URL ─────────────────────────────
+const _TOKEN = new URLSearchParams(window.location.search).get('token') || '';
+
+function _authHeaders(extra) {
+  const h = Object.assign({'Content-Type': 'application/json'}, extra || {});
+  if (_TOKEN) h['Authorization'] = 'Bearer ' + _TOKEN;
+  return h;
+}
+
+const state = {
+  decisions:    [],
+  auditEntries: [],
+  principals:   [],
+  agents:       {},
+  feedItems:    [],
+  policy:       null,
+  connected:    false,
+  currentAction: null,
+  seenFeedKeys:  new Set(),
+};
+
+// ── HTTP ──────────────────────────────────────────────────────────────────
+
+async function apiGet(path) {
+  const r = await fetch(API + path, {
+    headers: _authHeaders(),
+    signal: AbortSignal.timeout(4000)
+  });
+  if (!r.ok) throw new Error(r.status + ' ' + path);
+  return r.json();
+}
+
+async function apiPost(path, body) {
+  const r = await fetch(API + path, {
+    method: 'POST',
+    headers: _authHeaders(),
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(6000),
+  });
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.error || r.status);
+  return data;
+}
+
+// ── Connection ─────────────────────────────────────────────────────────────
+
+function setConnected(ok) {
+  state.connected = ok;
+  const pulse  = document.querySelector('.hstat.ok .pulse');
+  const banner = document.getElementById('conn-banner');
+  if (pulse)  pulse.className = 'pulse' + (ok ? '' : ' danger');
+  if (banner) banner.classList.toggle('show', !ok);
+}
+
+// ── Poll health ────────────────────────────────────────────────────────────
+
+async function pollHealth() {
+  try {
+    const h = await apiGet('/health');
+    setConnected(true);
+    document.getElementById('pending-count').textContent = h.pending ?? 0;
+    const badge = document.getElementById('badge-queue');
+    badge.textContent    = h.pending ?? 0;
+    badge.style.display  = (h.pending > 0) ? 'flex' : 'none';
+    if (h.policy) document.getElementById('policy-version').textContent = h.policy;
+  } catch { setConnected(false); }
+}
+
+// ── Poll policy ────────────────────────────────────────────────────────────
+
+async function pollPolicy() {
+  try {
+    const p = await apiGet('/api/policy');
+    state.policy = p;
+    document.getElementById('policy-version').textContent = p.version_id || p.name;
+    document.getElementById('policy-hash').textContent    = (p.content_hash||'').slice(0,8) + '…';
+    const ed = document.getElementById('policy-editor');
+    if (!ed.value.trim()) populatePolicyEditor(p);
+  } catch {}
+}
+
+// ── Poll decisions ─────────────────────────────────────────────────────────
+
+async function pollDecisions() {
+  try {
+    const data = await apiGet('/api/decisions');
+    state.decisions = data.decisions || [];
+    renderQueueCards();
+    for (const d of state.decisions)
+      trackAgent(d.agent_id, d.agent_name || d.agent_id, d.vrs ?? 0, d.tsi_state || 'STABLE');
+    renderAgentList();
+  } catch {}
+}
+
+// ── Poll agents (Vigil registry) ───────────────────────────────────────────
+
+async function pollAgents() {
+  try {
+    const data = await apiGet('/api/agents');
+    for (const a of (data.agents || [])) {
+      trackAgent(a.agent_id, a.agent_name || a.agent_id, a.vrs ?? 0, a.tsi_state || 'STABLE');
+    }
+    renderAgentList();
+  } catch {}
+}
+
+// ── Poll audit ─────────────────────────────────────────────────────────────
+
+async function pollAudit() {
+  try {
+    const outcome = document.getElementById('audit-filter-outcome')?.value || '';
+    const days    = document.getElementById('audit-filter-days')?.value    || '30';
+    let url = '/api/audit?days=' + days + '&limit=100';
+    if (outcome) url += '&outcome=' + outcome;
+    const data = await apiGet(url);
+    state.auditEntries = data.entries || [];
+    renderAuditTable(outcome);
+
+    const cv = document.querySelector('.chain-valid');
+    if (cv) cv.style.display = data.chain_valid ? 'flex' : 'none';
+    document.getElementById('kpi-resolved').textContent = data.total ?? 0;
+
+    for (const e of state.auditEntries) {
+      if (e.agent_id) trackAgent(e.agent_id, e.agent_name || e.agent_id,
+        parseFloat(e.vrs_at_decision ?? e.vrs ?? 0), e.tsi_state || 'STABLE');
+      const key = e.decision_id;
+      if (!state.seenFeedKeys.has(key)) {
+        state.seenFeedKeys.add(key);
+        state.feedItems.unshift({
+          key, ts: e.timestamp,
+          agent:   e.agent_name || e.agent_id || '—',
+          outcome: e.outcome || '—',
+          action:  e.action  || '',
+          cls:     feedClass(e.outcome),
+        });
+      }
+    }
+    if (state.feedItems.length > 60) state.feedItems.length = 60;
+    renderLiveFeed();
+    renderAgentList();
+  } catch {}
+}
+
+// ── Poll principals ────────────────────────────────────────────────────────
+
+async function pollPrincipals() {
+  try {
+    const data = await apiGet('/api/principals');
+    state.principals = data.principals || [];
+    renderPrincipals();
+  } catch {}
+}
+
+// ── Agents ─────────────────────────────────────────────────────────────────
+
+function trackAgent(id, name, vrs, tsi) {
+  if (!id) return;
+  const ex = state.agents[id];
+  if (!ex || vrs >= (ex.vrs || 0))
+    state.agents[id] = { id, name, vrs, tsi };
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+function vrsColor(v) {
+  if (v >= 0.85) return 'var(--danger)';
+  if (v >= 0.60) return 'var(--warn)';
+  if (v >= 0.40) return 'var(--human)';
+  return 'var(--allow)';
+}
+
+function feedClass(o) {
+  if (!o) return 'dim';
+  if (['ALLOW','APPROVED'].includes(o))                      return 'ok';
+  if (['BLOCK','REJECTED','QUARANTINE','TIMED_OUT'].includes(o)) return 'bad';
+  if (o === 'REQUIRE_HUMAN')                                 return 'rh';
+  return 'warn';
+}
+
+function outcomeBadge(outcome) {
+  const labels = {
+    ALLOW:'● ALLOW', ALLOW_WITH_LOG:'● ALLOW+LOG',
+    BLOCK:'■ BLOCK', QUARANTINE:'■ QUARANTINE',
+    REQUIRE_HUMAN:'◆ REQUIRE HUMAN', RESTRICTED:'▲ RESTRICTED',
+    MONITOR:'◌ MONITOR', APPROVED:'✓ APPROVED',
+    REJECTED:'✗ REJECTED', TIMED_OUT:'⏱ TIMED OUT',
+  };
+  const cls = 'badge-outcome badge-' + (outcome||'').replace(' ','_');
+  return '<span class="' + cls + '">' + (labels[outcome] || outcome) + '</span>';
+}
+
+function fmtTime(ts) {
+  if (!ts) return '—';
+  return new Date(ts * 1000).toLocaleTimeString('fr-FR',
+    {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+}
+
+function fmtAgo(ts) {
+  if (!ts) return '—';
+  const s = Math.floor(Date.now()/1000 - ts);
+  if (s < 60)   return s + 's ago';
+  if (s < 3600) return Math.floor(s/60) + 'm ago';
+  return Math.floor(s/3600) + 'h ago';
+}
+
+function simpleHash(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = (Math.imul(31, h) + str.charCodeAt(i)) | 0;
+  return Math.abs(h).toString(16).padStart(8,'0');
+}
+
+// ── Render: Queue ──────────────────────────────────────────────────────────
+
+function renderQueueCards() {
+  const wrap    = document.getElementById('queue-cards');
+  const pending = state.decisions.filter(d => d.state === 'PENDING');
+
+  document.getElementById('kpi-pending').textContent = pending.length;
+  document.getElementById('queue-sub').textContent   =
+    pending.length + ' decision' + (pending.length !== 1 ? 's' : '') + ' pending human approval';
+
+  if (!pending.length) {
+    wrap.innerHTML = '<div class="empty"><div class="empty-icon">✓</div>' +
+      '<div class="empty-text">No pending decisions — all clear</div></div>';
+    return;
+  }
+
+  const now = Date.now() / 1000;
+  wrap.innerHTML = pending.map(d => {
+    const rem    = d.timeout_at ? Math.max(0, d.timeout_at - now) : null;
+    const pct    = rem !== null ? Math.min(100, (rem / 300) * 100) : 100;
+    const urgent = rem !== null && rem < 60;
+    const tLeft  = rem !== null ? (rem < 60 ? Math.ceil(rem) + 's' : Math.ceil(rem/60) + 'm') : '—';
+    const vrs    = d.vrs ?? d.vrs_at_decision ?? 0;
+    const vc     = vrsColor(vrs);
+    return '<div class="queue-card" style="position:relative;margin-bottom:12px;">' +
+      '<div class="queue-card-header">' +
+        '<span class="qc-agent">'  + (d.agent_name || d.agent_id) + '</span>' +
+        '<span class="qc-action">' + (d.action || '—') + '</span>' +
+        '<span class="mono dim" style="font-size:10px;">' + (d.agent_id||'') + '</span>' +
+        '<span class="qc-time">'   + fmtAgo(d.timestamp) + '</span>' +
+      '</div>' +
+      '<div class="queue-card-body">' +
+        '<div class="qc-reason">' + (d.reason || '—') + '</div>' +
+        '<div class="qc-meta">' +
+          '<span class="qc-metric">VRS <strong style="color:' + vc + '">' + vrs.toFixed(3) + '</strong></span>' +
+          '<span class="qc-metric">TSI <strong>' + (d.tsi_state||'—') + '</strong></span>' +
+          '<span class="qc-metric">TIMEOUT <strong style="color:' + (urgent?'var(--danger)':'var(--text)') + '">' + tLeft + '</strong></span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="queue-card-footer">' +
+        '<button class="btn btn-approve" onclick="openModal(\'approve\',\'' + d.decision_id + '\')">✓ Approve</button>' +
+        '<button class="btn btn-reject"  onclick="openModal(\'reject\',\''  + d.decision_id + '\')">✗ Reject</button>' +
+        '<button class="btn btn-detail">Details</button>' +
+      '</div>' +
+      '<div class="timeout-bar"><div class="timeout-fill' + (urgent?' urgent':'') + '" style="width:' + pct + '%"></div></div>' +
+    '</div>';
+  }).join('');
+}
+
+// ── Render: Audit ──────────────────────────────────────────────────────────
+
+function renderAuditTable(filter) {
+  const tbody   = document.getElementById('audit-tbody');
+  const entries = filter
+    ? state.auditEntries.filter(e => e.outcome === filter)
+    : state.auditEntries;
+
+  if (!entries.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-dim);font-family:var(--mono)">No entries</td></tr>';
+    return;
+  }
+  tbody.innerHTML = entries.map(e => {
+    const vrs = parseFloat(e.vrs_at_decision ?? e.vrs ?? 0);
+    const vc  = vrsColor(vrs);
+    return '<tr>' +
+      '<td class="mono dim" style="font-size:10px;">' + (e.decision_id||'').slice(0,22) + '…</td>' +
+      '<td class="mono" style="font-size:11px;">' + (e.agent_name || e.agent_id || '—') + '</td>' +
+      '<td class="mono" style="font-size:11px;">' + (e.action || '—') + '</td>' +
+      '<td>' + outcomeBadge(e.outcome) + '</td>' +
+      '<td><div class="vrs-cell">' +
+        '<div class="vrs-bar-bg"><div class="vrs-bar-fill" style="width:' + (vrs*100) + '%;background:' + vc + '"></div></div>' +
+        '<span class="vrs-val" style="color:' + vc + '">' + vrs.toFixed(3) + '</span>' +
+      '</div></td>' +
+      '<td class="mono dim" style="font-size:10px;">' + (e.policy_version || '—') + '</td>' +
+      '<td class="mono dim" style="font-size:10px;">' + fmtTime(e.timestamp) + '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+// ── Render: Agents ─────────────────────────────────────────────────────────
+
+function renderAgentList() {
+  const agents = Object.values(state.agents).sort((a,b) => b.vrs - a.vrs);
+  const watch  = agents.filter(a => a.tsi !== 'STABLE').length;
+  document.getElementById('agent-count').textContent = watch;
+
+  if (!agents.length) {
+    document.getElementById('agent-list').innerHTML =
+      '<div style="padding:12px 16px;font-size:11px;color:var(--text-dim)">No active agents</div>';
+    return;
+  }
+  document.getElementById('agent-list').innerHTML = agents.slice(0,20).map(a => {
+    const c = a.tsi === 'CRITICAL' || a.tsi === 'UNSTABLE' ? 'var(--danger)'
+            : a.tsi === 'WATCH'    ? 'var(--warn)'
+            : 'var(--allow)';
+    return '<div class="agent-item">' +
+      '<div class="agent-dot" style="background:' + c + ';box-shadow:0 0 5px ' + c + '"></div>' +
+      '<span class="agent-name">' + (a.name||a.id) + '</span>' +
+      '<span class="agent-vrs" style="color:' + c + '">' + (a.vrs||0).toFixed(2) + '</span>' +
+    '</div>';
+  }).join('');
+}
+
+// ── Render: Principals ─────────────────────────────────────────────────────
+
+function renderPrincipals() {
+  const el = document.getElementById('principals-list');
+  if (!state.principals.length) {
+    el.innerHTML = '<div style="padding:12px;font-size:11px;color:var(--text-dim)">No principals registered</div>';
+    return;
+  }
+  el.innerHTML = state.principals.map(p => {
+    const cc = p.clearance==='L3' ? 'var(--warn)' : p.clearance==='L2' ? 'var(--human)' : 'var(--allow)';
+    return '<div class="principal-item">' +
+      '<div class="principal-avatar ' + (p.clearance||'L1') + '">' + (p.clearance||'?') + '</div>' +
+      '<div class="principal-info">' +
+        '<div class="principal-name">' + (p.name||'—') + '</div>' +
+        '<div class="principal-meta">' + (p.email||'') + '</div>' +
+      '</div>' +
+      '<div class="principal-cl" style="color:' + cc + '">' + (p.active ? '●' : '○') + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// ── Render: Live Feed ──────────────────────────────────────────────────────
+
+function renderLiveFeed() {
+  const el = document.getElementById('live-feed');
+  if (!state.feedItems.length) {
+    el.innerHTML = '<div style="padding:12px;font-size:11px;color:var(--text-dim)">Waiting for events…</div>';
+    return;
+  }
+  el.innerHTML = state.feedItems.slice(0,30).map(f =>
+    '<div class="feed-item">' +
+      '<div class="feed-time">' + fmtTime(f.ts) + '</div>' +
+      '<div class="feed-msg">' +
+        '<span class="agent">' + (f.agent||'—') + '</span>' +
+        ' → ' +
+        '<span class="outcome-text ' + (f.cls||'dim') + '">' + (f.outcome||'—') + '</span>' +
+        (f.action ? ' <span class="dim">(' + f.action + ')</span>' : '') +
+      '</div>' +
+    '</div>'
+  ).join('');
+}
+
+// ── Render: Compliance ─────────────────────────────────────────────────────
+
+function renderCompliance() {
+  const data = [
+    { title:'ANSSI 2024', color:'#4d9fff', score:100, items:[
+      {ok:true, ref:'R9',   text:'REQUIRE_HUMAN for critical actions'},
+      {ok:true, ref:'R25',  text:'Dangerous pattern filtering'},
+      {ok:true, ref:'R26',  text:'Role-based access control'},
+      {ok:true, ref:'R28',  text:'Zero Trust network policy'},
+      {ok:true, ref:'R29',  text:'Full audit journal with chain'},
+      {ok:true, ref:'R30',  text:'Clearance levels L1/L2/L3'},
+      {ok:true, ref:'R35',  text:'Policy file integrity (SHA-256)'},
+    ]},
+    { title:'NIST AI RMF 1.0', color:'#00e5a0', score:100, items:[
+      {ok:true, ref:'GOVERN 1.2',  text:'Principal hierarchy + accountability'},
+      {ok:true, ref:'GOVERN 6.2',  text:'Policy versioning + audit trail'},
+      {ok:true, ref:'MANAGE 1.3',  text:'6-level risk response taxonomy'},
+      {ok:true, ref:'MANAGE 2.2',  text:'Human oversight mechanism'},
+      {ok:true, ref:'MEASURE 2.5', text:'Continuous VRS/TSI monitoring'},
+      {ok:true, ref:'AI 600-1',    text:'Agentic AI — no unsupervised critical acts'},
+    ]},
+    { title:'EU AI Act', color:'#f5a623', score:100, items:[
+      {ok:true, ref:'Art. 9',  text:'Risk management system — continuous'},
+      {ok:true, ref:'Art. 12', text:'Automatic logging — tamper-proof chain'},
+      {ok:true, ref:'Art. 13', text:'Transparency — reason on every decision'},
+      {ok:true, ref:'Art. 14', text:'Human oversight — always interruptible'},
+      {ok:true, ref:'Art. 17', text:'Quality management — versioned policies'},
+    ]},
+  ];
+  document.getElementById('compliance-grid').innerHTML = data.map(c => {
+    const r = 20, circ = 2 * Math.PI * r, dash = circ * c.score / 100;
+    return '<div class="compliance-card">' +
+      '<h3>' + c.title + '</h3>' +
+      '<svg class="score-ring" width="54" height="54" viewBox="0 0 54 54">' +
+        '<circle cx="27" cy="27" r="' + r + '" fill="none" stroke="var(--border)" stroke-width="3"/>' +
+        '<circle cx="27" cy="27" r="' + r + '" fill="none" stroke="' + c.color + '" stroke-width="3"' +
+          ' stroke-dasharray="' + dash + ' ' + circ + '" stroke-linecap="round" transform="rotate(-90 27 27)"/>' +
+        '<text x="27" y="32" text-anchor="middle" fill="' + c.color + '" font-family="\'Share Tech Mono\'" font-size="12">' + c.score + '%</text>' +
+      '</svg>' +
+      c.items.map(i =>
+        '<div class="req-item">' +
+          '<span class="req-icon" style="color:' + (i.ok?'var(--allow)':'var(--danger)') + '">' + (i.ok?'✓':'✗') + '</span>' +
+          '<div><div class="req-text">' + i.text + '</div><div class="req-ref">' + i.ref + '</div></div>' +
+        '</div>'
+      ).join('') +
+    '</div>';
+  }).join('');
+}
+
+// ── Modal ──────────────────────────────────────────────────────────────────
+
+function openModal(type, decisionId) {
+  const d = state.decisions.find(x => x.decision_id === decisionId);
+  if (!d) return;
+  state.currentAction = { type, decision: d };
+
+  document.getElementById('modal-title').textContent      = type === 'approve' ? 'Approve Decision' : 'Reject Decision';
+  document.getElementById('modal-decision-id').textContent= d.decision_id;
+  document.getElementById('modal-agent').textContent      = (d.agent_name||d.agent_id) + ' (' + (d.agent_id||'') + ')';
+  document.getElementById('modal-action').textContent     = d.action || '—';
+  const vrs = d.vrs ?? d.vrs_at_decision ?? 0;
+  document.getElementById('modal-vrs').textContent        = vrs.toFixed(3) + ' — ' + (d.tsi_state||'—');
+  document.getElementById('modal-reason').textContent     = d.reason || '—';
+  document.getElementById('modal-justification').value   = '';
+
+  const sel = document.getElementById('modal-principal');
+  sel.innerHTML = '<option value="">— Select principal —</option>' +
+    state.principals.map(p =>
+      '<option value="' + p.name + '">' + p.name + ' (' + p.clearance + ') — ' + (p.email||'') + '</option>'
+    ).join('');
+
+  document.getElementById('modal-confirm-btn').style.display    = type === 'approve' ? 'inline-flex' : 'none';
+  document.getElementById('modal-reject-confirm').style.display = type === 'reject'  ? 'inline-flex' : 'none';
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal(event) {
+  if (event && event.target !== document.getElementById('modal-overlay')) return;
+  closeModalBtn();
+}
+
+function closeModalBtn() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  state.currentAction = null;
+}
+
+async function confirmAction() {
+  const { type, decision } = state.currentAction;
+  const principal     = document.getElementById('modal-principal').value;
+  const justification = document.getElementById('modal-justification').value;
+  if (!principal) { showToast('⚠', 'Please select a principal', 'warn'); return; }
+
+  try {
+    const ep = type === 'approve'
+      ? '/api/decisions/' + decision.decision_id + '/approve'
+      : '/api/decisions/' + decision.decision_id + '/reject';
+    await apiPost(ep, { principal_name: principal, justification });
+
+    closeModalBtn();
+    showToast(
+      type === 'approve' ? '✓' : '✗',
+      'Decision ' + (type === 'approve' ? 'approved' : 'rejected') + ' by ' + principal,
+      type === 'approve' ? 'ok' : 'danger'
+    );
+
+    // Optimistic feed entry
+    const key = decision.decision_id + '_' + type;
+    if (!state.seenFeedKeys.has(key)) {
+      state.seenFeedKeys.add(key);
+      state.feedItems.unshift({
+        key, ts: Date.now()/1000,
+        agent:   decision.agent_name || decision.agent_id,
+        outcome: type === 'approve' ? 'APPROVED' : 'REJECTED',
+        action:  decision.action,
+        cls:     type === 'approve' ? 'ok' : 'bad',
+      });
+    }
+    renderLiveFeed();
+    await pollDecisions();
+  } catch(e) { showToast('✗', 'Error: ' + e.message, 'danger'); }
+}
+
+// ── Policy editor ──────────────────────────────────────────────────────────
+
+function populatePolicyEditor(p) {
+  const yaml = '# Policy loaded from Trust Gate server\n' +
+    'version: "' + (p.version_id || p.version || '1.0') + '"\n' +
+    'name: "' + (p.name || 'demo') + '"\n' +
+    'profile: "' + (p.profile || 'nist_balanced') + '"\n\n' +
+    'thresholds:\n' +
+    '  vrs_require_human: ' + (p.thresholds?.vrs_require_human ?? 0.60) + '\n' +
+    '  vrs_block: '         + (p.thresholds?.vrs_block         ?? 0.85) + '\n\n' +
+    (p.roles||[]).map(r => 'roles:\n  ' + r + ':\n    allowed_tools: ["*"]').join('\n') + '\n\n' +
+    '# SHA-256: ' + (p.content_hash || '—') + '\n' +
+    '# Dangerous patterns: ' + (p.dangerous_patterns_count || '?') + ' rules active\n';
+  document.getElementById('policy-editor').value = yaml;
+  updateHash();
+}
+
+function loadDefaultPolicy() {
+  if (state.policy) populatePolicyEditor(state.policy);
+  else pollPolicy().then(() => { if (state.policy) populatePolicyEditor(state.policy); });
+}
+
+function updateHash() {
+  const c = document.getElementById('policy-editor').value;
+  document.getElementById('editor-hash').textContent = 'SHA-256: ' + simpleHash(c) + '…';
+}
+
+function runSimulation() {
+  const content = document.getElementById('policy-editor').value;
+  const out = document.getElementById('sim-result');
+  const rh  = state.policy?.thresholds?.vrs_require_human ?? 0.60;
+  const blk = state.policy?.thresholds?.vrs_block         ?? 0.85;
+
+  const scenarios = [
+    {agent:'prod_alpha', role:'operator',  action:'read_db',  vrs:0.20, tsi:'STABLE'},
+    {agent:'prod_beta',  role:'operator',  action:'write_db', vrs:0.72, tsi:'WATCH'},
+    {agent:'prod_delta', role:'trusted',   action:'shell',    vrs:0.30, tsi:'STABLE'},
+    {agent:'prod_alpha', role:'operator',  action:'read_db',  vrs:0.91, tsi:'STABLE'},
+    {agent:'staging',    role:'operator',  action:'http_get', vrs:0.30, tsi:'CRITICAL'},
+    {agent:'staging',    role:'read_only', action:'write_db', vrs:0.15, tsi:'STABLE'},
+  ];
+  const sim = s => {
+    if (s.vrs >= blk)  return 'BLOCK';
+    if (s.tsi === 'CRITICAL') return 'BLOCK';
+    if (s.action === 'shell') return 'BLOCK';
+    if (s.role === 'read_only' && s.action === 'write_db') return 'BLOCK';
+    if (s.vrs >= rh)   return 'REQUIRE_HUMAN';
+    if (s.tsi === 'UNSTABLE') return 'REQUIRE_HUMAN';
+    if (s.tsi === 'WATCH')    return 'ALLOW_WITH_LOG';
+    return 'ALLOW';
+  };
+  const cls = {ALLOW:'ok', REQUIRE_HUMAN:'human', BLOCK:'block'};
+  out.innerHTML =
+    '<div class="sim-line head">// Simulation — hash:' + simpleHash(content) + ' — rh=' + rh + ' blk=' + blk + '</div>' +
+    scenarios.map((s,i) => {
+      const res = sim(s);
+      return '<div class="sim-line ' + (cls[res]||'dim') + '">[' + String(i+1).padStart(2,'0') + '] ' +
+        s.agent.padEnd(14) + ' ' + s.action.padEnd(12) +
+        ' vrs=' + s.vrs.toFixed(2) + ' tsi=' + s.tsi.padEnd(8) + ' → ' + res + '</div>';
+    }).join('') +
+    '<div class="sim-line dim" style="margin-top:8px">// ' + scenarios.length + '/' + scenarios.length + ' evaluated</div>';
+}
+
+function activatePolicy() {
+  showToast('ℹ', 'Simulation only — use CLI to activate policy on server', 'warn');
+}
+
+// ── Audit filters ──────────────────────────────────────────────────────────
+
+function filterAudit(val)   { pollAudit(); }
+function filterAuditDays()  { pollAudit(); }
+
+async function exportAudit() {
+  try {
+    const data = await apiGet('/api/audit/export');
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href     = URL.createObjectURL(blob);
+    a.download = 'trustgate_audit_' + Date.now() + '.json';
+    a.click();
+    showToast('↓', 'Exported ' + (data.total_entries||'?') + ' entries', 'ok');
+  } catch(e) { showToast('✗', 'Export failed: ' + e.message, 'danger'); }
+}
+
+// ── Panel navigation ───────────────────────────────────────────────────────
+
+function showPanel(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (name === 'audit')  pollAudit();
+  if (name === 'policy') pollPolicy();
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+
+function showToast(icon, msg, type) {
+  const t = document.getElementById('toast');
+  const colors = {ok:'var(--allow)', danger:'var(--danger)', warn:'var(--warn)'};
+  t.style.borderColor = colors[type] || 'var(--border2)';
+  document.getElementById('toast-icon').textContent = icon;
+  document.getElementById('toast-msg').textContent  = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ── Boot ───────────────────────────────────────────────────────────────────
+
+async function init() {
+  renderCompliance();
+  await pollHealth();
+  await pollPolicy();
+  await pollDecisions();
+  await pollAgents();
+  await pollAudit();
+  await pollPrincipals();
+  renderAgentList();
+
+  setInterval(async () => {
+    await pollHealth();
+    await pollDecisions();
+    await pollAgents();
+    renderAgentList();
+  }, POLL_MS);
+
+  setInterval(async () => {
+    await pollAudit();
+    await pollPrincipals();
+  }, AUDIT_MS);
+
+  setInterval(renderQueueCards, 10000);
+}
+
+window.addEventListener('load', init);
+
+</script>
+</body>
+</html>

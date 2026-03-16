@@ -1,3 +1,10 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 PiQrypt Inc.
+# e-Soleau: DSO2026006483 (19/02/2026) -- DSO2026009143 (12/03/2026)
+#
+# Part of the AISS protocol specification.
+# Free to use, modify, and redistribute -- see root LICENSE for details.
+
 """
 AISS (Agent Identity and Signature Standard)
 PiQrypt v1.2.0
@@ -27,7 +34,7 @@ Quick Start — Archive (Pro):
     >>> create_archive(events, identity, "backup.pqz", passphrase="strong-pass")
 """
 
-__version__ = "1.6.0"
+__version__ = "1.7.1"
 
 # Core AISS-1
 from aiss.identity import (

@@ -1,15 +1,15 @@
-# PiQrypt v1.5.0 — AISS RFC Implementation Status
+# PiQrypt v1.7.1 — AISS RFC v2.0 Implementation Status
 
-**Version:** 1.5.0  
-**Date:** 2026-02-24  
-**AISS RFC:** v1.1  
+**Version:** 1.7.1  
+**Date:** 2026-03-12  
+**AISS RFC:** v2.0  
 **Status:** Production Ready (Level 2)
 
 ---
 
 ## Overview
 
-PiQrypt is the reference implementation of the AISS (Agent Identity and Signature Standard) v1.1.
+PiQrypt is the reference implementation of the AISS (Agent Identity and Signature Standard) v2.0.
 
 **Repository:** https://github.com/piqrypt/piqrypt  
 **Standard:** https://github.com/piqrypt/aiss-spec
@@ -60,13 +60,13 @@ PiQrypt is the reference implementation of the AISS (Agent Identity and Signatur
 | §8.2.2 | FreeTSA support | ✅ | `aiss/rfc3161.py` | v1.1.0 |
 | **§13** | **Key Lifecycle** | ✅ Complete | `aiss/identity.py` | v1.1.0 |
 | §13.1 | Secure generation | ✅ | `aiss/crypto/` | v1.0.0 |
-| §13.2 | Encrypted storage | ✅ | `aiss/memory.py` | v1.1.0 |
+| §13.2 | Encrypted storage | ✅ | `aiss/key_store.py` | **v1.7.0** |
 | **Crypto** | **Dilithium3** | ✅ Complete | `aiss/crypto/dilithium_liboqs.py` | v1.1.0 |
 | | ML-DSA-65 (NIST FIPS 204) | ✅ | `aiss/crypto/dilithium_liboqs.py` | v1.1.0 |
 
 ---
 
-### AISS v1.1 Extensions (New)
+### AISS v2.0 Extensions
 
 | RFC Section | Feature | Status | Module | Version |
 |-------------|---------|--------|--------|---------|
@@ -76,11 +76,11 @@ PiQrypt is the reference implementation of the AISS (Agent Identity and Signatur
 | **§15** | **Canonical History** | ✅ Complete | `aiss/fork.py` | v1.2.0 |
 | §15.1 | Fork resolution rules | ✅ | `aiss/fork.py` | v1.2.0 |
 | §15.2 | Finalization property | ✅ | `aiss/fork.py` | v1.2.0 |
-| **§16** | **A2A Handshake** | ✅ Complete | `aiss/a2a.py` | **v1.5.0** |
+| **§16** | **A2A Handshake** | ✅ Complete | `aiss/a2a.py` | v1.5.0 |
 | §16.1 | Handshake protocol | ✅ | `aiss/a2a.py` | v1.5.0 |
 | §16.2 | Co-signed events | ✅ | `aiss/a2a.py` | v1.5.0 |
 | §16.3 | Memory recording | ✅ | `aiss/a2a.py` | v1.5.0 |
-| §16.5 | Trust scoring | ✅ Complete | `aiss/a2a.py` | v1.5.0 |
+| §16.5 | Trust scoring | ✅ | `aiss/trust_score.py` | v1.5.0 |
 
 ---
 
@@ -103,36 +103,86 @@ PiQrypt is the reference implementation of the AISS (Agent Identity and Signatur
 
 | Feature | Status | Module | Version |
 |---------|--------|--------|---------|
+| **KeyStore — Encrypted Key Storage** | ✅ Complete | `aiss/key_store.py` | **v1.7.0** |
+| scrypt N=2¹⁷ + AES-256-GCM | ✅ | `aiss/key_store.py` | v1.7.0 |
+| Magic bytes validation (`PQKY`) | ✅ | `aiss/key_store.py` | v1.7.0 |
+| RAM erasure (`_secure_erase`) | ✅ | `aiss/key_store.py` | v1.7.0 |
+| Fixed file size (97 bytes) | ✅ | `aiss/key_store.py` | v1.7.0 |
+| **Agent Registry** | ✅ Complete | `aiss/agent_registry.py` | **v1.7.0** |
+| Class `AgentRegistry` (OO API) | ✅ | `aiss/agent_registry.py` | v1.7.0 |
+| Path traversal protection | ✅ | `aiss/agent_registry.py` | v1.7.0 |
+| Per-agent directory isolation | ✅ | `aiss/agent_registry.py` | v1.7.0 |
+| **TSI Engine** | ✅ Complete | `aiss/tsi_engine.py` | **v1.5.0** |
+| Trust State Index (STABLE/WATCH/UNSTABLE/CRITICAL) | ✅ | `aiss/tsi_engine.py` | v1.5.0 |
+| 24h drift detection | ✅ | `aiss/tsi_engine.py` | v1.5.0 |
+| **A2C Detector** | ✅ Complete | `aiss/a2c_detector.py` | **v1.5.0** |
+| 16 relational anomaly scenarios | ✅ | `aiss/a2c_detector.py` | v1.5.0 |
+| Risk scoring 0.0–1.0 | ✅ | `aiss/a2c_detector.py` | v1.5.0 |
+| **Anomaly Monitor + VRS** | ✅ Complete | `aiss/anomaly_monitor.py` | **v1.5.0** |
+| Composite VRS score | ✅ | `aiss/anomaly_monitor.py` | v1.5.0 |
+| Alert journal with deduplication | ✅ | `aiss/anomaly_monitor.py` | v1.5.0 |
+| **Vigil Server** | ✅ Complete | `vigil/vigil_server.py` | **v1.5.0** |
+| HTTP dashboard (port 18421) | ✅ | `vigil/vigil_server.py` | v1.5.0 |
+| REST API `/api/summary`, `/api/alerts` | ✅ | `vigil/vigil_server.py` | v1.5.0 |
+| Live backend with TSI hook | ✅ | `vigil/vigil_server.py` | v1.5.0 |
+| **Identity Session** | ✅ Complete | `aiss/identity_session.py` | v1.5.0 |
+| Lock/unlock with RAM erasure | ✅ | `aiss/identity_session.py` | v1.5.0 |
+| `SessionLockedError` protection | ✅ | `aiss/identity_session.py` | v1.5.0 |
 | **External Certification** | ✅ Complete | `aiss/external_cert.py` | v1.3.0 |
 | CA-signed export (email workflow) | ✅ | `aiss/external_cert.py` | v1.3.0 |
-| Certification request (.zip) | ✅ | `aiss/external_cert.py` | v1.3.0 |
-| CA public key verification | ✅ | `aiss/ca/piqrypt-ca-public.key` | v1.3.0 |
 | **Verification Engine** | ✅ Complete | `aiss/verify.py` | v1.0.0 |
-| Signature verification | ✅ | `aiss/verify.py` | v1.0.0 |
-| Chain integrity report | ✅ | `aiss/verify.py` | v1.0.0 |
-| **Visual Badges (simple)** | ✅ Complete | `aiss/badges.py` | v1.5.0 |
-| Markdown/HTML embed codes | ✅ | `aiss/badges.py` | v1.5.0 |
-| Tier-aware badge generation | ✅ | `aiss/badges.py` | v1.5.0 |
 | **Memory System** | ✅ Complete | `aiss/memory.py` | v1.1.0 |
 | Free: JSON plaintext | ✅ | `aiss/memory.py` | v1.1.0 |
 | Pro: AES-256-GCM encrypted | ✅ | `aiss/memory.py` | v1.1.0 |
-| **SQLite Indexing** | ✅ Complete | `aiss/index.py` | v1.1.0 |
-| Fast search | ✅ | `aiss/index.py` | v1.1.0 |
+| Agent isolation via registry | ✅ | `aiss/memory.py` | v1.7.0 |
+| **SQLite Indexing** | ✅ Complete | `aiss/index.py` | v1.2.0 |
+| Key rotation chain traversal | ✅ | `aiss/index.py` | v1.6.0 |
+| Session search | ✅ | `aiss/index.py` | v1.6.0 |
+| **Migration** | ✅ Complete | `aiss/migration.py` | v1.7.0 |
+| v1.6→v1.7 non-destructive | ✅ | `aiss/migration.py` | v1.7.0 |
+| Automatic backup creation | ✅ | `aiss/migration.py` | v1.7.0 |
 | **License System** | ✅ Complete | `aiss/license.py` | v1.1.0 |
-| Free/Pro/OSS/Enterprise | ✅ | `aiss/license.py` | v1.1.0 |
-| **Certification Service** | ✅ Complete | `aiss/certification.py` | **v1.5.0** |
-| Simple (€9) | ✅ | `aiss/certification.py` | v1.5.0 |
-| Timestamp (€29) | ✅ | `aiss/certification.py` | v1.5.0 |
-| Post-Quantum (€99) | ✅ | `aiss/certification.py` | v1.5.0 |
-| **Badge Generation** | ✅ Complete | `aiss/cert_badges.py` | **v1.5.0** |
-| SVG badges | ✅ | `aiss/cert_badges.py` | v1.5.0 |
-| Public verification | ✅ | `aiss/cert_badges.py` | v1.5.0 |
+| **Certification Service** | ✅ Complete | `aiss/certification.py` | v1.5.0 |
 | **Structured Logging** | ✅ Complete | `aiss/logger.py` | v1.1.0 |
-| PRO_HINT system | ✅ | `aiss/logger.py` | v1.1.0 |
 | **Telemetry** | ✅ Complete | `aiss/telemetry.py` | v1.1.0 |
-| Anonymous analytics | ✅ | `aiss/telemetry.py` | v1.1.0 |
+| **MCP Integration** | ✅ Complete | `@piqrypt/mcp-server` | v1.4.0 |
 
 ---
+
+### TrustGate — Governance Engine (Pro+)
+
+| Feature | Status | Module | Version |
+|---------|--------|--------|---------|
+| Policy engine (deterministic, 10-priority) | ✅ Complete | `trustgate/policy_engine.py` | v1.7.0 |
+| Hash-chained governance journal | ✅ Complete | `trustgate/audit_journal.py` | v1.7.0 |
+| Immutable policy versioning + SHA-256 | ✅ Complete | `trustgate/policy_versioning.py` | v1.7.0 |
+| REQUIRE_HUMAN with TTL + auto-deny | ✅ Complete | `trustgate/decision.py` | v1.7.0 |
+| Policy simulation (dry-run) | ✅ Complete | `trustgate/policy_engine.py` | v1.7.0 |
+| 3 built-in compliance profiles | ✅ Complete | `trustgate/profiles/` | v1.7.0 |
+| EU AI Act Art.14 human oversight | ✅ Complete | `trustgate/policy_engine.py` | v1.7.0 |
+
+### AgentSession — Cross-Framework Co-Signed Sessions
+
+| Feature | Status | Module | Version |
+|---------|--------|--------|---------|
+| N-agent session with pairwise handshakes | ✅ Complete | `bridges/session/__init__.py` | v1.7.0 |
+| Same interaction_hash in both memories | ✅ Complete | `bridges/session/__init__.py` | v1.7.0 |
+| Payload auto-hashing (RGPD by design) | ✅ Complete | `bridges/session/__init__.py` | v1.7.0 |
+| Cross-framework audit export | ✅ Complete | `bridges/session/__init__.py` | v1.7.0 |
+
+### Framework Bridges (9)
+
+| Bridge | Status | Module | Version |
+|--------|--------|--------|---------|
+| LangChain | ✅ Complete | `bridges/langchain/` | v1.7.0 |
+| CrewAI | ✅ Complete | `bridges/crewai/` | v1.7.0 |
+| AutoGen | ✅ Complete | `bridges/autogen/` | v1.7.0 |
+| OpenClaw | ✅ Complete | `bridges/openclaw/` | v1.7.0 |
+| Session | ✅ Complete | `bridges/session/` | v1.7.0 |
+| MCP | ✅ Complete | `bridges/mcp/` | v1.7.0 |
+| Ollama | ✅ Complete | `bridges/ollama/` | v1.7.0 |
+| ROS2 | ✅ Complete | `bridges/ros/` | v1.7.0 |
+| RPi | ✅ Complete | `bridges/rpi/` | v1.7.0 |
 
 ### Planned Features (Future)
 
@@ -140,159 +190,136 @@ PiQrypt is the reference implementation of the AISS (Agent Identity and Signatur
 |-------------|---------|--------|----------------|
 | **§17** | **ML-KEM-768** | 🔲 Planned | v2.0.0 |
 | | Key exchange | 🔲 | v2.0.0 |
-| **§20.2** | **Witness Network** | 🔲 Planned | v1.7.0 |
-| | Distributed trust | 🔲 | v1.7.0 |
-| **§20.3** | **Blockchain Anchoring** | 🔲 Planned | v1.7.0 |
-| | Public ledger | 🔲 | v1.7.0 |
-| **Trust Scoring** | **Dashboard UI** | 🔲 Planned | v1.6.0 |
-| | Visual interface | 🔲 | v1.6.0 |
-| | I/V/D/F metrics display | 🔲 | v1.6.0 |
-
----
-
-### Agent Examples
-
-| Feature | Status | Module | Version |
-|---------|--------|--------|---------|
-| **HR Assistant Agent** | ✅ Example | `agents/examples/hr-assistant.py` | v1.5.0 |
-| **Trading Bot Agent** | ✅ Example | `agents/examples/trading-bot.py` | v1.5.0 |
-
----
-
-**Per RFC §22.1:**
-
-| Level | Description | PiQrypt Status |
-|-------|-------------|----------------|
-| **Level 1** | Basic compliance (§5-12) | ✅ v1.0.0 |
-| **Level 2** | Production ready (§5-16) | ✅ v1.5.0 |
-| **Level 3** | Regulated environments | 🔲 v2.0.0 (pending HSM audit) |
-
-**Current:** **Level 2 — Production Ready**
+| **§20.2** | **Witness Network** | 🔲 Planned | v2.0.0 |
+| | Distributed trust | 🔲 | v2.0.0 |
+| **§20.3** | **Blockchain Anchoring** | 🔲 Planned | v2.0.0 |
+| | Public ledger | 🔲 | v2.0.0 |
+| **HSM** | **Hardware Security Module** | 🔲 Planned | v2.0.0 |
+| | Level 3 compliance | 🔲 | v2.0.0 |
 
 ---
 
 ## Testing
 
-**Test Coverage:**
-- Unit tests: 135 test functions across 11 test files ✅
-- Integration tests: `test_integration.py` (12 tests) ✅
-- Coverage: 85%+
+**Test Results (v1.7.0):**
 
-**Test Files:**
-- `test_sprint1a.py` — Core AISS-1 features (12 tests)
-- `test_vectors.py` — RFC normative test vectors (14 tests)
-- `test_a2a.py` — A2A handshake protocol (22 tests)
-- `test_integration.py` — End-to-end integration (12 tests)
-- `test_certification.py` — Certification service (52 tests)
-- `test_external_cert.py` — External CA certification (12 tests)
-- `test_rfc3161_e2e.py` — RFC 3161 TSA (3 tests)
-- `test_cli_authority.py` — Authority CLI (3 tests)
-- `test_cli_certified_export.py` — Certified export CLI (1 test)
-- `test_archive_index.py` — Archive & index (2 tests)
-- `test_memory_index.py` — Memory indexing (2 tests)
+| Suite | Tests | Status |
+|-------|-------|--------|
+| Functional — key_store | 7 | ✅ |
+| Functional — agent_registry | 6 | ✅ |
+| Functional — identity_session | 6 | ✅ |
+| Functional — migration | 4 | ✅ |
+| Functional — tsi_engine | 7 | ✅ |
+| Functional — a2c_detector | 16 | ✅ |
+| Functional — anomaly_monitor | 7 | ✅ |
+| Functional — trust_score | 6 | ✅ |
+| Functional — identity | 5 | ✅ |
+| Functional — memory | 5 | ✅ |
+| Functional — vigil_server | 7 | ✅ |
+| RFC Test Vectors | 14 | ✅ |
+| Security — keystore | 14 | ✅ |
+| Security — registry | 12 | ✅ + 1 skip (chmod/Windows) |
+| Security — chain | 19 | ✅ |
+| Security — session | 7 | ✅ |
+| Security — migration | 4 | ✅ |
+| Security — memory | 4 | ✅ |
+| Ollama bridge | 6 | ⏭ skipped (external dep) |
+| **Total** | **143** | **136 passed / 7 skipped / 0 failed** |
+
+**Security coverage:**
+- Cryptographic resistance: timing, corruption, forgery, RAM erasure
+- Filesystem: path traversal, sanitization, isolation, permissions
+- Protocol: replay, fork injection, agent ID spoofing, chain integrity
+- Session: lock/unlock, key erasure, context manager
+
+---
+
+## Conformance Level
+
+**Per RFC §22.1:**
+
+| Level | Description | Status |
+|-------|-------------|--------|
+| **Level 1** | Basic compliance (§5-12) | ✅ since v1.0.0 |
+| **Level 2** | Production ready (§5-16) | ✅ since v1.5.0 |
+| **Level 3** | Regulated environments (HSM audit) | 🔲 v2.0.0 |
+
+**Current: Level 2 — Production Ready**
 
 ---
 
 ## CLI Tool
-
-**Installation:**
 ```bash
 pip install piqrypt
 ```
-
-**Commands:**
 ```bash
 piqrypt identity create <file>            # Generate keypair
 piqrypt identity rotate <file>            # Rotate keys
 piqrypt stamp <identity> --payload        # Sign event
 piqrypt verify <audit>                    # Verify chain
 piqrypt export <audit>                    # Export audit (JSON)
-piqrypt certify-request <audit> <cert>    # Create external cert request (CA email workflow)
-piqrypt certify-verify <cert>             # Verify PiQrypt CA certification
-piqrypt hash <file>                       # Compute event hash
-piqrypt authority create/verify/chain     # Authority management
-piqrypt license activate/status/deactivate # License management
-piqrypt badge generate <cert_id>          # Badge generation [v1.5]
-piqrypt telemetry enable/disable/status   # Manage telemetry
-piqrypt memory status/unlock/lock/search/encrypt  # Memory management
-piqrypt a2a propose/respond/peers         # A2A protocol [v1.5]
-piqrypt archive create/import             # Portable .pqz archives
-piqrypt status                            # Show system status
+piqrypt certify-request <audit> <cert>    # External cert request
+piqrypt certify-verify <cert>             # Verify CA certification
+piqrypt history <agent_id>               # Full history with rotation
+piqrypt memory status/unlock/lock/search/encrypt
+piqrypt a2a propose/respond/peers
+piqrypt archive create/import
+piqrypt badge generate <cert_id>
+piqrypt telemetry enable/disable/status
+piqrypt status
 ```
+
+---
+
+## Standards Compliance
+
+| Standard | Purpose |
+|----------|---------|
+| RFC 8032 (Ed25519) | Agent signatures |
+| RFC 8785 (JCS) | JSON canonicalization |
+| RFC 3161 | Trusted timestamps |
+| NIST FIPS 204 (ML-DSA-65) | Post-quantum signatures |
+| NIST FIPS 197 (AES-256-GCM) | Symmetric encryption |
+| scrypt (Colin Percival, 2009) | Key derivation (N=2¹⁷) |
+
+**Regulatory alignment:** SOC2 · ISO 27001 · HIPAA · GDPR Art. 5.1.f
 
 ---
 
 ## MCP Integration
 
 **Repository:** https://github.com/piqrypt/piqrypt-mcp-server  
-**Version:** 1.4.0
-
-**MCP Tools Exposed:**
-- `piqrypt_stamp_event`
-- `piqrypt_verify_chain`
-- `piqrypt_export_audit`
-- `piqrypt_search_events`
-
-**Clients Supported:**
-- Claude Desktop
-- n8n workflows
-- Custom MCP clients
-
----
-
-## Standards Compliance
-
-**Cryptographic:**
-- ✅ RFC 8032 (Ed25519)
-- ✅ RFC 8785 (JSON Canonicalization)
-- ✅ RFC 3161 (TSA Timestamps)
-- ✅ NIST FIPS 204 (Dilithium3)
-- ✅ NIST FIPS 197 (AES-256-GCM)
-
-**Security:**
-- ✅ SOC2 alignment
-- ✅ ISO 27001 controls
-- ✅ HIPAA audit trail requirements
-- ✅ GDPR Art. 5.1.f (integrity)
+**Tools:** `piqrypt_stamp_event` · `piqrypt_verify_chain` · `piqrypt_export_audit` · `piqrypt_search_events`  
+**Clients:** Claude Desktop · n8n · custom MCP clients
 
 ---
 
 ## License
 
 **Core:** MIT License  
-**Pro Features:** Proprietary (Free/Pro/OSS/Enterprise tiers)
+**Pro Features:** Proprietary (Free/Pro/OSS/Enterprise tiers)  
+**IP:** e-Soleau DSO2026006483 (INPI France — 19/02/2026)
 
 ---
 
-## Changelog v1.5.0 (2026-02-24)
-
-**New Features:**
-- ✅ A2A Handshake protocol (§16) — full implementation including trust scoring
-- ✅ Trust scoring (`compute_trust_score`, `update_peer_trust_score`) — implemented in v1.5.0
-- ✅ Certification pay-per service (€9/€29/€99) — `aiss/certification.py`
-- ✅ Badge generation (SVG) — `aiss/cert_badges.py` + `aiss/badges.py`
-- ✅ External CA certification (email workflow) — `aiss/external_cert.py`
-- ✅ Public verification pages
-- ✅ Webhook automation (Stripe + Google Drive)
-- ✅ Agent examples (HR Assistant, Trading Bot) — `agents/examples/`
-
-**Improvements:**
-- ✅ RFC vendor-neutrality
-- ✅ Documentation dated
-- ✅ Version coherence across repos
-- ✅ Expanded CLI with 16+ commands
-
-**Tests:**
-- ✅ 135 test functions across 11 test files
-- ✅ A2A scenarios covered (22 tests)
-- ✅ Certification workflow tested (52 tests)
-- ✅ External certification tested (12 tests)
-
----
-
-**For detailed implementation notes, see:** `docs/` directory in repository.
-
----
-
-*PiQrypt v1.5.0 — Reference Implementation of AISS v1.1*  
+*PiQrypt v1.7.1 — Reference Implementation of AISS v2.0*  
 *https://github.com/piqrypt/piqrypt*
+
+---
+
+**Intellectual Property Notice**
+
+Core protocol concepts described in this document were deposited
+via e-Soleau with the French National Institute of Industrial Property (INPI):
+
+Primary deposit:  DSO2026006483 — 19 February 2026
+Addendum:         DSO2026009143 — 12 March 2026
+
+These deposits establish proof of authorship and prior art
+for the PCP protocol specification and PiQrypt reference implementation.
+
+PCP (Proof of Continuity Protocol) is an open protocol specification.
+It may be implemented independently by any compliant system.
+PiQrypt is the reference implementation.
+
+© 2026 PiQrypt — contact@piqrypt.com

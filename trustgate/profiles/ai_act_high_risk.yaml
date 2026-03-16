@@ -1,0 +1,80 @@
+# EU AI Act — High Risk Profile — Trust Gate
+# Article 9, 12, 13, 14, 17 compliance
+# Designed for: EU enterprise, regulated sectors (finance, health, HR, justice)
+#
+# Key characteristics:
+# - Mandatory human oversight for all critical actions (Art.14)
+# - Full audit logging with 2-year retention (Art.12)
+# - Explainable decisions — reason field mandatory (Art.13)
+# - Human override always available (Art.14 §4)
+# - BLOCK on timeout — safe default for high-risk contexts
+
+version: "1.0"
+name: "ai_act_high_risk"
+profile: "ai_act_high_risk"
+author: "system"
+
+thresholds:
+  vrs_require_human: 0.50       # Art.14 — human oversight at lower threshold
+  vrs_block: 0.80
+  tsi_unstable_action: "REQUIRE_HUMAN"
+  tsi_critical_action: "BLOCK"
+
+roles:
+  read_only:
+    allowed_tools: [read_db, list_files, search, query]
+    blocked_tools: [write_db, shell, admin, http_post, delete, create_user, financial_transfer]
+
+  operator:
+    allowed_tools: [read_db, write_db, http_get, query]
+    blocked_tools: [shell, admin, create_user, delete_user, financial_transfer, http_post]
+
+  trusted:
+    allowed_tools: [read_db, write_db, http_get, http_post, query, list_files]
+    blocked_tools: [shell, admin, financial_transfer]
+
+  # financial_transfer always blocked at role level — requires explicit human approval
+
+escalation:
+  max_watch_events: 3
+  auto_restrict_after: 5
+  restrict_duration_minutes: 120
+
+network:
+  allowed_domains: []
+  block_external: true
+  log_external_calls: true
+
+dangerous_patterns:
+  - "rm\\s+-rf"
+  - "DROP\\s+TABLE"
+  - "DROP\\s+DATABASE"
+  - "curl.*\\|.*bash"
+  - "curl.*\\|.*sh"
+  - "wget.*\\|.*bash"
+  - "base64.*decode"
+  - "exec\\("
+  - "eval\\("
+  - "CREATE\\s+USER"
+  - "GRANT\\s+ALL"
+  - "financial_transfer"
+  - "DELETE\\s+FROM"
+  - "__import__"
+  - "subprocess"
+  - "os\\.system"
+
+# Art.14 — human oversight
+notification:
+  timeout_seconds: 240          # 4 minutes
+  on_timeout: "BLOCK"           # safe default — Art.14 §4
+  require_justification: true   # mandatory for high-risk
+  approval_log_mandatory: true  # every approval logged with signature
+  channels: []
+  principals: []
+
+# Art.12 — record keeping
+logging:
+  retention_days: 730           # 2 years minimum — Art.12
+  log_allow: false
+  payload_mode: "hash"          # RGPD Art.5 — hash only
+  export_formats: ["json_signed", "pdf_certified"]

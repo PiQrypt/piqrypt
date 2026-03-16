@@ -1,0 +1,54 @@
+Elastic License 2.0 (ELv2)
+
+Copyright (c) 2026 PiQrypt Inc.
+e-Soleau primary deposit : DSO2026006483 — 19 February 2026
+e-Soleau addendum        : DSO2026009143 — 12 March 2026
+
+## Acceptance
+By using the software, you agree to all of the terms and conditions below.
+
+## Copyright License
+The licensor grants you a non-exclusive, royalty-free, worldwide,
+non-sublicensable, non-transferable license to use, copy, distribute,
+make available, and prepare derivative works of the software, in each
+case subject to the limitations and conditions below.
+
+## Limitations
+You may not provide the software to third parties as a hosted or
+managed service, where the service provides users with access to any
+substantial set of the features or functionality of the software.
+
+You may not move, change, disable, or circumvent the license key
+functionality in the software, and you may not remove or obscure any
+functionality in the software that is protected by the license key.
+
+You may not alter, remove, or obscure any licensing, copyright, or
+other notices of the licensor in the software.
+
+## Notices
+You must ensure that anyone who gets a copy of any part of the
+software from you also gets a copy of these terms.
+If you modify the software, you must include prominent notices
+stating that you have modified the software.
+
+## Termination
+If you use the software in violation of these terms, such use is not
+licensed, and your licenses will automatically terminate. If the
+licensor provides you with a notice of your violation, and you cease
+all violation no later than 30 days after you receive that notice,
+your licenses will be reinstated retroactively.
+
+## No Liability
+As far as the law allows, the software comes as is, without any
+warranty or condition, and the licensor will not be liable to you for
+any damages arising out of these terms or the use or nature of the
+software, under any kind of legal claim.
+
+Full license text : https://www.elastic.co/licensing/elastic-license
+Commercial license : contact@piqrypt.com — Subject: Commercial License Inquiry
+
+---
+Component : TrustGate — Governance Engine (trustgate/)
+Scope     : Policy enforcement, REQUIRE_HUMAN flow,
+            automated governance, compliance profiles
+            (EU AI Act, NIST AI RMF, ANSSI)

@@ -1,23 +1,22 @@
 # Telemetry System
 
-**Version:** 1.5.0  
-**Date:** 2026-02-21  
+**Version:** 1.7.1
+**Date:** 2026-03-12
 **Status:** Current
 
 ---
 
-
 ## Overview
 
-PiQrypt v1.1.0 includes **optional, privacy-first telemetry** to help improve the product while respecting user privacy.
+PiQrypt includes **optional, privacy-first telemetry** to help improve the product while respecting user privacy.
 
 ## Core Principles
 
-1. **Opt-in only** - Disabled by default
-2. **Anonymous** - No personal data
-3. **Transparent** - See exactly what's sent
-4. **Minimal** - Only usage statistics
-5. **Respectful** - Easy to disable anytime
+1. **Opt-in only** — Disabled by default
+2. **Anonymous** — No personal data
+3. **Transparent** — See exactly what's sent
+4. **Minimal** — Only usage statistics
+5. **Respectful** — Easy to disable anytime
 
 ---
 
@@ -26,23 +25,13 @@ PiQrypt v1.1.0 includes **optional, privacy-first telemetry** to help improve th
 ### Enable Telemetry
 
 ```bash
-# CLI
 piqrypt telemetry enable
-
-# Or in code
-from piqrypt import enable_telemetry
-enable_telemetry()
 ```
 
 ### Disable Telemetry
 
 ```bash
-# CLI
 piqrypt telemetry disable
-
-# Or in code
-from piqrypt import disable_telemetry
-disable_telemetry()
 ```
 
 ### Check Status
@@ -61,11 +50,11 @@ piqrypt telemetry status
 
 **Usage Statistics:**
 - Feature usage counts (e.g., "stamped 100 events")
-- Command frequency (e.g., "verify called 50 times")
+- Command frequency
 - License tier (Free, Pro, OSS)
 - Python version
 - PiQrypt version
-- Operating system (Linux, macOS, Windows)
+- Operating system
 - Timestamp (UTC)
 
 **Performance Metrics:**
@@ -76,11 +65,11 @@ piqrypt telemetry status
 **Example payload:**
 ```json
 {
-  "version": "1.1.0",
+  "version": "1.7.0",
   "python": "3.10",
   "os": "linux",
   "license_tier": "free",
-  "timestamp": "2025-02-16T14:30:00Z",
+  "timestamp": "2026-03-02T14:30:00Z",
   "metrics": {
     "events_stamped": 1000,
     "chains_verified": 50,
@@ -97,278 +86,83 @@ piqrypt telemetry status
 
 ### ❌ Never Collected
 
-- ❌ **Personal information** (names, emails, IPs)
-- ❌ **Agent IDs**
-- ❌ **Private keys** (obviously!)
-- ❌ **Payloads** or data content
-- ❌ **Signatures**
-- ❌ **Hostnames** or machine IDs
-- ❌ **File paths**
-- ❌ **Network information**
-- ❌ **Geographic location**
-
----
-
-## Why Telemetry?
-
-### Benefits to Users
-
-**Better Product:**
-- Identify most-used features → prioritize development
-- Find performance bottlenecks → optimize
-- Discover bugs → fix quickly
-- Understand usage patterns → improve UX
-
-**Better Documentation:**
-- See where users struggle → improve docs
-- Know which features need examples
-- Understand common workflows
-
-**Better Roadmap:**
-- Data-driven feature priorities
-- Focus on what matters most
-- Avoid building unused features
-
-### Benefits to PiQrypt
-
-- Measure product-market fit
-- Justify continued development
-- Demonstrate value to sponsors
-- Make informed decisions
+- ❌ Personal information (names, emails, IPs)
+- ❌ Agent IDs
+- ❌ Private keys or passphrases
+- ❌ KeyStore files or contents
+- ❌ Payloads or data content
+- ❌ Signatures
+- ❌ Hostnames or machine IDs
+- ❌ File paths
+- ❌ Geographic location
 
 ---
 
 ## How It Works
 
-### Collection
-
-```python
-from piqrypt import stamp_event
-
-# Telemetry enabled
-event = stamp_event(priv, agent_id, payload)
-# → Increments internal counter: events_stamped++
-
-# Periodically (daily), anonymous stats sent
-# → No blocking, no slowdown
-# → Batched and aggregated
-```
-
 ### Transmission
 
 - **Frequency:** Once per day (00:00 UTC)
 - **Method:** HTTPS POST to telemetry.piqrypt.org
-- **Async:** Non-blocking, doesn't slow operations
-- **Retry:** 3 attempts, then discard (no queueing)
+- **Async:** Non-blocking
+- **Retry:** 3 attempts, then discard
 - **Timeout:** 5 seconds max
-- **Failure:** Silently ignored (never breaks your app)
+- **Failure:** Silently ignored — never breaks your app
 
-### Storage
+### Storage (Local)
 
-- Aggregated statistics only
-- No raw events stored
-- 90-day retention
-- GDPR compliant
-- SOC 2 Type II certified endpoint
+All telemetry stored locally first:
+```
+~/.piqrypt/telemetry.json
+```
+
+Inspect anytime:
+```bash
+cat ~/.piqrypt/telemetry.json
+```
 
 ---
 
 ## Privacy Guarantees
 
-### Anonymous by Design
-
 **No way to identify users:**
 - No unique IDs sent
 - No IP addresses logged
 - No fingerprinting
-- No tracking cookies
 - No session correlation
 
-**Example:**
 ```
 We know: "Someone used stamp_event 1000 times"
 We DON'T know: "User X used stamp_event"
 ```
 
-### Local Control
-
-**All telemetry stored locally first:**
-```
-~/.piqrypt/telemetry.json
-```
-
-You can inspect it anytime:
-```bash
-cat ~/.piqrypt/telemetry.json
-```
-
-**You control when it's sent:**
-```bash
-# Send now (if enabled)
-piqrypt telemetry send
-
-# Or never (if disabled)
-piqrypt telemetry disable
-```
-
-### Compliance
-
+**Compliance:**
 - **GDPR:** No personal data = no consent needed
-- **CCPA:** No selling of data (we don't even collect it)
+- **CCPA:** No data sold
 - **HIPAA:** No PHI collected
-- **SOC 2:** Secure transmission and storage
 
 ---
 
 ## Configuration
 
-### Basic Configuration
+### Basic
 
 ```python
 from piqrypt import configure_telemetry
 
 configure_telemetry(
     enabled=True,
-    frequency="daily",  # daily, weekly, manual
+    frequency="daily",
     endpoint="https://telemetry.piqrypt.org"
-)
-```
-
-### Advanced Configuration
-
-```python
-configure_telemetry(
-    enabled=True,
-    frequency="weekly",
-    endpoint="https://telemetry.piqrypt.org",
-    timeout=5,  # seconds
-    retry_count=3,
-    min_interval=86400,  # seconds (1 day)
-    proxy=None,  # or "http://proxy:8080"
-    verify_ssl=True,
-    include_performance=True,
-    include_errors=True,
-    custom_tags={
-        "deployment": "production",
-        "region": "eu"
-    }
 )
 ```
 
 ### Environment Variables
 
 ```bash
-# Disable via environment
 export PIQRYPT_TELEMETRY=false
-
-# Or enable
 export PIQRYPT_TELEMETRY=true
-
-# Custom endpoint (for self-hosted)
 export PIQRYPT_TELEMETRY_ENDPOINT=https://your-server.com
-```
-
----
-
-## Self-Hosted Telemetry
-
-For enterprises wanting insights without external dependencies:
-
-### Run Your Own Server
-
-```bash
-# Docker
-docker run -p 8080:8080 piqrypt/telemetry-server
-
-# Or Python
-pip install piqrypt-telemetry-server
-piqrypt-telemetry-server --port 8080
-```
-
-### Configure Clients
-
-```python
-configure_telemetry(
-    enabled=True,
-    endpoint="https://telemetry.yourcompany.com"
-)
-```
-
-### Dashboard
-
-Access at `http://localhost:8080/dashboard`
-
-Shows:
-- Total events stamped
-- Active installations
-- Feature usage
-- Error rates
-- Performance metrics
-
----
-
-## CLI Commands
-
-### Status
-
-```bash
-piqrypt telemetry status
-# Telemetry: Enabled
-# Frequency: Daily
-# Last sent: 2025-02-16 00:00:00 UTC
-# Next scheduled: 2025-02-17 00:00:00 UTC
-# Events pending: 1,234
-```
-
-### Enable
-
-```bash
-piqrypt telemetry enable
-
-# With options
-piqrypt telemetry enable --frequency weekly
-```
-
-### Disable
-
-```bash
-piqrypt telemetry disable
-
-# Clears pending data
-piqrypt telemetry disable --clear
-```
-
-### Send Now
-
-```bash
-# Send pending telemetry immediately
-piqrypt telemetry send
-
-# Dry run (see what would be sent)
-piqrypt telemetry send --dry-run
-```
-
-### View Pending Data
-
-```bash
-# See what will be sent
-piqrypt telemetry show
-
-# Output:
-{
-  "version": "1.1.0",
-  "metrics": {
-    "events_stamped": 1234,
-    "chains_verified": 56
-  }
-}
-```
-
-### Clear Data
-
-```bash
-# Clear pending telemetry (doesn't disable)
-piqrypt telemetry clear
 ```
 
 ---
@@ -386,7 +180,9 @@ piqrypt telemetry clear
   "key_rotations": 3,
   "forks_detected": 2,
   "replay_attacks_blocked": 5,
-  "audit_exports": 10
+  "audit_exports": 10,
+  "keystore_created": 3,     # v1.7.0
+  "agents_registered": 5     # v1.7.0
 }
 ```
 
@@ -397,8 +193,7 @@ piqrypt telemetry clear
   "avg_stamp_duration_ms": 2.3,
   "avg_verify_duration_ms": 1.2,
   "avg_chain_validation_ms": 45.6,
-  "p95_stamp_duration_ms": 5.1,
-  "p99_stamp_duration_ms": 8.7
+  "avg_keystore_load_ms": 420.0    # v1.7.0 — scrypt expected ~400ms
 }
 ```
 
@@ -410,12 +205,13 @@ piqrypt telemetry clear
     "stamp": 1000,
     "verify": 500,
     "audit": 50,
-    "identity_create": 12
+    "identity_create": 12,
+    "vigil_start": 8           # v1.5.0+
   },
-  "api_calls": {
-    "stamp_event": 1000,
-    "verify_signature": 500,
-    "verify_chain": 50
+  "behavioral_monitoring": {
+    "tsi_computed": 200,       # v1.5.0+
+    "a2c_scans": 150,          # v1.5.0+
+    "vrs_computed": 200        # v1.5.0+
   }
 }
 ```
@@ -428,46 +224,58 @@ piqrypt telemetry clear
     "InvalidSignatureError": 5,
     "ForkDetected": 2,
     "ReplayAttackDetected": 5,
-    "LicenseRequiredError": 3
+    "LicenseRequiredError": 3,
+    "KeyStoreAuthError": 1       # v1.7.0
   }
 }
 ```
 
-### AISS-2 Metrics (Pro/OSS)
+---
 
-```python
-{
-  "dilithium_signatures": 234,
-  "hybrid_signatures": 456,
-  "trusted_timestamps": 78,
-  "witness_attestations": 90,
-  "blockchain_anchors": 12
-}
+## CLI Commands
+
+### Status
+
+```bash
+piqrypt telemetry status
+# Telemetry: Enabled
+# Frequency: Daily
+# Last sent: 2026-03-02 00:00:00 UTC
+# Next scheduled: 2026-03-03 00:00:00 UTC
+# Events pending: 1,234
+```
+
+### Send Now
+
+```bash
+piqrypt telemetry send
+
+# Dry run — see what would be sent
+piqrypt telemetry send --dry-run
+```
+
+### View Pending Data
+
+```bash
+piqrypt telemetry show
+```
+
+### Clear Data
+
+```bash
+piqrypt telemetry clear
 ```
 
 ---
 
 ## Opt-Out Best Practices
 
-### For Users
-
-**Telemetry is opt-in by default.** You don't need to do anything.
-
-If you explicitly enable it and change your mind:
-```bash
-piqrypt telemetry disable
-```
-
 ### For Organizations
-
-**Disable for all users** via configuration management:
 
 ```bash
 # Ansible
 - name: Disable PiQrypt telemetry
   command: piqrypt telemetry disable
-  become_user: "{{ item }}"
-  with_items: "{{ users }}"
 
 # Or via environment
 - name: Set telemetry environment variable
@@ -476,134 +284,57 @@ piqrypt telemetry disable
     line: 'PIQRYPT_TELEMETRY=false'
 ```
 
-### For Packages
-
-If you're packaging PiQrypt, **respect user choice:**
-```bash
-# Don't enable telemetry in post-install scripts
-# Let users opt-in themselves
-```
-
 ---
 
 ## Transparency
 
 ### View Source Code
 
-Telemetry implementation is open source:
 ```
 piqrypt/telemetry.py
 ```
 
-See exactly what's collected and sent.
-
-### Audit Transmission
-
-```bash
-# See what's about to be sent
-piqrypt telemetry send --dry-run
-
-# Or inspect local data
-cat ~/.piqrypt/telemetry.json
-```
-
 ### Data Retention
 
-- **Raw data:** None (we only receive aggregates)
+- **Raw data:** None (only aggregates received)
 - **Aggregated stats:** 90 days
-- **Reports:** Indefinite (anonymous summaries)
-
-### Data Access
-
-- Only PiQrypt core team
-- Never sold or shared
-- Never used for marketing
-- Never used to identify users
+- **Reports:** Anonymous summaries
 
 ---
 
 ## FAQ
 
-### Why is telemetry disabled by default?
+**Why is telemetry disabled by default?** Respect for privacy. We want explicit consent.
 
-**Respect for privacy.** We want explicit consent.
+**Can telemetry identify me?** No. No IDs, IPs, or fingerprints.
 
-### Can telemetry identify me?
+**Does it slow down PiQrypt?** No. Async, batched, <1KB payload, sent once daily.
 
-**No.** It's designed to be anonymous. No IDs, IPs, or fingerprints.
+**Can I audit what's sent?** Yes: `piqrypt telemetry show`
 
-### Does it slow down PiQrypt?
+**Can I use PiQrypt offline?** Yes. Telemetry fails silently if offline.
 
-**No.** Telemetry is:
-- Async (non-blocking)
-- Batched (not per-operation)
-- Lightweight (<1KB payload)
-- Cached locally (sent once daily)
+**Can I host my own telemetry server?** Yes. Set `PIQRYPT_TELEMETRY_ENDPOINT=https://your-server.com`.
 
-### Can I audit what's sent?
-
-**Yes!** 
-```bash
-piqrypt telemetry show
-```
-
-### Can I use PiQrypt offline?
-
-**Yes!** Telemetry fails silently if offline. No errors, no delays.
-
-### What if I'm behind a firewall?
-
-Telemetry will fail to send (silently) and be discarded after 3 retries. Your app continues working normally.
-
-### Does Free tier have telemetry?
-
-**Only if you enable it.** All tiers respect your choice.
-
-### Can I host my own telemetry server?
-
-**Yes!** See "Self-Hosted Telemetry" section above.
-
-### How do I know you're not lying?
-
-**Code is open source.** Audit it:
-```bash
-cat piqrypt/telemetry.py
-```
-
-### What happens to Pro users?
-
-**Same rules apply.** Telemetry is opt-in for everyone.
+**How do I know you're not lying?** Code is open source: `cat piqrypt/telemetry.py`
 
 ---
 
 ## Support Telemetry
 
-If you find PiQrypt useful, **consider enabling telemetry**:
+If you find PiQrypt useful, consider enabling telemetry:
 
 ```bash
 piqrypt telemetry enable
 ```
 
-It helps us:
-- ✅ Improve the product
-- ✅ Fix bugs faster
-- ✅ Prioritize features
-- ✅ Justify continued development
+It helps us improve the product, fix bugs faster, and prioritize features — while respecting your privacy 100%.
 
-**While respecting your privacy 100%.**
-
----
-
-## Alternative Ways to Help
-
-Don't want to enable telemetry? You can still help:
-
-1. **Star on GitHub** ⭐
-2. **Report bugs** (manually)
-3. **Request features** (via issues)
-4. **Contribute code** (PRs welcome)
-5. **Sponsor development** (GitHub Sponsors)
-6. **Spread the word** (Twitter, Reddit, etc.)
+**Alternative ways to help:**
+- ⭐ Star on GitHub
+- 🐛 Report bugs via issues
+- 💡 Request features
+- 🤝 Contribute code (PRs welcome)
 
 ---
 
@@ -613,80 +344,48 @@ Don't want to enable telemetry? You can still help:
 
 ```json
 {
-  "schema_version": "1.0",
-  "piqrypt_version": "1.1.0",
+  "schema_version": "1.1",
+  "piqrypt_version": "1.7.0",
   "python_version": "3.10.4",
   "os": "linux",
-  "architecture": "x86_64",
   "license_tier": "free",
-  "timestamp": "2025-02-16T14:30:00Z",
-  "session_duration_seconds": 3600,
+  "timestamp": "2026-03-02T14:30:00Z",
   "metrics": {
-    "usage": { /* ... */ },
-    "performance": { /* ... */ },
-    "features": { /* ... */ },
-    "errors": { /* ... */ }
-  },
-  "custom_tags": { /* optional */ }
+    "usage": {},
+    "performance": {},
+    "features": {},
+    "errors": {}
+  }
 }
 ```
-
-### Endpoint
-
-```
-POST https://telemetry.piqrypt.org/v1/collect
-Content-Type: application/json
-User-Agent: PiQrypt/1.1.0 Python/3.10.4
-
-{
-  // payload
-}
-```
-
-### Response
-
-```
-200 OK
-{"status": "received", "id": "anon_12345"}
-```
-
-Note: `id` is generated server-side, not sent by client.
 
 ### Security
 
 - ✅ HTTPS only (TLS 1.3)
-- ✅ Certificate pinning
 - ✅ No authentication (anonymous)
-- ✅ Rate limited (100 req/day per IP)
+- ✅ Rate limited
 - ✅ DDoS protection
 
 ---
 
-## Roadmap
-
-Future telemetry improvements (all opt-in):
-
-- **v1.2:** Crash reports (if opted-in)
-- **v1.3:** Performance profiling (sampling)
-- **v2.0:** Usage heatmaps (CLI commands)
-
-**All future additions will:**
-- ✅ Remain opt-in
-- ✅ Be announced clearly
-- ✅ Preserve anonymity
-- ✅ Be auditable
+**Last Updated:** 2026-03-12
+**Version:** 1.7.1
 
 ---
 
-## Contact
+**Intellectual Property Notice**
 
-Questions about telemetry?
+Core protocol concepts described in this document were deposited
+via e-Soleau with the French National Institute of Industrial Property (INPI):
 
-- **Technical:** telemetry@piqrypt.org
-- **Privacy:** privacy@piqrypt.org
-- **General:** contact@piqrypt.org
+Primary deposit:  DSO2026006483 — 19 February 2026
+Addendum:         DSO2026009143 — 12 March 2026
 
----
+These deposits establish proof of authorship and prior art
+for the PCP protocol specification and PiQrypt reference implementation.
 
-**Last Updated:** February 16, 2025
-**Version:** 1.1.0
+PCP (Proof of Continuity Protocol) is an open protocol specification.
+It may be implemented independently by any compliant system.
+PiQrypt is the reference implementation.
+
+© 2026 PiQrypt — contact@piqrypt.com

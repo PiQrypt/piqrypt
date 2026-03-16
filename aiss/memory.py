@@ -1,29 +1,41 @@
+# SPDX-License-Identifier: Elastic-2.0
+# Copyright (c) 2026 PiQrypt Inc.
+# e-Soleau: DSO2026006483 (19/02/2026) -- DSO2026009143 (12/03/2026)
+#
+# Licensed under the Elastic License 2.0 (ELv2).
+# You may not provide this software as a hosted or managed service
+# to third parties without a commercial license.
+# Commercial license: contact@piqrypt.com
+
 """
 Agent Memory System (PCP Layer 2)
 
 Implements cryptographically-backed agent memory:
-- FREE: plaintext JSON storage in ~/.piqrypt/events/
+- FREE: plaintext JSON storage in ~/.piqrypt/agents/<n>/events/plain/
 - PRO:  AES-256-GCM encrypted storage + PBKDF2 passphrase unlock
 
 RFC Sections 6 (Mémoire d'Agent), 11.2 (AISS-2 nonce retention)
 
-Architecture:
+Architecture v1.7.0 (isolation par agent) :
     ~/.piqrypt/
-    ├── events/
-    │   ├── plain/          # FREE: monthly JSON files
-    │   │   ├── 2025-01.json
-    │   │   └── 2025-02.json
-    │   └── encrypted/      # PRO: AES-256-GCM monthly files
-    │       ├── 2025-01.enc
-    │       └── 2025-02.enc
-    ├── keys/
-    │   └── master.key.enc  # PRO: master key encrypted with passphrase
-    └── config.json
+    └── agents/
+        └── <agent_name>/
+            ├── events/
+            │   ├── plain/          # FREE: monthly JSON files
+            │   └── encrypted/      # PRO: AES-256-GCM monthly files
+            ├── keys/
+            │   └── master.key.enc  # PRO master key
+            └── index.db            # SQLite index
 
-v1.6 additions (vs v1.5.0):
-    - store_event_free/pro: indexe successor_agent_id + session_id
-    - search_events: nouveaux params session_id + follow_rotation
-    - _load_full_events_from_index: helper partagé (DRY)
+Backward compat v1.6.0 :
+    - agent_name optionnel → fallback "default"
+    - Ancien chemin ~/.piqrypt/events/ → détecté et migré par migration.py
+    - Toutes les fonctions publiques existantes inchangées
+
+v1.7 additions (vs v1.6.0) :
+    - Toutes les fonctions acceptent agent_name optionnel
+    - _get_dirs(agent_name) : résolution dynamique des chemins
+    - Intégration agent_registry pour init et résolution
 """
 
 import json
@@ -51,13 +63,52 @@ except ImportError:
     INDEX_AVAILABLE = False
     get_index = None
 
-# ─── Constants ────────────────────────────────────────────────────────────────
+# ─── Constants (backward compat — remplacés dynamiquement par _get_dirs) ──────
 PIQRYPT_DIR = Path.home() / ".piqrypt"
 EVENTS_PLAIN_DIR = PIQRYPT_DIR / "events" / "plain"
 EVENTS_ENC_DIR = PIQRYPT_DIR / "events" / "encrypted"
 KEYS_DIR = PIQRYPT_DIR / "keys"
 MASTER_KEY_FILE = KEYS_DIR / "master.key.enc"
 CONFIG_FILE = PIQRYPT_DIR / "config.json"
+
+# ─── Agent Registry (v1.7.0) ──────────────────────────────────────────────────
+try:
+    from aiss.agent_registry import (
+        get_events_plain_dir as _reg_plain_dir,
+        get_events_enc_dir   as _reg_enc_dir,
+        get_keys_dir         as _reg_keys_dir,
+        init_agent_dirs      as _reg_init_dirs,
+        resolve_agent_name   as _resolve_agent,
+    )
+    REGISTRY_AVAILABLE = True
+except ImportError:
+    REGISTRY_AVAILABLE = False
+
+
+def _get_dirs(agent_name: Optional[str] = None, session: Any = None):
+    """
+    Résout les chemins de stockage pour un agent.
+
+    v1.7.0 : utilise agent_registry pour l'isolation par agent.
+    Fallback v1.6.0 : chemins globaux historiques.
+
+    Returns:
+        (plain_dir, enc_dir, keys_dir, master_key_file)
+    """
+    if REGISTRY_AVAILABLE:
+        name = _resolve_agent(agent_name, session)
+        plain_dir       = _reg_plain_dir(name)
+        enc_dir         = _reg_enc_dir(name)
+        keys_dir        = _reg_keys_dir(name)
+        master_key_file = keys_dir / "master.key.enc"
+    else:
+        # Fallback v1.6.0 — chemins globaux
+        plain_dir       = EVENTS_PLAIN_DIR
+        enc_dir         = EVENTS_ENC_DIR
+        keys_dir        = KEYS_DIR
+        master_key_file = MASTER_KEY_FILE
+
+    return plain_dir, enc_dir, keys_dir, master_key_file
 
 AES_KEY_SIZE = 32
 AES_NONCE_SIZE = 12
@@ -136,11 +187,27 @@ def _derive_key_from_passphrase(passphrase: str, salt: bytes) -> bytes:
 
 
 # ─── Directory initialization ─────────────────────────────────────────────────
-def init_memory_dirs() -> None:
+def init_memory_dirs(agent_name: Optional[str] = None, base_dir: Optional[str] = None) -> None:
+    """Create directory structure for an agent (v1.7.0) or global (v1.6.0 compat).
+
+    Args:
+        agent_name: Nom de l'agent (v1.7.0)
+        base_dir:   Répertoire racine alternatif (utile en tests/CI)
+    """
+    if base_dir is not None:
+        # Mode test : crée la structure dans base_dir
+        _base = Path(base_dir)
+        for subdir in ["events/plain", "events/encrypted", "keys"]:
+            (_base / subdir).mkdir(parents=True, exist_ok=True)
+        return
+    if REGISTRY_AVAILABLE and agent_name:
+        _reg_init_dirs(agent_name)
+        return
+    # Fallback v1.6.0
     for d in [PIQRYPT_DIR, EVENTS_PLAIN_DIR, EVENTS_ENC_DIR, KEYS_DIR]:
         d.mkdir(parents=True, exist_ok=True)
     if not CONFIG_FILE.exists():
-        config = {"version": "1.1.0", "retention_years": 10, "auto_backup": False,
+        config = {"version": "1.7.0", "retention_years": 10, "auto_backup": False,
                   "backup_interval_months": 6, "created_at": int(time.time())}
         CONFIG_FILE.write_text(json.dumps(config, indent=2))
     logger.info(f"[PiQrypt] Memory directories initialized at {PIQRYPT_DIR}")
@@ -244,11 +311,23 @@ def _current_month() -> str:
 
 
 # ─── FREE: plaintext event storage ───────────────────────────────────────────
-def store_event_free(event: Dict[str, Any]) -> None:
-    """Store a signed event in plaintext monthly JSON file. FREE tier."""
-    init_memory_dirs()
+def store_event_free(
+    event: Dict[str, Any],
+    agent_name: Optional[str] = None,
+    session: Any = None,
+) -> None:
+    """Store a signed event in plaintext monthly JSON file. FREE tier.
+
+    Args:
+        event:      Signed AISS event dict
+        agent_name: Agent name for isolation (v1.7.0). None = fallback "default"
+        session:    IdentitySession — agent_name déduit si fourni
+    """
+    plain_dir, _, _, _ = _get_dirs(agent_name, session)
+    plain_dir.mkdir(parents=True, exist_ok=True)
+
     month = _month_key(event.get("timestamp", int(time.time())))
-    filepath = EVENTS_PLAIN_DIR / f"{month}.json"
+    filepath = plain_dir / f"{month}.json"
 
     events = []
     if filepath.exists():
@@ -298,11 +377,14 @@ def store_event_free(event: Dict[str, Any]) -> None:
 
 def load_events_free(
     month: Optional[str] = None,
-    agent_id: Optional[str] = None
+    agent_id: Optional[str] = None,
+    agent_name: Optional[str] = None,
+    session: Any = None,
 ) -> List[Dict[str, Any]]:
-    init_memory_dirs()
+    plain_dir, _, _, _ = _get_dirs(agent_name, session)
+    plain_dir.mkdir(parents=True, exist_ok=True)
     all_events = []
-    files = [EVENTS_PLAIN_DIR / f"{month}.json"] if month else sorted(EVENTS_PLAIN_DIR.glob("*.json"))
+    files = [plain_dir / f"{month}.json"] if month else sorted(plain_dir.glob("*.json"))
     for f in files:
         if not f.exists():
             continue
@@ -316,12 +398,17 @@ def load_events_free(
 
 
 # ─── PRO: encrypted event storage ─────────────────────────────────────────────
-def store_event_pro(event: Dict[str, Any]) -> None:
+def store_event_pro(
+    event: Dict[str, Any],
+    agent_name: Optional[str] = None,
+    session: Any = None,
+) -> None:
     """Store a signed event in AES-256-GCM encrypted monthly file. PRO tier."""
-    init_memory_dirs()
+    _, enc_dir, _, master_key_file = _get_dirs(agent_name, session)
+    enc_dir.mkdir(parents=True, exist_ok=True)
     master_key = _require_unlocked()
     month = _month_key(event.get("timestamp", int(time.time())))
-    filepath = EVENTS_ENC_DIR / f"{month}.enc"
+    filepath = enc_dir / f"{month}.enc"
 
     events = []
     offset_before = 0
@@ -378,12 +465,14 @@ def store_event_pro(event: Dict[str, Any]) -> None:
 
 def load_events_pro(
     month: Optional[str] = None,
-    agent_id: Optional[str] = None
+    agent_id: Optional[str] = None,
+    agent_name: Optional[str] = None,
+    session: Any = None,
 ) -> List[Dict[str, Any]]:
-    init_memory_dirs()
+    _, enc_dir, _, _ = _get_dirs(agent_name, session)
     master_key = _require_unlocked()
     all_events = []
-    files = [EVENTS_ENC_DIR / f"{month}.enc"] if month else sorted(EVENTS_ENC_DIR.glob("*.enc"))
+    files = [enc_dir / f"{month}.enc"] if month else sorted(enc_dir.glob("*.enc"))
     for f in files:
         if not f.exists():
             continue
@@ -401,12 +490,45 @@ def load_events_pro(
 
 
 # ─── Unified API ─────────────────────────────────────────────────────────────
-def store_event(event: Dict[str, Any]) -> None:
+def store_event(
+    event: Dict[str, Any],
+    agent_name: Optional[str] = None,
+    session: Any = None,
+    base_dir: Optional[str] = None,
+) -> None:
+    """
+    Stocke un événement signé en mémoire.
+
+    v1.7.0 : agent_name et session optionnels pour isolation par agent.
+    Backward compat : si omis → agent "default".
+
+    Args:
+        event:      Événement signé à stocker
+        agent_name: Nom de l'agent (v1.7.0)
+        session:    Session IdentitySession active (optionnel)
+        base_dir:   Répertoire racine alternatif (tests/CI) — stockage JSON plain
+    """
+    if base_dir is not None:
+        # Mode test : stockage JSON plain dans base_dir/events/plain/
+        plain_dir = Path(base_dir) / "events" / "plain"
+        plain_dir.mkdir(parents=True, exist_ok=True)
+        ts = event.get("timestamp", int(time.time()))
+        month = time.strftime("%Y-%m", time.localtime(ts if isinstance(ts, (int, float)) else int(time.time())))
+        ev_file = plain_dir / f"{month}.json"
+        events = []
+        if ev_file.exists():
+            try:
+                events = json.loads(ev_file.read_text())
+            except Exception:
+                events = []
+        events.append(event)
+        ev_file.write_text(json.dumps(events, indent=2))
+        return
     from aiss.license import is_pro
     if is_pro() and is_unlocked():
-        store_event_pro(event)
+        store_event_pro(event, agent_name=agent_name, session=session)
     else:
-        store_event_free(event)
+        store_event_free(event, agent_name=agent_name, session=session)
         if is_pro() and not is_unlocked():
             log_replay_detection_limited()
             logger.warning("[PiQrypt] Memory not encrypted — run: piqrypt memory unlock")
@@ -414,13 +536,50 @@ def store_event(event: Dict[str, Any]) -> None:
 
 def load_events(
     month: Optional[str] = None,
-    agent_id: Optional[str] = None
+    agent_id: Optional[str] = None,
+    agent_name: Optional[str] = None,
+    session: Any = None,
+    base_dir: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
+    """
+    Charge les événements d'un agent.
+
+    v1.7.0 : agent_name et session optionnels pour isolation par agent.
+
+    Args:
+        month:      Filtre par mois (YYYY-MM)
+        agent_id:   Filtre par agent_id
+        agent_name: Nom de l'agent (v1.7.0)
+        session:    Session IdentitySession active (optionnel)
+        base_dir:   Répertoire racine alternatif (tests/CI)
+    """
+    if base_dir is not None:
+        # Mode test : charge depuis base_dir/events/plain/
+        plain_dir = Path(base_dir) / "events" / "plain"
+        if not plain_dir.exists():
+            return []
+        all_events: List[Dict[str, Any]] = []
+        for ev_file in sorted(plain_dir.glob("*.json")):
+            if month and not ev_file.stem.startswith(month):
+                continue
+            try:
+                data = json.loads(ev_file.read_text())
+                if isinstance(data, list):
+                    all_events.extend(data)
+            except Exception:
+                pass
+        return all_events
     from aiss.license import is_pro
     if is_pro() and is_unlocked():
-        return load_events_pro(month=month, agent_id=agent_id)
+        return load_events_pro(
+            month=month, agent_id=agent_id,
+            agent_name=agent_name, session=session
+        )
     else:
-        return load_events_free(month=month, agent_id=agent_id)
+        return load_events_free(
+            month=month, agent_id=agent_id,
+            agent_name=agent_name, session=session
+        )
 
 
 # ─── Helper index v1.6 ───────────────────────────────────────────────────────
@@ -620,14 +779,20 @@ def migrate_to_encrypted(passphrase: str) -> Dict[str, int]:
 
 
 # ─── Retention & stats ────────────────────────────────────────────────────────
-def get_memory_stats() -> Dict[str, Any]:
+def get_memory_stats(
+    agent_name: Optional[str] = None,
+    session: Any = None,
+) -> Dict[str, Any]:
+    """Statistiques mémoire d'un agent. agent_name optionnel (v1.7.0)."""
     config = get_config()
     retention_years = config.get("retention_years", 10)
     from aiss.license import is_pro
     tier = "pro" if is_pro() else "free"
 
+    plain_dir, enc_dir, _, _ = _get_dirs(agent_name, session)
+
     if tier == "free":
-        files = sorted(EVENTS_PLAIN_DIR.glob("*.json"))
+        files = sorted(plain_dir.glob("*.json")) if plain_dir.exists() else []
         total = 0
         months = []
         oldest_ts = None
@@ -649,11 +814,11 @@ def get_memory_stats() -> Dict[str, Any]:
         return {
             "tier": "free", "total_events": total, "months": months,
             "oldest_timestamp": oldest_ts, "newest_timestamp": newest_ts,
-            "retention_years": retention_years, "storage_path": str(EVENTS_PLAIN_DIR),
+            "retention_years": retention_years, "storage_path": str(plain_dir),
             "encrypted": False,
         }
     else:
-        files = sorted(EVENTS_ENC_DIR.glob("*.enc"))
+        files = sorted(enc_dir.glob("*.enc")) if enc_dir.exists() else []
         months = []
         total_bytes = 0
         for f in files:
@@ -662,7 +827,7 @@ def get_memory_stats() -> Dict[str, Any]:
             months.append({"month": f.stem, "size_bytes": sz})
         return {
             "tier": "pro", "months": months, "total_size_bytes": total_bytes,
-            "retention_years": retention_years, "storage_path": str(EVENTS_ENC_DIR),
+            "retention_years": retention_years, "storage_path": str(enc_dir),
             "encrypted": True, "session_active": is_unlocked(),
         }
 
