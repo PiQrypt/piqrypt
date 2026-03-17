@@ -114,11 +114,10 @@ site/
 *.bak
 
 piqrypt_keypair.json
-
 CLAUDE.md
-
 COMMANDES_VALIDEES.md
-
 ANALYSE_DIFFERENCIANTS.md
-
 ANALYSE_PROTOCOLE_BRIDGES.md
+.claude
+.claude/worktrees
+AUDIT_COHERENCE.md
