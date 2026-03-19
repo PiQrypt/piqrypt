@@ -132,7 +132,10 @@ FAMILY_EVENT_TYPES = {
     ],
 }
 
-EVENTS_PER_CYCLE = {"safe": 15, "watch": 25, "alert": 60, "critical": 80}
+EVENTS_PER_CYCLE = {"safe": 40, "watch": 65, "alert": 120, "critical": 160}
+
+SUB_CYCLES = 4
+SUB_DELAY  = 1.2
 
 # ── Profils des peers externes ────────────────────────────────────────────────
 # volume_per_cycle : nb d'events vers ce peer par cycle
@@ -353,17 +356,19 @@ def _inject_peers(ids):
         ag = next(a for a in DEMO_AGENTS if a["name"] == name)
         peers[aid] = {
             "identity": {"version": "AISS-1.0", "agent_id": aid,
+                         "agent_name": name,          # <-- nom lisible pour le graphe
                          "public_key": hashlib.sha256(aid.encode()).hexdigest()[:44],
                          "algorithm": "Ed25519", "capabilities": ["stamp", "verify"]},
+            "agent_name":        name,                # <-- doublon de surface
             "first_seen":        int(time.time()) - 86400,
-            "last_seen":         int(time.time()) - random.randint(10, 3600),
-            "interaction_count": random.randint(5, 500),
+            "last_seen":         int(time.time()) - random.randint(10, 300),
+            "interaction_count": random.randint(50, 800),
             "trust_score":       {"safe": 0.95, "watch": 0.65, "alert": 0.35, "critical": 0.10}[ag["profile"]],
             "external":          False,
+            "family":            ag.get("family", ""),
         }
 
     # Peers externes — enregistrés avec leur nom comme peer_id
-    # Vigil les affiche dans le network graph comme nœuds distincts
     active_ext = set()
     for name in ids:
         for peer_name in INTERACTION_MAP.get(name, []):
@@ -372,12 +377,13 @@ def _inject_peers(ids):
 
     for peer_name in active_ext:
         prof = EXTERNAL_PEER_PROFILES[peer_name]
-        # trust_score réaliste selon le statut du service externe
         trust = random.uniform(0.70, 0.95)
         peers[peer_name] = {
             "identity": {"version": "AISS-1.0", "agent_id": peer_name,
+                         "agent_name": peer_name,
                          "public_key": hashlib.sha256(peer_name.encode()).hexdigest()[:44],
                          "algorithm": "Ed25519", "capabilities": ["stamp"]},
+            "agent_name":        peer_name,
             "first_seen":        int(time.time()) - 86400 * random.randint(7, 90),
             "last_seen":         int(time.time()) - random.randint(5, 300),
             "interaction_count": random.randint(50, 5000),
@@ -667,36 +673,62 @@ def inject_cycle(ids, cycle):
     print(DIM("  " + "-" * 60))
     total_events   = 0
     total_alerts   = 0
+
+    # Génère tous les events d'abord
+    agent_events = {}
     current_family = None
     for ag in DEMO_AGENTS:
         name   = ag["name"]
         family = ag.get("family", "")
         aid    = ids.get(name)
         if not aid: continue
+        evts     = _generate_events(aid, name, ag["profile"], ids)
+        ext_evts = _generate_external_events(aid, name, ids)
+        agent_events[name] = (ag, aid, evts, ext_evts)
+
+    # Injection progressive en sous-cycles
+    agent_list = list(agent_events.items())
+    for sub in range(SUB_CYCLES):
+        if sub > 0:
+            time.sleep(SUB_DELAY)
+        for name, (ag, aid, evts, ext_evts) in agent_list:
+            all_evts  = evts + ext_evts
+            n_total   = len(all_evts)
+            per_sub   = max(1, n_total // SUB_CYCLES)
+            start_idx = sub * per_sub
+            end_idx   = (start_idx + per_sub) if sub < SUB_CYCLES - 1 else n_total
+            sub_evts  = all_evts[start_idx:end_idx]
+            if sub_evts:
+                _write_events(name, sub_evts)
+
+    # Stats + alertes (une fois à la fin)
+    current_family = None
+    for name, (ag, aid, evts, ext_evts) in agent_list:
+        family   = ag.get("family", "")
+        profile  = ag["profile"]
         if family != current_family:
             current_family = family
             finfo  = FAMILIES.get(family, {})
             fcol   = {"CYAN": CYAN, "MAGENTA": MAGENTA, "YELLOW": YELLOW}.get(finfo.get("color"), DIM)
             print(f"  {fcol('── ' + finfo.get('label', family))}")
-        profile   = ag["profile"]
         color     = {"safe": GREEN, "watch": YELLOW, "alert": RED, "critical": MAGENTA}[profile]
-        evts      = _generate_events(aid, name, profile, ids)
-        ext_evts  = _generate_external_events(aid, name, ids)
-        stored    = _write_events(name, evts + ext_evts)
+        stored    = len(evts) + len(ext_evts)
         tsi_state = _write_tsi_history(aid, profile)
         alerts    = _inject_alerts(name, aid, profile)
+        all_evts  = evts + ext_evts
         peer_count = {}
-        for e in evts + ext_evts: peer_count[e["peer_id"]] = peer_count.get(e["peer_id"], 0) + 1
+        for e in all_evts: peer_count[e["peer_id"]] = peer_count.get(e["peer_id"], 0) + 1
         dom = max(peer_count, key=peer_count.get) if peer_count else "?"
-        pct = 100 * peer_count.get(dom, 0) / len(evts + ext_evts) if evts else 0
+        pct = 100 * peer_count.get(dom, 0) / len(all_evts) if all_evts else 0
         ext_count = len(ext_evts)
-        stack_s = DIM(f" [{ag.get('stack', '')}]") if ag.get("stack") else ""
-        alert_s = f"  {RED(f'+{alerts}al')}" if alerts else ""
-        ext_s   = f"  {DIM(f'ext={ext_count}')}" if ext_count else ""
-        plabel  = color(f"[{profile.upper():<8}]")
+        stack_s   = DIM(f" [{ag.get('stack', '')}]") if ag.get("stack") else ""
+        alert_s   = f"  {RED(f'+{alerts}al')}" if alerts else ""
+        ext_s     = f"  {DIM(f'ext={ext_count}')}" if ext_count else ""
+        plabel    = color(f"[{profile.upper():<8}]")
         print(f"  {plabel} {name:<26} +{stored:>3}ev  tsi={tsi_state:<8} conc={pct:3.0f}%{alert_s}{ext_s}{stack_s}")
         total_events += stored
         total_alerts += alerts
+
     _inject_peers(ids)
 
     # Scénarios famille toutes les 3 cycles

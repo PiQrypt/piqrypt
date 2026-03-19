@@ -76,7 +76,12 @@ INTERACTION_MAP = {
     "compromised_node":   ["rogue_llm",        "shadow_agent",      "exchange_api_binance"],
 }
 
-EVENTS_PER_CYCLE = {"safe": 15, "watch": 25, "alert": 60, "critical": 80}
+EVENTS_PER_CYCLE = {"safe": 40, "watch": 65, "alert": 120, "critical": 160}
+
+# Nombre de sous-cycles par cycle principal — chaque sous-cycle écrit une fraction
+# des events avec un délai, ce qui donne des incréments progressifs au dashboard
+SUB_CYCLES = 4          # 4 petits lots au lieu d'un gros paquet
+SUB_DELAY  = 1.2        # secondes entre sous-cycles (4 × 1.2s = 4.8s d'étalement)
 
 def _make_event(agent_id, peer_id, ts=None, tsa=False, previous_hash=None, event_type=None):
     import hashlib as _hl
@@ -266,12 +271,15 @@ def _inject_peers(ids):
         ag = next(a for a in DEMO_AGENTS if a["name"] == name)
         peers[aid] = {
             "identity": {"version": "AISS-1.0", "agent_id": aid,
+                         "agent_name": name,          # <-- nom lisible pour le graphe
                          "public_key": hashlib.sha256(aid.encode()).hexdigest()[:44],
                          "algorithm": "Ed25519", "capabilities": ["stamp", "verify"]},
+            "agent_name":        name,                # <-- doublon de surface pour anomaly_monitor
             "first_seen":        int(time.time()) - 86400,
-            "last_seen":         int(time.time()) - random.randint(10, 3600),
-            "interaction_count": random.randint(5, 500),
+            "last_seen":         int(time.time()) - random.randint(10, 300),
+            "interaction_count": random.randint(50, 800),
             "trust_score":       {"safe": 0.95, "watch": 0.65, "alert": 0.35, "critical": 0.10}[ag["profile"]],
+            "external":          False,
         }
     peers_path.write_text(json.dumps(peers, indent=2), encoding="utf-8")
 
@@ -584,17 +592,42 @@ def inject_cycle(ids, cycle):
     print(DIM("  " + "-" * 55))
     total_events = 0
     total_alerts = 0
+
+    # Génère tous les events puis les répartit en sous-cycles
+    agent_events = {}
     for ag in DEMO_AGENTS:
         name    = ag["name"]
         profile = ag["profile"]
         aid     = ids.get(name)
         if not aid: continue
-        color  = {"safe": GREEN, "watch": YELLOW, "alert": RED, "critical": MAGENTA}[profile]
-        label  = color(f"[{profile.upper():<8}]")
-        evts      = _generate_events(aid, name, profile, ids)
-        stored    = _write_events(name, evts)
+        evts = _generate_events(aid, name, profile, ids)
+        agent_events[name] = (ag, aid, evts)
+
+    # Injection progressive — SUB_CYCLES lots avec pause entre eux
+    chunk_size = max(1, len(DEMO_AGENTS) // SUB_CYCLES)
+    agent_list = list(agent_events.items())
+
+    for sub in range(SUB_CYCLES):
+        if sub > 0:
+            time.sleep(SUB_DELAY)
+        # Chaque sous-cycle injecte une tranche d'events pour chaque agent
+        for name, (ag, aid, evts) in agent_list:
+            n_total   = len(evts)
+            per_sub   = max(1, n_total // SUB_CYCLES)
+            start_idx = sub * per_sub
+            end_idx   = (start_idx + per_sub) if sub < SUB_CYCLES - 1 else n_total
+            sub_evts  = evts[start_idx:end_idx]
+            if sub_evts:
+                _write_events(name, sub_evts)
+
+    # Stats finales + alertes (une seule fois à la fin)
+    for name, (ag, aid, evts) in agent_list:
+        profile  = ag["profile"]
+        color    = {"safe": GREEN, "watch": YELLOW, "alert": RED, "critical": MAGENTA}[profile]
+        label    = color(f"[{profile.upper():<8}]")
+        stored   = len(evts)
         tsi_state = _write_tsi_history(aid, profile)
-        alerts    = _inject_alerts(name, aid, profile)
+        alerts   = _inject_alerts(name, aid, profile)
         peer_count = {}
         for e in evts: peer_count[e["peer_id"]] = peer_count.get(e["peer_id"], 0) + 1
         dom = max(peer_count, key=peer_count.get) if peer_count else "?"
@@ -603,6 +636,7 @@ def inject_cycle(ids, cycle):
         print(f"  {label} {name:<22} +{stored:>3}ev  tsi={tsi_state:<8} conc={pct:3.0f}%{alert_str}")
         total_events += stored
         total_alerts += alerts
+
     _inject_peers(ids)
 
     # ── Scénarios d'attaque — toutes les 3 cycles ────────────────────

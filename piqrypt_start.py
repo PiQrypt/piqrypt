@@ -45,6 +45,34 @@ import time
 from pathlib import Path
 from typing import List, Optional
 
+# ── Windows UTF-8 fix ─────────────────────────────────────────────────────────
+# PowerShell / cmd.exe utilisent cp1252 par défaut — force UTF-8 sur stdout/stderr
+# pour éviter UnicodeEncodeError sur les caractères ─ ✅ ❌ ⚠ etc.
+if sys.platform == "win32":
+    import io
+    try:
+        sys.stdout = io.TextIOWrapper(
+            sys.stdout.buffer, encoding="utf-8", errors="replace", line_buffering=True
+        )
+        sys.stderr = io.TextIOWrapper(
+            sys.stderr.buffer, encoding="utf-8", errors="replace", line_buffering=True
+        )
+    except AttributeError:
+        pass  # déjà reconfigured ou pas de buffer (pytest, etc.)
+    # Activer aussi le mode UTF-8 pour les sous-processus
+    os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+    # Activer le mode virtuel ANSI pour PowerShell (couleurs)
+    try:
+        import ctypes
+        kernel32 = ctypes.windll.kernel32
+        kernel32.SetConsoleOutputCP(65001)           # UTF-8 code page
+        kernel32.SetConsoleMode(
+            kernel32.GetStdHandle(-11),              # STDOUT
+            kernel32.GetConsoleMode(kernel32.GetStdHandle(-11), ctypes.byref(ctypes.c_ulong())) or 7
+        )
+    except Exception:
+        pass
+
 # ── Résolution des chemins ────────────────────────────────────────────────────
 _LAUNCHER_DIR = Path(__file__).resolve().parent
 for _p in [str(_LAUNCHER_DIR), str(_LAUNCHER_DIR / "aiss")]:
@@ -77,6 +105,25 @@ def red(t):    return _c(t, "31")
 def bold(t):   return _c(t, "1")
 def cyan(t):   return _c(t, "36")
 def dim(t):    return _c(t, "2")
+
+# ── Symboles unicode avec fallback ASCII ──────────────────────────────────────
+# Certains terminaux Windows (cp1252) ne supportent pas les caractères > U+00FF.
+# On détecte la capacité du codec et on replie sur ASCII si nécessaire.
+def _can_encode(s: str) -> bool:
+    try:
+        s.encode(sys.stdout.encoding or "ascii")
+        return True
+    except (UnicodeEncodeError, LookupError):
+        return False
+
+_OK   = "OK"   if not _can_encode("✅") else "✅"
+_ERR  = "ERR"  if not _can_encode("❌") else "❌"
+_WARN = "(!)"  if not _can_encode("⚠️") else "⚠️"
+_BOOK = "[r]"  if not _can_encode("📖") else "📖"
+_BULL = "*"    if not _can_encode("●")  else "●"
+_SEP  = "-"    if not _can_encode("─")  else "─"
+_INF  = "inf"  if not _can_encode("∞")  else "∞"
+_ARR  = "->"   if not _can_encode("→")  else "→"
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -224,24 +271,24 @@ class StartupCheck:
     def print_report(self):
         print()
         print(bold("PiQrypt Stack Launcher v1.7.0"))
-        print(dim("─" * 50))
+        print(dim(_SEP * 50))
         print(f"  Tier      : {bold(self.tier.upper())}")
-        print(f"  Vigil     : {'✅ complet' if tier_allows_vigil_full(self.tier) else '📖 lecture seule (Free)'}")
-        print(f"  TrustGate : {('✅ ' + ('complet' if self.tier in ('business','enterprise') else 'manuel')) if tier_allows_trustgate(self.tier) else red('non disponible — upgrade Pro')}")
+        print(f"  Vigil     : {_OK + ' complet' if tier_allows_vigil_full(self.tier) else _BOOK + ' lecture seule (Free)'}")
+        print(f"  TrustGate : {(_OK + ' ' + ('complet' if self.tier in ('business','enterprise') else 'manuel')) if tier_allows_trustgate(self.tier) else red('non disponible -- upgrade Pro')}")
         print()
 
         if self.warnings:
             for w in self.warnings:
-                print(yellow(f"  ⚠️  {w}"))
+                print(yellow(f"  {_WARN}  {w}"))
             print()
 
         if self.errors:
             for e in self.errors:
-                print(red(f"  ❌ {e}"))
+                print(red(f"  {_ERR} {e}"))
             print()
-            print(red("  Startup annulé — corrigez les erreurs ci-dessus."))
+            print(red("  Startup annule -- corrigez les erreurs ci-dessus."))
         else:
-            print(green("  ✅ Configuration valide — prêt à démarrer."))
+            print(green(f"  {_OK} Configuration valide -- pret a demarrer."))
         print()
 
 
@@ -292,11 +339,11 @@ class ServiceProcess:
                           self.name, self._process.returncode)
                 return False
 
-            log.info("[%s] ✅ Démarré — http://%s:%d", self.name, self.host, self.port)
+            log.info("[%s] %s Demarre -- http://%s:%d", self.name, _OK, self.host, self.port)
             return True
 
         except Exception as e:
-            log.error("[%s] ❌ Échec démarrage : %s", self.name, e)
+            log.error("[%s] %s Echec demarrage : %s", self.name, _ERR, e)
             return False
 
     def _log_output(self):
@@ -308,13 +355,13 @@ class ServiceProcess:
 
     def stop(self):
         if self._process and self._process.poll() is None:
-            log.info("[%s] Arrêt en cours…", self.name)
+            log.info("[%s] Arret en cours...", self.name)
             self._process.terminate()
             try:
                 self._process.wait(timeout=5)
             except subprocess.TimeoutExpired:
                 self._process.kill()
-            log.info("[%s] ✅ Arrêté.", self.name)
+            log.info("[%s] %s Arrete.", self.name, _OK)
 
     def is_running(self) -> bool:
         return self._process is not None and self._process.poll() is None
@@ -360,7 +407,7 @@ class PiQryptLauncher:
                     port=DEFAULT_VIGIL_PORT,
                 ))
             else:
-                log.error("vigil_server.py introuvable — Vigil non démarré")
+                log.error("vigil_server.py introuvable -- Vigil non demarre")
 
         # ── TrustGate ──
         launch_tg = (
@@ -380,11 +427,11 @@ class PiQryptLauncher:
                     port=DEFAULT_TRUSTGATE_PORT,
                 ))
             else:
-                log.warning("trustgate_server.py introuvable — TrustGate non démarré")
+                log.warning("trustgate_server.py introuvable -- TrustGate non demarre")
         elif not tier_allows_trustgate(self.tier) and not self.args.vigil_only:
             log.info(
                 "TrustGate non disponible sur le tier '%s'. "
-                "Disponible à partir du tier Pro — https://piqrypt.com/pricing",
+                "Disponible a partir du tier Pro -- https://piqrypt.com/pricing",
                 self.tier
             )
 
@@ -411,10 +458,10 @@ class PiQryptLauncher:
         # ── Démarrer les services ──
         self.services = self._build_services()
         if not self.services:
-            log.error("Aucun service à démarrer.")
+            log.error("Aucun service a demarrer.")
             return 1
 
-        print(bold("\n  Démarrage du stack PiQrypt…"))
+        print(bold("\n  Demarrage du stack PiQrypt..."))
         print()
 
         started = []
@@ -422,26 +469,24 @@ class PiQryptLauncher:
             if svc.start():
                 started.append(svc)
             else:
-                log.error("Échec démarrage %s — arrêt.", svc.name)
+                log.error("Echec demarrage %s -- arret.", svc.name)
                 self._shutdown_all()
                 return 1
 
         # ── Résumé ──
         print()
         print(bold("  Stack PiQrypt operationnel"))
-        # Ouverture navigateur geree par les launchers (start_*.ps1)
-        print(dim("  " + "─" * 46))
+        print(dim("  " + _SEP * 46))
         for svc in started:
-            # Afficher l'URL avec token pour acces direct au dashboard
             _token = os.getenv("VIGIL_TOKEN", "") if svc.name == "Vigil" else os.getenv("TRUSTGATE_TOKEN", "")
             _tg_path = "/console" if svc.name == "TrustGate" else ""
             _display_url = f"{svc.url}{_tg_path}?token={_token}" if _token else svc.url
-            print(f"  {green('●')} {svc.name:<12} {cyan(_display_url)}")
+            print(f"  {green(_BULL)} {svc.name:<12} {cyan(_display_url)}")
         tier_label = self.tier.upper()
         print(f"  {'Tier':<12} {bold(tier_label)}")
-        print(f"  {'Auth':<12} {'✅ Bearer token' if os.getenv('VIGIL_TOKEN') else red('⚠️  non configuré')}")
+        print(f"  {'Auth':<12} {_OK + ' Bearer token' if os.getenv('VIGIL_TOKEN') else red(_WARN + '  non configure')}")
         print()
-        print(dim("  Ctrl+C pour arrêter."))
+        print(dim("  Ctrl+C pour arreter."))
         print()
 
         # ── Graceful shutdown ──
@@ -449,7 +494,7 @@ class PiQryptLauncher:
             if not self._stopped:
                 self._stopped = True
                 print()
-                log.info("Signal %d reçu — arrêt en cours…", sig)
+                log.info("Signal %d recu -- arret en cours...", sig)
                 self._shutdown_all()
                 sys.exit(0)
 
@@ -494,14 +539,14 @@ def cmd_gen_tokens():
     trustgate_token = secrets.token_urlsafe(32)
 
     print()
-    print(bold("  Tokens PiQrypt générés"))
-    print(dim("  " + "─" * 50))
+    print(bold("  Tokens PiQrypt generes"))
+    print(dim("  " + _SEP * 50))
     print()
     print("  Copiez ces lignes dans votre .env ou votre shell :\n")
     print(f"  export VIGIL_TOKEN={vigil_token}")
     print(f"  export TRUSTGATE_TOKEN={trustgate_token}")
     print()
-    print(dim("  Ces tokens ne sont pas sauvegardés — notez-les maintenant."))
+    print(dim("  Ces tokens ne sont pas sauvegardes -- notez-les maintenant."))
     print()
 
     # Proposer de créer un fichier .env
@@ -513,7 +558,7 @@ def cmd_gen_tokens():
                 f"VIGIL_TOKEN={vigil_token}\n"
                 f"TRUSTGATE_TOKEN={trustgate_token}\n"
             )
-            print(green(f"  ✅ Fichier créé : {env_file}"))
+            print(green(f"  {_OK} Fichier cree : {env_file}"))
             print(dim("  Source : source .env.piqrypt  (bash/zsh)"))
             print()
     except OSError:
@@ -527,20 +572,20 @@ def cmd_status():
     tg_token    = os.getenv("TRUSTGATE_TOKEN", "")
 
     print()
-    print(bold("  PiQrypt Stack — État de la configuration"))
-    print(dim("  " + "─" * 50))
+    print(bold("  PiQrypt Stack -- Etat de la configuration"))
+    print(dim("  " + _SEP * 50))
     print(f"  Tier          : {bold(tier.upper())}")
-    print(f"  VIGIL_TOKEN   : {'✅ défini' if vigil_token else red('❌ absent')}")
-    print(f"  TRUSTGATE_TOKEN: {'✅ défini' if tg_token else (yellow('⚠️  absent') if tier_allows_trustgate(tier) else dim('non requis (Free)'))}")
+    print(f"  VIGIL_TOKEN   : {_OK + ' defini' if vigil_token else red(_ERR + ' absent')}")
+    print(f"  TRUSTGATE_TOKEN: {_OK + ' defini' if tg_token else (yellow(_WARN + '  absent') if tier_allows_trustgate(tier) else dim('non requis (Free)'))}")
     print()
 
     try:
         from aiss.license import get_license_info
         info = get_license_info()
-        print(f"  Agents max    : {info.get('agents_max') or '∞'}")
-        print(f"  Events/mois   : {info.get('events_month') or '∞'}")
+        print(f"  Agents max    : {info.get('agents_max') or _INF}")
+        print(f"  Events/mois   : {info.get('events_month') or _INF}")
         print(f"  TrustGate     : {info['features'].get('trustgate') or red('non disponible')}")
-        print(f"  Quantum       : {'✅' if info['features'].get('quantum') else '—'}")
+        print(f"  Quantum       : {_OK if info['features'].get('quantum') else '--'}")
     except Exception:
         pass
     print()

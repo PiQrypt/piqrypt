@@ -258,6 +258,30 @@ body::before{
 }
 .star-info.show{display:block}
 
+/* ── CANVAS MODE SELECTOR ── */
+.cmode-bar{
+  display:flex;align-items:center;gap:6px;
+  padding:8px 14px;border-bottom:1px solid var(--b1);
+  background:var(--s1);
+}
+.cmode-label{font-family:var(--mono);font-size:9px;color:var(--txd);letter-spacing:.12em;text-transform:uppercase;margin-right:4px}
+.cmode-btn{
+  display:flex;align-items:center;gap:5px;
+  font-family:var(--mono);font-size:9px;letter-spacing:.06em;
+  padding:3px 10px;border-radius:var(--r);border:1px solid var(--b2);
+  color:var(--txd);background:transparent;cursor:pointer;transition:all .12s;
+}
+.cmode-btn:hover{color:var(--txm);border-color:var(--b2)}
+.cmode-btn.active{color:var(--ac);border-color:var(--ac);background:var(--ac2)}
+.cmode-btn .cmode-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
+.cmode-split{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--b1)}
+.cmode-split-label{
+  font-family:var(--mono);font-size:8px;letter-spacing:.12em;color:var(--txd);
+  text-transform:uppercase;padding:5px 10px;background:var(--s2);
+  border-bottom:1px solid var(--b1);
+}
+.cmode-pane{background:var(--s2);position:relative;overflow:hidden}
+
 /* ── STAMP PANEL ── */
 .stamp-panel{
   position:fixed; top:0; right:-420px; width:400px; height:100vh;
@@ -342,6 +366,30 @@ body::before{
 
 .toast{position:fixed;bottom:20px;right:20px;z-index:900;background:var(--s1);border:1px solid var(--b2);border-radius:var(--r2);padding:10px 16px;font-family:var(--mono);font-size:11px;box-shadow:0 8px 24px rgba(0,0,0,.4);transform:translateY(60px);opacity:0;transition:all .25s cubic-bezier(.34,1.56,.64,1);pointer-events:none}
 .toast.show{transform:translateY(0);opacity:1}
+
+/* ── LIVE COCKPIT ROWS ── */
+@keyframes ck-flash{from{background:rgba(0,200,224,.12)}to{background:transparent}}
+.ck-row{display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,.03);transition:background .1s;min-height:44px}
+.ck-row:hover{background:rgba(0,200,224,.03)}
+.ck-row.ck-new{animation:ck-flash .8s ease both}
+.ck-time{font-family:var(--mono);font-size:8px;color:var(--txd);padding:8px 6px 8px 10px;flex-shrink:0;white-space:nowrap;align-self:flex-start;margin-top:2px;min-width:46px}
+.ck-type-col{width:2px;flex-shrink:0;align-self:stretch;margin:2px 6px 2px 0;border-radius:1px}
+.ck-body{flex:1;padding:7px 10px 7px 0;min-width:0}
+.ck-head{display:flex;align-items:center;gap:5px;margin-bottom:4px;flex-wrap:wrap}
+.ck-type{font-family:var(--mono);font-size:8px;font-weight:700;letter-spacing:.08em;padding:1px 5px;border-radius:2px;flex-shrink:0}
+.ck-peer{font-family:var(--mono);font-size:8px;color:var(--txd)}
+.ck-peer span{color:var(--ac)}
+.ck-sig{font-family:var(--mono);font-size:8px;font-weight:700;padding:1px 4px;border-radius:2px;margin-left:auto;flex-shrink:0}
+.ck-natural{font-size:11px;color:var(--txm);line-height:1.4}
+.ck-natural strong{color:var(--tx);font-weight:500}
+.ck-natural code{font-family:var(--mono);font-size:9px;color:var(--ac)}
+.ck-hash{font-family:var(--mono);font-size:8px;color:var(--txd);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* ── COCKPIT PEER BARS ── */
+.cockpit-peer-row{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.cockpit-peer-name{font-family:var(--mono);font-size:9px;color:var(--txm);width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0}
+.cockpit-peer-bar{flex:1;height:3px;background:var(--b1);border-radius:2px;overflow:hidden}
+.cockpit-peer-fill{height:100%;border-radius:2px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.cockpit-peer-pct{font-family:var(--mono);font-size:8px;color:var(--txd);width:28px;text-align:right;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -455,12 +503,19 @@ body::before{
   <div id="agent-detail"></div>
 </div>
 
-<!-- STAR GRAPH -->
+<!-- STAR GRAPH / NETWORK VIEW -->
 <div class="view" id="view-star">
   <div class="slabel">Agent Network — Relational View</div>
-  <div class="star-wrap">
-    <div class="star-controls">
-      <span>Click an agent to inspect · Edge thickness = A2C correlation · Color = risk level</span>
+
+  <!-- Mode selector bar -->
+  <div class="star-wrap" style="margin-bottom:10px">
+    <div class="cmode-bar">
+      <span class="cmode-label">View</span>
+      <button class="cmode-btn active" id="cmb-split"  onclick="setCanvasMode('split')"><span class="cmode-dot"></span>A+D Split</button>
+      <button class="cmode-btn"        id="cmb-orbital" onclick="setCanvasMode('orbital')"><span class="cmode-dot"></span>A — Orbital</button>
+      <button class="cmode-btn"        id="cmb-circuit" onclick="setCanvasMode('circuit')"><span class="cmode-dot"></span>B — Circuit</button>
+      <button class="cmode-btn"        id="cmb-radar"   onclick="setCanvasMode('radar')"><span class="cmode-dot"></span>C — Radar</button>
+      <button class="cmode-btn"        id="cmb-lanes"   onclick="setCanvasMode('lanes')"><span class="cmode-dot"></span>D — Lanes</button>
       <div style="flex:1"></div>
       <div class="star-legend">
         <div class="star-li"><div class="star-dot" style="background:var(--safe)"></div>SAFE</div>
@@ -468,14 +523,47 @@ body::before{
         <div class="star-li"><div class="star-dot" style="background:var(--alert)"></div>ALERT</div>
         <div class="star-li"><div class="star-dot" style="background:var(--crit)"></div>CRITICAL</div>
       </div>
-      <select id="star-center" onchange="drawStar()" style="background:var(--s2);border:1px solid var(--b1);color:var(--txm);padding:3px 8px;font-family:var(--mono);font-size:9px;border-radius:var(--r);outline:none;margin-left:10px">
+      <select id="star-center" onchange="_redrawCurrentMode()" style="background:var(--s2);border:1px solid var(--b1);color:var(--txm);padding:3px 8px;font-family:var(--mono);font-size:9px;border-radius:var(--r);outline:none;margin-left:10px">
         <option value="">All agents</option>
       </select>
     </div>
-    <canvas id="star-canvas" class="star-canvas" height="440"></canvas>
-    <div class="star-info" id="star-info"></div>
+
+    <!-- SPLIT (A+D) -->
+    <div id="cv-split" class="cmode-split">
+      <div class="cmode-pane">
+        <div class="cmode-split-label">A — Orbital network</div>
+        <canvas id="star-canvas" class="star-canvas"></canvas>
+        <div class="star-info" id="star-info"></div>
+      </div>
+      <div class="cmode-pane">
+        <div class="cmode-split-label">D — Flow lanes</div>
+        <canvas id="lanes-canvas" style="display:block;width:100%"></canvas>
+      </div>
+    </div>
+
+    <!-- ORBITAL full -->
+    <div id="cv-orbital" style="display:none">
+      <canvas id="orbital-canvas" class="star-canvas"></canvas>
+      <div class="star-info" id="star-info-orbital"></div>
+    </div>
+
+    <!-- CIRCUIT full -->
+    <div id="cv-circuit" style="display:none">
+      <canvas id="circuit-canvas" class="star-canvas"></canvas>
+    </div>
+
+    <!-- RADAR full -->
+    <div id="cv-radar" style="display:none">
+      <canvas id="radar-canvas" class="star-canvas"></canvas>
+    </div>
+
+    <!-- LANES full -->
+    <div id="cv-lanes" style="display:none">
+      <canvas id="lanes-full-canvas" class="star-canvas"></canvas>
+    </div>
   </div>
-  <div style="margin-top:10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px" id="star-agent-cards"></div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px" id="star-agent-cards"></div>
 </div>
 
 <!-- ALERTS -->
@@ -647,12 +735,48 @@ body::before{
     <button class="sp-close" onclick="_closeStampPanel()">✕</button>
   </div>
   <div class="sp-meta" id="sp-meta"></div>
-  <div class="sp-filter">
-    <input class="sp-search" id="sp-search" placeholder="Filter by type, payload…" oninput="_filterStamps()">
-    <span id="sp-count" style="font-family:var(--mono);font-size:9px;color:var(--txd);white-space:nowrap"></span>
+  <!-- Onglets -->
+  <div style="display:flex;border-bottom:1px solid var(--b1);flex-shrink:0;background:var(--s1)">
+    <div id="sp-tab-stamps" onclick="_spSetTab('stamps')"
+      style="flex:1;text-align:center;padding:7px 0;font-family:var(--mono);font-size:9px;letter-spacing:.08em;cursor:pointer;color:var(--ac);border-bottom:2px solid var(--ac);transition:all .12s">STAMPS</div>
+    <div id="sp-tab-live" onclick="_spSetTab('live')"
+      style="flex:1;text-align:center;padding:7px 0;font-family:var(--mono);font-size:9px;letter-spacing:.08em;cursor:pointer;color:var(--txd);border-bottom:2px solid transparent;transition:all .12s">◉ LIVE</div>
   </div>
-  <div class="sp-list" id="sp-list">
-    <div class="sp-empty">Click an agent on the network graph<br>to inspect its stamps</div>
+  <!-- Onglet Stamps -->
+  <div id="sp-pane-stamps" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+    <div class="sp-filter">
+      <input class="sp-search" id="sp-search" placeholder="Filter by type, payload…" oninput="_filterStamps()">
+      <span id="sp-count" style="font-family:var(--mono);font-size:9px;color:var(--txd);white-space:nowrap"></span>
+    </div>
+    <div class="sp-list" id="sp-list">
+      <div class="sp-empty">Click an agent on the network graph<br>to inspect its stamps</div>
+    </div>
+  </div>
+  <!-- Onglet Live Feed -->
+  <div id="sp-pane-live" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+    <div style="display:flex;align-items:center;gap:5px;padding:6px 10px;border-bottom:1px solid var(--b1);flex-shrink:0;background:var(--s1)">
+      <div id="ck-live-d" style="width:5px;height:5px;border-radius:50%;background:var(--safe);box-shadow:0 0 5px var(--safe);animation:lp 1.8s ease-in-out infinite;flex-shrink:0"></div>
+      <span id="ck-live-label" style="font-family:var(--mono);font-size:8px;color:var(--txd);letter-spacing:.1em">LIVE</span>
+      <div style="flex:1"></div>
+      <button id="ck-btn-live" onclick="_ckToggleLive()"
+        style="font-family:var(--mono);font-size:8px;padding:2px 7px;border-radius:var(--r);border:1px solid var(--ac);color:var(--ac);background:var(--ac2);cursor:pointer">⟳ LIVE</button>
+      <button id="ck-btn-scroll" onclick="_ckToggleScroll()"
+        style="font-family:var(--mono);font-size:8px;padding:2px 7px;border-radius:var(--r);border:1px solid var(--b2);color:var(--txd);background:transparent;cursor:pointer">↓ AUTO</button>
+      <button onclick="_ckClear()"
+        style="font-family:var(--mono);font-size:8px;padding:2px 7px;border-radius:var(--r);border:1px solid var(--b2);color:var(--txd);background:transparent;cursor:pointer">CLEAR</button>
+      <select id="ck-filter" onchange="_ckApplyFilter()"
+        style="background:var(--s2);border:1px solid var(--b1);color:var(--txm);padding:2px 4px;font-family:var(--mono);font-size:8px;border-radius:var(--r);outline:none">
+        <option value="">All</option>
+        <option>action</option><option>decision</option><option>observation</option>
+        <option>alert</option><option>a2a_handshake</option><option>trust_update</option><option>chain_verify</option>
+      </select>
+    </div>
+    <div id="ck-paused-banner"
+      style="display:none;background:rgba(6,8,11,.85);font-family:var(--mono);font-size:9px;color:var(--watch);text-align:center;padding:3px;letter-spacing:.1em;border-bottom:1px solid var(--watchb);flex-shrink:0">
+      ⏸ PAUSED</div>
+    <div id="ck-stream" style="flex:1;overflow-y:auto;display:flex;flex-direction:column">
+      <div style="padding:30px 16px;text-align:center;font-family:var(--mono);font-size:10px;color:var(--txd)">Cliquez un agent sur le graphe</div>
+    </div>
   </div>
 </div>
 
@@ -749,6 +873,7 @@ const _stampFlash   = {};   // agentName → {t, intensity}  (t=0..1, decays)
 const _stampHistory = [];   // [{src, dst, t, col, id}]  cross-agent stamps
 let   _lastEventCounts = {};
 let   _serverStart = null;
+let _starRaf = null;
 
 function _injectStampFlash(agentName, intensity=1.0){
   _stampFlash[agentName] = { t: 1.0, intensity };
@@ -789,434 +914,18 @@ function _spawnBurst(x, y, col, count=6){
   }
 }
 
+// ── drawStar : alias vers _drawOrbital sur star-canvas ────────────────────
+// Toutes les logiques de rendu sont dans _drawOrbital / setCanvasMode.
+// Cette fonction est conservée pour compatibilité avec les appels existants.
 function drawStar(){
-  if(_starRaf){ cancelAnimationFrame(_starRaf); _starRaf = null; }
-
-  const canvas = document.getElementById('star-canvas');
-  if(!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const W = canvas.parentElement.clientWidth || 600;
-  canvas.width = W;
-  const H = 520;
-  canvas.height = H;
-
-  const agents = AGENTS;
-  const n = agents.length;
-  if(!n){ ctx.clearRect(0,0,W,H); return; }
-
-  const centerFilter = document.getElementById('star-center').value;
-  const cx = W/2, cy = H/2;
-  // Internal ring: keep agents well within canvas with margin for labels
-  const margin = 70; // room for node label below + stamp rings
-  const R = Math.min(W/2 - margin, H/2 - margin) * 0.72;
-
-  // ── Node positions ─────────────────────────────────────────────────
-  const positions = {};
-  const internalAgents = agents.filter(a=>!a.is_external);
-  const externalAgents = agents.filter(a=>a.is_external);
-  // External ring: fits INSIDE canvas — max radius constrained to canvas bounds
-  const Rext = Math.min(W/2 - 36, H/2 - 36, R + 90);
-  if(centerFilter){
-    const center = agents.find(a=>a.name===centerFilter);
-    const others = internalAgents.filter(a=>a.name!==centerFilter);
-    if(center) positions[center.name] = {x:cx, y:cy, r:28};
-    others.forEach((a,i)=>{
-      const angle = (i/others.length)*Math.PI*2 - Math.PI/2;
-      positions[a.name] = {x:cx+Math.cos(angle)*R, y:cy+Math.sin(angle)*R, r:20};
-    });
-  } else {
-    internalAgents.forEach((a,i)=>{
-      const angle = (i/Math.max(internalAgents.length,1))*Math.PI*2 - Math.PI/2;
-      positions[a.name] = {x:cx+Math.cos(angle)*R, y:cy+Math.sin(angle)*R, r:20};
-    });
-  }
-  // Peers externes — anneau extérieur, nœuds plus petits
-  externalAgents.forEach((a,i)=>{
-    const angle = (i/Math.max(externalAgents.length,1))*Math.PI*2 - Math.PI/2;
-    positions[a.name] = {x:cx+Math.cos(angle)*Rext, y:cy+Math.sin(angle)*Rext, r:11};
-  });
-
-  // ── Flow particles (A2C correlation edges) ─────────────────────────
-  const flowParticles = [];
-  agents.forEach(agent=>{
-    if(agent.is_external) return; // les externes n'émettent pas
-    (agent.peers||[]).forEach(([peer,corr])=>{
-      if(!corr || corr < 0.04) return;
-      const maxVrs = Math.max(agent.vrs, (agents.find(a=>a.name===peer)||{vrs:0}).vrs);
-      const col = maxVrs>0.5?'#ff6200':maxVrs>0.25?'#ffb300':'#00e676';
-      const count = Math.max(1, Math.round(corr*5));
-      for(let i=0;i<count;i++){
-        flowParticles.push({
-          src:agent.name, dst:peer,
-          t: i/count,
-          speed: 0.003 + corr*0.007,
-          col, size: 2+corr*2, op: 0.55+corr*0.4,
-        });
-      }
-    });
-    // Liens vers peers externes — particules fines bleues
-    (agent.a2c_peers||[]).forEach(([peer, corr])=>{
-      if(!positions[peer]) return; // pas positionné = pas externe enregistré
-      const extAgent = externalAgents.find(a=>a.name===peer);
-      if(!extAgent) return;
-      flowParticles.push({
-        src:agent.name, dst:peer,
-        t: Math.random(),
-        speed: 0.004,
-        col:'#4a9eff', size:1.5, op:0.45,
-      });
-    });
-  });
-
-  // ── Session particles (cross-agent stamps — directional) ────────────
-  // Simulated from peers with high correlation as "active A2A sessions"
-  const sessionStreams = [];
-  agents.forEach(agent=>{
-    (agent.peers||[]).filter(([,c])=>c>0.3).forEach(([peer,corr])=>{
-      if(positions[agent.name] && positions[peer]){
-        // Bidirectional — represent real A2A traffic
-        sessionStreams.push({src:agent.name, dst:peer, corr, col:'#00c8e0', t:Math.random(), speed:0.004+corr*0.005});
-        sessionStreams.push({src:peer, dst:agent.name, corr, col:'#a78bfa', t:Math.random(), speed:0.003+corr*0.004});
-      }
-    });
-  });
-
-  // ── Hover state ─────────────────────────────────────────────────────
-  let hovered = null;
-  canvas.onmousemove = e=>{
-    const rect=canvas.getBoundingClientRect();
-    const mx=(e.clientX-rect.left)*(W/rect.width);
-    const my=(e.clientY-rect.top)*(H/rect.height);
-    hovered = null;
-    for(const [name,pos] of Object.entries(positions)){
-      if((mx-pos.x)**2+(my-pos.y)**2 < pos.r**2*2.5){ hovered=name; break; }
-    }
-    canvas.style.cursor = hovered?'pointer':'default';
-  };
-  canvas.onmouseleave = ()=>{ hovered=null; };
-  canvas.onclick = e=>{
-    const rect=canvas.getBoundingClientRect();
-    const mx=(e.clientX-rect.left)*(W/rect.width);
-    const my=(e.clientY-rect.top)*(H/rect.height);
-    for(const [name,pos] of Object.entries(positions)){
-      if((mx-pos.x)**2+(my-pos.y)**2 < pos.r**2*2.5){
-        // If same agent clicked twice → deselect
-        const sel=document.getElementById('star-center');
-        if(sel.value===name){
-          sel.value=''; drawStar(); _closeStampPanel(); return;
-        }
-        sel.value=name; drawStar();
-        _openStampPanel(name); return;
-      }
-    }
-    document.getElementById('star-center').value='';
-    drawStar(); _closeStampPanel();
-  };
-
-  // ── Animation loop ─────────────────────────────────────────────────
-  let tick = 0;
-  let lastTime = performance.now();
-
-  function frame(now){
-    const dt = Math.min((now - lastTime)/1000, 0.1);
-    lastTime = now;
-    tick++;
-
-    ctx.clearRect(0,0,W,H);
-
-    // Detect new stamps every ~30 frames
-    if(tick % 30 === 0) _detectNewStamps();
-
-    // Decay flash states
-    _decayFlashes(dt);
-
-  // ── Background grid (subtle) ──────────────────────────────────────
-    ctx.save();
-    ctx.strokeStyle='rgba(0,200,224,0.04)';
-    ctx.lineWidth=0.5;
-    for(let gx=0;gx<W;gx+=40){ ctx.beginPath();ctx.moveTo(gx,0);ctx.lineTo(gx,H);ctx.stroke(); }
-    for(let gy=0;gy<H;gy+=40){ ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(W,gy);ctx.stroke(); }
-    ctx.restore();
-
-    // ── Internal zone circle (dashed) ────────────────────────────────
-    if(externalAgents.length>0){
-      ctx.save();
-      ctx.beginPath(); ctx.arc(cx,cy,R+32,0,Math.PI*2);
-      ctx.strokeStyle='rgba(0,200,224,0.08)'; ctx.lineWidth=1;
-      ctx.setLineDash([6,6]); ctx.stroke(); ctx.setLineDash([]);
-      ctx.font='9px monospace'; ctx.fillStyle='rgba(0,200,224,0.18)';
-      ctx.textAlign='left';
-      ctx.fillText('── INTERNAL ──', cx+R+36, cy-6);
-      ctx.fillText('── EXTERNAL ──', cx+Rext-20, cy-6);
-      ctx.restore();
-    }
-
-    // ── Edges (A2C correlation) ───────────────────────────────────────
-    const drawn = new Set();
-    agents.forEach(agent=>{
-      (agent.peers||[]).forEach(([peer,corr])=>{
-        const key=[agent.name,peer].sort().join('|');
-        if(drawn.has(key)) return;
-        drawn.add(key);
-        const p1=positions[agent.name], p2=positions[peer];
-        if(!p1||!p2) return;
-        const maxVrs=Math.max(agent.vrs,(agents.find(a=>a.name===peer)||{vrs:0}).vrs);
-        const col=maxVrs>0.5?'rgba(255,98,0,':maxVrs>0.25?'rgba(255,179,0,':'rgba(0,230,118,';
-        ctx.beginPath();
-        ctx.strokeStyle=`${col}${0.06+corr*0.25})`;
-        ctx.lineWidth=0.5+corr*2.5;
-        corr>0.5?ctx.setLineDash([5,4]):ctx.setLineDash([]);
-        ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke();
-        ctx.setLineDash([]);
-        if(corr>0.15){
-          ctx.font='9px monospace'; ctx.fillStyle=`${col}0.5)`; ctx.textAlign='center';
-          ctx.fillText(corr.toFixed(2),(p1.x+p2.x)/2,(p1.y+p2.y)/2-5);
-        }
-      });
-    });
-
-    // ── Session streams (directional — co-signed A2A) ─────────────────
-    sessionStreams.forEach(s=>{
-      const p1=positions[s.src], p2=positions[s.dst];
-      if(!p1||!p2){ s.t=0; return; }
-      s.t += s.speed;
-      if(s.t>1) s.t=0;
-      const x=p1.x+(p2.x-p1.x)*s.t;
-      const y=p1.y+(p2.y-p1.y)*s.t;
-      // Arrow head at tip
-      const dx=p2.x-p1.x, dy=p2.y-p1.y;
-      const len=Math.sqrt(dx*dx+dy*dy)||1;
-      const nx=dx/len, ny=dy/len;
-      // Glow
-      const g=ctx.createRadialGradient(x,y,0,x,y,6);
-      g.addColorStop(0,s.col+'cc'); g.addColorStop(1,s.col+'00');
-      ctx.beginPath(); ctx.arc(x,y,6,0,Math.PI*2);
-      ctx.fillStyle=g; ctx.fill();
-      // Core
-      ctx.beginPath(); ctx.arc(x,y,2,0,Math.PI*2);
-      ctx.fillStyle=s.col; ctx.globalAlpha=0.9; ctx.fill(); ctx.globalAlpha=1;
-      // Mini arrow
-      if(s.t>0.05 && s.t<0.95){
-        ctx.beginPath();
-        ctx.moveTo(x+nx*7-ny*3, y+ny*7+nx*3);
-        ctx.lineTo(x+nx*7+ny*3, y+ny*7-nx*3);
-        ctx.lineTo(x+nx*12, y+ny*12);
-        ctx.closePath();
-        ctx.fillStyle=s.col; ctx.globalAlpha=0.6; ctx.fill(); ctx.globalAlpha=1;
-      }
-    });
-
-    // ── A2C flow particles ─────────────────────────────────────────────
-    flowParticles.forEach(p=>{
-      const p1=positions[p.src], p2=positions[p.dst];
-      if(!p1||!p2){ p.t=0; return; }
-      const x=p1.x+(p2.x-p1.x)*p.t;
-      const y=p1.y+(p2.y-p1.y)*p.t;
-      const g=ctx.createRadialGradient(x,y,0,x,y,p.size*2.5);
-      g.addColorStop(0,p.col+'bb'); g.addColorStop(1,p.col+'00');
-      ctx.beginPath(); ctx.arc(x,y,p.size*2.5,0,Math.PI*2);
-      ctx.fillStyle=g; ctx.fill();
-      ctx.beginPath(); ctx.arc(x,y,p.size*0.7,0,Math.PI*2);
-      ctx.fillStyle=p.col; ctx.globalAlpha=p.op; ctx.fill(); ctx.globalAlpha=1;
-      p.t+=p.speed; if(p.t>1) p.t=0;
-    });
-
-    // ── Burst particles (stamp events) ────────────────────────────────
-    for(let i=_burstParticles.length-1;i>=0;i--){
-      const bp=_burstParticles[i];
-      bp.x+=bp.vx; bp.y+=bp.vy;
-      bp.vx*=0.92; bp.vy*=0.92;
-      bp.life-=0.04;
-      if(bp.life<=0){ _burstParticles.splice(i,1); continue; }
-      ctx.beginPath(); ctx.arc(bp.x,bp.y,bp.r*bp.life,0,Math.PI*2);
-      ctx.fillStyle=bp.col; ctx.globalAlpha=bp.life*0.8; ctx.fill(); ctx.globalAlpha=1;
-    }
-
-    // ── Alert pulse rings ──────────────────────────────────────────────
-    agents.forEach(agent=>{
-      const pos=positions[agent.name];
-      if(!pos) return;
-      if(agent.state==='ALERT'||agent.state==='CRITICAL'){
-        const col=agent.state==='CRITICAL'?'#f5003c':'#ff6200';
-        const phase=(tick*0.025)%1;
-        ctx.beginPath(); ctx.arc(pos.x,pos.y,pos.r+phase*24,0,Math.PI*2);
-        ctx.strokeStyle=col; ctx.globalAlpha=(1-phase)*0.5; ctx.lineWidth=1.5; ctx.stroke();
-        // Second ring offset
-        const phase2=(tick*0.025+0.5)%1;
-        ctx.beginPath(); ctx.arc(pos.x,pos.y,pos.r+phase2*24,0,Math.PI*2);
-        ctx.globalAlpha=(1-phase2)*0.25; ctx.stroke();
-        ctx.globalAlpha=1;
-      }
-    });
-
-    // ── Stamp flash rings (when agent stamps an event) ─────────────────
-    for(const [name, flash] of Object.entries(_stampFlash)){
-      const pos=positions[name];
-      if(!pos) continue;
-      const col='#00c8e0';
-      const radius = pos.r + (1-flash.t)*30;
-      ctx.beginPath(); ctx.arc(pos.x,pos.y,radius,0,Math.PI*2);
-      ctx.strokeStyle=col; ctx.globalAlpha=flash.t*flash.intensity*0.9;
-      ctx.lineWidth=2.5; ctx.stroke();
-      // Inner flash fill
-      const g2=ctx.createRadialGradient(pos.x,pos.y,0,pos.x,pos.y,pos.r);
-      g2.addColorStop(0,col+(Math.round(flash.t*flash.intensity*80).toString(16).padStart(2,'0')));
-      g2.addColorStop(1,col+'00');
-      ctx.beginPath(); ctx.arc(pos.x,pos.y,pos.r,0,Math.PI*2);
-      ctx.fillStyle=g2; ctx.globalAlpha=flash.t*flash.intensity; ctx.fill();
-      ctx.globalAlpha=1;
-      // Spawn burst if fresh stamp
-      if(flash.t>0.92 && flash.intensity>0.7){
-        _spawnBurst(pos.x, pos.y, col, 8);
-      }
-    }
-
-    // ── Nodes ──────────────────────────────────────────────────────────
-    agents.forEach(agent=>{
-      const pos=positions[agent.name];
-      if(!pos) return;
-
-      // ── Peer externe — nœud losange grisé ──────────────────────────
-      if(agent.is_external){
-        const r=pos.r;
-        ctx.save();
-        ctx.translate(pos.x, pos.y);
-        ctx.rotate(Math.PI/4);
-        ctx.beginPath();
-        ctx.rect(-r,-r,r*2,r*2);
-        ctx.fillStyle='#0d1420'; ctx.fill();
-        ctx.strokeStyle='#4a6080'; ctx.lineWidth=1.5; ctx.stroke();
-        ctx.restore();
-        // Icône éclair pour external
-        ctx.font='bold 9px monospace'; ctx.fillStyle='#4a9eff';
-        ctx.textAlign='center';
-        ctx.fillText('⇄', pos.x, pos.y+3);
-        // Nom court
-        const shortName = agent.name.replace(/_/g,' ').split(' ').slice(0,2).join(' ');
-        ctx.font='500 8px sans-serif'; ctx.fillStyle='#6b8aaa';
-        ctx.fillText(shortName, pos.x, pos.y+r+11);
-        // Latence si dispo
-        if(agent.avg_latency_ms){
-          ctx.font='500 7px monospace'; ctx.fillStyle='#3d5a73';
-          ctx.fillText(agent.avg_latency_ms+'ms', pos.x, pos.y+r+20);
-        }
-        return;
-      }
-
-      const col=sc(agent.state);
-      const r=pos.r;
-      const isCenter=centerFilter===agent.name;
-      const isHover=hovered===agent.name;
-      const flash=_stampFlash[agent.name];
-      const flashBoost = flash ? flash.t*flash.intensity : 0;
-
-      // Outer glow halo — brighter when stamping
-      const grd=ctx.createRadialGradient(pos.x,pos.y,r*0.3,pos.x,pos.y,r*2.8);
-      grd.addColorStop(0,col+(isHover||flashBoost>0.5?'66':'33'));
-      grd.addColorStop(0.5,col+(flashBoost>0?Math.round(flashBoost*30).toString(16).padStart(2,'0'):'11'));
-      grd.addColorStop(1,col+'00');
-      ctx.beginPath(); ctx.arc(pos.x,pos.y,r*2.8,0,Math.PI*2); ctx.fillStyle=grd; ctx.fill();
-
-      // Circle body
-      ctx.beginPath(); ctx.arc(pos.x,pos.y,r,0,Math.PI*2);
-      ctx.fillStyle='#0d1420'; ctx.fill();
-
-      // Stroke — blinks cyan when stamping
-      const strokeCol = flashBoost>0.3 ? `rgba(0,200,224,${0.5+flashBoost*0.5})` : col;
-      ctx.strokeStyle=strokeCol;
-      ctx.lineWidth=isCenter||isHover?3:flashBoost>0.3?2.5:1.5; ctx.stroke();
-
-      // VRS fill arc
-      ctx.beginPath(); ctx.moveTo(pos.x,pos.y);
-      ctx.arc(pos.x,pos.y,r*0.78,-Math.PI/2,-Math.PI/2+agent.vrs*Math.PI*2);
-      ctx.closePath(); ctx.fillStyle=col+'2e'; ctx.fill();
-
-      // Active stamp indicator — small cyan dot
-      if(flashBoost>0.1){
-        ctx.beginPath(); ctx.arc(pos.x+r*0.65,pos.y-r*0.65,3.5,0,Math.PI*2);
-        ctx.fillStyle='#00c8e0'; ctx.globalAlpha=flashBoost; ctx.fill(); ctx.globalAlpha=1;
-      }
-
-      // Labels
-      ctx.textAlign='center';
-      ctx.font='bold 9px monospace'; ctx.fillStyle=col;
-      ctx.fillText(fv(agent.vrs),pos.x,pos.y+4);
-      ctx.font='500 10px sans-serif'; ctx.fillStyle='#c5d8ec';
-      ctx.fillText(agent.name.replace(/_/g,' '),pos.x,pos.y+r+14);
-
-      // Event count badge (small)
-      const evCount=agent.event_count||agent.events||0;
-      if(evCount>0){
-        const badge=evCount>999?Math.floor(evCount/1000)+'k':String(evCount);
-        ctx.font='8px monospace'; ctx.fillStyle='rgba(0,200,224,0.6)';
-        ctx.fillText(badge,pos.x,pos.y+r+24);
-      }
-    });
-
-    // ── Legend ──────────────────────────────────────────────────────────
-    const leg=[
-      {col:'#00e676',label:'SAFE'},
-      {col:'#ffb300',label:'WATCH'},
-      {col:'#ff6200',label:'ALERT'},
-      {col:'#f5003c',label:'CRITICAL'},
-      {col:'#00c8e0',label:'◉ Stamping'},
-      {col:'#a78bfa',label:'⟶ A2A flow'},
-    ];
-    leg.forEach((l,i)=>{
-      const lx=12, ly=H-12-i*16;
-      ctx.beginPath(); ctx.arc(lx,ly,4,0,Math.PI*2);
-      ctx.fillStyle=l.col; ctx.globalAlpha=0.85; ctx.fill(); ctx.globalAlpha=1;
-      ctx.font='9px sans-serif'; ctx.fillStyle='rgba(197,216,236,0.6)'; ctx.textAlign='left';
-      ctx.fillText(l.label,lx+9,ly+3);
-    });
-    ctx.textAlign='center';
-
-    _starRaf=requestAnimationFrame(frame);
-  }
-  frame(performance.now());
-
-  // ── Cards below canvas ──────────────────────────────────────────────
-  document.getElementById('star-agent-cards').innerHTML=agents.map(a=>{
-    const c=sc(a.state);
-    const evCount=a.event_count||a.events||0;
-    return`<div class="card" style="border-left:2px solid ${c};padding:10px 12px;cursor:pointer" onclick="openAgent('${a.name}')">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-        <div id="node-dot-${a.name.replace(/\W/g,'_')}" style="width:8px;height:8px;border-radius:50%;background:${c};flex-shrink:0;transition:box-shadow .2s"></div>
-        <span style="font-size:12px;font-weight:500;flex:1">${a.name}</span>
-        <span class="sbadge ${scls(a.state)}" style="font-size:8px">● ${a.state}</span>
-        <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:${c}">${fv(a.vrs)}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;margin-bottom:5px">
-        <span style="font-family:var(--mono);font-size:9px;color:var(--txd)">${evCount>0?evCount.toLocaleString()+' events':'no events'}</span>
-        <span style="font-family:var(--mono);font-size:9px;color:var(--ac)">${a.bridge?a.bridge:a.tier||''}</span>
-      </div>
-      <div style="font-size:10px;color:var(--txd);font-family:var(--mono)">
-        ${(a.peers||[]).map(([p,v])=>`<span style="color:${v>.5?'var(--alert)':v>.2?'var(--watch)':'var(--txd)'}">${p.split('_')[0]} ${v.toFixed(2)}</span>`).join(' · ')||'<span style="color:var(--txd)">no peers yet</span>'}
-      </div>
-    </div>`;
-  }).join('');
-
-  // ── Pulse card dots when stamp events detected ──────────────────────
-  function _pulseCardDots(){
-    for(const [name, flash] of Object.entries(_stampFlash)){
-      const dotEl = document.getElementById('node-dot-'+name.replace(/\W/g,'_'));
-      if(dotEl && flash.t > 0.3){
-        const alpha=Math.round(flash.t*200).toString(16).padStart(2,'0');
-        dotEl.style.boxShadow=`0 0 ${Math.round(flash.t*12)}px #00c8e0${alpha}`;
-        dotEl.style.background='#00c8e0';
-      } else if(dotEl){
-        const agent=AGENTS.find(a=>a.name===name);
-        dotEl.style.boxShadow='none';
-        dotEl.style.background=agent?sc(agent.state):'var(--txd)';
-      }
-    }
-    requestAnimationFrame(_pulseCardDots);
-  }
-  _pulseCardDots();
+  _drawOrbital('star-canvas', 560);
 }
 function populateStarSelect(){
   const s=document.getElementById('star-center');
+  const cur=s.value;
+  while(s.options.length>1) s.remove(1);
   AGENTS.forEach(a=>{const o=document.createElement('option');o.value=a.name;o.textContent=a.name;s.appendChild(o)});
+  if(cur && AGENTS.find(a=>a.name===cur)) s.value=cur;
 }
 
 // ════════════════════════════════════════════
@@ -1481,7 +1190,7 @@ function renderAV(){
   const list=[...ALL_ALERTS].filter(a=>(!fs||a.sev===fs)&&(!fa||a.ag===fa)).sort((a,b)=>(o[b.sev]||0)-(o[a.sev]||0)||(b.t||0)-(a.t||0));
   document.getElementById('alerts-list').innerHTML=list.length?list.map(aRow).join(''):`<div style="padding:20px 14px;font-family:var(--mono);font-size:10px;color:var(--txd)">No alerts match filter</div>`;
 }
-function popAlertFilters(){const s=document.getElementById('f-ag');AGENTS.forEach(a=>{const o=document.createElement('option');o.value=a.name;o.textContent=a.name;s.appendChild(o)})}
+function popAlertFilters(){const s=document.getElementById('f-ag');while(s.options.length>1)s.remove(1);AGENTS.forEach(a=>{const o=document.createElement('option');o.value=a.name;o.textContent=a.name;s.appendChild(o)})}
 
 // ════════════════════════════════════════════
 // SIDEBAR
@@ -1493,17 +1202,16 @@ function renderSbAgents(){
 // ════════════════════════════════════════════
 // VIEW ROUTING
 // ════════════════════════════════════════════
-let _starRaf = null;
 
 function sv(name,el){
   // Stop star animation when leaving that view
-  if(name !== 'star' && _starRaf){ cancelAnimationFrame(_starRaf); _starRaf = null; }
+  if(name !== 'star'){ _stopAllRenderers && _stopAllRenderers(); }
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.querySelectorAll('.sb-item').forEach(n=>n.classList.remove('active'));
   document.getElementById(`view-${name}`).classList.add('active');
   if(el)el.classList.add('active');
   if(name==='agents'){renderAgentsTable()}
-  if(name==='star'){setTimeout(()=>drawStar(),50)}
+  if(name==='star'){setTimeout(()=>setCanvasMode(_currentMode),50)}
   if(name==='alerts'){renderAV()}
   if(name==='timeline'){renderSOC()}
   if(name==='export'){filterExports()}
@@ -1639,11 +1347,11 @@ renderAV();
 populateStarSelect();
 updateSnippet();
 // resize star on window resize
-window.addEventListener('resize',()=>{if(document.getElementById('view-star').classList.contains('active'))drawStar()});
-</script>
+window.addEventListener('resize',()=>{if(document.getElementById('view-star').classList.contains('active'))_redrawCurrentMode()});
 
-<script>
-// PiQrypt Vigil — Backend connection
+// ════════════════════════════════════════════
+// BACKEND CONNECTION (merged — single script block)
+// ════════════════════════════════════════════
 
 // ── Auth helper ──────────────────────────────────────────────────────────────
 // Le token est injecté par vigil_server.py au moment de servir le HTML.
@@ -1687,6 +1395,10 @@ function _vigilFetch(url, opts){
   });
 }
 
+// ── Peer ID → name resolution cache ─────────────────────────────────────────
+// Populated from /api/summary — maps agent_id → agent_name
+var _peerNameCache = {};
+
 function _mapAgent(a){
   var vrs=+(a.vrs||0).toFixed(3);
   var state=(a.state||'SAFE').toUpperCase();
@@ -1694,8 +1406,19 @@ function _mapAgent(a){
   var tsi=(a.tsi_state||'STABLE').toUpperCase();
   var a2c=+(a.a2c_risk||0).toFixed(3);
   var td=a.tsi_detail||{},ad=a.a2c_detail||{};
-  // Peers : inclure a2c_peers_computed (qui contient les peers externes par nom)
-  var rawPeers=(a.a2c_peers||a.peers||[]).map(function(p){return Array.isArray(p)?p:[p.name,p.score||0]});
+
+  // Résolution des peers : si le peer_id est un UUID, on tente de le résoudre
+  // vers un nom lisible via _peerNameCache (peuplé depuis le summary)
+  var rawPeers=(a.a2c_peers||a.peers||[]).map(function(p){
+    if(Array.isArray(p)){
+      var pid=p[0], score=p[1]||0;
+      // Si l'ID ressemble à un UUID ou hash (pas un nom lisible), résoudre
+      var name = _peerNameCache[pid] || pid;
+      return [name, score];
+    }
+    return [p.name||p.agent_name||p.peer_id||p, p.score||p.correlation||0];
+  });
+
   return{
     name:a.agent_name||a.name, id:a.agent_id||a.name, tier:a.tier||'Pro',
     vrs:vrs, state:state, ts:ts, tsi:tsi, a2c:a2c,
@@ -1706,6 +1429,7 @@ function _mapAgent(a){
     last_seen:a.last_seen||(Date.now()/1000-60),
     alerts:a.alert_count||0,
     event_count:a.event_count||a.events||0,
+    bridge:a.bridge||'',
     ts_d:{I:ts,V_t:ts,D_t:ts,F:ts,R:1},
     tsi_d:{z:td.z_score||0,d24:td.delta_24h||0,base:td.baseline_mean||ts},
     a2c_ind:{
@@ -1733,11 +1457,57 @@ function loadFromBackend(){
       var raw=d.agents||[];
       console.log('[Vigil] /api/summary -> '+raw.length+' agents', raw);
 
+      // ── Peupler le cache ID→name depuis tous les agents du summary ────
+      raw.forEach(function(a){
+        var aid  = a.agent_id||a.name;
+        var name = a.agent_name||a.name;
+        if(aid && name) _peerNameCache[aid] = name;
+        // Aussi depuis a2c_peers si présent (paires [id, score])
+        (a.a2c_peers||a.peers||[]).forEach(function(p){
+          if(Array.isArray(p) && p[0] && typeof p[0]==='string'){
+            // Si la clé ressemble à un nom (pas un hex long), ignorer
+            // Sinon on l'enregistre en attente de résolution au prochain cycle
+          } else if(p && p.agent_id && p.agent_name){
+            _peerNameCache[p.agent_id] = p.agent_name;
+          }
+        });
+      });
+
       // ── Detect stamp activity before updating AGENTS ──────────────
       var prevCounts={};
       AGENTS.forEach(function(a){ prevCounts[a.name]=a.event_count||a.events||0; });
 
-      AGENTS=raw.map(_mapAgent);
+      // ── Merge doux : mettre à jour les agents existants sans reset ──
+      // Évite le re-calcul des positions et des particules dans le graphe
+      var newAgents=raw.map(_mapAgent);
+      var starVisible=document.getElementById('view-star').classList.contains('active');
+      var agentCountChanged=(newAgents.length !== AGENTS.length);
+
+      if(!agentCountChanged && AGENTS.length>0){
+        // Mise à jour in-place des propriétés dynamiques uniquement
+        newAgents.forEach(function(na){
+          var existing=AGENTS.find(function(a){return a.name===na.name;});
+          if(existing){
+            existing.vrs=na.vrs; existing.state=na.state; existing.ts=na.ts;
+            existing.tsi=na.tsi; existing.a2c=na.a2c; existing.alerts=na.alerts;
+            existing.event_count=na.event_count; existing.last_seen=na.last_seen;
+            existing.chain_label=na.chain_label; existing.narr_cls=na.narr_cls;
+            existing.narr_title=na.narr_title; existing.narr_items=na.narr_items;
+            existing.tsi_d=na.tsi_d; existing.a2c_ind=na.a2c_ind; existing.hist=na.hist;
+            existing.tl=na.tl;
+            // Peers : mettre à jour seulement si non vide (évite d'effacer les arêtes)
+            if(na.peers && na.peers.length>0){ existing.peers=na.peers; existing.a2c_peers=na.peers; }
+          }
+        });
+        // Ajouter les nouveaux agents non présents
+        newAgents.forEach(function(na){
+          if(!AGENTS.find(function(a){return a.name===na.name;})) AGENTS.push(na);
+        });
+        // Retirer les agents supprimés
+        AGENTS=AGENTS.filter(function(a){return newAgents.find(function(na){return na.name===a.name;});});
+      } else {
+        AGENTS=newAgents;
+      }
 
       // ── Trigger flash on agents with new events ────────────────────
       AGENTS.forEach(function(a){
@@ -1753,11 +1523,13 @@ function loadFromBackend(){
       }
       if(!_serverStart) _serverStart = Date.now();
 
-      // Refresh star graph if currently visible
-      if(document.getElementById('view-star').classList.contains('active')){
-        if(_starRaf){ cancelAnimationFrame(_starRaf); _starRaf=null; }
-        drawStar();
+      // Refresh star graph — uniquement si le nombre d'agents a changé
+      // (sinon le renderer en cours continue sans interruption)
+      if(starVisible && agentCountChanged){
+        _stopAllRenderers();
+        _redrawCurrentMode();
       }
+
       ALL_ALERTS=(d.active_alerts||[]).map(function(a){
         return{ag:a.agent_name||a.agent||'',sev:(a.severity||a.sev||'LOW').toUpperCase(),
                msg:a.message||a.msg||'',t:a.timestamp||a.t||Date.now()/1000};
@@ -1826,6 +1598,9 @@ function _openStampPanel(agentName){
   document.getElementById('sp-search').value = '';
   document.getElementById('stamp-panel').classList.add('open');
 
+  // Initialiser le live feed
+  openCockpit(agentName);
+
   // Fetch stamps from backend
   _fetchStamps(agentName);
 }
@@ -1833,14 +1608,16 @@ function _openStampPanel(agentName){
 function _closeStampPanel(){
   document.getElementById('stamp-panel').classList.remove('open');
   _stampPanelAgent = null;
+  _closeCockpit();
 }
 
 function _fetchStamps(agentName){
   document.getElementById('sp-list').innerHTML = '<div class="sp-empty">Loading stamps…</div>';
-  _vigilFetch('/api/events?agent='+encodeURIComponent(agentName)+'&limit=100')
+  _vigilFetch('/api/agent/'+encodeURIComponent(agentName))
     .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
     .then(d=>{
-      _stampPanelData = d.events || d || [];
+      // /api/agent/<n> retourne {vrs, history, alerts} — on construit les stamps
+      _stampPanelData = _agentDataToStamps(d, agentName);
       _renderStamps(_stampPanelData);
     })
     .catch(()=>{
@@ -1960,6 +1737,944 @@ setInterval(()=>{
     _fetchStamps(_stampPanelAgent);
   }
 }, 8000);
+
+// ════════════════════════════════════════════
+// CANVAS MODE SYSTEM
+// ════════════════════════════════════════════
+let _currentMode = 'split';
+let _laneRaf = null, _circuitRaf = null, _radarRaf = null;
+
+function _stopAllRenderers(){
+  if(_starRaf){ cancelAnimationFrame(_starRaf); _starRaf=null; }
+  if(_laneRaf){ cancelAnimationFrame(_laneRaf); _laneRaf=null; }
+  if(_circuitRaf){ cancelAnimationFrame(_circuitRaf); _circuitRaf=null; }
+  if(_radarRaf){ cancelAnimationFrame(_radarRaf); _radarRaf=null; }
+}
+
+function setCanvasMode(mode){
+  _stopAllRenderers();
+  _currentMode = mode;
+
+  // Toggle panel visibility
+  const panes = ['split','orbital','circuit','radar','lanes'];
+  panes.forEach(p=>{
+    const el = document.getElementById('cv-'+p);
+    if(el) el.style.display = p===mode ? (p==='split'?'grid':'block') : 'none';
+  });
+
+  // Toggle button states
+  document.querySelectorAll('.cmode-btn').forEach(b=>b.classList.remove('active'));
+  const btn = document.getElementById('cmb-'+mode);
+  if(btn) btn.classList.add('active');
+
+  // Launch renderer(s)
+  setTimeout(()=>{
+    if(mode==='split'){
+      _drawOrbital('star-canvas', 560);
+      _drawLanes('lanes-canvas', 560);
+    } else if(mode==='orbital'){
+      _drawOrbital('orbital-canvas', 640);
+    } else if(mode==='circuit'){
+      _drawCircuit('circuit-canvas', 640);
+    } else if(mode==='radar'){
+      _drawRadar('radar-canvas', 640);
+    } else if(mode==='lanes'){
+      _drawLanes('lanes-full-canvas', 640);
+    }
+  }, 40);
+}
+
+function _redrawCurrentMode(){
+  setCanvasMode(_currentMode);
+}
+
+// ── Shared drawing helpers ───────────────────────────────────────────────
+function _gridDots(ctx, W, H, col='rgba(0,200,224,0.04)', step=28){
+  ctx.fillStyle=col;
+  for(let gx=0;gx<W;gx+=step)for(let gy=0;gy<H;gy+=step){
+    ctx.beginPath();ctx.arc(gx,gy,.8,0,Math.PI*2);ctx.fill();
+  }
+}
+function _hexPath(ctx, cx, cy, r){
+  ctx.beginPath();
+  for(let k=0;k<6;k++){
+    const a=(Math.PI/3)*k+Math.PI/6;
+    k===0?ctx.moveTo(cx+r*Math.cos(a),cy+r*Math.sin(a))
+         :ctx.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a));
+  }
+  ctx.closePath();
+}
+
+// ════════════════════════════════════════════
+// RENDERER A — Orbital (enhanced drawStar wrapper)
+// ════════════════════════════════════════════
+function _drawOrbital(canvasId, H){
+  if(_starRaf){ cancelAnimationFrame(_starRaf); _starRaf=null; }
+
+  const canvas = document.getElementById(canvasId);
+  if(!canvas) return;
+
+  // Full orbital renderer for standalone orbital-canvas
+  const ctx = canvas.getContext('2d');
+  const W = canvas.parentElement.clientWidth||600;
+  canvas.width=W; canvas.height=H;
+  const agents=AGENTS, n=agents.length;
+  const centerFilter=document.getElementById('star-center').value;
+  const cx=W/2, cy=H/2;
+  const orbitR=Math.min(W,H)*0.29;
+  const angles=agents.map((_,i)=>i/Math.max(n,1)*Math.PI*2-Math.PI/2);
+
+  const positions={};
+  agents.forEach((a,i)=>{
+    if(centerFilter===a.name){ positions[a.name]={x:cx,y:cy,r:26}; return; }
+    const others=agents.filter(ag=>ag.name!==centerFilter);
+    const idx=others.indexOf(a);
+    const angle=idx/Math.max(others.length,1)*Math.PI*2-Math.PI/2;
+    const R=centerFilter?orbitR:orbitR;
+    positions[a.name]={x:cx+Math.cos(angle)*R, y:cy+Math.sin(angle)*R, r:18};
+  });
+
+  // Flows same as drawStar
+  const sessionStreams=[];
+  agents.forEach(agent=>{
+    (agent.peers||[]).filter(([,c])=>c>0.3).forEach(([peer,corr])=>{
+      if(positions[agent.name]&&positions[peer]){
+        sessionStreams.push({src:agent.name,dst:peer,corr,col:'#00c8e0',t:Math.random(),speed:.004+corr*.005});
+        sessionStreams.push({src:peer,dst:agent.name,corr,col:'#a78bfa',t:Math.random(),speed:.003+corr*.004});
+      }
+    });
+  });
+
+  let tick=0, lastTime=performance.now();
+  function frame(now){
+    const dt=Math.min((now-lastTime)/1000,.1); lastTime=now; tick++;
+    ctx.clearRect(0,0,W,H);
+    _gridDots(ctx,W,H);
+
+    // Orbit ring
+    ctx.beginPath();ctx.arc(cx,cy,orbitR,0,Math.PI*2);
+    ctx.strokeStyle='rgba(0,200,224,0.07)';ctx.lineWidth=1;
+    ctx.setLineDash([4,10]);ctx.stroke();ctx.setLineDash([]);
+
+    // Vigil nucleus
+    const ng=ctx.createRadialGradient(cx,cy,0,cx,cy,22);
+    ng.addColorStop(0,'rgba(0,200,224,0.25)');ng.addColorStop(1,'rgba(0,200,224,0)');
+    ctx.beginPath();ctx.arc(cx,cy,22,0,Math.PI*2);ctx.fillStyle=ng;ctx.fill();
+    ctx.beginPath();ctx.arc(cx,cy,8,0,Math.PI*2);
+    ctx.fillStyle='#0d1420';ctx.fill();
+    ctx.strokeStyle='#00c8e0';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.textAlign='center';ctx.font='bold 7px monospace';ctx.fillStyle='#00c8e0';
+    ctx.fillText('VIGIL',cx,cy+2.5);
+
+    // Edges
+    const drawn=new Set();
+    agents.forEach(agent=>{
+      (agent.peers||[]).forEach(([peer,corr])=>{
+        const key=[agent.name,peer].sort().join('|');
+        if(drawn.has(key))return; drawn.add(key);
+        const p1=positions[agent.name],p2=positions[peer];
+        if(!p1||!p2)return;
+        const maxV=Math.max(agent.vrs,(agents.find(a=>a.name===peer)||{vrs:0}).vrs);
+        const rgb=maxV>.5?'255,98,0':maxV>.25?'255,179,0':'0,230,118';
+        // Bezier curve
+        const mx=(p1.x+p2.x)/2,my=(p1.y+p2.y)/2;
+        const dx=p2.x-p1.x,dy=p2.y-p1.y,len=Math.sqrt(dx*dx+dy*dy)||1;
+        const bend=len*.15;
+        const cpx=mx-(dy/len)*bend,cpy=my+(dx/len)*bend;
+        ctx.beginPath();
+        ctx.strokeStyle=`rgba(${rgb},${.07+corr*.2})`;
+        ctx.lineWidth=.5+corr*2;
+        corr>.5?ctx.setLineDash([5,4]):ctx.setLineDash([]);
+        ctx.moveTo(p1.x,p1.y);ctx.quadraticCurveTo(cpx,cpy,p2.x,p2.y);
+        ctx.stroke();ctx.setLineDash([]);
+      });
+    });
+
+    // Session streams on bezier paths
+    sessionStreams.forEach(s=>{
+      const p1=positions[s.src],p2=positions[s.dst];
+      if(!p1||!p2){s.t=0;return;}
+      s.t+=s.speed; if(s.t>1)s.t=0;
+      const mx=(p1.x+p2.x)/2,my=(p1.y+p2.y)/2;
+      const dx=p2.x-p1.x,dy=p2.y-p1.y,len=Math.sqrt(dx*dx+dy*dy)||1;
+      const bend=len*.15;
+      const cpx=mx-(dy/len)*bend,cpy=my+(dx/len)*bend;
+      const t=s.t;
+      const x=(1-t)*(1-t)*p1.x+2*(1-t)*t*cpx+t*t*p2.x;
+      const y=(1-t)*(1-t)*p1.y+2*(1-t)*t*cpy+t*t*p2.y;
+      const g=ctx.createRadialGradient(x,y,0,x,y,6);
+      g.addColorStop(0,s.col+'cc');g.addColorStop(1,s.col+'00');
+      ctx.beginPath();ctx.arc(x,y,6,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+      ctx.beginPath();ctx.arc(x,y,2,0,Math.PI*2);
+      ctx.fillStyle=s.col;ctx.globalAlpha=.9;ctx.fill();ctx.globalAlpha=1;
+    });
+
+    // Burst particles
+    for(let i=_burstParticles.length-1;i>=0;i--){
+      const bp=_burstParticles[i];
+      bp.x+=bp.vx;bp.y+=bp.vy;bp.vx*=.92;bp.vy*=.92;bp.life-=.04;
+      if(bp.life<=0){_burstParticles.splice(i,1);continue;}
+      ctx.beginPath();ctx.arc(bp.x,bp.y,bp.r*bp.life,0,Math.PI*2);
+      ctx.fillStyle=bp.col;ctx.globalAlpha=bp.life*.8;ctx.fill();ctx.globalAlpha=1;
+    }
+
+    // Nodes — hexagonal
+    agents.forEach(agent=>{
+      const pos=positions[agent.name];
+      if(!pos)return;
+      const col=sc(agent.state);
+      const r=pos.r;
+      const flash=_stampFlash[agent.name];
+      const fb=flash?flash.t*flash.intensity:0;
+
+      // Alert pulse
+      if(agent.state==='ALERT'||agent.state==='CRITICAL'){
+        const phase=(tick*.025)%1;
+        ctx.beginPath();ctx.arc(pos.x,pos.y,r+phase*20,0,Math.PI*2);
+        ctx.strokeStyle=col;ctx.globalAlpha=(1-phase)*.45;ctx.lineWidth=1.5;ctx.stroke();ctx.globalAlpha=1;
+      }
+
+      // Stamp flash ring
+      if(fb>0){
+        ctx.beginPath();ctx.arc(pos.x,pos.y,r+(1-fb)*28,0,Math.PI*2);
+        ctx.strokeStyle='#00c8e0';ctx.globalAlpha=fb*.8;ctx.lineWidth=2;ctx.stroke();ctx.globalAlpha=1;
+        if(fb>.92){_spawnBurst(pos.x,pos.y,'#00c8e0',6);}
+      }
+
+      // Outer glow
+      const grd=ctx.createRadialGradient(pos.x,pos.y,r*.3,pos.x,pos.y,r*2.8);
+      grd.addColorStop(0,col+(fb>.5?'55':'28'));grd.addColorStop(1,col+'00');
+      ctx.beginPath();ctx.arc(pos.x,pos.y,r*2.8,0,Math.PI*2);ctx.fillStyle=grd;ctx.fill();
+
+      // Hex body
+      _hexPath(ctx,pos.x,pos.y,r);
+      ctx.fillStyle='#0d1420';ctx.fill();
+      ctx.strokeStyle=fb>.3?`rgba(0,200,224,${.5+fb*.5})`:col;
+      ctx.lineWidth=centerFilter===agent.name?3:1.5;ctx.stroke();
+
+      // Outer hex ring
+      _hexPath(ctx,pos.x,pos.y,r+5);
+      ctx.strokeStyle=col+'20';ctx.lineWidth=1;ctx.stroke();
+
+      // VRS arc inside hex
+      const innerR=r*.65;
+      _hexPath(ctx,pos.x,pos.y,innerR);
+      ctx.save();ctx.clip();
+      ctx.beginPath();ctx.moveTo(pos.x,pos.y);
+      ctx.arc(pos.x,pos.y,innerR*1.5,-Math.PI/2,-Math.PI/2+agent.vrs*Math.PI*2);
+      ctx.closePath();ctx.fillStyle=col+'30';ctx.fill();ctx.restore();
+
+      // Vertex dots (VRS gauge)
+      for(let k=0;k<6;k++){
+        const a=(Math.PI/3)*k+Math.PI/6;
+        const px=pos.x+r*Math.cos(a),py=pos.y+r*Math.sin(a);
+        ctx.beginPath();ctx.arc(px,py,2,0,Math.PI*2);
+        ctx.fillStyle=col+(k<Math.round(agent.vrs*6)?'cc':'25');ctx.fill();
+      }
+
+      // Stamp indicator dot
+      if(fb>.1){
+        ctx.beginPath();ctx.arc(pos.x+r*.65,pos.y-r*.65,3,0,Math.PI*2);
+        ctx.fillStyle='#00c8e0';ctx.globalAlpha=fb;ctx.fill();ctx.globalAlpha=1;
+      }
+
+      // Labels
+      ctx.textAlign='center';
+      ctx.font='bold 8px monospace';ctx.fillStyle=col;
+      ctx.fillText(fv(agent.vrs),pos.x,pos.y+2);
+      ctx.font='6px monospace';ctx.fillStyle=col+'88';
+      ctx.fillText(agent.state,pos.x,pos.y+10);
+      ctx.font='500 9px sans-serif';ctx.fillStyle='#c5d8ec';
+      ctx.fillText(agent.name.replace(/_/g,' '),pos.x,pos.y+r+13);
+    });
+
+    _decayFlashes(dt);
+    if(tick%30===0)_detectNewStamps();
+    _starRaf=requestAnimationFrame(frame);
+  }
+  frame(performance.now());
+
+  // Click handler
+  canvas.onclick=e=>{
+    const rect=canvas.getBoundingClientRect();
+    const mx=(e.clientX-rect.left)*(W/rect.width);
+    const my=(e.clientY-rect.top)*(H/rect.height);
+    for(const[name,pos]of Object.entries(positions)){
+      if((mx-pos.x)**2+(my-pos.y)**2<pos.r**2*3){
+        const sel=document.getElementById('star-center');
+        if(sel.value===name){sel.value='';_redrawCurrentMode();_closeStampPanel();return;}
+        sel.value=name;_redrawCurrentMode();_openStampPanel(name);return;
+      }
+    }
+    document.getElementById('star-center').value='';
+    _redrawCurrentMode();_closeStampPanel();
+  };
+}
+
+// ════════════════════════════════════════════
+// RENDERER B — Circuit board
+// ════════════════════════════════════════════
+function _drawCircuit(canvasId, H){
+  if(_circuitRaf){cancelAnimationFrame(_circuitRaf);_circuitRaf=null;}
+  const canvas=document.getElementById(canvasId);
+  if(!canvas)return;
+  const W=canvas.parentElement.clientWidth||600;
+  canvas.width=W;canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  const agents=AGENTS, n=agents.length;
+
+  // Position agents in a grid-snapped layout
+  const cols=Math.ceil(Math.sqrt(n)), rows=Math.ceil(n/cols);
+  const gx=W/(cols+1), gy=H/(rows+1);
+  const gridPos=agents.map((_,i)=>({x:gx*(i%cols+1), y:gy*(Math.floor(i/cols)+1)}));
+
+  function tracePts(p1,p2){
+    const mx=(p1.x+p2.x)/2;
+    return[p1.x,p1.y, mx,p1.y, mx,p2.y, p2.x,p2.y];
+  }
+  function ptOnTrace(pts,t){
+    const segs=[[pts[0],pts[1],pts[2],pts[3]],[pts[2],pts[3],pts[4],pts[5]],[pts[4],pts[5],pts[6],pts[7]]];
+    const lens=segs.map(s=>Math.hypot(s[2]-s[0],s[3]-s[1]));
+    const total=lens.reduce((a,b)=>a+b,0);
+    let d=t*total;
+    for(let i=0;i<segs.length;i++){
+      if(d<=lens[i]||i===segs.length-1){
+        const f=Math.min(d/Math.max(lens[i],.001),1);
+        return{x:segs[i][0]+(segs[i][2]-segs[i][0])*f, y:segs[i][1]+(segs[i][3]-segs[i][1])*f};
+      }
+      d-=lens[i];
+    }
+  }
+
+  // Build particles from peers
+  const particles=[];
+  agents.forEach((agent,i)=>{
+    (agent.peers||[]).forEach(([peer,corr])=>{
+      const j=agents.findIndex(a=>a.name===peer);
+      if(j<0)return;
+      const maxV=Math.max(agent.vrs,(agents.find(a=>a.name===peer)||{vrs:0}).vrs);
+      const col=maxV>.5?'#ff6200':maxV>.25?'#ffb300':'#00e676';
+      particles.push({pts:tracePts(gridPos[i],gridPos[j]),t:Math.random(),speed:.003+corr*.005,corr,col,i,j});
+    });
+  });
+
+  let tick=0;
+  function frame(){
+    tick++;
+    ctx.clearRect(0,0,W,H);
+
+    // PCB grid
+    ctx.strokeStyle='rgba(0,160,60,0.05)';ctx.lineWidth=.5;
+    for(let x=0;x<W;x+=20){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+    for(let y=0;y<H;y+=20){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+
+    // Traces
+    particles.forEach(p=>{
+      const pts=p.pts;
+      ctx.beginPath();ctx.moveTo(pts[0],pts[1]);
+      for(let k=2;k<pts.length;k+=2)ctx.lineTo(pts[k],pts[k+1]);
+      const rgb=p.col==='#ff6200'?'255,98,0':p.col==='#ffb300'?'255,179,0':'0,230,118';
+      ctx.strokeStyle=`rgba(${rgb},${.1+p.corr*.15})`;
+      ctx.lineWidth=.8+p.corr*1.2;ctx.stroke();
+      // Pad dots
+      [[pts[0],pts[1]],[pts[6],pts[7]]].forEach(([px,py])=>{
+        ctx.beginPath();ctx.arc(px,py,2.5,0,Math.PI*2);
+        ctx.fillStyle=`rgba(${rgb},.3)`;ctx.fill();
+      });
+    });
+
+    // Signal particles
+    particles.forEach(p=>{
+      p.t=(p.t+p.speed)%1;
+      const pt=ptOnTrace(p.pts,p.t);
+      if(!pt)return;
+      const rgb=p.col==='#ff6200'?'255,98,0':p.col==='#ffb300'?'255,179,0':'0,230,118';
+      const g=ctx.createRadialGradient(pt.x,pt.y,0,pt.x,pt.y,8);
+      g.addColorStop(0,`rgba(${rgb},.9)`);g.addColorStop(1,`rgba(${rgb},0)`);
+      ctx.beginPath();ctx.arc(pt.x,pt.y,8,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+      ctx.beginPath();ctx.arc(pt.x,pt.y,2.5,0,Math.PI*2);ctx.fillStyle=p.col;ctx.fill();
+    });
+
+    // IC chip nodes
+    agents.forEach((ag,i)=>{
+      const {x,y}=gridPos[i];
+      const col=sc(ag.state);
+      const s=28;
+      const flash=_stampFlash[ag.name];
+      const fb=flash?flash.t*flash.intensity:0;
+
+      // Stamp flash
+      if(fb>.1){
+        ctx.strokeStyle=`rgba(0,200,224,${fb*.8})`;ctx.lineWidth=2;
+        ctx.strokeRect(x-s-fb*8,y-s-fb*8,s*2+fb*16,s*2+fb*16);
+      }
+
+      ctx.fillStyle='#0a1018';ctx.fillRect(x-s,y-s,s*2,s*2);
+      ctx.strokeStyle=fb>.3?`rgba(0,200,224,${.5+fb*.5})`:col;
+      ctx.lineWidth=1.5;ctx.strokeRect(x-s,y-s,s*2,s*2);
+      ctx.strokeStyle=col+'30';ctx.lineWidth=.7;
+      ctx.strokeRect(x-s+5,y-s+5,s*2-10,s*2-10);
+
+      // Pin marks
+      [0,1,2,3].forEach(side=>{
+        for(let p=0;p<3;p++){
+          const t=(p+1)/4;
+          let px,py,ex,ey;
+          if(side===0){px=x-s+t*s*2;py=y-s;ex=px;ey=py-5;}
+          else if(side===1){px=x+s;py=y-s+t*s*2;ex=px+5;ey=py;}
+          else if(side===2){px=x-s+t*s*2;py=y+s;ex=px;ey=py+5;}
+          else{px=x-s;py=y-s+t*s*2;ex=px-5;ey=py;}
+          ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(ex,ey);
+          ctx.strokeStyle=col+'50';ctx.lineWidth=1;ctx.stroke();
+        }
+      });
+
+      // VRS fill bar
+      const fh=ag.vrs*s*2*.72;
+      ctx.fillStyle=col+'1a';ctx.fillRect(x-s+6,y+s-6-fh,s*2-12,fh);
+
+      // Crosshair
+      ctx.strokeStyle=col+'18';ctx.lineWidth=.5;
+      ctx.beginPath();ctx.moveTo(x,y-s+5);ctx.lineTo(x,y+s-5);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(x-s+5,y);ctx.lineTo(x+s-5,y);ctx.stroke();
+
+      ctx.textAlign='center';
+      ctx.font='bold 8px monospace';ctx.fillStyle=col;ctx.fillText(fv(ag.vrs),x,y-2);
+      ctx.font='7px monospace';ctx.fillStyle=col+'88';ctx.fillText(ag.state,x,y+9);
+      ctx.font='500 9px sans-serif';ctx.fillStyle='#8aa8c0';
+      ctx.fillText(ag.name.replace(/_/g,' '),x,y+s+14);
+    });
+
+    _decayFlashes(1/60);
+    if(tick%30===0)_detectNewStamps();
+    _circuitRaf=requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+// ════════════════════════════════════════════
+// RENDERER C — Radar / polar matrix
+// ════════════════════════════════════════════
+function _drawRadar(canvasId, H){
+  if(_radarRaf){cancelAnimationFrame(_radarRaf);_radarRaf=null;}
+  const canvas=document.getElementById(canvasId);
+  if(!canvas)return;
+  const W=canvas.parentElement.clientWidth||600;
+  canvas.width=W;canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  const agents=AGENTS;
+  const axes=['VRS','Trust','A2C','Chain','Events'];
+  const N=axes.length;
+  const cx=W/2, cy=H/2+10;
+  const maxR=Math.min(W,H)*0.32;
+
+  function axisXY(k,r){
+    const a=k/N*Math.PI*2-Math.PI/2;
+    return{x:cx+Math.cos(a)*r, y:cy+Math.sin(a)*r};
+  }
+  function agentVals(a){
+    const evNorm=Math.min((a.event_count||0)/1000,1);
+    return[a.vrs, a.ts, a.a2c, a.chain_label==='CANONICAL CHAIN'?0:.7, evNorm];
+  }
+
+  let tick=0;
+  function frame(){
+    tick++;
+    ctx.clearRect(0,0,W,H);
+    _gridDots(ctx,W,H,'rgba(0,200,224,0.03)',32);
+
+    // Rings
+    [.2,.4,.6,.8,1].forEach(t=>{
+      ctx.beginPath();
+      for(let k=0;k<N;k++){
+        const {x,y}=axisXY(k,t*maxR);
+        k===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+      }
+      ctx.closePath();
+      ctx.strokeStyle=`rgba(0,200,224,${.04+t*.015})`;ctx.lineWidth=.5;ctx.stroke();
+    });
+
+    // Axis lines + labels
+    for(let k=0;k<N;k++){
+      const {x,y}=axisXY(k,maxR);
+      ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(x,y);
+      ctx.strokeStyle='rgba(0,200,224,0.1)';ctx.lineWidth=.5;ctx.stroke();
+      const lp=axisXY(k,maxR+18);
+      ctx.font='8px monospace';ctx.fillStyle='#4a7a99';
+      ctx.textAlign='center';ctx.fillText(axes[k],lp.x,lp.y+3);
+    }
+
+    // Agent polygons
+    agents.forEach((ag,i)=>{
+      const vals=agentVals(ag);
+      const col=sc(ag.state);
+      const pulse=1+.025*Math.sin(tick*.04+i*1.5);
+      const flash=_stampFlash[ag.name];
+      const fb=flash?flash.t*flash.intensity:0;
+
+      ctx.beginPath();
+      vals.forEach((v,k)=>{
+        const {x,y}=axisXY(k,v*maxR*pulse*(1+fb*.05));
+        k===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+      });
+      ctx.closePath();
+      const rgb=col==='#00e676'?'0,230,118':col==='#ffb300'?'255,179,0':col==='#ff6200'?'255,98,0':'245,0,60';
+      ctx.fillStyle=`rgba(${rgb},${.05+fb*.05})`;ctx.fill();
+      ctx.strokeStyle=`rgba(${rgb},${.45+fb*.3})`;ctx.lineWidth=1+fb*.5;ctx.stroke();
+
+      vals.forEach((v,k)=>{
+        const {x,y}=axisXY(k,v*maxR*pulse);
+        ctx.beginPath();ctx.arc(x,y,2.5,0,Math.PI*2);
+        ctx.fillStyle=`rgba(${rgb},.8)`;ctx.fill();
+      });
+    });
+
+    // Center
+    ctx.beginPath();ctx.arc(cx,cy,5,0,Math.PI*2);
+    ctx.fillStyle='#0d1420';ctx.fill();
+    ctx.strokeStyle='#00c8e0';ctx.lineWidth=1.5;ctx.stroke();
+
+    // Legend
+    agents.forEach((ag,i)=>{
+      const lx=20+i*Math.floor(W/agents.length),ly=H-14;
+      const col=sc(ag.state);
+      ctx.beginPath();ctx.arc(lx+4,ly,4,0,Math.PI*2);
+      ctx.fillStyle=col+'66';ctx.fill();
+      ctx.strokeStyle=col;ctx.lineWidth=1;ctx.stroke();
+      ctx.font='8px monospace';ctx.fillStyle='#6a90a8';
+      ctx.textAlign='left';ctx.fillText(ag.name,lx+12,ly+3);
+    });
+
+    _decayFlashes(1/60);
+    if(tick%30===0)_detectNewStamps();
+    _radarRaf=requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+// ════════════════════════════════════════════
+// RENDERER D — Flow lanes / swimlanes
+// ════════════════════════════════════════════
+const _laneEvents=[];
+const _laneBeams=[];
+let _laneSpawnT=0;
+
+function _laneSpawn(){
+  const agents=AGENTS, n=agents.length;
+  if(!n)return;
+  const i=Math.floor(Math.random()*n);
+  const types=['action','stamp','a2a','alert','decision'];
+  const type=types[Math.floor(Math.random()*types.length)];
+  _laneEvents.push({lane:i,y:1,speed:.35+Math.random()*.5,col:sc(agents[i].state),
+    type,life:1,size:type==='alert'?6:type==='stamp'?4:3});
+  // Occasionally spawn a beam
+  if(Math.random()<.15&&agents.length>1){
+    const peers=agents[i].peers||[];
+    if(peers.length){
+      const [peer,corr]=peers[Math.floor(Math.random()*peers.length)];
+      const j=agents.findIndex(a=>a.name===peer);
+      if(j>=0){
+        const col=corr>.5?'#ff6200':corr>.25?'#ffb300':'#00e676';
+        _laneBeams.push({i,j,t:0,speed:.018+corr*.015,corr,col,life:1});
+      }
+    }
+  }
+}
+
+function _drawLanes(canvasId, H){
+  if(_laneRaf){cancelAnimationFrame(_laneRaf);_laneRaf=null;}
+  const canvas=document.getElementById(canvasId);
+  if(!canvas)return;
+  const W=canvas.parentElement.clientWidth||600;
+  canvas.width=W;canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  const agents=AGENTS, n=agents.length;
+  if(!n){ ctx.clearRect(0,0,W,H); return; }
+  const laneW=W/n;
+  const HEADER=48;
+
+  function laneCX(i){return laneW*i+laneW/2;}
+
+  let tick=0, lastSpawn=0;
+  function frame(){
+    tick++;
+    ctx.clearRect(0,0,W,H);
+
+    // Spawn
+    if(tick-lastSpawn>40+Math.random()*30){_laneSpawn();lastSpawn=tick;}
+
+    // Lane BG
+    agents.forEach((_,i)=>{
+      ctx.fillStyle=i%2===0?'rgba(0,200,224,0.012)':'rgba(0,0,0,0)';
+      ctx.fillRect(i*laneW,HEADER,laneW,H-HEADER);
+    });
+
+    // Dividers
+    for(let i=1;i<n;i++){
+      ctx.beginPath();ctx.moveTo(i*laneW,0);ctx.lineTo(i*laneW,H);
+      ctx.strokeStyle='rgba(25,37,53,0.9)';ctx.lineWidth=1;ctx.stroke();
+    }
+
+    // Headers
+    agents.forEach((ag,i)=>{
+      const x=laneCX(i);
+      const col=sc(ag.state);
+      const flash=_stampFlash[ag.name];
+      const fb=flash?flash.t*flash.intensity:0;
+
+      ctx.fillStyle=fb>.3?'#0a1220':'#080d14';
+      ctx.fillRect(i*laneW+1,1,laneW-2,HEADER-1);
+      ctx.strokeStyle=fb>.3?`rgba(0,200,224,${.3+fb*.4})`:col+'44';
+      ctx.lineWidth=1;ctx.strokeRect(i*laneW+1,1,laneW-2,HEADER-1);
+
+      // State color bar at top of header
+      ctx.fillStyle=col;
+      ctx.fillRect(i*laneW+1,1,laneW-2,2);
+
+      ctx.textAlign='center';
+      ctx.font='bold 9px monospace';ctx.fillStyle=col;
+      ctx.fillText(ag.name.replace(/_/g,' '),x,18);
+      ctx.font='7px monospace';ctx.fillStyle=col+'88';
+      ctx.fillText('VRS '+fv(ag.vrs),x,30);
+      ctx.font='7px monospace';ctx.fillStyle=col+'60';
+      ctx.fillText(ag.state,x,41);
+
+      // Pulse dot
+      if(ag.state==='ALERT'||ag.state==='CRITICAL'){
+        const pulse=.5+.5*Math.sin(tick*.08+i);
+        ctx.beginPath();ctx.arc(i*laneW+laneW-10,10,3,0,Math.PI*2);
+        ctx.fillStyle=col;ctx.globalAlpha=pulse;ctx.fill();ctx.globalAlpha=1;
+      }
+    });
+
+    // Horizontal A2A beams
+    for(let b=_laneBeams.length-1;b>=0;b--){
+      const bm=_laneBeams[b];
+      bm.t+=bm.speed; bm.life=Math.max(0,1-bm.t);
+      if(bm.life===0){_laneBeams.splice(b,1);continue;}
+      const x1=laneCX(bm.i),x2=laneCX(bm.j);
+      const xCur=x1+(x2-x1)*Math.min(bm.t,1);
+      const y=HEADER+20+Math.random()*.3*(H-HEADER-40);
+      const rgb=bm.col==='#ff6200'?'255,98,0':bm.col==='#ffb300'?'255,179,0':'0,230,118';
+      ctx.beginPath();ctx.moveTo(x1,y);ctx.lineTo(xCur,y);
+      ctx.strokeStyle=`rgba(${rgb},${.12*bm.life})`;ctx.lineWidth=1;ctx.stroke();
+      const g=ctx.createRadialGradient(xCur,y,0,xCur,y,9);
+      g.addColorStop(0,`rgba(${rgb},.75)`);g.addColorStop(1,`rgba(${rgb},0)`);
+      ctx.beginPath();ctx.arc(xCur,y,9,0,Math.PI*2);
+      ctx.fillStyle=g;ctx.globalAlpha=bm.life;ctx.fill();ctx.globalAlpha=1;
+    }
+
+    // Floating events
+    for(let e=_laneEvents.length-1;e>=0;e--){
+      const ev=_laneEvents[e];
+      const yAbs=H-HEADER-ev.y*(H-HEADER-10);
+      ev.y+=ev.speed/100;
+      if(yAbs<HEADER+4||ev.y>1.05){_laneEvents.splice(e,1);continue;}
+      const x=laneCX(ev.lane);
+      const alpha=Math.min(1,ev.y*8)*Math.min(1,(1-ev.y)*8);
+      const rgb=ev.col==='#00e676'?'0,230,118':ev.col==='#ffb300'?'255,179,0':ev.col==='#ff6200'?'255,98,0':'245,0,60';
+      ctx.globalAlpha=alpha;
+      if(ev.type==='stamp'){
+        ctx.save();ctx.translate(x,yAbs);ctx.rotate(Math.PI/4);
+        ctx.fillStyle=`rgba(${rgb},.85)`;
+        ctx.fillRect(-ev.size,-ev.size,ev.size*2,ev.size*2);
+        ctx.restore();
+      } else if(ev.type==='alert'){
+        ctx.beginPath();
+        ctx.moveTo(x,yAbs-ev.size);
+        ctx.lineTo(x+ev.size,yAbs+ev.size);
+        ctx.lineTo(x-ev.size,yAbs+ev.size);
+        ctx.closePath();ctx.fillStyle=`rgba(${rgb},.9)`;ctx.fill();
+      } else if(ev.type==='decision'){
+        ctx.beginPath();ctx.arc(x,yAbs,ev.size,0,Math.PI*2);
+        ctx.strokeStyle=`rgba(${rgb},.8)`;ctx.lineWidth=1.5;ctx.stroke();
+      } else {
+        ctx.beginPath();ctx.arc(x,yAbs,ev.size,0,Math.PI*2);
+        ctx.fillStyle=`rgba(${rgb},.7)`;ctx.fill();
+      }
+      ctx.globalAlpha=1;
+    }
+
+    _decayFlashes(1/60);
+    if(tick%30===0)_detectNewStamps();
+    _laneRaf=requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+// ════════════════════════════════════════════
+// LIVE COCKPIT
+// ════════════════════════════════════════════
+let _ckAgent       = null;   // nom de l'agent surveillé
+let _ckLive        = true;   // mode live activé
+let _ckAutoScroll  = true;   // défilement automatique
+let _ckFilter      = '';     // filtre type
+let _ckSeenHashes  = new Set(); // hashes déjà affichés (déduplication)
+let _ckRaf         = null;   // RAF pour le ticker de rate
+let _ckEventTimes  = [];     // timestamps des events récents (pour rate/min)
+let _ckRefreshT    = null;   // setInterval live fetch
+let _ckHeight      = 340;    // hauteur cockpit en px
+let _ckResizing    = false;
+
+// Couleurs par type
+const _ckTypeColors = {
+  action:        {col:'var(--ac)',    bg:'var(--ac2)'},
+  decision:      {col:'var(--watch)', bg:'var(--watchb)'},
+  observation:   {col:'#a78bfa',      bg:'rgba(167,139,250,.1)'},
+  alert:         {col:'var(--alert)', bg:'var(--alertb)'},
+  a2a_handshake: {col:'var(--safe)',  bg:'var(--safeb)'},
+  trust_update:  {col:'#64b5f6',      bg:'rgba(100,181,246,.1)'},
+  chain_verify:  {col:'var(--ac)',    bg:'var(--ac2)'},
+};
+
+// Traduction payload → langage naturel
+function _ckNaturalLanguage(type, payload, peerName){
+  const p = payload || {};
+  const peer = peerName ? `<strong>${peerName}</strong>` : 'a peer';
+  switch(type){
+    case 'action':
+      return `Executing <strong>${p.action||'task'}</strong>${p.target?' on '+p.target:''}`
+           + (p.confidence!=null?` — confidence <strong>${(p.confidence*100).toFixed(0)}%</strong>`:'');
+    case 'decision':
+      return `Decision: <strong>${p.decision||'?'}</strong>`
+           + (p.symbol?` ${p.symbol}`:'')
+           + (p.amount!=null?` — amount <strong>${p.amount}</strong>`:'');
+    case 'observation':
+      return `Observed <strong>${p.observation||'event'}</strong>`
+           + (p.delta!=null?` Δ<strong>${p.delta>0?'+':''}${p.delta}</strong>`:'')
+           + (p.source?` from ${p.source}`:'');
+    case 'alert':
+      return `⚡ <strong>${p.alert||'threshold exceeded'}</strong>`
+           + (p.vrs!=null?` VRS=<strong>${p.vrs}</strong>`:'')
+           + (p.escalated?' — escalated':'');
+    case 'a2a_handshake':
+      return `Handshake <strong>${p.handshake||'init'}</strong> with ${peer}`
+           + (p.session_id?` · session <code>${p.session_id}</code>`:'');
+    case 'trust_update': {
+      const d=+(p.delta||0);
+      const dSign = d>=0 ? '+' : '';
+      const dCol = d>=0 ? 'var(--safe)' : 'var(--alert)';
+      return 'Trust score → <strong>'+(p.trust_score!=null?(p.trust_score*100).toFixed(1)+'%':'?')+'</strong>'
+           + ' (<strong style="color:'+dCol+'">'+dSign+d.toFixed(4)+'</strong>)';
+    }
+    case 'chain_verify': {
+      return 'Chain <strong style="color:'+(p.fork_detected?'var(--crit)':'var(--safe)')+'">'+
+             (p.chain||'ok')+'</strong>'+
+             (p.depth!=null?' — depth '+p.depth:'')+
+             (p.fork_detected?' ⚠ FORK DETECTED':'');
+    }
+    default: {
+      // Essayer de décrire le payload générique
+      const keys = Object.keys(p).slice(0,3);
+      if(!keys.length) return '<strong>'+type+'</strong> event';
+      return '<strong>'+type+'</strong> — '+keys.map(function(k){return k+': <strong>'+JSON.stringify(p[k])+'</strong>';}).join(' · ');
+    }
+  }
+}
+
+function _ckRowHTML(stamp, isNew){
+  const type = stamp.event_type || 'event';
+  const tc   = _ckTypeColors[type] || {col:'var(--txm)', bg:'rgba(255,255,255,.04)'};
+  const ts   = stamp.timestamp
+    ? new Date(stamp.timestamp*1000).toISOString().slice(11,19)
+    : '—';
+
+  // Résoudre le nom du peer
+  const rawPeer = stamp.peer_id || stamp.payload?.peer_id || '';
+  const peerName = _peerNameCache[rawPeer] || rawPeer || '';
+
+  const isValid = (stamp.sig_status||'valid') === 'valid';
+  const natural = _ckNaturalLanguage(type, stamp.payload, peerName);
+  const hash = (stamp.hash||'').slice(0,24);
+  const seq  = stamp.seq ? `#${stamp.seq}` : '';
+
+  return `<div class="ck-row${isNew?' ck-new':''}">
+    <div class="ck-time">${ts}</div>
+    <div class="ck-type-col" style="background:${tc.col};opacity:.7"></div>
+    <div class="ck-body">
+      <div class="ck-head">
+        <span class="ck-type" style="color:${tc.col};background:${tc.bg}">${type.toUpperCase()}</span>
+        ${peerName?`<span class="ck-peer">→ <span>${peerName}</span></span>`:''}
+        ${seq?`<span style="font-family:var(--mono);font-size:8px;color:var(--txd)">${seq}</span>`:''}
+        <span class="ck-sig ${isValid?'sig-ok':'sig-bad'}">${isValid?'✓':'✗'}</span>
+      </div>
+      <div class="ck-natural">${natural}</div>
+      ${hash?`<div class="ck-hash">${hash}…</div>`:''}
+    </div>
+  </div>`;
+}
+
+function _ckPushStamps(stamps, isNew=false){
+  const stream = document.getElementById('ck-stream');
+  const filter = _ckFilter;
+
+  const toAdd = stamps.filter(s=>{
+    const h = s.hash||s.nonce||JSON.stringify(s).slice(0,32);
+    if(_ckSeenHashes.has(h)) return false;
+    _ckSeenHashes.add(h);
+    if(filter && (s.event_type||'')!==filter) return false;
+    return true;
+  });
+
+  if(!toAdd.length) return;
+
+  // Enregistrer timestamps pour rate
+  const now = Date.now()/1000;
+  toAdd.forEach(()=>_ckEventTimes.push(now));
+  _ckEventTimes = _ckEventTimes.filter(t=>now-t<60);
+
+  // Injecter les nouvelles lignes en bas
+  const frag = document.createDocumentFragment();
+  const tmp  = document.createElement('div');
+  tmp.innerHTML = toAdd.map(s=>_ckRowHTML(s, isNew)).join('');
+  while(tmp.firstChild) frag.appendChild(tmp.firstChild);
+
+  // Supprimer les vieilles lignes si trop nombreuses (>200)
+  const existing = stream.querySelectorAll('.ck-row');
+  if(existing.length > 200){
+    for(let i=0;i<existing.length-180;i++) existing[i].remove();
+  }
+
+  // Retirer le placeholder vide si présent
+  const empty = stream.querySelector('div:not(.ck-row)');
+  if(empty) empty.remove();
+
+  stream.appendChild(frag);
+
+  if(_ckAutoScroll){
+    stream.scrollTop = stream.scrollHeight;
+  }
+}
+
+// ════════════════════════════════════════════
+// STAMP PANEL — onglets STAMPS / LIVE
+// ════════════════════════════════════════════
+function _spSetTab(tab){
+  ['stamps','live'].forEach(function(t){
+    var pane = document.getElementById('sp-pane-'+t);
+    var btn  = document.getElementById('sp-tab-'+t);
+    if(!pane||!btn) return;
+    var active = (t===tab);
+    pane.style.display    = active ? 'flex' : 'none';
+    btn.style.color       = active ? 'var(--ac)' : 'var(--txd)';
+    btn.style.borderBottom= active ? '2px solid var(--ac)' : '2px solid transparent';
+  });
+  // Démarrer le polling live si on bascule sur cet onglet
+  if(tab==='live' && _ckAgent && !_ckRefreshT){
+    _ckRefreshT = setInterval(_ckFetchAndPush, 2500);
+  }
+}
+
+// ════════════════════════════════════════════
+// LIVE FEED — dans le panneau stamp
+// ════════════════════════════════════════════
+function openCockpit(agentName){
+  _ckAgent = agentName;
+  _ckSeenHashes.clear();
+  _ckEventTimes = [];
+  _ckFilter = '';
+  var fe = document.getElementById('ck-filter');
+  if(fe) fe.value = '';
+  // Réinitialiser le stream
+  var stream = document.getElementById('ck-stream');
+  if(stream) stream.innerHTML = '<div style="padding:10px 14px;font-family:var(--mono);font-size:9px;color:var(--txd);border-bottom:1px solid var(--b1)">── '+agentName.replace(/_/g,' ')+' — '+new Date().toISOString().slice(11,19)+' UTC ──</div>';
+  // Charger l'historique initial depuis /api/agent/<name>
+  _vigilFetch('/api/agent/'+encodeURIComponent(agentName))
+    .then(function(r){ return r.ok ? r.json() : Promise.reject(r.status); })
+    .then(function(d){ _ckPushStamps(_agentDataToStamps(d, agentName), false); })
+    .catch(function(){
+      var agent = AGENTS.find(function(a){ return a.name===agentName; });
+      _ckPushStamps(_generateDemoStamps(agentName, agent), false);
+    });
+  // Démarrer polling seulement si onglet live visible
+  if(_ckRefreshT) clearInterval(_ckRefreshT);
+  var livePane = document.getElementById('sp-pane-live');
+  if(livePane && livePane.style.display !== 'none'){
+    _ckRefreshT = setInterval(_ckFetchAndPush, 2500);
+  }
+}
+
+// Convertit la réponse /api/agent/<n> en stamps affichables
+function _agentDataToStamps(d, agentName){
+  var stamps = [];
+  var now = Date.now()/1000;
+  // Alertes → stamps
+  var alerts = (d.alerts||[]).slice().reverse();
+  alerts.forEach(function(al, i){
+    stamps.push({
+      seq: i+1, timestamp: al.timestamp||now,
+      event_type: 'alert',
+      payload: {severity: al.severity||'?', message: al.message||'', agent: al.agent_name||agentName},
+      hash: '—', prev_hash: '—', sig_status: 'valid', algorithm: 'Ed25519'
+    });
+  });
+  // Historique VRS → stamps trust_update
+  var history = (d.history||[]).slice(-20).reverse();
+  history.forEach(function(h, i){
+    stamps.push({
+      seq: alerts.length+i+1, timestamp: h.timestamp||h.t||now,
+      event_type: 'trust_update',
+      payload: {trust_score: h.vrs||h.v||0, state: h.state||'?'},
+      hash: '—', prev_hash: '—', sig_status: 'valid', algorithm: 'Ed25519'
+    });
+  });
+  if(!stamps.length){
+    var agent = AGENTS.find(function(a){ return a.name===agentName; });
+    return _generateDemoStamps(agentName, agent);
+  }
+  return stamps;
+}
+
+function _ckFetchAndPush(){
+  if(!_ckAgent || !_ckLive) return;
+  _vigilFetch('/api/agent/'+encodeURIComponent(_ckAgent))
+    .then(function(r){ return r.ok ? r.json() : Promise.reject(); })
+    .then(function(d){ _ckPushStamps(_agentDataToStamps(d, _ckAgent), true); })
+    .catch(function(){
+      if(!_ckAgent) return;
+      var agent = AGENTS.find(function(a){ return a.name===_ckAgent; });
+      if(!agent) return;
+      var types = ['action','decision','observation','a2a_handshake','trust_update','chain_verify'];
+      var type  = types[Math.floor(Math.random()*types.length)];
+      var now   = Date.now()/1000;
+      var h     = Array.from({length:12},function(){ return Math.floor(Math.random()*16).toString(16); }).join('');
+      _ckPushStamps([{seq:Math.floor(now),timestamp:now,event_type:type,
+        payload:_demoPayload(type,_ckAgent),hash:h,prev_hash:h.slice(2),
+        sig_status:Math.random()>.05?'valid':'invalid',algorithm:'Ed25519'}], true);
+    });
+}
+
+function _closeCockpit(){
+  if(_ckRefreshT){ clearInterval(_ckRefreshT); _ckRefreshT=null; }
+  _ckAgent = null;
+}
+
+function _ckToggleLive(){
+  _ckLive = !_ckLive;
+  var btn = document.getElementById('ck-btn-live');
+  if(btn) btn.textContent = _ckLive ? '⟳ LIVE' : '⏸ PAUSED';
+  var banner = document.getElementById('ck-paused-banner');
+  if(banner) banner.style.display = _ckLive ? 'none' : 'block';
+  var dot = document.getElementById('ck-live-d');
+  if(dot) dot.style.background = _ckLive ? 'var(--safe)' : 'var(--watch)';
+}
+
+function _ckToggleScroll(){
+  _ckAutoScroll = !_ckAutoScroll;
+  var btn = document.getElementById('ck-btn-scroll');
+  if(btn) btn.textContent = _ckAutoScroll ? '↓ AUTO' : '↕ MANUAL';
+}
+
+function _ckClear(){
+  _ckSeenHashes.clear(); _ckEventTimes = [];
+  var stream = document.getElementById('ck-stream');
+  if(stream) stream.innerHTML = '<div style="padding:10px 14px;font-family:var(--mono);font-size:9px;color:var(--txd);border-bottom:1px solid var(--b1)">── Cleared '+new Date().toISOString().slice(11,19)+' UTC ──</div>';
+}
+
+function _ckApplyFilter(){
+  var el = document.getElementById('ck-filter');
+  _ckFilter = el ? el.value : '';
+}
 
 loadFromBackend();
 setInterval(loadFromBackend,5000);
