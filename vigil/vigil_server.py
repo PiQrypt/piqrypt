@@ -1247,7 +1247,11 @@ class VIGILServer:
                                         except Exception:
                                             pass
                         for agent in agents:
-                            aname = agent.get("name") or agent.get("agent_id", "")
+                            aname = (
+                                agent.get("agent_name")
+                                or agent.get("name")
+                                or agent.get("agent_id", "")
+                            )
                             if not aname:
                                 continue
                             vrs = agent.get("vrs", 0.5)

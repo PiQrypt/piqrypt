@@ -416,6 +416,11 @@ class TrustGateServer:
         if path == "/api/vigil/agent-state" and method == "POST":
             return self._handle_vigil_agent_state(body)
 
+        if path == "/api/reset" and method == "POST":
+            self._agents.clear()
+            log.info("[TrustGate] agents registry cleared")
+            return {"ok": True, "cleared": True}, 200
+
         # ── Console HTML ────────────────────────────────────────────────────────
         if path == "/api/agents" and method == "GET":
             return self._handle_list_agents()
@@ -430,10 +435,16 @@ class TrustGateServer:
 
     def _handle_list_agents(self):
         """GET /api/agents — registre de tous les agents connus de Vigil."""
-        import time as _time
-        now = int(_time.time())
+        now = int(time.time())
+        # Nettoyer les agents expirés (TTL 120s)
+        expired = [
+            aid for aid, a in self._agents.items()
+            if (now - a.get("updated_at", 0)) > 120
+        ]
+        for aid in expired:
+            del self._agents[aid]
+        # Retourner les agents restants
         agents = list(self._agents.values())
-        # Marquer inactif si pas de mise a jour depuis 60s
         for a in agents:
             a["active"] = (now - a.get("updated_at", 0)) < 60
         return {"total": len(agents), "agents": agents}, 200
