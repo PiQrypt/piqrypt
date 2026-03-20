@@ -76,7 +76,7 @@ def main():
     parser.add_argument("--module", help="Lancer un seul module (ex: tsi_engine)")
     args = parser.parse_args()
 
-    verbosity = 2 if args.verbose else 1
+    _ = 2 if args.verbose else 1
 
     print(f"\n{BOLD}{CYAN}PiQrypt v1.7.0 — Test Suite{RESET}")
     print(f"Racine projet : {ROOT}")

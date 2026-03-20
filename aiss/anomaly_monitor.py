@@ -782,7 +782,8 @@ def get_installation_summary(
                 _pc = {}
                 for _e in _evts:
                     _p = _e.get("peer_id", "")
-                    if _p: _pc[_p] = _pc.get(_p, 0) + 1
+                    if _p:
+                        _pc[_p] = _pc.get(_p, 0) + 1
                 _total = sum(_pc.values()) or 1
                 _id_to_name = {a.get("agent_id", a["name"]): a["name"] for a in all_agents}
                 _peers = sorted(_pc.items(), key=lambda x: x[1], reverse=True)[:6]

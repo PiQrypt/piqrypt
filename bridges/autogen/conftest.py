@@ -1,4 +1,4 @@
-﻿import sys
+import sys
 import types
 import hashlib
 import json
@@ -14,14 +14,39 @@ mock_pq.compute_event_hash = lambda e: hashlib.sha256(json.dumps(e, default=str)
 mock_pq.export_audit_chain = lambda path: open(path, 'w').write(json.dumps(events))
 sys.modules['piqrypt'] = mock_pq
 ag = types.ModuleType('autogen')
+
+
 class CA:
-    def __init__(self,**k): self.name=k.get('name','a'); self._reply_func_list=[]
-    def generate_reply(self,**k): return 'mock'
-    def initiate_chat(self,r,message='',**k): return MagicMock(summary='ok')
-    def register_reply(self,*a,**k): pass
-class AA(CA): pass
+    def __init__(self, **k):
+        self.name = k.get('name', 'a')
+        self._reply_func_list = []
+
+    def generate_reply(self, **k):
+        return 'mock'
+
+    def initiate_chat(self, r, message='', **k):
+        return MagicMock(summary='ok')
+
+    def register_reply(self, *a, **k):
+        pass
+
+
+class AA(CA):
+    pass
+
+
 class UA(CA):
-    def __init__(self,**k): super().__init__(**k); self.human_input_mode='TERMINATE'; self.code_execution_config=False
-    def execute_code_blocks(self,*a,**k): return 0,'ok'
-ag.ConversableAgent=CA; ag.AssistantAgent=AA; ag.UserProxyAgent=UA
-sys.modules['autogen']=ag; sys.modules['pyautogen']=ag
+    def __init__(self, **k):
+        super().__init__(**k)
+        self.human_input_mode = 'TERMINATE'
+        self.code_execution_config = False
+
+    def execute_code_blocks(self, *a, **k):
+        return 0, 'ok'
+
+
+ag.ConversableAgent = CA
+ag.AssistantAgent = AA
+ag.UserProxyAgent = UA
+sys.modules['autogen'] = ag
+sys.modules['pyautogen'] = ag

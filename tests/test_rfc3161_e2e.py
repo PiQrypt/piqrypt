@@ -137,7 +137,14 @@ if __name__ == "__main__":
     print("─" * 60)
     print("Results:")
     for name, result in results.items():
-        status = "✅ PASS" if result is True else ("⚠️  DEGRADED" if result == "degraded" else "⏭️  SKIPPED" if result == "skipped" else "❌ FAIL")
+        if result is True:
+            status = "✅ PASS"
+        elif result == "degraded":
+            status = "⚠️  DEGRADED"
+        elif result == "skipped":
+            status = "⏭️  SKIPPED"
+        else:
+            status = "❌ FAIL"
         print(f"  {name:20s}: {status}")
 
     # Consider degraded as acceptable (network may be disabled)

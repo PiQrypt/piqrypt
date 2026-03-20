@@ -352,7 +352,7 @@ def _verify_jwt_ed25519(token: str, public_key_b64: str) -> Dict[str, Any]:
         # Vérification Ed25519 via PyNaCl
         try:
             from nacl.signing import VerifyKey
-            from nacl.exceptions import BadSignatureError
+            from nacl.exceptions import BadSignatureError  # noqa: F401
             public_key_bytes = base64.b64decode(public_key_b64)
             vk = VerifyKey(public_key_bytes)
             vk.verify(message, signature)

@@ -28,11 +28,11 @@ sys.modules.setdefault("nacl", _mock_nacl)
 sys.modules.setdefault("nacl.signing", _mock_nacl.signing)
 sys.modules.setdefault("nacl.exceptions", _mock_nacl.exceptions)
 
-import sys
-import os
+import sys  # noqa: E402
+import os  # noqa: E402
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from aiss.license import (
+from aiss.license import (  # noqa: E402
     License, TIERS, TIER_ORDER,
     FeatureNotAvailableError, QuotaExceededError, require_pro,
 )

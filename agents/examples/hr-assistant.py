@@ -29,7 +29,7 @@ class HRAssistant:
     def evaluate_candidate(self, cv_text, job_requirements):
         """
         Evaluate candidate with explainable AI.
-        
+
         GDPR Art. 22: Right to explanation of automated decisions.
         """
         # Simulate AI evaluation (in real: NLP model)
@@ -78,7 +78,7 @@ class HRAssistant:
     def explain_decision(self, event):
         """
         Provide explanation (GDPR Art. 22).
-        
+
         Candidate has right to:
         1. Know decision was automated
         2. Get explanation
@@ -180,7 +180,8 @@ def demo():
 
         print(f"  Decision: {explanation['decision']}")
         print(f"  Score: {explanation['score']:.1f}/100")
-        print(f"  Reasons: {', '.join(explanation['reasons']) if explanation['reasons'] else 'N/A'}")
+        reasons = ', '.join(explanation['reasons']) if explanation['reasons'] else 'N/A'
+        print(f"  Reasons: {reasons}")
         print(f"  Event hash: {explanation['audit_proof']['event_hash'][:16]}...")
         print()
 

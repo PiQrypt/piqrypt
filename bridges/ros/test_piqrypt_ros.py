@@ -94,7 +94,7 @@ def _setup_ros2_mock():
 MockNode, MockString, MockTwist = _setup_ros2_mock()
 
 # Import bridge
-from piqrypt_ros import AuditedNode, AuditedPublisher, stamp_callback
+from piqrypt_ros import AuditedNode, AuditedPublisher, stamp_callback  # noqa: E402
 
 
 # ══════════════════════════════════════════════════════════════════════════════

@@ -64,7 +64,6 @@ __license__ = "Apache-2.0"
 
 import hashlib
 import json
-import os
 import platform
 import time
 import threading
@@ -187,7 +186,7 @@ class AuditedGPIO:
                     )
         if backend in ("auto", "gpiozero"):
             try:
-                from gpiozero import Device
+                from gpiozero import Device  # noqa: F401
                 return "gpiozero"
             except ImportError:
                 pass
@@ -436,9 +435,12 @@ class AuditedPiAgent:
             "sensor":      sensor_name,
             "value":       value,
         }
-        if unit:     payload["unit"]   = unit
-        if source:   payload["source"] = source
-        if metadata: payload.update(metadata)
+        if unit:
+            payload["unit"] = unit
+        if source:
+            payload["source"] = source
+        if metadata:
+            payload.update(metadata)
 
         return self._stamp_event("rpi_sensor_reading", payload)
 
@@ -456,7 +458,8 @@ class AuditedPiAgent:
             "sensor":      sensor_name,
             "value_hash":  _h(str(value)),
         }
-        if unit: payload["unit"] = unit
+        if unit:
+            payload["unit"] = unit
         return self._stamp_event("rpi_sensor_reading_hashed", payload)
 
     # ── Decisions ─────────────────────────────────────────────────────────────
@@ -498,10 +501,13 @@ class AuditedPiAgent:
         ... )
         """
         payload: Dict = {"decision": decision}
-        if context:    payload["context_hash"] = _h(json.dumps(context, default=str, sort_keys=True))
-        if context:    payload["context"]      = context   # store human-readable context
-        if confidence is not None: payload["confidence"] = round(confidence, 4)
-        if model:      payload["model"] = model
+        if context:
+            payload["context_hash"] = _h(json.dumps(context, default=str, sort_keys=True))
+            payload["context"] = context  # store human-readable context
+        if confidence is not None:
+            payload["confidence"] = round(confidence, 4)
+        if model:
+            payload["model"] = model
 
         return self._stamp_event("rpi_decision", payload)
 
@@ -533,7 +539,8 @@ class AuditedPiAgent:
             "actuator": actuator,
             "command":  str(command),
         }
-        if parameters: payload["parameters"] = parameters
+        if parameters:
+            payload["parameters"] = parameters
 
         return self._stamp_event("rpi_actuator_command", payload)
 
@@ -614,8 +621,10 @@ class AuditedPiAgent:
             "endpoint_hash":  _h(endpoint),
             "success":        success,
         }
-        if payload_hash: ev["payload_hash"] = payload_hash
-        if metadata:     ev.update(metadata)
+        if payload_hash:
+            ev["payload_hash"] = payload_hash
+        if metadata:
+            ev.update(metadata)
 
         return self._stamp_event(event_type, ev)
 
@@ -645,7 +654,8 @@ class AuditedPiAgent:
             "description_hash": _h(description),
             "recoverable":      recoverable,
         }
-        if context: payload["context_hash"] = _h(json.dumps(context, default=str))
+        if context:
+            payload["context_hash"] = _h(json.dumps(context, default=str))
 
         return self._stamp_event("rpi_error", payload)
 

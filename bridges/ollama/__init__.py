@@ -63,7 +63,6 @@ except ImportError:
     )
 
 try:
-    import ollama
     from ollama import Client as OllamaClient
 except ImportError:
     raise ImportError(

@@ -25,7 +25,7 @@ __license__ = "Apache-2.0"
 
 import hashlib
 import functools
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional
 
 try:
     import piqrypt as aiss
@@ -36,7 +36,6 @@ except ImportError:
 
 try:
     from langchain.agents import AgentExecutor
-    from langchain.tools import BaseTool
     from langchain.callbacks.base import BaseCallbackHandler
     from langchain.schema import LLMResult
 except ImportError:

@@ -45,7 +45,7 @@ class TestIdentitySessionUnlock(unittest.TestCase):
         try:
             from aiss.identity_session import IdentitySession
             with self.assertRaises(Exception):
-                with IdentitySession.open("agent_qui_nexiste_pas_xyz", "passphrase") as s:
+                with IdentitySession.open("agent_qui_nexiste_pas_xyz", "passphrase") as _:
                     pass
         except ImportError:
             self.skipTest("IdentitySession non trouvee")

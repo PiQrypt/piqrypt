@@ -55,12 +55,9 @@ try:
     import piqrypt as aiss
     from aiss.a2a import (
         create_identity_proposal,
-        perform_handshake,
         build_cosigned_handshake_event,
         create_identity_response,
-        verify_identity_proposal,
     )
-    from aiss.crypto import ed25519
 except ImportError:
     raise ImportError(
         "piqrypt is required. Install with: pip install piqrypt"

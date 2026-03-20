@@ -80,7 +80,7 @@ for _p in [str(_ROOT), str(_TG_DIR)]:
     if _p not in _sys.path:
         _sys.path.insert(0, _p)
 try:
-    from auth_middleware import AuthMiddleware, generate_token_hint
+    from auth_middleware import AuthMiddleware
 except ImportError:
     raise ImportError(
         "auth_middleware.py introuvable. "
@@ -90,19 +90,20 @@ except ImportError:
 # ── Trust Gate imports ────────────────────────────────────────────────────────
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from trustgate.decision import Decision, EvaluationContext, Outcome
-from trustgate.policy_loader import (
-    load_policy, Policy, ThresholdPolicy, RolePolicy, NetworkPolicy, NotificationPolicy, EscalationPolicy,
+from trustgate.decision import Decision, EvaluationContext, Outcome  # noqa: E402
+from trustgate.policy_loader import (  # noqa: E402
+    load_policy, Policy, ThresholdPolicy, RolePolicy,
+    NetworkPolicy, NotificationPolicy, EscalationPolicy,
 )
-from trustgate.policy_engine import evaluate as engine_evaluate, simulate as engine_simulate
-from trustgate.policy_versioning import PolicyVersioning
-from trustgate.audit_journal import AuditJournal
-from trustgate.decision_queue import DecisionQueue
-from trustgate.human_principal import (
+from trustgate.policy_engine import evaluate as engine_evaluate, simulate as engine_simulate  # noqa: E402
+from trustgate.policy_versioning import PolicyVersioning  # noqa: E402
+from trustgate.audit_journal import AuditJournal  # noqa: E402
+from trustgate.decision_queue import DecisionQueue  # noqa: E402
+from trustgate.human_principal import (  # noqa: E402
     HumanPrincipal, SSOToken, PrincipalNotFoundError,
     InsufficientClearanceError, DEFAULT_PRINCIPALS_DIR,
 )
-from trustgate.notifier import Notifier, ConsoleChannel
+from trustgate.notifier import Notifier, ConsoleChannel  # noqa: E402
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -742,7 +743,10 @@ class TrustGateServer:
 
             return {
                 "decision_id": decision.decision_id,
-                "outcome":     decision.outcome.value if hasattr(decision.outcome, "value") else str(decision.outcome).replace("Outcome.", ""),
+                "outcome": (
+                    decision.outcome.value if hasattr(decision.outcome, "value")
+                    else str(decision.outcome).replace("Outcome.", "")
+                ),
                 "reason":      decision.reason,
             }, 200
 
@@ -798,7 +802,9 @@ class TrustGateServer:
         import pathlib
         console_path = pathlib.Path(__file__).parent / "console" / "trustgate_console.html"
         if not console_path.exists():
-            return {"error": "Console not found — place trustgate_console.html in trustgate/console/"}, 404
+            return {
+                "error": "Console not found — place trustgate_console.html in trustgate/console/"
+            }, 404
         # Return as special tuple with content-type override
         return {"__html_file__": str(console_path)}, 200
 
@@ -860,7 +866,9 @@ def main():
     parser.add_argument("--host",   default=DEFAULT_HOST,  help="Bind host")
     parser.add_argument("--port",   default=DEFAULT_PORT,  type=int, help="Port")
     parser.add_argument("--policy", default=str(DEFAULT_POLICY_PATH), help="Policy YAML path")
-    parser.add_argument("--demo",   action="store_true",   help="Demo mode (no policy file required)")
+    parser.add_argument(
+        "--demo", action="store_true", help="Demo mode (no policy file required)"
+    )
     args = parser.parse_args()
 
     server = TrustGateServer(

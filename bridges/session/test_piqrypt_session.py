@@ -45,7 +45,7 @@ def _setup_piqrypt_mock():
 _mock_piqrypt, _events_by_agent = _setup_piqrypt_mock()
 
 # Import bridge
-from piqrypt_session import AgentSession
+from piqrypt_session import AgentSession  # noqa: E402
 
 
 # ══════════════════════════════════════════════════════════════════════════════

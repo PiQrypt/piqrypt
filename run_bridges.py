@@ -46,7 +46,9 @@ for bridge_name, test_file in BRIDGE_TESTS:
 
     # Environnement : injecter le dossier du bridge dans PYTHONPATH
     env = os.environ.copy()
-    env["PYTHONPATH"] = str(bridge_dir) + os.pathsep + str(ROOT) + os.pathsep + env.get("PYTHONPATH", "")
+    env["PYTHONPATH"] = (
+        str(bridge_dir) + os.pathsep + str(ROOT) + os.pathsep + env.get("PYTHONPATH", "")
+    )
     env["PIQRYPT_SCRYPT_N"] = "16384"
 
     proc = subprocess.run(
@@ -65,9 +67,11 @@ for bridge_name, test_file in BRIDGE_TESTS:
         if "passed" in line and ("failed" in line or "passed" in line):
             import re
             m = re.search(r"(\d+) passed", line)
-            if m: passed = int(m.group(1))
+            if m:
+                passed = int(m.group(1))
             m = re.search(r"(\d+) failed", line)
-            if m: failed = int(m.group(1))
+            if m:
+                failed = int(m.group(1))
         if "error" in line.lower() and "importerror" in line.lower():
             pass
 

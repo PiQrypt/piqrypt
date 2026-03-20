@@ -35,7 +35,7 @@ except ImportError:
     )
 
 try:
-    from crewai import Agent, Crew, Task
+    from crewai import Agent, Crew
 except ImportError:
     raise ImportError(
         "crewai is required. Install with: pip install crewai"

@@ -52,8 +52,8 @@ from typing import Optional, List
 
 # PiQrypt integration
 try:
-    from aiss.key_store import encrypt_private_key, decrypt_private_key
-    from aiss.crypto.ed25519 import generate_keypair, sign, verify
+    from aiss.key_store import encrypt_private_key
+    from aiss.crypto.ed25519 import generate_keypair, sign
     from aiss.identity import derive_agent_id
     _AISS_AVAILABLE = True
 except ImportError:

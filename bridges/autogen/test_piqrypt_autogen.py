@@ -96,7 +96,7 @@ def _setup_autogen_mock():
 MockAssistant, MockUserProxy, MockGroupChat, MockGroupChatManager = _setup_autogen_mock()
 
 # Import bridge
-from piqrypt_autogen import AuditedAssistant, AuditedUserProxy, AuditedGroupChat, stamp_reply, stamp_conversation, export_audit
+from piqrypt_autogen import AuditedAssistant, AuditedUserProxy, AuditedGroupChat, stamp_reply, stamp_conversation, export_audit  # noqa: E402
 
 
 # ══════════════════════════════════════════════════════════════════════════════

@@ -198,9 +198,15 @@ def test_principal_sign_decision_sso():
 def test_principal_clearance_levels():
     with tempfile.TemporaryDirectory() as tmpdir:
         principals_dir = Path(tmpdir) / "principals"
-        l1 = HumanPrincipal.create(name="l1", email="l1@co.com", clearance="L1", mode="sso", principals_dir=principals_dir)
-        l2 = HumanPrincipal.create(name="l2", email="l2@co.com", clearance="L2", mode="sso", principals_dir=principals_dir)
-        l3 = HumanPrincipal.create(name="l3", email="l3@co.com", clearance="L3", mode="sso", principals_dir=principals_dir)
+        l1 = HumanPrincipal.create(
+            name="l1", email="l1@co.com", clearance="L1", mode="sso", principals_dir=principals_dir
+        )
+        l2 = HumanPrincipal.create(
+            name="l2", email="l2@co.com", clearance="L2", mode="sso", principals_dir=principals_dir
+        )
+        l3 = HumanPrincipal.create(
+            name="l3", email="l3@co.com", clearance="L3", mode="sso", principals_dir=principals_dir
+        )
 
         # L1: can approve VRS < 0.75
         assert l1.can_approve(0.70) is True

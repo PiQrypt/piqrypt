@@ -71,7 +71,7 @@ def _setup_openclaw_mock():
 MockOpenClaw, MockExecutionResult = _setup_openclaw_mock()
 
 # Import bridge
-from piqrypt_openclaw import AuditableOpenClaw, stamp_action, export_audit
+from piqrypt_openclaw import AuditableOpenClaw, stamp_action, export_audit  # noqa: E402
 
 
 # ══════════════════════════════════════════════════════════════════════════════

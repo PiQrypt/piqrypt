@@ -93,7 +93,7 @@ def make_ctx(**overrides) -> EvaluationContext:
 
 def test_decision_creation():
     ctx = make_ctx()
-    policy = make_policy()
+    _ = make_policy()
     d = Decision.from_context(ctx, Outcome.ALLOW, "passed", "test@1.0", "abc123")
     assert d.outcome == Outcome.ALLOW
     assert d.agent_id == ctx.agent_id
@@ -106,7 +106,7 @@ def test_decision_creation():
 
 def test_decision_require_human_flow():
     ctx = make_ctx(vrs=0.65)
-    policy = make_policy()
+    _ = make_policy()
     d = Decision.from_context(
         ctx, Outcome.REQUIRE_HUMAN, "vrs high",
         "test@1.0", "abc123", timeout_seconds=300
@@ -182,7 +182,10 @@ roles:
 
 
 def test_policy_integrity_check():
-    policy_yaml = "version: '1.0'\nname: 'integrity_test'\nthresholds:\n  vrs_require_human: 0.60\n  vrs_block: 0.85\n"
+    policy_yaml = (
+        "version: '1.0'\nname: 'integrity_test'\n"
+        "thresholds:\n  vrs_require_human: 0.60\n  vrs_block: 0.85\n"
+    )
     import hashlib
     # Ecrire en mode binaire (newline=None) pour eviter la conversion
     # CRLF sur Windows — le hash doit correspondre exactement aux bytes ecrits.
@@ -305,7 +308,8 @@ def test_engine_block_network():
 
 
 def test_engine_allow_whitelisted_domain():
-    import trustgate.policy_engine as _pe; _pe._alert_counts.clear()
+    import trustgate.policy_engine as _pe
+    _pe._alert_counts.clear()
     ctx = make_ctx(
         action        = "http_get",
         role          = "operator",
@@ -336,7 +340,8 @@ def test_engine_tsi_unstable():
 
 
 def test_engine_tsi_watch():
-    import trustgate.policy_engine as _pe; _pe._alert_counts.clear()
+    import trustgate.policy_engine as _pe
+    _pe._alert_counts.clear()
     ctx    = make_ctx(vrs=0.20, tsi_state="WATCH")
     policy = make_policy()
     d = evaluate(ctx, policy)
@@ -465,8 +470,14 @@ def test_versioning_activate():
 
 
 def test_versioning_history():
-    policy_v1 = "version: '1.0'\nname: 'hist_test'\nthresholds:\n  vrs_require_human: 0.60\n  vrs_block: 0.85\n"
-    policy_v2 = "version: '2.0'\nname: 'hist_test'\nthresholds:\n  vrs_require_human: 0.50\n  vrs_block: 0.80\n"
+    policy_v1 = (
+        "version: '1.0'\nname: 'hist_test'\n"
+        "thresholds:\n  vrs_require_human: 0.60\n  vrs_block: 0.85\n"
+    )
+    policy_v2 = (
+        "version: '2.0'\nname: 'hist_test'\n"
+        "thresholds:\n  vrs_require_human: 0.50\n  vrs_block: 0.80\n"
+    )
 
     with tempfile.TemporaryDirectory() as tmpdir:
         v1_path = Path(tmpdir) / "policy_v1.yaml"
@@ -487,7 +498,10 @@ def test_versioning_history():
 
 
 def test_versioning_verify_current():
-    policy_content = "version: '1.0'\nname: 'verify_test'\nthresholds:\n  vrs_require_human: 0.60\n  vrs_block: 0.85\n"
+    policy_content = (
+        "version: '1.0'\nname: 'verify_test'\n"
+        "thresholds:\n  vrs_require_human: 0.60\n  vrs_block: 0.85\n"
+    )
 
     with tempfile.TemporaryDirectory() as tmpdir:
         policy_path = Path(tmpdir) / "policy.yaml"

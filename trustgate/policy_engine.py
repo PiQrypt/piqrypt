@@ -254,7 +254,9 @@ def simulate(ctx: EvaluationContext, policy: Policy) -> dict:
         triggered.append("tsi_watch")
 
     if ctx.vrs >= policy.thresholds.vrs_require_human:
-        triggered.append(f"vrs_require_human ({ctx.vrs:.3f} >= {policy.thresholds.vrs_require_human})")
+        triggered.append(
+            f"vrs_require_human ({ctx.vrs:.3f} >= {policy.thresholds.vrs_require_human})"
+        )
 
     return {
         "outcome":          outcome,

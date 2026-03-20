@@ -190,7 +190,10 @@ class TestCertifySimple:
 
         bundle_path = Path(result["bundle_path"])
         assert bundle_path.exists()
-        assert bundle_path.suffix == ".piqrypt-certified" or ".piqrypt-certified" in bundle_path.name
+        assert (
+            bundle_path.suffix == ".piqrypt-certified"
+            or ".piqrypt-certified" in bundle_path.name
+        )
 
     def test_zip_contains_expected_files(self, minimal_audit, tmp_dir, sample_keypair):
         from aiss.certification import certify_simple

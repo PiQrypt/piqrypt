@@ -80,7 +80,7 @@ def _setup_crewai_mock():
 MockAgent, MockCrew, MockTask = _setup_crewai_mock()
 
 # Import bridge
-from piqrypt_crewai import AuditedAgent, AuditedCrew, stamp_task, export_audit
+from piqrypt_crewai import AuditedAgent, AuditedCrew, stamp_task, export_audit  # noqa: E402
 
 
 # ══════════════════════════════════════════════════════════════════════════════

@@ -38,7 +38,7 @@ def _setup_piqrypt_mock():
 _mock_piqrypt, _events = _setup_piqrypt_mock()
 
 # Import bridge
-from piqrypt_mcp import AuditedMCPClient, export_audit
+from piqrypt_mcp import AuditedMCPClient, export_audit  # noqa: E402
 
 
 # ── Helper async runner ───────────────────────────────────────────────────────
@@ -132,7 +132,7 @@ class TestMCPSessionLifecycle(unittest.TestCase):
     def test_context_manager_stamps_both_endpoints(self):
         async def _test():
             _events.clear()
-            async with MockMCPClient(agent_name="test") as client:
+            async with MockMCPClient(agent_name="test") as _:
                 pass
             session_events = [e for e in _events if "session" in e.get("event_type", "").lower()]
             self.assertGreaterEqual(len(session_events), 2)  # start + end

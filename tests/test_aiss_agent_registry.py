@@ -35,7 +35,8 @@ class TestAgentRegistryOperations(unittest.TestCase):
             reg = AgentRegistry(self.registry_path)
             reg.register("agent_test", {"tier": "free", "type": "llm"})
             agents = reg.list()
-            self.assertIn("agent_test", [a if isinstance(a, str) else a.get("name", "") for a in agents])
+            names = [a if isinstance(a, str) else a.get("name", "") for a in agents]
+            self.assertIn("agent_test", names)
         except (ImportError, AttributeError):
             self.skipTest("API AgentRegistry non trouvee")
 

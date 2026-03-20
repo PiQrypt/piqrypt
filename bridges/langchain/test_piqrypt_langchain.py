@@ -91,7 +91,7 @@ def _setup_langchain_mock():
 BaseCallbackHandler, AgentExecutor, BaseTool, LLMResult = _setup_langchain_mock()
 
 # Import bridge
-from piqrypt_langchain import PiQryptCallbackHandler, AuditedAgentExecutor, piqrypt_tool, stamp_chain, export_audit
+from piqrypt_langchain import PiQryptCallbackHandler, AuditedAgentExecutor, piqrypt_tool, stamp_chain, export_audit  # noqa: E402
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -356,7 +356,7 @@ class TestExportAudit(unittest.TestCase):
         with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
             path = f.name
         try:
-            result = export_audit(path)
+            _ = export_audit(path)
             self.assertTrue(os.path.exists(path))
         finally:
             os.unlink(path)

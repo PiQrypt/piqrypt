@@ -74,7 +74,7 @@ def test_memory_integration():
     """Test intégration store_event → index automatique"""
     # Setup test directory
     test_home = Path(tempfile.mkdtemp())
-    original_home = Path.home()
+    _ = Path.home()
 
     try:
         # Override home temporarily
@@ -93,7 +93,9 @@ def test_memory_integration():
         agent_id = aiss.derive_agent_id(pub)
 
         for i in range(5):
-            event = aiss.stamp_event(priv, agent_id, {"action": f"test_{i}", "event_type": "test_event"})
+            event = aiss.stamp_event(
+                priv, agent_id, {"action": f"test_{i}", "event_type": "test_event"}
+            )
             store_event(event)
 
         # Verify index was updated

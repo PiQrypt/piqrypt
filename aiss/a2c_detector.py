@@ -92,10 +92,14 @@ def _indicator(
 
 def _severity(score: float) -> str:
     """Convertit un score [0,1] en niveau de sévérité."""
-    if score < 0.25:  return "NONE"
-    if score < 0.50:  return "LOW"
-    if score < 0.70:  return "MEDIUM"
-    if score < 0.90:  return "HIGH"
+    if score < 0.25:
+        return "NONE"
+    if score < 0.50:
+        return "LOW"
+    if score < 0.70:
+        return "MEDIUM"
+    if score < 0.90:
+        return "HIGH"
     return "CRITICAL"
 
 

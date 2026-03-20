@@ -46,7 +46,7 @@ class TradingBot:
     def make_decision(self, symbol):
         """
         Make trading decision and sign with PiQrypt.
-        
+
         This creates a cryptographic proof of:
         - What decision was made
         - When it was made

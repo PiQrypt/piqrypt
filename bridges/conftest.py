@@ -81,10 +81,17 @@ class ConversableAgent:
         self._reply_func_list = []
     def generate_reply(self, messages=None, sender=None, **kwargs): return "Mock reply"
     def initiate_chat(self, recipient, message="", **kwargs):
-        return MagicMock(summary="Chat completed", chat_history=[{"role": "user", "content": message}, {"role": "assistant", "content": "Mock response"}])
+        return MagicMock(
+            summary="Chat completed",
+            chat_history=[
+                {"role": "user", "content": message},
+                {"role": "assistant", "content": "Mock response"},
+            ],
+        )
     def register_reply(self, *args, **kwargs): pass
 
-class AssistantAgent(ConversableAgent): pass
+class AssistantAgent(ConversableAgent):
+    pass
 
 class UserProxyAgent(ConversableAgent):
     def __init__(self, **kwargs):
@@ -142,7 +149,8 @@ class ExecutionResult:
 class OpenClaw:
     def __init__(self, **kwargs): self.config = kwargs
     def execute(self, language, code, **kwargs):
-        if "raise" in code: raise RuntimeError(f"Execution failed: {code}")
+        if "raise" in code:
+            raise RuntimeError(f"Execution failed: {code}")
         return ExecutionResult(stdout=f"[{language}] {code[:30]}... executed")
     def run_tool(self, tool_name, **kwargs): return {"tool": tool_name, "result": "mock_result", "success": True}
 

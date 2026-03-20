@@ -16,7 +16,7 @@ import types
 def _setup_piqrypt_mock():
     """Install a minimal piqrypt mock into sys.modules."""
     events_store = []
-    last_hash_store = [None]
+    _ = [None]  # unused placeholder
 
     mock_aiss = types.ModuleType("piqrypt")
     mock_aiss.generate_keypair = lambda: (b"priv" * 8, b"pub" * 8)
@@ -74,7 +74,7 @@ def _setup_ollama_mock():
 _setup_ollama_mock()
 
 # ── Now import the bridge ─────────────────────────────────────────────────────
-from piqrypt_ollama import AuditedOllama, stamp_ollama, export_audit
+from piqrypt_ollama import AuditedOllama, stamp_ollama, export_audit  # noqa: E402
 
 
 class TestAuditedOllama(unittest.TestCase):
@@ -201,7 +201,8 @@ class TestAuditedOllama(unittest.TestCase):
     def test_tool_call_stamped(self):
         _events.clear()
         tools = [{"type": "function", "function": {"name": "get_weather", "description": "Get weather", "parameters": {"type": "object", "properties": {"city": {"type": "string"}}, "required": ["city"]}}}]
-        dispatcher = lambda name, args: f"Sunny in {args.get('city','?')}"
+        def dispatcher(name, args):
+            return f"Sunny in {args.get('city', '?')}"
         self.llm.chat_with_tools(
             messages=[{"role": "user", "content": "weather in paris"}],
             tools=tools,

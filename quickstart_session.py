@@ -147,9 +147,19 @@ def _build_demo_session():
                 for j in range(i + 1, len(agent_list)):
                     a, b = agent_list[i], agent_list[j]
                     hs_hash = sha256(f"{a.agent_id}:{b.agent_id}:{self.session_id}")
-                    a.stamp("a2a_handshake", {"peer_agent_id": b.agent_id, "hs_hash": hs_hash}, self.session_id, b.agent_id)
-                    b.stamp("a2a_handshake", {"peer_agent_id": a.agent_id, "hs_hash": hs_hash}, self.session_id, a.agent_id)
-                    self._handshakes.append({"agent_a": a.name, "agent_b": b.name, "hs_hash": hs_hash})
+                    a.stamp(
+                        "a2a_handshake",
+                        {"peer_agent_id": b.agent_id, "hs_hash": hs_hash},
+                        self.session_id, b.agent_id,
+                    )
+                    b.stamp(
+                        "a2a_handshake",
+                        {"peer_agent_id": a.agent_id, "hs_hash": hs_hash},
+                        self.session_id, a.agent_id,
+                    )
+                    self._handshakes.append(
+                        {"agent_a": a.name, "agent_b": b.name, "hs_hash": hs_hash}
+                    )
                     print(f"  [handshake] {a.name} ↔ {b.name}  co-signed {green('✓')}")
 
             self.started = True
@@ -167,10 +177,16 @@ def _build_demo_session():
             if peer:
                 peer_agent = self._agents[peer]
                 ih = sha256(f"{agent.agent_id}:{peer_agent.agent_id}:{time.time()}")
-                event = agent.stamp(event_type, {**safe, "interaction_hash": ih, "role": "initiator"},
-                                    self.session_id, peer_agent.agent_id)
-                peer_agent.stamp(f"{event_type}_received", {**safe, "interaction_hash": ih, "role": "responder"},
-                                 self.session_id, agent.agent_id)
+                event = agent.stamp(
+                    event_type,
+                    {**safe, "interaction_hash": ih, "role": "initiator"},
+                    self.session_id, peer_agent.agent_id,
+                )
+                peer_agent.stamp(
+                    f"{event_type}_received",
+                    {**safe, "interaction_hash": ih, "role": "responder"},
+                    self.session_id, agent.agent_id,
+                )
                 return event, ih
             else:
                 return agent.stamp(event_type, safe, self.session_id), None

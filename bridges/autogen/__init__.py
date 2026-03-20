@@ -35,8 +35,7 @@ except ImportError:
     )
 
 try:
-    import autogen
-    from autogen import AssistantAgent, UserProxyAgent, GroupChat, GroupChatManager
+    from autogen import AssistantAgent, UserProxyAgent, GroupChatManager
 except ImportError:
     raise ImportError(
         "pyautogen is required. Install with: pip install pyautogen"

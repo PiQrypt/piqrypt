@@ -83,7 +83,7 @@ for mod_name in ["smbus2", "spidev"]:
     sys.modules[mod_name] = mod
 
 # Import bridge
-from piqrypt_rpi import AuditedGPIO, AuditedPiAgent, stamp_loop
+from piqrypt_rpi import AuditedGPIO, AuditedPiAgent, stamp_loop  # noqa: E402
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -157,7 +157,7 @@ class TestAuditedGPIO(unittest.TestCase):
         _events.clear()
         self.gpio.setup(24, "IN")
         _events.clear()
-        val = self.gpio.input(24)
+        _ = self.gpio.input(24)
         self.assertTrue(len(_events) >= 1)
 
     def test_input_returns_value(self):

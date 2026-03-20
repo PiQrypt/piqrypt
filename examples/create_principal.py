@@ -74,7 +74,7 @@ def main():
     parser.add_argument("--email",     default="admin@trustgate.local",  help="Email")
     parser.add_argument("--clearance", default="L3",
                         choices=["L1", "L2", "L3"],                      help="Niveau de clearance")
-    parser.add_argument("--list",      action="store_true",               help="Lister les principals")
+    parser.add_argument("--list", action="store_true", help="Lister les principals")
     args = parser.parse_args()
 
     if args.list:

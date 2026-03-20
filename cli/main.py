@@ -747,7 +747,7 @@ Examples:
     id_create.add_argument('--non-interactive', action='store_true',
                            help='Use env vars PIQRYPT_AGENT_NAME + PIQRYPT_PASSPHRASE')
 
-    id_list = id_s.add_parser('list', help='List registered agents')
+    id_s.add_parser('list', help='List registered agents')
 
     id_secure = id_s.add_parser('secure', help='Encrypt/re-encrypt agent private key')
     id_secure.add_argument('--name', '-n', help='Agent name')

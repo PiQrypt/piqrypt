@@ -442,7 +442,7 @@ class AgentRegistry:
         def _ctx():
             global REGISTRY_FILE  # noqa: PLW0603
             if self._custom_path:
-                original = REGISTRY_FILE
+                _ = REGISTRY_FILE
                 # On patch au niveau du module pour que _load/_save utilisent notre path
                 import aiss.agent_registry as _mod
                 original_mod = _mod.REGISTRY_FILE

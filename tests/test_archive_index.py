@@ -24,12 +24,14 @@ def test_archive_with_index():
 
         events = []
         for i in range(10):
-            e = aiss.stamp_event(priv, agent_id, {"action": f"test_{i}", "event_type": "test_event"})
+            e = aiss.stamp_event(
+                priv, agent_id, {"action": f"test_{i}", "event_type": "test_event"}
+            )
             events.append(e)
 
         # Create archive (Free)
         archive_path = Path(tmpdir) / "test.pqz"
-        meta = create_archive(events, identity, str(archive_path))
+        _ = create_archive(events, identity, str(archive_path))
 
         assert archive_path.exists()
         print(f"✓ Archive created: {archive_path.name}")
@@ -81,7 +83,7 @@ def test_archive_encrypted_with_index():
 
             # Create encrypted archive
             archive_path = Path(tmpdir) / "encrypted.pqz"
-            meta = create_archive(events, identity, str(archive_path), passphrase="test-pass")
+            _ = create_archive(events, identity, str(archive_path), passphrase="test-pass")
 
             # Verify
             with zipfile.ZipFile(archive_path, 'r') as zf:

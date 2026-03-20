@@ -121,9 +121,11 @@ def _generate_events(agent_id, profile, all_peer_ids, n):
             if random.random() < 0.92:
                 peer = dominant
                 tsa  = i < n // 3
-                ts   = (burst_ts + random.randint(-5, 5)) if tsa else (now - random.randint(0, 3600 * 6))
+                ts   = (burst_ts + random.randint(-5, 5)) if tsa else (now - random.randint(0, 3600 * 6))  # noqa: E501
             else:
-                peer, tsa, ts = random.choice(peers[1:] or [dominant]), False, now - random.randint(0, 3600 * 12)
+                peer = random.choice(peers[1:] or [dominant])
+                tsa  = False
+                ts   = now - random.randint(0, 3600 * 12)
             evts.append(_make_event(agent_id, peer, ts=ts, tsa=tsa))
 
     elif profile == "critical":
@@ -395,7 +397,7 @@ def main():
     parser.add_argument("--reset",       action="store_true", help="Supprime les agents")
     parser.add_argument("--status",      action="store_true", help="État sans modifier")
     parser.add_argument("--events-only", action="store_true", help="Events sans recréer les agents")
-    parser.add_argument("--interval",    type=int, default=20, help="Secondes entre cycles (défaut: 20)")
+    parser.add_argument("--interval",    type=int, default=20, help="Secondes entre cycles (défaut: 20)")  # noqa: E501
     args = parser.parse_args()
 
     print(BOLD(CYAN("DemoLab Runner — PiQrypt v1.7.0 + Vigil + Trust Gate")))

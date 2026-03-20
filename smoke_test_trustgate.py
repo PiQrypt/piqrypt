@@ -53,31 +53,36 @@ from pathlib import Path
 ROOT = Path(__file__).parent
 sys.path.insert(0, str(ROOT))
 
-from trustgate.decision import (
+from trustgate.decision import (  # noqa: E402
     Decision, EvaluationContext, Outcome, DecisionState, BLOCKING_OUTCOMES
 )
-from trustgate.policy_loader import (
+from trustgate.policy_loader import (  # noqa: E402
     Policy, ThresholdPolicy, RolePolicy, NetworkPolicy,
     NotificationPolicy, EscalationPolicy,
     load_policy, PolicyIntegrityError, PolicyValidationError,
 )
-from trustgate.policy_engine import evaluate, simulate
-from trustgate.policy_versioning import PolicyVersioning
-from trustgate.audit_journal import AuditJournal
-from trustgate.decision_queue import (
+from trustgate.policy_engine import evaluate, simulate  # noqa: E402
+from trustgate.policy_versioning import PolicyVersioning  # noqa: E402
+from trustgate.audit_journal import AuditJournal  # noqa: E402
+from trustgate.decision_queue import (  # noqa: E402
     DecisionQueue, DecisionAlreadyResolvedError
 )
-from trustgate.human_principal import (
+from trustgate.human_principal import (  # noqa: E402
     HumanPrincipal, InsufficientClearanceError, PrincipalNotFoundError,
     CLEARANCE_VRS_LIMITS,
 )
-from trustgate.notifier import Notifier, ConsoleChannel, WebhookChannel
-from trustgate.trustgate_server import TrustGateServer
+from trustgate.notifier import Notifier, ConsoleChannel, WebhookChannel  # noqa: E402
+from trustgate.trustgate_server import TrustGateServer  # noqa: E402
 
 
 # ─── Colours ─────────────────────────────────────────────────────────────────
-G = "\033[92m"; R = "\033[91m"; Y = "\033[93m"; B = "\033[94m"
-BOLD = "\033[1m"; DIM = "\033[2m"; RESET = "\033[0m"
+G = "\033[92m"
+R = "\033[91m"
+Y = "\033[93m"
+B = "\033[94m"
+BOLD = "\033[1m"
+DIM = "\033[2m"
+RESET = "\033[0m"
 
 passed = 0
 failed = 0
@@ -269,7 +274,8 @@ def bloc_04():
     # P1: VRS block
     d = evaluate(make_ctx(vrs=0.90), p)
     check("P1 — BLOCK (VRS > block threshold)",    d.outcome == Outcome.BLOCK)
-    check("P1 — reason references vrs_block",      "0.85" in d.reason or "vrs_block" in d.reason.lower())
+    check("P1 — reason references vrs_block",
+          "0.85" in d.reason or "vrs_block" in d.reason.lower())
 
     # P2: dangerous pattern
     pe._alert_counts.clear()
@@ -282,7 +288,8 @@ def bloc_04():
     pe._alert_counts.clear()
     d = evaluate(make_ctx(role="operator", action="shell"), p)
     check("P3 — BLOCK (role violation ANSSI R26)", d.outcome == Outcome.BLOCK)
-    check("P3 — reason mentions role",             "role" in d.reason.lower() or "operator" in d.reason)
+    check("P3 — reason mentions role",
+          "role" in d.reason.lower() or "operator" in d.reason)
 
     # P4: TSI CRITICAL
     pe._alert_counts.clear()
@@ -367,11 +374,19 @@ def bloc_05():
 def bloc_06():
     bloc("BLOC 06 — Policy Versioning — hash, history, diff, tamper (ANSSI R35)")
     with tempfile.TemporaryDirectory() as d:
-        v1 = "version: '1.0'\nname: 'ver_test'\nthresholds:\n  vrs_require_human: 0.60\n  vrs_block: 0.85\n"
-        v2 = "version: '2.0'\nname: 'ver_test'\nthresholds:\n  vrs_require_human: 0.50\n  vrs_block: 0.80\n"
+        v1 = (
+            "version: '1.0'\nname: 'ver_test'\n"
+            "thresholds:\n  vrs_require_human: 0.60\n  vrs_block: 0.85\n"
+        )
+        v2 = (
+            "version: '2.0'\nname: 'ver_test'\n"
+            "thresholds:\n  vrs_require_human: 0.50\n  vrs_block: 0.80\n"
+        )
 
-        p1 = Path(d) / "p1.yaml"; p1.write_text(v1)
-        p2 = Path(d) / "p2.yaml"; p2.write_text(v2)
+        p1 = Path(d) / "p1.yaml"
+        p1.write_text(v1)
+        p2 = Path(d) / "p2.yaml"
+        p2.write_text(v2)
         vdir = Path(d) / "versions"
 
         pv = PolicyVersioning(versions_dir=vdir)
@@ -390,7 +405,8 @@ def bloc_06():
 
         diff = pv.diff(ver1.content_hash, ver2.content_hash)
         check("diff() — returns lines",      len(diff) > 0)
-        check("diff() — contains change",    any("0.50" in l or "0.60" in l for l in diff))
+        check("diff() — contains change",
+              any("0.50" in line or "0.60" in line for line in diff))
 
         # verify_current checks against last activated version (p2)
         valid, msg = pv.verify_current(p2)
@@ -505,18 +521,21 @@ def bloc_09():
     with tempfile.TemporaryDirectory() as d:
         pdir = Path(d) / "principals"
 
-        l1 = HumanPrincipal.create(name="l1", email="l1@t.com", clearance="L1", mode="sso", principals_dir=pdir)
-        l2 = HumanPrincipal.create(name="l2", email="l2@t.com", clearance="L2", mode="sso", principals_dir=pdir)
-        l3 = HumanPrincipal.create(name="l3", email="l3@t.com", clearance="L3", mode="sso", principals_dir=pdir)
+        p_l1 = HumanPrincipal.create(
+            name="l1", email="l1@t.com", clearance="L1", mode="sso", principals_dir=pdir)
+        p_l2 = HumanPrincipal.create(
+            name="l2", email="l2@t.com", clearance="L2", mode="sso", principals_dir=pdir)
+        p_l3 = HumanPrincipal.create(
+            name="l3", email="l3@t.com", clearance="L3", mode="sso", principals_dir=pdir)
 
-        check("L1 — can approve VRS=0.70", l1.can_approve(0.70))
-        check("L1 — cannot approve VRS=0.80", not l1.can_approve(0.80))
-        check("L2 — can approve VRS=0.85", l2.can_approve(0.85))
-        check("L2 — cannot approve VRS=0.95", not l2.can_approve(0.95))
-        check("L3 — can approve VRS=0.99", l3.can_approve(0.99))
+        check("L1 — can approve VRS=0.70", p_l1.can_approve(0.70))
+        check("L1 — cannot approve VRS=0.80", not p_l1.can_approve(0.80))
+        check("L2 — can approve VRS=0.85", p_l2.can_approve(0.85))
+        check("L2 — cannot approve VRS=0.95", not p_l2.can_approve(0.95))
+        check("L3 — can approve VRS=0.99", p_l3.can_approve(0.99))
 
         try:
-            l1.assert_can_approve(0.80)
+            p_l1.assert_can_approve(0.80)
             check("assert_can_approve() raises for L1@0.80", False)
         except InsufficientClearanceError as e:
             check("assert_can_approve() raises InsufficientClearanceError", True)
@@ -562,7 +581,8 @@ def bloc_10():
 
         resolved = queue.approve(d1.decision_id, principal, token, "smoke approve")
         check("approve() — state=APPROVED",         resolved.state == DecisionState.APPROVED)
-        check("approve() — approved_by set",        resolved.approved_by == principal.record.principal_id)
+        check("approve() — approved_by set",
+              resolved.approved_by == principal.record.principal_id)
         check("approve() — signature bytes",        isinstance(resolved.approval_signature, bytes))
         check("approve() — justification",          resolved.justification == "smoke approve")
         check("approve() — removed from pending",   queue.get_decision(d1.decision_id) is not None)
@@ -616,7 +636,8 @@ def bloc_11():
     import threading
 
     ctx = make_ctx(vrs=0.72)
-    d   = Decision.from_context(ctx, Outcome.REQUIRE_HUMAN, "vrs", "v@1.0", "h", timeout_seconds=300)
+    d = Decision.from_context(ctx, Outcome.REQUIRE_HUMAN, "vrs", "v@1.0", "h",
+                              timeout_seconds=300)
 
     notifier = Notifier(channels=[ConsoleChannel()])
 
@@ -627,11 +648,17 @@ def bloc_11():
     check("build_context() — reject_url",   nc.reject_url != "")
 
     check("severity CRITICAL for VRS=0.80", notifier._build_context(
-        Decision.from_context(make_ctx(vrs=0.80), Outcome.REQUIRE_HUMAN, "", "v","h", 300)).severity == "CRITICAL")
-    check("severity ALERT for VRS=0.60",    notifier._build_context(
-        Decision.from_context(make_ctx(vrs=0.60), Outcome.REQUIRE_HUMAN, "", "v","h", 300)).severity == "ALERT")
-    check("severity WATCH for VRS=0.30",    notifier._build_context(
-        Decision.from_context(make_ctx(vrs=0.30), Outcome.REQUIRE_HUMAN, "", "v","h", 300)).severity == "WATCH")
+        Decision.from_context(
+            make_ctx(vrs=0.80), Outcome.REQUIRE_HUMAN, "", "v", "h", 300)
+    ).severity == "CRITICAL")
+    check("severity ALERT for VRS=0.60", notifier._build_context(
+        Decision.from_context(
+            make_ctx(vrs=0.60), Outcome.REQUIRE_HUMAN, "", "v", "h", 300)
+    ).severity == "ALERT")
+    check("severity WATCH for VRS=0.30", notifier._build_context(
+        Decision.from_context(
+            make_ctx(vrs=0.30), Outcome.REQUIRE_HUMAN, "", "v", "h", 300)
+    ).severity == "WATCH")
 
     # Webhook
     received = []
@@ -639,12 +666,16 @@ def bloc_11():
         def do_POST(self):
             n = int(self.headers.get("Content-Length", 0))
             received.append(json.loads(self.rfile.read(n)))
-            self.send_response(200); self.end_headers()
-        def log_message(self, *a): pass
+            self.send_response(200)
+            self.end_headers()
+
+        def log_message(self, *a):
+            pass
 
     srv = http.server.HTTPServer(("127.0.0.1", 0), Handler)
     port = srv.server_address[1]
-    t = threading.Thread(target=srv.serve_forever, daemon=True); t.start()
+    t = threading.Thread(target=srv.serve_forever, daemon=True)
+    t.start()
 
     with tempfile.TemporaryDirectory() as tmp:
         p = HumanPrincipal.create(name="w", email="w@t.com", clearance="L1",
@@ -673,9 +704,18 @@ def bloc_12():
     profiles_dir = ROOT / "trustgate" / "profiles"
 
     for profile_name, expected in [
-        ("anssi_strict",    {"vrs_rh": 0.40, "vrs_b": 0.70, "timeout": 180, "on_timeout": "REJECT", "block_ext": True}),
-        ("nist_balanced",   {"vrs_rh": 0.60, "vrs_b": 0.85, "timeout": 300, "on_timeout": "ESCALATE", "block_ext": False}),
-        ("ai_act_high_risk",{"vrs_rh": 0.50, "vrs_b": 0.80, "timeout": 240, "on_timeout": "BLOCK", "block_ext": True}),
+        ("anssi_strict", {
+            "vrs_rh": 0.40, "vrs_b": 0.70, "timeout": 180,
+            "on_timeout": "REJECT", "block_ext": True,
+        }),
+        ("nist_balanced", {
+            "vrs_rh": 0.60, "vrs_b": 0.85, "timeout": 300,
+            "on_timeout": "ESCALATE", "block_ext": False,
+        }),
+        ("ai_act_high_risk", {
+            "vrs_rh": 0.50, "vrs_b": 0.80, "timeout": 240,
+            "on_timeout": "BLOCK", "block_ext": True,
+        }),
     ]:
         path = profiles_dir / f"{profile_name}.yaml"
         check(f"Profile {profile_name} — file exists", path.exists())
@@ -722,7 +762,9 @@ def bloc_12():
 # ─── BLOC 13 — HTTP API ───────────────────────────────────────────────────────
 
 class APIClient:
-    def __init__(self, base): self.base = base
+    def __init__(self, base):
+        self.base = base
+
     def get(self, path):
         try:
             with urllib.request.urlopen(f"{self.base}{path}", timeout=5) as r:
@@ -743,20 +785,23 @@ class APIClient:
 def start_server(tmpdir) -> tuple:
     import socket
     with socket.socket() as s:
-        s.bind(("127.0.0.1", 0)); port = s.getsockname()[1]
+        s.bind(("127.0.0.1", 0))
+        port = s.getsockname()[1]
 
     srv = TrustGateServer(
         host="127.0.0.1", port=port, demo_mode=True,
         journal_dir=tmpdir/"j", queue_dir=tmpdir/"q",
         versions_dir=tmpdir/"v", principals_dir=tmpdir/"p",
     )
-    t = threading.Thread(target=srv.start, daemon=True); t.start()
+    t = threading.Thread(target=srv.start, daemon=True)
+    t.start()
     deadline = time.time() + 5
     while time.time() < deadline:
         try:
             urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=1)
             break
-        except: time.sleep(0.1)
+        except Exception:
+            time.sleep(0.1)
     return srv, APIClient(f"http://127.0.0.1:{port}")
 
 

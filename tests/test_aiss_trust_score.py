@@ -4,7 +4,7 @@ Trust Score 5 composantes (I, V_t, D_t, F, R)
 
 Comportement reel :
     compute_trust_score(agent_id, events) -> dict
-    
+
     events vide => score = 1.0  (nouvel agent = confiance par defaut)
     Ce n est pas un bug : un agent sans historique n a pas encore failli.
 """

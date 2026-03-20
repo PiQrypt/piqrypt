@@ -55,7 +55,7 @@ for _p in [str(_PROJECT_DIR), str(_VIGIL_DIR)]:
 
 # ── Auth middleware ───────────────────────────────────────────────────────────
 try:
-    from auth_middleware import AuthMiddleware, generate_token_hint
+    from auth_middleware import AuthMiddleware, generate_token_hint  # noqa: F401
 except ImportError:
     # Fallback si auth_middleware pas encore dans le path
     sys.path.insert(0, str(_PROJECT_DIR))
@@ -70,7 +70,7 @@ try:
             get_agent_alerts, get_vrs_history,
             record, activate_tsi_hook,
         )
-        from aiss.a2c_detector import (
+        from aiss.a2c_detector import (  # noqa: F401
             detect_concentration, detect_entropy_drop,
             detect_synchronization, detect_silence_break,
             compute_a2c_risk_batch,
@@ -82,7 +82,7 @@ try:
             get_agent_alerts, get_vrs_history,
             record, activate_tsi_hook,
         )
-        from a2c_detector import (
+        from a2c_detector import (  # noqa: F401
             detect_concentration, detect_entropy_drop,
             detect_synchronization, detect_silence_break,
             compute_a2c_risk_batch,
@@ -149,7 +149,10 @@ def _push_to_trustgate(agent_name: str, vrs: float, alerts: list) -> None:
         "agent_name":  agent_name,
         "vrs":         round(vrs, 4),
         "trust_score": round(vrs, 4),
-        "tsi_state":   "CRITICAL" if vrs < 0.3 else "ALERT" if vrs < 0.6 else "WATCH" if vrs < 0.8 else "STABLE",
+        "tsi_state":   (
+            "CRITICAL" if vrs < 0.3 else "ALERT" if vrs < 0.6
+            else "WATCH" if vrs < 0.8 else "STABLE"
+        ),
         "a2c_score":   0.0,
         "alert_level": alert_level,
         "source":      "vigil",
@@ -230,10 +233,25 @@ def _demo_summary() -> Dict:
             },
         ],
         "active_alerts": [
-            {"agent": "trading_bot_A", "severity": "HIGH",   "type": "tsi_drift",       "message": "TSI drift UNSTABLE — z-score 3.4σ",             "timestamp": now - 300},
-            {"agent": "trading_bot_A", "severity": "HIGH",   "type": "a2c_concentration","message": "A2C: 81% traffic concentration → sentiment_bot", "timestamp": now - 3600},
-            {"agent": "trading_bot_A", "severity": "MEDIUM", "type": "chain_fork",       "message": "Fork detected at event #2847 — unresolved",      "timestamp": now - 7200},
-            {"agent": "sentiment_bot", "severity": "MEDIUM", "type": "a2c_sync",         "message": "Temporal sync 0.94 with trading_bot_A (±5s)",    "timestamp": now - 1800},
+            {
+                "agent": "trading_bot_A", "severity": "HIGH", "type": "tsi_drift",
+                "message": "TSI drift UNSTABLE — z-score 3.4σ", "timestamp": now - 300,
+            },
+            {
+                "agent": "trading_bot_A", "severity": "HIGH", "type": "a2c_concentration",
+                "message": "A2C: 81% traffic concentration → sentiment_bot",
+                "timestamp": now - 3600,
+            },
+            {
+                "agent": "trading_bot_A", "severity": "MEDIUM", "type": "chain_fork",
+                "message": "Fork detected at event #2847 — unresolved",
+                "timestamp": now - 7200,
+            },
+            {
+                "agent": "sentiment_bot", "severity": "MEDIUM", "type": "a2c_sync",
+                "message": "Temporal sync 0.94 with trading_bot_A (±5s)",
+                "timestamp": now - 1800,
+            },
         ],
     }
 
@@ -436,7 +454,9 @@ class VIGILHandler(BaseHTTPRequestHandler):
             try:
                 data = get_installation_summary(agent_subset=subset, use_cache=use_cache)
                 agents = data.get("agents", [])
-                log.info("[summary] %d agents, global_vrs=%.3f", len(agents), data.get("global_vrs", 0))
+                log.info(
+                    "[summary] %d agents, global_vrs=%.3f", len(agents), data.get("global_vrs", 0)
+                )
 
                 # Collecter TOUTES les alertes MEDIUM+ (pas seulement CRITICAL)
                 all_alerts = list(data.get("active_alerts", []))
@@ -622,8 +642,18 @@ class VIGILHandler(BaseHTTPRequestHandler):
             self._send_json(200, {
                 "name": name,
                 "demo_mode": True,
-                "vrs": {"vrs": vrs_val, "state": "ALERT" if vrs_val > 0.5 else "WATCH" if vrs_val > 0.25 else "SAFE"},
-                "history": [{"timestamp": now - i * 86400, "vrs": max(0, min(1, vrs_val + random.uniform(-.08, .08))), "state": "SAFE"} for i in range(days, -1, -1)],
+                "vrs": {
+                    "vrs": vrs_val,
+                    "state": "ALERT" if vrs_val > 0.5 else "WATCH" if vrs_val > 0.25 else "SAFE",
+                },
+                "history": [
+                    {
+                        "timestamp": now - i * 86400,
+                        "vrs": max(0, min(1, vrs_val + random.uniform(-.08, .08))),
+                        "state": "SAFE",
+                    }
+                    for i in range(days, -1, -1)
+                ],
                 "alerts": [],
                 "computed_at": _ts(),
             })
@@ -656,7 +686,10 @@ class VIGILHandler(BaseHTTPRequestHandler):
                 })
             except Exception as e:
                 log.error("get_agent_alerts failed: %s", e)
-                self._send_json(200, {"alerts": _demo_summary()["active_alerts"], "demo_fallback": True})
+                self._send_json(200, {
+                    "alerts": _demo_summary()["active_alerts"],
+                    "demo_fallback": True,
+                })
         else:
             alerts = _demo_summary()["active_alerts"]
             if severity:
@@ -692,14 +725,18 @@ class VIGILHandler(BaseHTTPRequestHandler):
                 data = path.read_bytes()
                 self.send_response(200)
                 self.send_header("Content-Type",        "application/octet-stream")
-                self.send_header("Content-Disposition", f'attachment; filename="{name}_certified.pqz"')
+                self.send_header(
+                    "Content-Disposition", f'attachment; filename="{name}_certified.pqz"'
+                )
                 self.send_header("Content-Length",      str(len(data)))
                 for k, v in CORS_HEADERS.items():
                     self.send_header(k, v)
                 self.end_headers()
                 self.wfile.write(data)
             else:
-                self._send_error(404, f"No certified archive for {name}. Run: piqrypt archive --agent {name}")
+                self._send_error(
+                    404, f"No certified archive for {name}. Run: piqrypt archive --agent {name}"
+                )
 
         elif export_type == "pqz-memory":
             path = PIQRYPT_DIR / "agents" / name / "archive" / f"{name}_memory.pqz"
@@ -714,7 +751,10 @@ class VIGILHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(data)
             else:
-                self._send_error(404, f"No memory archive for {name}. Run: piqrypt archive --agent {name} --memory")
+                self._send_error(
+                    404,
+                    f"No memory archive for {name}. Run: piqrypt archive --agent {name} --memory",
+                )
 
         elif export_type == "pdf":
             # Generate minimal text-based PDF report
@@ -722,7 +762,9 @@ class VIGILHandler(BaseHTTPRequestHandler):
             pdf_content = self._generate_pdf_report(name)
             self.send_response(200)
             self.send_header("Content-Type",        "application/pdf")
-            self.send_header("Content-Disposition", f'attachment; filename="{name}_audit_report.pdf"')
+            self.send_header(
+                "Content-Disposition", f'attachment; filename="{name}_audit_report.pdf"'
+            )
             self.send_header("Content-Length",      str(len(pdf_content)))
             self.send_header("X-Vigil-Warning",     "local-export-not-certified")
             for k, v in CORS_HEADERS.items():
@@ -731,7 +773,9 @@ class VIGILHandler(BaseHTTPRequestHandler):
             self.wfile.write(pdf_content)
 
         else:
-            self._send_error(400, f"Unknown export type: {export_type}. Use: pqz-cert, pqz-memory, pdf")
+            self._send_error(
+                400, f"Unknown export type: {export_type}. Use: pqz-cert, pqz-memory, pdf"
+            )
 
     def _api_create_agent(self, payload: Dict):
         """POST /api/agent/create — crée une identité agent."""
@@ -1132,18 +1176,23 @@ class VIGILServer:
         lic_exp    = tier_inf.get("license_expires")
         vf         = tier_inf.get("vigil_features", {})
 
-        log.info("  Auth      → %s", "✅ ENABLED" if _AUTH.token else "⚠️  MISCONFIGURED — set VIGIL_TOKEN")
+        log.info(
+            "  Auth      → %s",
+            "✅ ENABLED" if _AUTH.token else "⚠️  MISCONFIGURED — set VIGIL_TOKEN",
+        )
         log.info("  Tier      → %s  [%s]", tier.upper(), lic_status.upper())
         if lic_exp:
             log.info("  Expires   → %s", lic_exp)
         log.info("  TrustGate → %s", tier_inf["trustgate_level"] or "unavailable (upgrade to Pro)")
-        log.info("  Features  → record=%s  alerts=%s  export_pdf=%s  export_pqz=%s  full_vrs=%s  bridges=%s",
-                 "✅" if vf.get("record")      else "🔒",
-                 "✅" if vf.get("alerts")      else "🔒",
-                 "✅" if vf.get("export_pdf")  else "🔒",
-                 "✅" if vf.get("export_pqz")  else "🔒",
-                 "✅" if vf.get("full_vrs")    else "🔒 (7d max)",
-                 str(vf.get("bridge_limit") or "∞"))
+        log.info(
+            "  Features  → record=%s  alerts=%s  export_pdf=%s  export_pqz=%s  full_vrs=%s  bridges=%s",  # noqa: E501
+            "✅" if vf.get("record")      else "🔒",
+            "✅" if vf.get("alerts")      else "🔒",
+            "✅" if vf.get("export_pdf")  else "🔒",
+            "✅" if vf.get("export_pqz")  else "🔒",
+            "✅" if vf.get("full_vrs")    else "🔒 (7d max)",
+            str(vf.get("bridge_limit") or "∞"),
+        )
 
         if tier == "free":
             log.info("  ℹ️  VIGIL Free tier — fully functional dashboard.")
@@ -1228,8 +1277,8 @@ class VIGILServer:
 # ── CLI ────────────────────────────────────────────────────────────────────────
 def main():
     parser = argparse.ArgumentParser(description="Vigil HTTP Server — PiQrypt v1.7.0")
-    parser.add_argument("--host",  default=DEFAULT_HOST,  help=f"Bind host (default: {DEFAULT_HOST})")
-    parser.add_argument("--port",  default=DEFAULT_PORT,  type=int, help=f"Port (default: {DEFAULT_PORT})")
+    parser.add_argument("--host",  default=DEFAULT_HOST,  help=f"Bind host (default: {DEFAULT_HOST})")  # noqa: E501
+    parser.add_argument("--port",  default=DEFAULT_PORT,  type=int, help=f"Port (default: {DEFAULT_PORT})")  # noqa: E501
     parser.add_argument("--debug", action="store_true",   help="Verbose logging")
     args = parser.parse_args()
 

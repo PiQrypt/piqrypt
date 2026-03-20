@@ -50,7 +50,7 @@ import hashlib
 import json
 import time
 import functools
-from typing import Any, Callable, Dict, List, Optional, Type
+from typing import Any, Callable, Dict, Optional, Type
 
 try:
     import piqrypt as aiss

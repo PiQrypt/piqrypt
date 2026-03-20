@@ -59,7 +59,7 @@ class TestMigrationV16ToV17(unittest.TestCase):
             from aiss.migration import migrate_agent
             tmpdir = Path(tempfile.mkdtemp())
             identity_path = self._make_v16_identity(tmpdir, "safe_bot")
-            original_content = identity_path.read_text()
+            _ = identity_path.read_text()
             migrate_agent(str(tmpdir), "safe_bot", passphrase="test_pass")
             # Original ou backup doit contenir les donnees originales
             has_data = (

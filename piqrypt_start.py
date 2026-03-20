@@ -196,7 +196,7 @@ class StartupCheck:
 
     def _check_aiss_importable(self):
         try:
-            import aiss
+            import aiss  # noqa: F401
         except ImportError:
             self.errors.append(
                 "Package 'aiss' non importable. "
@@ -273,8 +273,17 @@ class StartupCheck:
         print(bold("PiQrypt Stack Launcher v1.7.0"))
         print(dim(_SEP * 50))
         print(f"  Tier      : {bold(self.tier.upper())}")
-        print(f"  Vigil     : {_OK + ' complet' if tier_allows_vigil_full(self.tier) else _BOOK + ' lecture seule (Free)'}")
-        print(f"  TrustGate : {(_OK + ' ' + ('complet' if self.tier in ('business','enterprise') else 'manuel')) if tier_allows_trustgate(self.tier) else red('non disponible -- upgrade Pro')}")
+        _vigil_str = (
+            _OK + ' complet'
+            if tier_allows_vigil_full(self.tier)
+            else _BOOK + ' lecture seule (Free)'
+        )
+        _tg_str = (
+            (_OK + ' ' + ('complet' if self.tier in ('business', 'enterprise') else 'manuel'))
+            if tier_allows_trustgate(self.tier) else red('non disponible -- upgrade Pro')
+        )
+        print(f"  Vigil     : {_vigil_str}")
+        print(f"  TrustGate : {_tg_str}")
         print()
 
         if self.warnings:
@@ -478,13 +487,19 @@ class PiQryptLauncher:
         print(bold("  Stack PiQrypt operationnel"))
         print(dim("  " + _SEP * 46))
         for svc in started:
-            _token = os.getenv("VIGIL_TOKEN", "") if svc.name == "Vigil" else os.getenv("TRUSTGATE_TOKEN", "")
+            _token = (
+                os.getenv("VIGIL_TOKEN", "") if svc.name == "Vigil"
+                else os.getenv("TRUSTGATE_TOKEN", "")
+            )
             _tg_path = "/console" if svc.name == "TrustGate" else ""
             _display_url = f"{svc.url}{_tg_path}?token={_token}" if _token else svc.url
             print(f"  {green(_BULL)} {svc.name:<12} {cyan(_display_url)}")
         tier_label = self.tier.upper()
         print(f"  {'Tier':<12} {bold(tier_label)}")
-        print(f"  {'Auth':<12} {_OK + ' Bearer token' if os.getenv('VIGIL_TOKEN') else red(_WARN + '  non configure')}")
+        _auth_str = (
+            _OK + ' Bearer token' if os.getenv('VIGIL_TOKEN') else red(_WARN + '  non configure')
+        )
+        print(f"  {'Auth':<12} {_auth_str}")
         print()
         print(dim("  Ctrl+C pour arreter."))
         print()
@@ -576,7 +591,11 @@ def cmd_status():
     print(dim("  " + _SEP * 50))
     print(f"  Tier          : {bold(tier.upper())}")
     print(f"  VIGIL_TOKEN   : {_OK + ' defini' if vigil_token else red(_ERR + ' absent')}")
-    print(f"  TRUSTGATE_TOKEN: {_OK + ' defini' if tg_token else (yellow(_WARN + '  absent') if tier_allows_trustgate(tier) else dim('non requis (Free)'))}")
+    _tg_tok_str = (
+        _OK + ' defini' if tg_token
+        else (yellow(_WARN + '  absent') if tier_allows_trustgate(tier) else dim('non requis (Free)'))  # noqa: E501
+    )
+    print(f"  TRUSTGATE_TOKEN: {_tg_tok_str}")
     print()
 
     try:

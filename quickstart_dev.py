@@ -134,7 +134,9 @@ def step_chain(private_key: bytes, agent_id: str, genesis: dict) -> list:
         )
         events.append(event)
         eh = aiss.compute_event_hash(event)
-        print(f"  {green('✓')} {cyan(event_type):<25} hash: {eh[:16]}...  ← prev: {prev_hash[:12]}...")
+        print(
+            f"  {green('✓')} {cyan(event_type):<25} hash: {eh[:16]}...  ← prev: {prev_hash[:12]}..."
+        )
 
     print(dim("\n  → Each event's previous_hash binds it to the prior event."))
     print(dim("    Modifying any event breaks all subsequent hashes — detectable instantly."))
@@ -259,7 +261,8 @@ def step_vigil_preview(events: list, agent_id: str, agent_name: str):
         tsi    = result["components"]["tsi"]["state"]
 
         state_icon = {"SAFE": "🟢", "WATCH": "🟡", "ALERT": "🟠", "CRITICAL": "🔴"}.get(state, "⚪")
-        print(f"  VRS (Vigil Risk Score) : {bold(f'{vrs:.3f}')}  {state_icon} {green(state) if state == 'SAFE' else yellow(state)}")
+        _state_colored = green(state) if state == 'SAFE' else yellow(state)
+        print(f"  VRS (Vigil Risk Score) : {bold(f'{vrs:.3f}')}  {state_icon} {_state_colored}")
         print(f"  Trust Score            : {ts:.3f}")
         print(f"  TSI (temporal drift)   : {tsi}")
         print(f"  Chain anomalies        : {len(result['components']['chain']['anomalies'])}")
