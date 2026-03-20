@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 PiQrypt Inc.
+# e-Soleau: DSO2026006483 (19/02/2026) -- DSO2026009143 (12/03/2026)
 """
 Tests — aiss/license.py  (v1.7.1)
 Un test par feature par tier interdit.

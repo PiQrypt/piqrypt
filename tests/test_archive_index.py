@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 PiQrypt Inc.
+# e-Soleau: DSO2026006483 (19/02/2026) -- DSO2026009143 (12/03/2026)
 """
 Test Archive .pqz — Sprint 3 Partie 2
 Vérifie : index.json + decrypt.py v2 + recherche
