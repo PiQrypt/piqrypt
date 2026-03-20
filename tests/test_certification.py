@@ -436,6 +436,7 @@ class TestTelemetry:
     def isolate_telemetry(self, tmp_path, monkeypatch):
         """Redirect ~/.piqrypt to tmp dir and reset global Telemetry state.
         Sets both HOME (Linux/Mac) and USERPROFILE (Windows) for portability.
+        Mocks urllib.request.urlopen to prevent real network calls.
         """
         monkeypatch.setenv("HOME", str(tmp_path))
         monkeypatch.setenv("USERPROFILE", str(tmp_path))
@@ -444,7 +445,9 @@ class TestTelemetry:
         import aiss.telemetry as tel_mod
         importlib.reload(tel_mod)
         self.tel_mod = tel_mod
-        yield
+        # Prevent any real HTTP calls during tests
+        with patch("urllib.request.urlopen"):
+            yield
         importlib.reload(tel_mod)  # Restore after test
 
     def test_disabled_by_default(self):

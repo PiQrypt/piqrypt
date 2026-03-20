@@ -23,12 +23,28 @@ Status:
     piqrypt telemetry status
 """
 
-import os
 import json
+import os
+import platform
+import sys
 import uuid
-from pathlib import Path
-from typing import Dict, Any, Optional
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, Optional
+
+# ── Endpoint ────────────────────────────────────────────────────────────────
+TELEMETRY_ENDPOINT = os.getenv(
+    "PIQRYPT_TELEMETRY_ENDPOINT",
+    "https://trust-server-ucjb.onrender.com/api/telemetry",
+)
+
+# ── Version ──────────────────────────────────────────────────────────────────
+_VERSION = "1.7.1"
+
+# ── System fingerprint (computed once at import) ─────────────────────────────
+_os_name   = platform.system()    # Linux / Windows / Darwin
+_arch      = platform.machine()   # x86_64 / ARM64 / etc.
+_is_server = not sys.stdout.isatty()
 
 
 class Telemetry:
@@ -45,64 +61,83 @@ class Telemetry:
       - Agent IDs
       - Event payloads
       - Any personal data
-      - IP addresses (when server implemented)
+      - IP addresses
     """
 
     def __init__(self):
         # Respect HOME (Linux/Mac) or USERPROFILE (Windows) env var overrides,
         # which pytest monkeypatch uses to isolate tests.
-        import os
         home_override = os.environ.get("HOME") or os.environ.get("USERPROFILE")
         home = Path(home_override) if home_override else Path.home()
-        self.config_dir = home / ".piqrypt"
+        self.config_dir  = home / ".piqrypt"
         self.config_file = self.config_dir / "telemetry.json"
-        self.enabled = self._check_enabled()
-        self.installation_id = self._get_installation_id()
+        self._id_file    = self.config_dir / "installation_id"
+        self.enabled          = self._check_enabled()
+        self.installation_id  = self._get_installation_id()
 
     def _check_enabled(self) -> bool:
         """Check if telemetry is enabled"""
-        # Environment variable override (disable)
         if os.getenv("PIQRYPT_TELEMETRY") == "0":
             return False
-
-        # Check config file
         if self.config_file.exists():
             try:
                 with open(self.config_file) as f:
                     config = json.load(f)
                     return config.get("enabled", False)
-            except:
+            except Exception:
                 return False
-
         return False
 
     def _get_installation_id(self) -> str:
-        """Get or create anonymous installation ID (UUID)"""
-        if self.config_file.exists():
+        """
+        Get or create anonymous installation ID (UUID).
+        Persisted in ~/.piqrypt/installation_id (dedicated file).
+        Falls back to telemetry.json for backward compatibility.
+        """
+        # 1. Dedicated file (preferred)
+        if self._id_file.exists():
             try:
-                with open(self.config_file) as f:
-                    config = json.load(f)
-                    install_id = config.get("installation_id")
-                    if install_id:
-                        return install_id
+                return self._id_file.read_text().strip()
             except Exception:
                 pass
 
-        # Generate new UUID
-        return str(uuid.uuid4())
+        # 2. Legacy: read from telemetry.json
+        if self.config_file.exists():
+            try:
+                with open(self.config_file) as f:
+                    install_id = json.load(f).get("installation_id")
+                if install_id:
+                    # Migrate to dedicated file
+                    try:
+                        self.config_dir.mkdir(exist_ok=True)
+                        self._id_file.write_text(install_id)
+                    except Exception:
+                        pass
+                    return install_id
+            except Exception:
+                pass
+
+        # 3. Generate fresh UUID and persist
+        new_id = str(uuid.uuid4())
+        try:
+            self.config_dir.mkdir(exist_ok=True)
+            self._id_file.write_text(new_id)
+        except Exception:
+            pass
+        return new_id
 
     def enable(self):
         """Enable telemetry"""
         self.config_dir.mkdir(exist_ok=True)
 
         config = {
-            "enabled": True,
+            "enabled":         True,
             "installation_id": self.installation_id,
-            "enabled_at": datetime.utcnow().isoformat() + "Z",
-            "version": "1.1.0"
+            "enabled_at":      datetime.utcnow().isoformat() + "Z",
+            "version":         _VERSION,
         }
 
-        with open(self.config_file, 'w') as f:
+        with open(self.config_file, "w") as f:
             json.dump(config, f, indent=2)
 
         self.enabled = True
@@ -121,15 +156,12 @@ class Telemetry:
     def disable(self):
         """Disable telemetry"""
         if self.config_file.exists():
-            # Keep installation_id but disable
             try:
                 with open(self.config_file) as f:
                     config = json.load(f)
-
-                config["enabled"] = False
+                config["enabled"]     = False
                 config["disabled_at"] = datetime.utcnow().isoformat() + "Z"
-
-                with open(self.config_file, 'w') as f:
+                with open(self.config_file, "w") as f:
                     json.dump(config, f, indent=2)
             except Exception:
                 self.config_file.unlink()
@@ -140,14 +172,40 @@ class Telemetry:
     def get_status(self) -> Dict[str, Any]:
         """Get telemetry status"""
         return {
-            "enabled": self.enabled,
-            "installation_id": self.installation_id if self.enabled else "N/A"
+            "enabled":         self.enabled,
+            "installation_id": self.installation_id if self.enabled else "N/A",
         }
+
+    def _send_to_server(self, event_type: str) -> None:
+        """Send anonymous event to trust-server (fire-and-forget, 3 s timeout)."""
+        if os.getenv("PIQRYPT_TELEMETRY") == "0":
+            return
+        try:
+            import urllib.request
+            payload = json.dumps({
+                "installation_id": self.installation_id,
+                "version":         _VERSION,
+                "event":           event_type,
+                "system": {
+                    "os":        _os_name,
+                    "arch":      _arch,
+                    "is_server": _is_server,
+                },
+            }).encode()
+            req = urllib.request.Request(
+                TELEMETRY_ENDPOINT,
+                data=payload,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            urllib.request.urlopen(req, timeout=3)
+        except Exception:
+            pass  # silent fail — never block the user
 
     def track_event(
         self,
         event_name: str,
-        properties: Optional[Dict[str, Any]] = None
+        properties: Optional[Dict[str, Any]] = None,
     ):
         """
         Track anonymous event
@@ -159,28 +217,25 @@ class Telemetry:
         if not self.enabled:
             return
 
-        # Build event
         event = {
-            "event": event_name,
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "event":           event_name,
+            "timestamp":       datetime.utcnow().isoformat() + "Z",
             "installation_id": self.installation_id,
-            "version": "1.1.0",
-            "properties": properties or {}
+            "version":         _VERSION,
+            "properties":      properties or {},
         }
 
-        # In production, send to telemetry server
-        # For now, log locally
         self._log_event(event)
+        self._send_to_server(event_name)
 
     def _log_event(self, event: Dict[str, Any]):
-        """Log event to local file (development/testing)"""
+        """Log event to local file."""
         log_file = self.config_dir / "telemetry.log"
-
         try:
-            with open(log_file, 'a') as f:
+            with open(log_file, "a") as f:
                 f.write(json.dumps(event) + "\n")
         except Exception:
-            pass  # Silent fail (telemetry should never break app)
+            pass  # Silent fail — telemetry must never break the app
 
 
 # Global instance
@@ -226,4 +281,5 @@ __all__ = [
     "disable_telemetry",
     "is_telemetry_enabled",
     "get_telemetry_status",
+    "TELEMETRY_ENDPOINT",
 ]

@@ -28,6 +28,7 @@ from aiss.crypto import ed25519
 from aiss.canonical import hash_bytes
 from aiss.exceptions import InvalidAgentIDError
 from aiss.logger import get_logger
+from aiss.telemetry import track as _telemetry_track
 
 logger = get_logger(__name__)
 
@@ -379,6 +380,8 @@ def create_agent_identity(
         f"ID: {agent_id[:16]}... — "
         f"Clé: {'chiffrée' if encrypted else 'non chiffrée'}"
     )
+
+    _telemetry_track("identity_created", algorithm="Ed25519", tier=tier)
 
     return {
         "agent_name":  agent_name,

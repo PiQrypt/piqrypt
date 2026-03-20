@@ -686,6 +686,7 @@ def cmd_badge_generate(args):
 
 def cmd_telemetry_enable(args):
     aiss.enable_telemetry()
+    aiss.track("install")
 
 
 def cmd_telemetry_disable(args):
