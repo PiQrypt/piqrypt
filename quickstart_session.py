@@ -64,7 +64,7 @@ def _check_imports():
 
     if missing:
         print(f"\n❌  Missing: {', '.join(missing)}")
-        print(f"    Install: pip install piqrypt")
+        print("    Install: pip install piqrypt")
         sys.exit(1)
 
     try:
@@ -241,7 +241,7 @@ def scenario_trading(AgentSession):
     )
     ih1_short = ih1[:16] if ih1 else "n/a"
     print(f"  {green('✓')} Claude    → LangGraph  interaction_hash: {cyan(ih1_short)}...")
-    print(dim(f"      Same hash in both memories — co-signed, non-repudiable"))
+    print(dim("      Same hash in both memories — co-signed, non-repudiable"))
 
     print(f"\n  {bold('Interaction 2 — LangGraph sends decision to CrewAI:')}")
     recommendation = "BUY AAPL 100 @ market — confidence 0.87"
@@ -445,13 +445,13 @@ def show_cross_memory_proof(session):
         print(f"  {b_name:<16} interaction_hash: {cyan(b_ih[:32])}...")
         if match:
             print(f"\n  {green('✓')} IDENTICAL in both memories")
-            print(dim(f"    Modifying one side leaves the other unchanged → detectable"))
-            print(dim(f"    This is what no other observability tool provides:"))
-            print(dim(f"    cryptographic proof that BOTH parties saw the SAME interaction."))
+            print(dim("    Modifying one side leaves the other unchanged → detectable"))
+            print(dim("    This is what no other observability tool provides:"))
+            print(dim("    cryptographic proof that BOTH parties saw the SAME interaction."))
         else:
             print(f"  {yellow('⚠')}  Hashes differ — chain integrity issue")
     else:
-        print(dim(f"  (No co-signed interactions to display for this agent pair)"))
+        print(dim("  (No co-signed interactions to display for this agent pair)"))
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────

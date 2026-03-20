@@ -29,11 +29,11 @@ Compliance:
 import hashlib
 import json
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional
 
-from trustgate.policy_loader import Policy, load_policy
+from trustgate.policy_loader import load_policy
 
 
 # ─── Default versioning dir ───────────────────────────────────────────────────

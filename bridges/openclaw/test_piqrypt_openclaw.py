@@ -10,7 +10,7 @@ import sys
 import time
 import types
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 
 # ── Mock piqrypt ──────────────────────────────────────────────────────────────
@@ -365,7 +365,8 @@ class TestStampAction(unittest.TestCase):
 class TestExport(unittest.TestCase):
 
     def test_export_audit_instance(self):
-        import tempfile, os
+        import tempfile
+        import os
         claw = AuditableOpenClaw(agent_name="test")
         _events.clear()
         claw.execute_task("python", "x = 1")
@@ -378,7 +379,8 @@ class TestExport(unittest.TestCase):
             os.unlink(path)
 
     def test_export_audit_top_level(self):
-        import tempfile, os
+        import tempfile
+        import os
         _events.clear()
         _events.append({"event_type": "execution_complete", "result_hash": "abc"})
         with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:

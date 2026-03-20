@@ -29,7 +29,7 @@ from __future__ import annotations
 import logging
 import os
 import time
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Dict, Optional
 
 log = logging.getLogger("piqrypt.auth")
 
@@ -376,7 +376,7 @@ class AuthMiddleware:
         handler.send_response(401)
         handler.send_header("Content-Type", "application/json")
         handler.send_header("Content-Length", str(len(body)))
-        handler.send_header("WWW-Authenticate", f'Bearer realm="PiQrypt"')
+        handler.send_header("WWW-Authenticate", 'Bearer realm="PiQrypt"')
         handler.end_headers()
         handler.wfile.write(body)
 

@@ -215,7 +215,6 @@ def test_policy_integrity_check():
 
 def test_policy_validation_errors():
     from trustgate.policy_loader import _validate
-    from trustgate.policy_loader import PolicyValidationError
 
     bad = make_policy()
     bad.thresholds.vrs_require_human = 0.90

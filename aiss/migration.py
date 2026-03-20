@@ -229,7 +229,6 @@ def _migrate_key(
     try:
         # Lire la clé legacy
         data = json.loads(old_key_path.read_text())
-        import base64
         from aiss.crypto import ed25519 as _ed
 
         raw_key = _ed.decode_base64(data.get("private_key", ""))
@@ -397,14 +396,14 @@ def prompt_migration(non_interactive: bool = False) -> Optional[Dict[str, Any]]:
     report = run_migration(agent_name, passphrase)
 
     if report["success"]:
-        print(f"\n  ✅ Migration terminée !")
+        print("\n  ✅ Migration terminée !")
         print(f"     {len(report['moved_files'])} fichiers déplacés")
         if report.get("key_encrypted"):
             print("     Clé privée chiffrée avec succès")
         print(f"     Backup : {report['backup_path']}")
         print(f"     Suppression manuelle : rm -rf {report['backup_path']}\n")
     else:
-        print(f"\n  ⚠️  Migration terminée avec erreurs :")
+        print("\n  ⚠️  Migration terminée avec erreurs :")
         for err in report["errors"]:
             print(f"     • {err}")
 

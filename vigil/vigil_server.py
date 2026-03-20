@@ -59,7 +59,7 @@ try:
 except ImportError:
     # Fallback si auth_middleware pas encore dans le path
     sys.path.insert(0, str(_PROJECT_DIR))
-    from auth_middleware import AuthMiddleware, generate_token_hint
+    from auth_middleware import AuthMiddleware
 
 # ── PiQrypt imports ────────────────────────────────────────────────────────────
 try:
@@ -127,7 +127,8 @@ def _push_to_trustgate(agent_name: str, vrs: float, alerts: list) -> None:
     Exécuté dans un thread daemon — n'impacte pas la réponse Vigil.
     Silencieux si TrustGate n'est pas disponible.
     """
-    import urllib.request, urllib.error
+    import urllib.request
+    import urllib.error
 
     if not TRUSTGATE_TOKEN:
         return  # TrustGate non configuré
@@ -583,7 +584,6 @@ class VIGILHandler(BaseHTTPRequestHandler):
                 agent_dir = PIQRYPT_DIR / "agents" / name
                 plain_dir = agent_dir / "events" / "plain"
                 if plain_dir.exists():
-                    import glob
                     for fpath in sorted(plain_dir.glob("*.json")):
                         try:
                             with open(fpath) as f:
@@ -1056,18 +1056,18 @@ class VIGILHandler(BaseHTTPRequestHandler):
                 pass
 
         content_lines = [
-            f"VIGIL AUDIT REPORT",
-            f"PiQrypt v1.7.0 — AISS v1.1",
-            f"",
-            f"!!! NOTICE: LOCAL EXPORT — NOT CERTIFIED BY PIQRYPT !!!",
-            f"This PDF is a local readable report only. It has no legal",
-            f"or cryptographic value. For certified export use .pqz format.",
-            f"",
+            "VIGIL AUDIT REPORT",
+            "PiQrypt v1.7.0 — AISS v1.1",
+            "",
+            "!!! NOTICE: LOCAL EXPORT — NOT CERTIFIED BY PIQRYPT !!!",
+            "This PDF is a local readable report only. It has no legal",
+            "or cryptographic value. For certified export use .pqz format.",
+            "",
             f"Generated : {now_str}",
             f"Agent     : {name}",
             f"VRS Score : {vrs_val:.3f}",
             f"State     : {state}",
-            f"",
+            "",
             f"For certified audit trail: piqrypt archive --agent {name}",
             f"For memory export:         piqrypt archive --agent {name} --memory",
         ]
@@ -1142,7 +1142,7 @@ class VIGILServer:
                  "✅" if vf.get("alerts")      else "🔒",
                  "✅" if vf.get("export_pdf")  else "🔒",
                  "✅" if vf.get("export_pqz")  else "🔒",
-                 "✅" if vf.get("full_vrs")    else f"🔒 (7d max)",
+                 "✅" if vf.get("full_vrs")    else "🔒 (7d max)",
                  str(vf.get("bridge_limit") or "∞"))
 
         if tier == "free":

@@ -28,7 +28,14 @@ Usage :
     python smoke_test.py --bloc 4  # un seul bloc
 """
 
-import os, sys, json, time, tempfile, threading, traceback, argparse
+import os
+import sys
+import json
+import time
+import tempfile
+import threading
+import traceback
+import argparse
 from pathlib import Path
 from typing import List, Tuple
 
@@ -62,7 +69,7 @@ def check(bloc, name, fn, *args, **kwargs):
         if _verbose:
             print(f"  {GREEN}✓{RESET} {name}  {DIM}{detail}{RESET}")
         return True
-    except Exception as e:
+    except Exception:
         tb = traceback.format_exc().strip().split("\n")[-1]
         _results.append((bloc, name, "FAIL", tb))
         if _verbose:
@@ -296,8 +303,7 @@ def bloc4_keystore():
     from aiss.key_store import (
         save_encrypted_key, load_encrypted_key,
         encrypt_private_key, decrypt_private_key,
-        _secure_erase, InvalidPassphraseError,
-        EXPECTED_FILE_SIZE, MAGIC,
+        _secure_erase, EXPECTED_FILE_SIZE, MAGIC,
     )
     from aiss.identity import generate_keypair
 

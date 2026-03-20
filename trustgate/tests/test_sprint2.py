@@ -13,22 +13,18 @@ import tempfile
 import time
 import threading
 from pathlib import Path
-from unittest.mock import patch, MagicMock
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from trustgate.decision import Decision, EvaluationContext, Outcome, DecisionState
 from trustgate.human_principal import (
-    HumanPrincipal, PrincipalRecord, SSOToken,
+    HumanPrincipal, SSOToken,
     InsufficientClearanceError, PrincipalNotFoundError,
-    CLEARANCE_VRS_LIMITS,
 )
 from trustgate.decision_queue import (
-    DecisionQueue, DecisionNotFoundError,
-    DecisionAlreadyResolvedError, DecisionTimedOutError,
+    DecisionQueue, DecisionAlreadyResolvedError,
 )
-from trustgate.notifier import Notifier, ConsoleChannel, NotificationContext
-from trustgate.policy_engine import evaluate
+from trustgate.notifier import Notifier, ConsoleChannel
 from trustgate.policy_loader import (
     Policy, ThresholdPolicy, RolePolicy, NetworkPolicy,
     NotificationPolicy, EscalationPolicy,
@@ -480,7 +476,6 @@ def test_notifier_console_channel():
 def test_notifier_webhook_channel():
     """Test WebhookChannel with a mock HTTP server."""
     import http.server
-    import threading
 
     received = []
 

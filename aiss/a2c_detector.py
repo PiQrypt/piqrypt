@@ -43,9 +43,7 @@ Hook v1.6.0 → v1.7.0 :
 
 import math
 import time
-import statistics
-from collections import Counter, defaultdict
-from pathlib import Path
+from collections import Counter
 from typing import Any, Dict, List, Optional, Tuple
 
 from aiss.logger import get_logger

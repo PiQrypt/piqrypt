@@ -56,12 +56,12 @@ def create_principal(name, email, clearance):
             created_by="cli",
             principals_dir=DEFAULT_PRINCIPALS_DIR,
         )
-        print(f"\n✓ Principal créé :")
+        print("\n✓ Principal créé :")
         print(f"  name      : {p.record.name}")
         print(f"  email     : {p.record.email}")
         print(f"  clearance : {p.record.clearance}")
         print(f"  id        : {p.record.principal_id}")
-        print(f"\nTu peux maintenant approuver des décisions dans la console TrustGate.")
+        print("\nTu peux maintenant approuver des décisions dans la console TrustGate.")
         print(f"Sélectionne '{name}' dans le dropdown du modal Approve/Reject.\n")
     except Exception as e:
         print(f"Erreur : {e}")

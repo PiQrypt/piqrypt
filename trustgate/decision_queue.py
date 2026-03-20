@@ -34,10 +34,10 @@ import json
 import threading
 import time
 from pathlib import Path
-from typing import Callable, Dict, List, Optional
+from typing import Callable, List, Optional
 
 from trustgate.decision import Decision, DecisionState, Outcome
-from trustgate.human_principal import HumanPrincipal, InsufficientClearanceError
+from trustgate.human_principal import HumanPrincipal
 
 
 # ─── Constants ────────────────────────────────────────────────────────────────

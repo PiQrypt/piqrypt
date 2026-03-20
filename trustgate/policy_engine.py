@@ -47,7 +47,6 @@ Priority order (highest to lowest):
 
 import re
 import time
-from typing import Optional
 
 from trustgate.decision import Decision, EvaluationContext, Outcome
 from trustgate.policy_loader import Policy
@@ -154,8 +153,8 @@ def _evaluate_rules(ctx: EvaluationContext, policy: Policy) -> tuple[Outcome, st
         tsi_outcome = Outcome(policy.thresholds.tsi_critical_action)
         return (
             tsi_outcome,
-            f"TSI state CRITICAL — agent shows critical temporal drift "
-            f"[NIST MEASURE 2.5 / AI Act Art.9]"
+            "TSI state CRITICAL — agent shows critical temporal drift "
+            "[NIST MEASURE 2.5 / AI Act Art.9]"
         )
 
     # ── Priority 5: Network domain violation ──────────────────────────────────
@@ -186,8 +185,8 @@ def _evaluate_rules(ctx: EvaluationContext, policy: Policy) -> tuple[Outcome, st
         tsi_outcome = Outcome(policy.thresholds.tsi_unstable_action)
         return (
             tsi_outcome,
-            f"TSI state UNSTABLE — agent Trust Score shows significant drift "
-            f"[NIST MEASURE 2.5]"
+            "TSI state UNSTABLE — agent Trust Score shows significant drift "
+            "[NIST MEASURE 2.5]"
         )
 
     # ── Priority 8: Escalation threshold ─────────────────────────────────────
@@ -205,8 +204,8 @@ def _evaluate_rules(ctx: EvaluationContext, policy: Policy) -> tuple[Outcome, st
     if ctx.tsi_state == "WATCH":
         return (
             Outcome.ALLOW_WITH_LOG,
-            f"TSI state WATCH — action allowed with enhanced logging "
-            f"[NIST MEASURE 2.5]"
+            "TSI state WATCH — action allowed with enhanced logging "
+            "[NIST MEASURE 2.5]"
         )
 
     # ── Priority 10: Default ALLOW ────────────────────────────────────────────

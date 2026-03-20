@@ -14,7 +14,6 @@ Couverture :
    10. Roundtrip : chiffrer → déchiffrer → égalité exacte
 """
 
-import os
 import secrets
 import tempfile
 import time

@@ -223,7 +223,8 @@ class TestPiQryptCallbackHandler(unittest.TestCase):
     # ── Export ────────────────────────────────────────────────────────────────
 
     def test_export_audit(self):
-        import tempfile, os
+        import tempfile
+        import os
         self.handler.on_llm_start({"name": "gpt-4"}, ["test"])
         with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
             path = f.name
@@ -348,7 +349,8 @@ class TestStampChain(unittest.TestCase):
 class TestExportAudit(unittest.TestCase):
 
     def test_export_audit_creates_file(self):
-        import tempfile, os
+        import tempfile
+        import os
         _events.clear()
         _events.append({"event_type": "test", "data": "value"})
         with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:

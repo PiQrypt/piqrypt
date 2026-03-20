@@ -8,7 +8,8 @@ Comportement reel :
     events vide => score = 1.0  (nouvel agent = confiance par defaut)
     Ce n est pas un bug : un agent sans historique n a pas encore failli.
 """
-import time, unittest
+import time
+import unittest
 
 
 def make_events(n: int, score: float = 0.85) -> list:

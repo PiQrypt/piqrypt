@@ -11,7 +11,7 @@ import json
 import unittest
 from pathlib import Path
 
-from aiss import verify_signature, derive_agent_id
+from aiss import derive_agent_id
 from aiss.canonical import canonicalize, hash_canonical
 from aiss.chain import compute_event_hash
 from aiss.fork import find_forks

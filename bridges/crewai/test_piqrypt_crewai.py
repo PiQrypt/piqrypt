@@ -10,7 +10,7 @@ import sys
 import time
 import types
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 
 # ── Mock piqrypt ──────────────────────────────────────────────────────────────
@@ -191,7 +191,8 @@ class TestAuditedAgent(unittest.TestCase):
     # ── Export ────────────────────────────────────────────────────────────────
 
     def test_export_audit(self):
-        import tempfile, os
+        import tempfile
+        import os
         task = MockTask(description="Test task", expected_output="Result")
         self.agent.execute_task(task)
         with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
@@ -269,7 +270,8 @@ class TestAuditedCrew(unittest.TestCase):
         self.assertIsNotNone(result)
 
     def test_crew_export_audit(self):
-        import tempfile, os
+        import tempfile
+        import os
         self.crew.kickoff()
         with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
             path = f.name
@@ -340,7 +342,8 @@ class TestStampTask(unittest.TestCase):
 class TestExportAudit(unittest.TestCase):
 
     def test_export_creates_file(self):
-        import tempfile, os
+        import tempfile
+        import os
         _events.clear()
         _events.append({"event_type": "task_complete", "result_hash": "abc123"})
         with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:

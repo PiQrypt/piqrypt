@@ -10,10 +10,9 @@ Changelog v1.7.1:
 - Quotas certification: cert_simple_month, cert_timestamp_month, cert_pq_month
 - TIER_ORDER mis à jour: ["free", "pro", "startup", "team", "business", "enterprise"]
 """
-import importlib
 import sys
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
 
 
 # ── Mock PyNaCl pour les tests offline ───────────────────────────────────────
@@ -29,13 +28,13 @@ sys.modules.setdefault("nacl", _mock_nacl)
 sys.modules.setdefault("nacl.signing", _mock_nacl.signing)
 sys.modules.setdefault("nacl.exceptions", _mock_nacl.exceptions)
 
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from aiss.license import (
     License, TIERS, TIER_ORDER,
-    FeatureNotAvailableError, QuotaExceededError, LicenseExpiredError,
-    LicenseInvalidError, get_tier, is_paid, require_pro,
+    FeatureNotAvailableError, QuotaExceededError, require_pro,
 )
 
 
@@ -631,7 +630,8 @@ class TestTierComparison(unittest.TestCase):
 class TestExpiration(unittest.TestCase):
 
     def test_expired_within_grace_warns(self):
-        import time, warnings
+        import time
+        import warnings
         lic = _make_license("pro")
         lic._payload = {
             "tier": "pro",

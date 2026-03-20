@@ -72,7 +72,7 @@ class TestPathTraversalFilesystem(unittest.TestCase):
 
     def test_init_agent_dirs_no_escape(self):
         """init_agent_dirs() ne crée rien en dehors du sandbox."""
-        from aiss.agent_registry import init_agent_dirs, AGENTS_DIR
+        from aiss.agent_registry import init_agent_dirs
 
         with tempfile.TemporaryDirectory() as tmpdir:
             fake_agents = Path(tmpdir) / "agents"

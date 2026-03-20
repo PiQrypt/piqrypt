@@ -494,7 +494,8 @@ def run_trading_simulation(ids, n_sessions=3, n_interactions=8):
     - Chaque session forme une chaîne liée (previous_hash → hash)
     - 3 sessions = dérive TSI visible sur trading_bot_alpha
     """
-    import json as _j, hashlib as _hl
+    import json as _j
+    import hashlib as _hl
     now = int(time.time())
     source_name = "trading_bot_alpha"
     source_aid  = ids.get(source_name, "")

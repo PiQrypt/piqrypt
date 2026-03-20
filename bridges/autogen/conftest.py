@@ -1,4 +1,7 @@
-﻿import sys, types, hashlib, json, time
+﻿import sys
+import types
+import hashlib
+import json
 from unittest.mock import MagicMock
 events = []
 mock_pq = types.ModuleType('piqrypt')

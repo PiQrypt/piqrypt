@@ -370,7 +370,7 @@ def compute_vrs(
     if forks_found:
         # Fork = incident de sécurité → priorité absolue dans le narratif
         f0 = forks_found[0]
-        narrative_title = f"Chain Fork — RFC AISS-1.1 §6 Security Incident"
+        narrative_title = "Chain Fork — RFC AISS-1.1 §6 Security Incident"
         narrative_items = [
             {"severity": "CRITICAL", "text": f0.get("description", "2 branches detected from same previous_hash")},
             {"severity": "HIGH",     "text": f"Chain contribution +{round(chain_contribution,3)} to VRS={vrs:.3f}"},
@@ -710,7 +710,7 @@ def _build_agent_timeline(result: Dict) -> list:
                        "label": f"TSI {tsi_state} Δ24h={det.get('delta_24h', 0):.3f}"})
     elif tsi_state == "WATCH":
         events.append({"t": now - 3600, "type": "watch",
-                       "label": f"TSI drifting"})
+                       "label": "TSI drifting"})
 
     # Chain anomalies
     for anom in result.get("components", {}).get("chain", {}).get("anomalies", []):

@@ -6,7 +6,7 @@ import hashlib
 import json
 import time
 import unittest
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import patch
 
 
 # ── Mock piqrypt so tests work without the full package ───────────────────────
@@ -233,7 +233,8 @@ class TestAuditedOllama(unittest.TestCase):
 
     # ── export ────────────────────────────────────────────────────────────────
     def test_export_audit(self):
-        import tempfile, os
+        import tempfile
+        import os
         self.llm.generate("Test")
         with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
             path = f.name
@@ -287,7 +288,8 @@ class TestStampOllamaDecorator(unittest.TestCase):
 class TestTopLevelExport(unittest.TestCase):
 
     def test_export_audit_top_level(self):
-        import tempfile, os
+        import tempfile
+        import os
         _events.clear()
         _events.append({"event_type": "test", "data": "value"})
         with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:

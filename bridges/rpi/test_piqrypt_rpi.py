@@ -349,7 +349,8 @@ class TestAuditedPiAgent(unittest.TestCase):
     # ── export ────────────────────────────────────────────────────────────────
 
     def test_export_audit(self):
-        import tempfile, os
+        import tempfile
+        import os
         _events.clear()
         self.agent.stamp_sensor("test_sensor", 42.0, "unit")
         with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:

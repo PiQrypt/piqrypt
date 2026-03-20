@@ -7,11 +7,9 @@ import sys
 import time
 sys.path.insert(0, '.')
 
-import aiss
 from aiss.authority import (
     create_authority_statement,
     verify_authority_statement,
-    build_authority_chain,
     validate_authority_chain,
     get_accountable_authority,
     annotate_event_with_authority,
@@ -23,9 +21,7 @@ from aiss.authority import (
 from aiss.fork import (
     select_canonical_chain,
     resolve_fork_canonical,
-    ForkAfterFinalizationError,
     STATUS_FORK_DETECTED,
-    STATUS_FORK_AFTER_FINALIZATION,
 )
 from aiss import generate_keypair, derive_agent_id, stamp_event
 from aiss.chain import compute_event_hash
@@ -99,7 +95,7 @@ def test_validate_authority_chain_valid():
     priv_corp, pub_corp = generate_keypair()
     priv_system, pub_system = generate_keypair()
     priv_agent, pub_agent = generate_keypair()
-    
+
     corp_id = "acme_corp"
     system_id = derive_agent_id(pub_system)
     agent_id = derive_agent_id(pub_agent)
@@ -127,7 +123,7 @@ def test_validate_authority_chain_missing_key():
     priv, pub = generate_keypair()
     agent_id = derive_agent_id(pub)
     stmt = create_authority_statement(priv, "unknown_corp", agent_id, ["trade"])
-    
+
     result, errors = validate_authority_chain([stmt], {})  # No public keys
     assert result == RESULT_VALID_UNAUTHORIZED
     assert len(errors) > 0
@@ -140,7 +136,7 @@ def test_select_canonical_chain_longest():
     """Step 3: Longest chain wins (no TSA anchors)."""
     short_chain, _ = make_chain(2)
     long_chain, _ = make_chain(5)
-    
+
     canonical, _ = select_canonical_chain([short_chain, long_chain])
     assert len(canonical) == 5
     print("✓ select_canonical_chain (longest wins)")
@@ -150,16 +146,16 @@ def test_select_canonical_chain_deterministic():
     """Step 4: Tie-breaker is deterministic (same result every call)."""
     chain_a, _ = make_chain(3)
     chain_b, _ = make_chain(3)
-    
+
     result1, _ = select_canonical_chain([chain_a, chain_b])
     result2, _ = select_canonical_chain([chain_a, chain_b])
     result3, _ = select_canonical_chain([chain_b, chain_a])  # Reversed order
-    
+
     # Must be same result regardless of input order
     hash1 = compute_event_hash(result1[-1])
     hash2 = compute_event_hash(result2[-1])
     hash3 = compute_event_hash(result3[-1])
-    
+
     assert hash1 == hash2 == hash3, "Result must be deterministic"
     print("✓ select_canonical_chain (deterministic tie-breaker)")
 
@@ -168,14 +164,14 @@ def test_select_canonical_chain_tsa_wins():
     """Step 1: Chain with TSA-anchored event wins over longer chain."""
     short_chain, _ = make_chain(2)
     long_chain, _ = make_chain(5)
-    
+
     # Add TSA anchor to short chain
     short_chain[1]["trusted_timestamp"] = {
         "rfc3161_token": "FAKE_TOKEN_FOR_TEST",
         "tsa_id": "freetsa.org",
         "timestamp": int(time.time()),
     }
-    
+
     canonical, _ = select_canonical_chain([long_chain, short_chain])
     assert len(canonical) == 2  # Short but anchored wins
     print("✓ select_canonical_chain (TSA-anchored beats longer)")
@@ -185,7 +181,7 @@ def test_resolve_fork_canonical_standard():
     """Standard fork — should resolve without exception."""
     chain_a, _ = make_chain(3)
     chain_b, _ = make_chain(2)
-    
+
     result = resolve_fork_canonical([chain_a, chain_b], raise_on_security_incident=False)
     assert "canonical_chain" in result
     assert result["status"] == STATUS_FORK_DETECTED
@@ -207,10 +203,10 @@ def test_annotate_event_with_authority():
     priv_corp, pub_corp = generate_keypair()
     priv_agent, pub_agent = generate_keypair()
     agent_id = derive_agent_id(pub_agent)
-    
+
     stmt = create_authority_statement(priv_corp, "corp", agent_id, ["trade"])
     event = stamp_event(priv_agent, agent_id, {"action": "buy"})
-    
+
     annotated = annotate_event_with_authority(event, [stmt])
     assert "authority_chain" in annotated
     assert len(annotated["authority_chain"]) == 1
@@ -234,7 +230,7 @@ if __name__ == "__main__":
         test_single_chain_no_fork,
         test_annotate_event_with_authority,
     ]
-    
+
     passed = 0
     failed = 0
     for test in tests:
@@ -246,7 +242,7 @@ if __name__ == "__main__":
             import traceback
             traceback.print_exc()
             failed += 1
-    
+
     print(f"\n{'─'*50}")
     print(f"Sprint 1-A: {passed} passed, {failed} failed")
     if failed == 0:

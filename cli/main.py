@@ -57,7 +57,8 @@ def print_json(data: Dict[str, Any]) -> None:
 
 def cmd_identity_create(args):
     """Création d'une identité agent v1.7.0 — nom + passphrase + stockage isolé."""
-    import getpass, os
+    import getpass
+    import os
 
     # Récupérer le nom
     agent_name = getattr(args, 'name', None)
@@ -101,7 +102,7 @@ def cmd_identity_create(args):
         print(f"❌ Erreur : {e}")
         return
 
-    print(f"\n✅ Identité créée !")
+    print("\n✅ Identité créée !")
     print(f"   Nom       : {result['agent_name']}")
     print(f"   Agent ID  : {result['agent_id']}")
     print(f"   Clé       : {'🔒 chiffrée' if result['encrypted'] else '⚠️  non chiffrée'}")
@@ -131,7 +132,8 @@ def cmd_identity_list(args):
 
 def cmd_identity_secure(args):
     """Chiffre ou rechiffre la clé privée d'un agent."""
-    import getpass, os
+    import getpass
+    import os
 
     agent_name = getattr(args, 'name', None) or os.environ.get("PIQRYPT_AGENT_NAME")
     if not agent_name:
@@ -167,7 +169,7 @@ def cmd_identity_secure(args):
 
 def cmd_unlock(args):
     """Déverrouille une session agent (affiche les infos de session)."""
-    import getpass, os
+    import os
 
     agent_name = getattr(args, 'agent', None) or os.environ.get("PIQRYPT_AGENT_NAME")
     if not agent_name:
@@ -182,7 +184,7 @@ def cmd_unlock(args):
         with IdentitySession().unlock_interactive(agent_name) as session:
             print(f"\n✅ Session ouverte pour '{agent_name}'")
             print(f"   Agent ID : {session.agent_id}")
-            print(f"   Statut   : déverrouillée")
+            print("   Statut   : déverrouillée")
             input("\n   Appuyez sur Entrée pour verrouiller...")
         print("🔒 Session verrouillée.")
     except Exception as e:

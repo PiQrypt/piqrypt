@@ -418,7 +418,7 @@ def encrypt_key(private_key: bytes, passphrase: str, path: "Path") -> None:
 def load_key(passphrase: str, path: "Path") -> bytes:
     """Alias court : charge et déchiffre la clé privée."""
     return load_encrypted_key(path, passphrase)
-    
+
 # ─── Public API ───────────────────────────────────────────────────────────────
 __all__ = [
     "encrypt_private_key",

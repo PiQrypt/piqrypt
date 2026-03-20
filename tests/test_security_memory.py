@@ -8,7 +8,6 @@ Couverture :
     4. Isolation agents     : events de A non visibles pour B
 """
 
-import json
 import time
 import unittest
 

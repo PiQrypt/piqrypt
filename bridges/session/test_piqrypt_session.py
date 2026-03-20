@@ -10,7 +10,6 @@ import sys
 import time
 import types
 import unittest
-from unittest.mock import MagicMock, patch
 
 
 # ── Mock piqrypt ──────────────────────────────────────────────────────────────
@@ -46,7 +45,7 @@ def _setup_piqrypt_mock():
 _mock_piqrypt, _events_by_agent = _setup_piqrypt_mock()
 
 # Import bridge
-from piqrypt_session import AgentSession, AgentMember
+from piqrypt_session import AgentSession
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -257,7 +256,8 @@ class TestCrossFrameworkSession(unittest.TestCase):
                 "Tous les events doivent partager le même session_id")
 
     def test_audit_chain_is_exportable(self):
-        import tempfile, os
+        import tempfile
+        import os
         session = _make_session(("a", "b"))
         session.start()
         session.stamp("a", "event", {"data": "test"})

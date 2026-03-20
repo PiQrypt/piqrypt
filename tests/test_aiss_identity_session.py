@@ -7,8 +7,7 @@ API reelle :
         session.agent_id
         session.sign(data)
 """
-import tempfile, unittest
-from pathlib import Path
+import unittest
 
 
 class TestIdentitySessionImport(unittest.TestCase):

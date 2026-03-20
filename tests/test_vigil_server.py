@@ -3,7 +3,6 @@ Tests — vigil/vigil_server.py
 Serveur HTTP Vigil (port 8421)
 """
 import json
-import threading
 import time
 import unittest
 import urllib.request
@@ -56,7 +55,7 @@ class TestVigilServerLive(unittest.TestCase):
             cls.server.start(blocking=False)
             time.sleep(0.5)  # Laisser le serveur demarrer
             cls.server_available = True
-        except Exception as e:
+        except Exception:
             cls.server_available = False
             cls.server = None
 

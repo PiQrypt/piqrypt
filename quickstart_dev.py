@@ -71,10 +71,10 @@ def step_identity(agent_name: str) -> tuple:
 
     print(f"  Agent name : {cyan(agent_name)}")
     print(f"  Agent ID   : {green(agent_id[:32])}...")
-    print(f"  Algorithm  : Ed25519 (RFC 8032)")
-    print(f"  Key size   : 32 bytes private / 32 bytes public")
-    print(dim(f"\n  → Agent ID is derived deterministically from the public key."))
-    print(dim(f"    Same keypair always yields the same ID — no central registry needed."))
+    print("  Algorithm  : Ed25519 (RFC 8032)")
+    print("  Key size   : 32 bytes private / 32 bytes public")
+    print(dim("\n  → Agent ID is derived deterministically from the public key."))
+    print(dim("    Same keypair always yields the same ID — no central registry needed."))
 
     return private_key, public_key, agent_id
 
@@ -104,8 +104,8 @@ def step_genesis(private_key: bytes, agent_id: str) -> dict:
     print(f"  Previous hash : {dim('genesis')} (chain anchor)")
     print(f"  Event hash    : {green(genesis_hash[:32])}...")
     print(f"  Signature     : {genesis['signature'][:32]}...")
-    print(dim(f"\n  → The genesis event anchors the chain. All subsequent events"))
-    print(dim(f"    reference its hash — making retroactive modification detectable."))
+    print(dim("\n  → The genesis event anchors the chain. All subsequent events"))
+    print(dim("    reference its hash — making retroactive modification detectable."))
 
     return genesis
 
@@ -136,8 +136,8 @@ def step_chain(private_key: bytes, agent_id: str, genesis: dict) -> list:
         eh = aiss.compute_event_hash(event)
         print(f"  {green('✓')} {cyan(event_type):<25} hash: {eh[:16]}...  ← prev: {prev_hash[:12]}...")
 
-    print(dim(f"\n  → Each event's previous_hash binds it to the prior event."))
-    print(dim(f"    Modifying any event breaks all subsequent hashes — detectable instantly."))
+    print(dim("\n  → Each event's previous_hash binds it to the prior event."))
+    print(dim("    Modifying any event breaks all subsequent hashes — detectable instantly."))
 
     return events
 
@@ -190,7 +190,7 @@ def step_verify(events: list) -> bool:
     tampered_chain = [events[0], tampered] + events[2:]
     try:
         vcl(tampered_chain)
-        print(f"  ✗ Tamper NOT detected (unexpected)")
+        print("  ✗ Tamper NOT detected (unexpected)")
     except Exception:
         print(f"  {green('✓')} Tamper detected        payload modified → chain broken immediately")
 
@@ -215,8 +215,8 @@ def step_store(events: list, agent_id: str, agent_name: str):
     storage_path = Path.home() / ".piqrypt" / "agents" / agent_name
     print(f"  {green('✓')} Stored {stored} events")
     print(f"  Location : {storage_path}")
-    print(dim(f"\n  → Events are stored as JSON with OS-level permissions."))
-    print(dim(f"    Use IdentitySession + passphrase for encrypted key storage (Pro)."))
+    print(dim("\n  → Events are stored as JSON with OS-level permissions."))
+    print(dim("    Use IdentitySession + passphrase for encrypted key storage (Pro)."))
 
 
 def step_export(events: list, agent_id: str, public_key: bytes) -> str:
@@ -239,7 +239,7 @@ def step_export(events: list, agent_id: str, public_key: bytes) -> str:
     print(f"  File size   : {file_size:,} bytes")
     print(f"  Events      : {len(events)}")
     print(f"  Chain hash  : {green(aiss.compute_chain_hash(events)[:32])}...")
-    print(dim(f"\n  → This file is verifiable by any party holding the agent's public key."))
+    print(dim("\n  → This file is verifiable by any party holding the agent's public key."))
     print(dim(f"    piqrypt verify {output_path}"))
 
     return output_path
@@ -263,11 +263,11 @@ def step_vigil_preview(events: list, agent_id: str, agent_name: str):
         print(f"  Trust Score            : {ts:.3f}")
         print(f"  TSI (temporal drift)   : {tsi}")
         print(f"  Chain anomalies        : {len(result['components']['chain']['anomalies'])}")
-        print(dim(f"\n  → VRS = 0.35×(1−TS) + 0.30×TSI + 0.20×A2C + 0.15×chain"))
-        print(dim(f"    A fresh agent with a clean chain scores SAFE by design."))
+        print(dim("\n  → VRS = 0.35×(1−TS) + 0.30×TSI + 0.20×A2C + 0.15×chain"))
+        print(dim("    A fresh agent with a clean chain scores SAFE by design."))
     except Exception as e:
         print(f"  {yellow('⚠')}  Vigil not available in this environment ({e})")
-        print(dim(f"    Run 'python piqrypt_start.py --vigil' to start the monitoring server."))
+        print(dim("    Run 'python piqrypt_start.py --vigil' to start the monitoring server."))
 
 
 def step_next_steps():

@@ -35,10 +35,10 @@ import json
 import time
 import urllib.error
 import urllib.request
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from dataclasses import dataclass
+from typing import List, Optional
 
-from trustgate.decision import Decision, Outcome
+from trustgate.decision import Decision
 from trustgate.human_principal import HumanPrincipal
 
 

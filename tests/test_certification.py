@@ -16,13 +16,11 @@ Coverage:
 """
 
 import json
-import os
 import re
 import time
-import tempfile
 import zipfile
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 import pytest
 
@@ -48,7 +46,7 @@ def minimal_audit(tmp_path, sample_keypair):
     Written to disk and returned as (path, data).
     """
     from aiss import derive_agent_id, stamp_genesis_event, stamp_event
-    from aiss.chain import append_event, compute_event_hash
+    from aiss.chain import compute_event_hash
 
     priv_key, pub_key = sample_keypair
     agent_id = derive_agent_id(pub_key)

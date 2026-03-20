@@ -451,7 +451,7 @@ def secure_agent_key(
     """
     from aiss.agent_registry import get_agent_dir
     from aiss.key_store import (
-        re_encrypt_key, is_encrypted,
+        is_encrypted,
         load_plaintext_key, save_encrypted_key,
     )
 

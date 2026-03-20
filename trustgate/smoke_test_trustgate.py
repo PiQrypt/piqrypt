@@ -65,7 +65,7 @@ from trustgate.policy_engine import evaluate, simulate
 from trustgate.policy_versioning import PolicyVersioning
 from trustgate.audit_journal import AuditJournal
 from trustgate.decision_queue import (
-    DecisionQueue, DecisionNotFoundError, DecisionAlreadyResolvedError
+    DecisionQueue, DecisionAlreadyResolvedError
 )
 from trustgate.human_principal import (
     HumanPrincipal, InsufficientClearanceError, PrincipalNotFoundError,
@@ -612,7 +612,8 @@ def bloc_10():
 
 def bloc_11():
     bloc("BLOC 11 — Notifier — context, severity, channels")
-    import http.server, threading
+    import http.server
+    import threading
 
     ctx = make_ctx(vrs=0.72)
     d   = Decision.from_context(ctx, Outcome.REQUIRE_HUMAN, "vrs", "v@1.0", "h", timeout_seconds=300)
@@ -711,7 +712,6 @@ def bloc_12():
 
     # AI Act — retention 2 years
     try:
-        import yaml
         ai_act_content = (profiles_dir / "ai_act_high_risk.yaml").read_text()
         check("ai_act_high_risk — retention_days 730 in profile",
               "730" in ai_act_content)
@@ -935,7 +935,7 @@ def bloc_15():
         check("E2E — AI Act Art.14 — human approval signed", s == 200)
 
         # 6. Audit trail
-        audit, _ = api.get(f"/api/audit?agent_id=AISS-e2e-final")
+        audit, _ = api.get("/api/audit?agent_id=AISS-e2e-final")
         check("E2E — ANSSI R29 — audit trail",   audit.get("total", 0) >= 1)
         check("E2E — AI Act Art.12 — chain",     audit.get("chain_valid") is True)
 

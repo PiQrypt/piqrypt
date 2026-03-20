@@ -622,13 +622,13 @@ def test_full_require_human_flow():
     assert approve_data["justification"] == "E2E test — verified safe"
 
     # 6. Verify audit trail
-    audit_data, _ = f.client.get(f"/api/audit?agent_id=AISS-e2e-001")
+    audit_data, _ = f.client.get("/api/audit?agent_id=AISS-e2e-001")
     assert audit_data["total"] >= 1
 
     print(
-        f"  ✓ FULL E2E REQUIRE_HUMAN FLOW — "
-        f"evaluate→queue→authenticate→approve→audit "
-        f"[ANSSI R9 / AI Act Art.14 ✅]"
+        "  ✓ FULL E2E REQUIRE_HUMAN FLOW — "
+        "evaluate→queue→authenticate→approve→audit "
+        "[ANSSI R9 / AI Act Art.14 ✅]"
     )
 
 

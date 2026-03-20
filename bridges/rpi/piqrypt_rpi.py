@@ -64,7 +64,6 @@ __license__ = "MIT"
 
 import hashlib
 import json
-import os
 import platform
 import time
 import threading

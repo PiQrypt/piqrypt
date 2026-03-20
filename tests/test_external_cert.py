@@ -12,7 +12,6 @@ without depending on any private/internal module.
 import sys
 import os
 import json
-import tempfile
 import subprocess
 from pathlib import Path
 
@@ -148,7 +147,7 @@ class TestVerifyPiqryptCertification:
         Simulates validate_and_certify() inline so only public API is needed.
         Returns (certified_path_str, ca_pub_bytes, ca_id_str).
         """
-        import hashlib, zipfile, uuid
+        import zipfile
         from datetime import datetime, timezone
         from aiss.crypto import ed25519
 

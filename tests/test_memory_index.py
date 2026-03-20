@@ -4,15 +4,12 @@ Vérifie : indexation SQLite + search rapide
 """
 
 import sys
-import os
 import tempfile
 import shutil
 sys.path.insert(0, '.')
 
-import aiss
 from aiss.index import MemoryIndex, get_index
 from aiss.memory import store_event, search_events, init_memory_dirs
-from aiss.license import activate_license, deactivate_license
 from pathlib import Path
 
 
@@ -20,7 +17,7 @@ def test_index_basic():
     """Test création index + add_event + search"""
     with tempfile.TemporaryDirectory() as tmpdir:
         index_path = Path(tmpdir) / "test.db"
-        
+
         with MemoryIndex(index_path) as idx:
             # Add events
             idx.add_event(
@@ -33,7 +30,7 @@ def test_index_basic():
                 offset=0,
                 length=512,
             )
-            
+
             idx.add_event(
                 event_hash="b4e9f1d0a2c3b5e7",
                 timestamp=1705396800,
@@ -44,32 +41,32 @@ def test_index_basic():
                 offset=512,
                 length=480,
             )
-            
+
             # Search
             results = idx.search(agent_id="test_agent")
             assert len(results) == 2
-            
+
             results = idx.search(event_type="trade_executed")
             assert len(results) == 1
             assert results[0]["event_hash"] == "a3f7e8c9d1b2a4f6"
-            
+
             results = idx.search(from_timestamp=1705310400, to_timestamp=1705310400)
             assert len(results) == 1
-            
+
             # Search by hash prefix
             results = idx.search_by_hash_prefix("a3f7")
             assert len(results) == 1
-            
+
             # Find by nonce
             entry = idx.find_by_nonce("uuid-1")
             assert entry is not None
             assert entry["event_hash"] == "a3f7e8c9d1b2a4f6"
-            
+
             # Stats
             stats = idx.get_stats()
             assert stats["total_events"] == 2
             assert stats["agents_count"] == 1
-    
+
     print("✓ index_basic OK")
 
 
@@ -78,7 +75,7 @@ def test_memory_integration():
     # Setup test directory
     test_home = Path(tempfile.mkdtemp())
     original_home = Path.home()
-    
+
     try:
         # Override home temporarily
         import aiss.memory
@@ -88,34 +85,34 @@ def test_memory_integration():
         aiss.memory.KEYS_DIR = aiss.memory.PIQRYPT_DIR / "keys"
         aiss.memory.MASTER_KEY_FILE = aiss.memory.KEYS_DIR / "master.key.enc"
         aiss.memory.CONFIG_FILE = aiss.memory.PIQRYPT_DIR / "config.json"
-        
+
         init_memory_dirs()
-        
+
         # Create events
         priv, pub = aiss.generate_keypair()
         agent_id = aiss.derive_agent_id(pub)
-        
+
         for i in range(5):
             event = aiss.stamp_event(priv, agent_id, {"action": f"test_{i}", "event_type": "test_event"})
             store_event(event)
-        
+
         # Verify index was updated
         with get_index(encrypted=False) as idx:
             results = idx.search(agent_id=agent_id)
             assert len(results) == 5
-            
+
             results = idx.search(event_type="test_event")
             assert len(results) == 5
-        
+
         # Verify search_events uses index
         search_results = search_events(participant=agent_id, use_index=True)
         assert len(search_results) == 5
-        
+
         search_results = search_events(event_type="test_event", limit=2)
         assert len(search_results) == 2
-        
+
         print("✓ memory_integration OK")
-    
+
     finally:
         shutil.rmtree(test_home)
 
@@ -125,11 +122,11 @@ if __name__ == "__main__":
     print("Memory Index Tests — Sprint 3")
     print("=" * 60)
     print()
-    
+
     try:
         test_index_basic()
         test_memory_integration()
-        
+
         print()
         print("─" * 60)
         print("✅ MEMORY INDEX TESTS PASSED")

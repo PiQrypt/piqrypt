@@ -360,12 +360,8 @@ def _verify_jwt_ed25519(token: str, public_key_b64: str) -> Dict[str, Any]:
             # Fallback : cryptography library
             from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
             from cryptography.exceptions import InvalidSignature
-            from cryptography.hazmat.primitives.serialization import (
-                Encoding, PublicFormat, load_der_public_key
-            )
             public_key_bytes = base64.b64decode(public_key_b64)
             # Raw Ed25519 public key (32 bytes)
-            from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
             pk = Ed25519PublicKey.from_public_bytes(public_key_bytes)
             try:
                 pk.verify(signature, message)

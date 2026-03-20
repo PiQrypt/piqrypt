@@ -197,7 +197,8 @@ class TestAuditedAssistant(unittest.TestCase):
     # ── Export ────────────────────────────────────────────────────────────────
 
     def test_export_audit(self):
-        import tempfile, os
+        import tempfile
+        import os
         self.assistant.generate_reply(messages=[{"role": "user", "content": "test"}])
         with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
             path = f.name
@@ -290,7 +291,8 @@ class TestAuditedGroupChat(unittest.TestCase):
         self.assertTrue(len(_events) >= 0)  # May be 0 if run_chat not fully mockable
 
     def test_export_audit_returns_path(self):
-        import tempfile, os
+        import tempfile
+        import os
         _events.append({"event_type": "test"})
         with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
             path = f.name
@@ -390,7 +392,8 @@ class TestStampConversation(unittest.TestCase):
 class TestExportAudit(unittest.TestCase):
 
     def test_export_creates_file(self):
-        import tempfile, os
+        import tempfile
+        import os
         _events.clear()
         _events.append({"event_type": "reply_complete", "result_hash": "abc"})
         with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:

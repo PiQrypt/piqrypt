@@ -10,7 +10,7 @@ import sys
 import time
 import types
 import unittest
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import patch
 import asyncio
 
 
@@ -380,7 +380,8 @@ class TestInspectionAndExport(unittest.TestCase):
         self.assertNotEqual(self.client.last_event_hash, initial)
 
     def test_export_audit_instance(self):
-        import tempfile, os
+        import tempfile
+        import os
         async def _test():
             await self.client.call_tool("search", {"q": "test"})
         run(_test())
@@ -395,7 +396,8 @@ class TestInspectionAndExport(unittest.TestCase):
             os.unlink(path)
 
     def test_export_audit_top_level(self):
-        import tempfile, os
+        import tempfile
+        import os
         _events.clear()
         _events.append({"event_type": "mcp_tool_result", "result_hash": "abc"})
         with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:

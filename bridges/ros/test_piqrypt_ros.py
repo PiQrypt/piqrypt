@@ -342,7 +342,8 @@ class TestStampCallback(unittest.TestCase):
 class TestExport(unittest.TestCase):
 
     def test_export_audit(self):
-        import tempfile, os
+        import tempfile
+        import os
         node = AuditedNode("export_node", agent_name="test")
         _events.clear()
         node.stamp("test_event", {"data": "value"})

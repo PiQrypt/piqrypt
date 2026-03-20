@@ -62,7 +62,6 @@ Endpoints:
 import argparse
 import json
 import logging
-import os
 import signal
 import sys
 import threading
@@ -93,12 +92,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from trustgate.decision import Decision, EvaluationContext, Outcome
 from trustgate.policy_loader import (
-    load_policy, Policy, PolicyLoadError,
-    ThresholdPolicy, RolePolicy, NetworkPolicy, NotificationPolicy, EscalationPolicy,
+    load_policy, Policy, ThresholdPolicy, RolePolicy, NetworkPolicy, NotificationPolicy, EscalationPolicy,
 )
 from trustgate.policy_engine import evaluate as engine_evaluate, simulate as engine_simulate
 from trustgate.policy_versioning import PolicyVersioning
-from trustgate.audit_journal import AuditJournal, get_journal
+from trustgate.audit_journal import AuditJournal
 from trustgate.decision_queue import DecisionQueue
 from trustgate.human_principal import (
     HumanPrincipal, SSOToken, PrincipalNotFoundError,
@@ -887,7 +885,7 @@ def main():
     _lic_exp    = _tier_inf.get("license_expires")
 
     print(f"\n{'━'*56}")
-    print(f"  Trust Gate HTTP Server v1.7.0")
+    print("  Trust Gate HTTP Server v1.7.0")
     print(f"  Listening on http://{args.host}:{args.port}")
     print(f"  Policy     : {args.policy}")
     print(f"  Demo mode  : {args.demo}")
@@ -899,27 +897,27 @@ def main():
 
     # ── License gate — bloquer le démarrage de TrustGate en Free ─────────────
     if _tg_level is None:
-        print(f"\n  ⚠️  TRUSTGATE IS LOCKED on Free tier.")
-        print(f"     TrustGate requires Pro tier or above.")
-        print(f"     Activate a license: piqrypt license activate <token>")
-        print(f"     Or visit: https://piqrypt.com/pricing")
+        print("\n  ⚠️  TRUSTGATE IS LOCKED on Free tier.")
+        print("     TrustGate requires Pro tier or above.")
+        print("     Activate a license: piqrypt license activate <token>")
+        print("     Or visit: https://piqrypt.com/pricing")
         if not args.demo:
-            print(f"\n  Starting in DEMO mode (no enforcement).")
+            print("\n  Starting in DEMO mode (no enforcement).")
             args.demo = True  # Force demo si pas de licence valide
     elif _tg_level == "manual":
-        print(f"  Mode       : Manual approval queue — automatic policies require Business tier")
+        print("  Mode       : Manual approval queue — automatic policies require Business tier")
     elif _tg_level == "full":
-        print(f"  Mode       : Full automatic policies ✅")
+        print("  Mode       : Full automatic policies ✅")
 
     if _lic_status == "demo":
-        print(f"\n  ⚠️  No valid license token — running in DEMO mode.")
-        print(f"     Activate: piqrypt license activate <token>")
+        print("\n  ⚠️  No valid license token — running in DEMO mode.")
+        print("     Activate: piqrypt license activate <token>")
 
     if not _AUTH.token:
         import secrets as _sec
         print(f"  Generate   : export TRUSTGATE_TOKEN={_sec.token_urlsafe(32)}")
     print(f"{'━'*56}")
-    print(f"  Press Ctrl+C to stop\n")
+    print("  Press Ctrl+C to stop\n")
 
     server.start()
 

@@ -2,11 +2,9 @@
 Tests — aiss/agent_registry.py
 Registre centralise des agents
 """
-import json
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
 
 
 class TestAgentRegistryImport(unittest.TestCase):
