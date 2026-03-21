@@ -732,6 +732,37 @@ class TrustGateServer:
         if not self.policy:
             return {"outcome": "MONITOR", "vrs": vrs, "registered": True}, 200
 
+        # Force évaluation si tsi_state CRITICAL ou ALERT (même si VRS sous seuil)
+        if tsi_state in ("CRITICAL", "ALERT") and not (
+            vrs >= self.policy.thresholds.vrs_require_human
+        ):
+            ctx = EvaluationContext(
+                agent_id    = agent_id,
+                agent_name  = agent_name,
+                role        = body.get("role", "operator"),
+                action      = "vigil_threshold_exceeded",
+                payload     = {
+                    "source": "vigil", "vrs": vrs,
+                    "tsi_state": tsi_state, "forced": True,
+                },
+                vrs         = vrs,
+                tsi_state   = tsi_state,
+                a2c_score   = a2c_score,
+                trust_score = body.get("trust_score", 0.0),
+            )
+            try:
+                decision = engine_evaluate(ctx, self.policy)
+                self.journal.record(decision)
+                if decision.outcome == Outcome.REQUIRE_HUMAN:
+                    self.queue.enqueue(decision)
+                    self._notify_on_enqueue(decision)
+                log.info(
+                    "[TrustGate] tsi_state=%s forced eval → %s agent=%s",
+                    tsi_state, decision.outcome, agent_name,
+                )
+            except Exception as e:
+                log.warning("[TrustGate] forced eval failed: %s", e)
+
         # If VRS is above require_human threshold — auto-evaluate
         if vrs >= self.policy.thresholds.vrs_require_human:
             ctx = EvaluationContext(

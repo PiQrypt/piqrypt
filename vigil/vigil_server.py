@@ -124,7 +124,12 @@ _AUTH = AuthMiddleware("VIGIL_TOKEN", service="vigil")
 
 
 # ── TrustGate push (fire-and-forget, thread séparé) ──────────────────────────
-def _push_to_trustgate(agent_name: str, vrs: float, alerts: list) -> None:
+def _push_to_trustgate(
+    agent_name: str,
+    vrs: float,
+    alerts: list,
+    a2c_score: float = 0.0,
+) -> None:
     """
     Pousse l'état d'un agent vers TrustGate après chaque record.
     Exécuté dans un thread daemon — n'impacte pas la réponse Vigil.
@@ -156,7 +161,7 @@ def _push_to_trustgate(agent_name: str, vrs: float, alerts: list) -> None:
             "CRITICAL" if vrs < 0.3 else "ALERT" if vrs < 0.6
             else "WATCH" if vrs < 0.8 else "STABLE"
         ),
-        "a2c_score":   0.0,
+        "a2c_score":   round(a2c_score, 4),
         "alert_level": alert_level,
         "source":      "vigil",
         "timestamp":   _ts(),
@@ -1254,8 +1259,9 @@ class VIGILServer:
                             )
                             if not aname:
                                 continue
-                            vrs = agent.get("vrs", 0.5)
-                            _push_to_trustgate(aname, vrs, agent.get("alerts", []))
+                            vrs  = agent.get("vrs", 0.5)
+                            a2c  = agent.get("a2c_risk", 0.0)
+                            _push_to_trustgate(aname, vrs, agent.get("alerts", []), a2c)
                     except Exception:
                         pass
             threading.Thread(target=_sync_loop, daemon=True, name="vigil-tg-sync").start()

@@ -1128,8 +1128,9 @@ function renderAgentList() {
     return;
   }
   document.getElementById('agent-list').innerHTML = agents.slice(0,20).map(a => {
-    const c = a.tsi === 'CRITICAL' || a.tsi === 'UNSTABLE' ? 'var(--danger)'
-            : a.tsi === 'WATCH'    ? 'var(--warn)'
+    const c = a.tsi === 'CRITICAL'                         ? 'var(--danger)'
+            : a.tsi === 'ALERT'   || a.tsi === 'UNSTABLE' ? 'var(--danger)'
+            : a.tsi === 'WATCH'                           ? 'var(--warn)'
             : 'var(--allow)';
     return '<div class="agent-item">' +
       '<div class="agent-dot" style="background:' + c + ';box-shadow:0 0 5px ' + c + '"></div>' +
@@ -1347,6 +1348,7 @@ function runSimulation() {
   const sim = s => {
     if (s.vrs >= blk)  return 'BLOCK';
     if (s.tsi === 'CRITICAL') return 'BLOCK';
+    if (s.tsi === 'ALERT')    return 'REQUIRE_HUMAN';
     if (s.action === 'shell') return 'BLOCK';
     if (s.role === 'read_only' && s.action === 'write_db') return 'BLOCK';
     if (s.vrs >= rh)   return 'REQUIRE_HUMAN';
