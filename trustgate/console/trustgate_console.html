@@ -729,6 +729,7 @@
       </div>
       <div class="editor-actions">
         <button class="btn-primary" onclick="runSimulation()">▶ Run Simulation</button>
+        <button class="btn-primary" onclick="savePolicy()">💾 Save to Server</button>
         <button class="btn-sec" onclick="activatePolicy()">Activate Policy</button>
         <button class="btn-sec" onclick="loadDefaultPolicy()">Load Default</button>
       </div>
@@ -990,10 +991,10 @@ function trackAgent(id, name, vrs, tsi) {
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 function vrsColor(v) {
-  if (v >= 0.85) return 'var(--danger)';
-  if (v >= 0.60) return 'var(--warn)';
-  if (v >= 0.40) return 'var(--human)';
-  return 'var(--allow)';
+  if (v < 0.30) return 'var(--danger)';   // CRITICAL
+  if (v < 0.60) return 'var(--warn)';     // ALERT
+  if (v < 0.80) return 'var(--human)';    // WATCH
+  return 'var(--allow)';                  // STABLE
 }
 
 function feedClass(o) {
@@ -1369,7 +1370,26 @@ function runSimulation() {
 }
 
 function activatePolicy() {
-  showToast('ℹ', 'Simulation only — use CLI to activate policy on server', 'warn');
+  savePolicy();
+}
+
+async function savePolicy() {
+  const ta = document.getElementById('policy-editor');
+  if (!ta) { showToast('✗', 'Policy editor not found', 'danger'); return; }
+  const yaml = ta.value || ta.textContent || '';
+  if (!yaml.trim()) { showToast('✗', 'Policy content is empty', 'warn'); return; }
+  try {
+    const r = await fetch('/api/policy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ yaml }),
+    });
+    const d = await r.json();
+    if (r.ok) showToast('✓', 'Policy saved and activated on server', 'allow');
+    else showToast('✗', d.error || 'Save failed', 'danger');
+  } catch (e) {
+    showToast('✗', 'Network error: ' + e.message, 'danger');
+  }
 }
 
 // ── Audit filters ──────────────────────────────────────────────────────────

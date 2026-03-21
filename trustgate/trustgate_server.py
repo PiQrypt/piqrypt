@@ -362,6 +362,9 @@ class TrustGateServer:
         if path == "/api/policy" and method == "GET":
             return self._handle_get_policy()
 
+        if path == "/api/policy" and method == "POST":
+            return self._handle_save_policy(body)
+
         if path == "/api/policy/simulate" and method == "POST":
             return self._handle_simulate(body)
 
@@ -472,6 +475,19 @@ class TrustGateServer:
         }, 200
 
     def _handle_get_policy(self):
+        if self.policy is None:
+            default_path = (
+                Path(__file__).parent / "profiles" / "nist_balanced.yaml"
+            )
+            if default_path.exists():
+                try:
+                    from trustgate.policy_loader import load_policy
+                    self.policy = load_policy(str(default_path))
+                    log.info("[TrustGate] Loaded default policy: nist_balanced")
+                except Exception as e:
+                    log.warning(
+                        "[TrustGate] Could not load default policy: %s", e
+                    )
         if not self.policy:
             return {"error": "No policy loaded"}, 503
         return {
@@ -487,6 +503,34 @@ class TrustGateServer:
             "roles":            list(self.policy.roles.keys()),
             "dangerous_patterns_count": len(self.policy.dangerous_patterns),
         }, 200
+
+    def _handle_save_policy(self, body: dict):
+        """POST /api/policy — save and reload policy from YAML content."""
+        import os
+        import yaml as _yaml
+        import tempfile  # noqa: F401 — kept for future use
+
+        yaml_content = body.get("yaml", "")
+        if not yaml_content:
+            return {"error": "yaml content required"}, 400
+        try:
+            parsed = _yaml.safe_load(yaml_content)
+            if not isinstance(parsed, dict):
+                return {"error": "invalid policy YAML"}, 400
+            policy_file = os.getenv(
+                "TRUSTGATE_POLICY_FILE",
+                str(Path(__file__).parent / "policy.yaml"),
+            )
+            Path(policy_file).parent.mkdir(parents=True, exist_ok=True)
+            with open(policy_file, "w") as f:
+                f.write(yaml_content)
+            from trustgate.policy_loader import load_policy
+            self.policy = load_policy(policy_file)
+            log.info("[TrustGate] Policy saved and reloaded: %s", policy_file)
+            return {"ok": True, "file": policy_file}, 200
+        except Exception as e:
+            log.error("[TrustGate] save_policy failed: %s", e)
+            return {"error": str(e)}, 500
 
     def _handle_simulate(self, body: dict):
         if not self.policy:
