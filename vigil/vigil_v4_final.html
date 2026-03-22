@@ -1310,8 +1310,12 @@ function wizNext(){
     .then(function(d){
       closeWizard();
       if(d.status==='ok'){
-        if(d.encrypted){showToast('✓ Agent "'+d.agent_name+'" créé — clé chiffrée');}
-        else{showToast('⚠ Agent "'+d.agent_name+'" créé — clé en clair (dev only)');}
+        var createdName=d.agent_name;
+        var encrypted=d.encrypted;
+        var toastMsg='✅ Agent "'+createdName+'" créé';
+        if(encrypted) toastMsg+=' — clé chiffrée 🔒';
+        showToast(toastMsg);
+        _showAgentCreatedPanel(createdName,encrypted);
         setTimeout(loadFromBackend,800);
       } else {
         showToast('❌ '+(d.error||'Erreur inconnue'));
@@ -1324,6 +1328,53 @@ function wizNext(){
   }
 }
 function wizBack(){if(wizStep>1)setWizStep(wizStep-1)}
+
+function _showAgentCreatedPanel(agentName,encrypted){
+  var existing=document.getElementById('agent-created-panel');
+  if(existing) existing.remove();
+  var panel=document.createElement('div');
+  panel.id='agent-created-panel';
+  panel.style.cssText='position:fixed;bottom:80px;right:24px;z-index:600;'+
+    'background:var(--s1);border:1px solid var(--safe);border-radius:var(--r2);'+
+    'padding:16px 20px;min-width:280px;box-shadow:0 8px 32px rgba(0,0,0,.4)';
+  panel.innerHTML=
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'+
+      '<span style="font-size:12px;font-weight:600;color:var(--safe)">✓ Agent created</span>'+
+      '<button onclick="this.parentElement.parentElement.remove()" '+
+        'style="background:none;border:none;color:var(--txd);cursor:pointer;font-size:16px">×</button>'+
+    '</div>'+
+    '<div style="font-family:var(--mono);font-size:11px;color:var(--txm);margin-bottom:12px">'+
+      agentName+(encrypted?' <span style="color:var(--safe)">🔒</span>':' <span style="color:var(--watch)">⚠ plaintext</span>')+
+    '</div>'+
+    '<button onclick="_downloadIdentity(\''+agentName+'\')" '+
+      'style="width:100%;padding:8px;background:var(--ac2);border:1px solid var(--ac);'+
+      'border-radius:var(--r);color:var(--ac);font-family:var(--mono);font-size:10px;'+
+      'cursor:pointer;letter-spacing:.05em">↓ Download identity.json</button>'+
+    '<div style="font-size:10px;color:var(--txd);margin-top:8px">'+
+      'Required by your bridge (identity_file parameter)'+
+    '</div>';
+  document.body.appendChild(panel);
+  setTimeout(function(){if(panel.parentElement)panel.remove();},30000);
+}
+
+function _downloadIdentity(agentName){
+  _vigilFetch('/api/agent/'+encodeURIComponent(agentName)+'/identity')
+    .then(function(r){
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      return r.blob();
+    })
+    .then(function(blob){
+      var a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download=agentName+'_identity.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+      showToast('↓ identity.json téléchargé');
+    })
+    .catch(function(e){showToast('⚠ Download failed: '+e.message);});
+}
 function setTier(t){wizTier=t;document.getElementById('tier-free').classList.toggle('sel',t==='free');document.getElementById('tier-pro').classList.toggle('sel',t==='pro');}
 function updPassphraseHint(){
   const v=(document.getElementById('new-agent-passphrase')?.value||'').trim();

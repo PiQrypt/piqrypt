@@ -33,6 +33,7 @@ import argparse
 import json
 import logging
 import os
+import re
 import sys
 import threading
 import time
@@ -413,6 +414,8 @@ class VIGILHandler(BaseHTTPRequestHandler):
             name = parts[3]
             if len(parts) == 4:
                 self._api_agent(name, qs)
+            elif len(parts) == 5 and parts[4] == "identity":
+                self._api_download_identity(name)
             elif len(parts) == 6 and parts[4] == "export":
                 self._api_export(name, parts[5])
             else:
@@ -904,9 +907,29 @@ class VIGILHandler(BaseHTTPRequestHandler):
                 400, f"Unknown export type: {export_type}. Use: pqz-cert, pqz-memory, pdf"
             )
 
+    def _api_download_identity(self, name: str):
+        """GET /api/agent/<n>/identity — télécharge identity.json."""
+        identity_path = PIQRYPT_DIR / "agents" / name / "identity.json"
+        if not identity_path.exists():
+            self._send_error(404, f"Identity not found for agent '{name}'")
+            return
+        data = identity_path.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Disposition",
+                         f'attachment; filename="{name}_identity.json"')
+        self.send_header("Content-Length", str(len(data)))
+        for k, v in CORS_HEADERS.items():
+            self.send_header(k, v)
+        self.end_headers()
+        self.wfile.write(data)
+
     def _api_create_agent(self, payload: Dict):
         """POST /api/agent/create — crée une identité agent."""
-        agent_name = payload.get("name", "").strip()
+        agent_name_raw = payload.get("name", "").strip()
+        # Sanitiser : même logique que aiss/agent_registry._safe_name
+        agent_name = re.sub(r'[^\w\-]', '_', agent_name_raw)[:64]
+        agent_name = agent_name.strip('_') or 'agent'
         passphrase = payload.get("passphrase") or None
         tier       = payload.get("tier", "free")
         bridge     = payload.get("bridge", "")
@@ -961,13 +984,14 @@ class VIGILHandler(BaseHTTPRequestHandler):
             )
             log.info("[Vigil] Agent '%s' créé — %s...", agent_name, result["agent_id"][:16])
             self._send_json(200, {
-                "status":     "ok",
-                "agent_name": result["agent_name"],
-                "agent_id":   result["agent_id"],
-                "encrypted":  result["encrypted"],
-                "tier":       result["tier"],
-                "key_path":   result["key_path"],
-                "created_at": result["created_at"],
+                "status":             "ok",
+                "agent_name":         result["agent_name"],
+                "agent_name_display": agent_name_raw,
+                "agent_id":           result["agent_id"],
+                "encrypted":          result["encrypted"],
+                "tier":               result["tier"],
+                "key_path":           result["key_path"],
+                "created_at":         result["created_at"],
             })
         except Exception as e:
             log.error("[Vigil] create_agent failed: %s", e)
