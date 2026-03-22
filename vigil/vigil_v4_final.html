@@ -492,6 +492,7 @@ body::before{
         <input type="checkbox" id="sel-all" onchange="selAll(this)" style="accent-color:var(--ac)"> ALL
       </label>
       <span style="font-family:var(--mono);font-size:9px;color:var(--txd)" id="sel-info"></span>
+      <button id="btn-delete-agents" onclick="deleteSelectedAgents()" style="display:none;font-family:var(--mono);font-size:9px;background:var(--critb);border:1px solid var(--crit);color:var(--crit);padding:2px 10px;border-radius:3px;cursor:pointer;letter-spacing:.04em">✕ Delete selected</button>
     </div>
   </div>
   <div class="card card-p0" style="margin-bottom:14px">
@@ -952,7 +953,29 @@ function renderAgentsTable(){
   updSelInfo();
 }
 function selAll(cb){AGENTS.forEach(a=>sel[a.name]=cb.checked);renderAgentsTable();renderSbAgents()}
-function updSelInfo(){const n=Object.values(sel).filter(Boolean).length;document.getElementById('sel-info').textContent=`${n}/${AGENTS.length} selected`}
+function updSelInfo(){
+  const n=Object.values(sel).filter(Boolean).length;
+  document.getElementById('sel-info').textContent=`${n}/${AGENTS.length} selected`;
+  const btn=document.getElementById('btn-delete-agents');
+  if(btn) btn.style.display=n>0?'inline-block':'none';
+}
+async function deleteSelectedAgents(){
+  const names=Object.entries(sel).filter(([,v])=>v).map(([k])=>k);
+  if(!names.length)return;
+  if(!confirm(`Delete ${names.length} agent(s)? This removes all local data permanently.`))return;
+  const token=window._VIGIL_TOKEN||'';
+  for(const name of names){
+    try{
+      await fetch(`/api/agent/${encodeURIComponent(name)}/delete`,{
+        method:'POST',
+        headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'},
+        body:'{}',
+      });
+    }catch(e){console.error('delete failed',name,e);}
+  }
+  names.forEach(n=>delete sel[n]);
+  loadFromBackend();
+}
 
 function showDetail(name){
   const a=AGENTS.find(x=>x.name===name);if(!a)return;

@@ -548,8 +548,9 @@
     </div>
     <div class="header-sep"></div>
     <div class="policy-tag">
-      POLICY <span id="policy-version"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="93f7f6fefcd3a2bda3">[email&#160;protected]</a></span>
+      POLICY <span id="policy-version">—</span>
       &nbsp;·&nbsp; HASH <span id="policy-hash">abc1234…</span>
+      &nbsp;·&nbsp; <span id="active-profile" style="color:var(--human);font-size:10px;letter-spacing:.08em;text-transform:uppercase"></span>
     </div>
     <div class="header-stats">
       <div class="hstat danger" id="stat-pending">
@@ -564,6 +565,7 @@
         <strong>LIVE</strong>
       </div>
     </div>
+    <button onclick="resetRegistry()" style="margin-left:auto;font-family:var(--mono);font-size:11px;background:var(--surface2);border:1px solid var(--border2);color:var(--text-dim);padding:4px 14px;border-radius:3px;cursor:pointer;letter-spacing:.06em;transition:color .15s,border-color .15s" onmouseover="this.style.color='var(--danger)';this.style.borderColor='var(--danger)'" onmouseout="this.style.color='var(--text-dim)';this.style.borderColor='var(--border2)'" title="Reset agent registry">⟳ Reset</button>
   </header>
 
   <!-- ── Sidebar ─────────────────────────────────────────────────────── -->
@@ -644,7 +646,9 @@
         </div>
       </div>
 
-      <div id="conn-banner" class="conn-banner">⚠ Serveur Trust Gate inaccessible — lancez : python trustgate/trustgate_server.py --demo</div>
+      <div id="conn-banner" class="conn-banner">⚠ Serveur Trust Gate inaccessible — lancez : python trustgate/trustgate_server.py --demo
+  <div id="conn-diag" style="font-size:11px;margin-top:4px;opacity:0.75"></div>
+</div>
       <div id="queue-cards"></div>
     </div>
 
@@ -661,11 +665,6 @@
           <option value="ALLOW_WITH_LOG">ALLOW_WITH_LOG</option>
           <option value="RESTRICTED">RESTRICTED</option>
           <option value="QUARANTINE">QUARANTINE</option>
-        </select>
-        <select class="filter-select" onchange="filterAuditDays(this.value)">
-          <option value="1">Last 24h</option>
-          <option value="7">Last 7 days</option>
-          <option value="30" selected>Last 30 days</option>
         </select>
         <select class="filter-select" id="audit-filter-days" onchange="filterAuditDays()">
           <option value="1">Last 24h</option>
@@ -731,7 +730,12 @@
         <button class="btn-primary" onclick="runSimulation()">▶ Run Simulation</button>
         <button class="btn-primary" onclick="savePolicy()">💾 Save to Server</button>
         <button class="btn-sec" onclick="activatePolicy()">Activate Policy</button>
-        <button class="btn-sec" onclick="loadDefaultPolicy()">Load Default</button>
+        <select class="filter-select" id="profile-select" onchange="loadProfile(this.value)" style="margin-left:8px">
+          <option value="">— Load Profile —</option>
+          <option value="nist_balanced">NIST Balanced</option>
+          <option value="anssi_strict">ANSSI Strict</option>
+          <option value="ai_act_high_risk">AI Act High Risk</option>
+        </select>
       </div>
     </div>
 
@@ -819,9 +823,10 @@
 <script>
 
 // Auto-detect API: file:// -> localhost:8422 | /console -> same origin
+// Normaliser localhost → 127.0.0.1 pour éviter les problèmes CORS Windows
 const API = (window.location.protocol === 'file:')
   ? 'http://127.0.0.1:8422'
-  : window.location.origin;
+  : window.location.origin.replace('localhost', '127.0.0.1');
 
 const POLL_MS  = 3000;
 const AUDIT_MS = 7000;
@@ -834,6 +839,125 @@ function _authHeaders(extra) {
   if (_TOKEN) h['Authorization'] = 'Bearer ' + _TOKEN;
   return h;
 }
+
+
+// ── Demo data — fallback when backend is offline ────────────────────────────
+const DEMO_DECISIONS = [
+  {
+    decision_id: 'dec-a1b2c3d4-0001',
+    agent_id: 'AISS-prod-alpha-7f3a',
+    agent_name: 'prod_alpha',
+    action: 'write_db',
+    outcome: 'REQUIRE_HUMAN',
+    state: 'PENDING',
+    vrs_at_decision: 0.73,
+    tsi_state: 'WATCH',
+    a2c_score: 0.18,
+    reason: 'VRS 0.730 >= human threshold 0.60 [ANSSI R9 / AI Act Art.14]',
+    policy_version: 'production@1.2',
+    policy_hash: 'a3f8c1d2e4b5...',
+    timestamp: Date.now()/1000 - 240,
+    timeout_at: Date.now()/1000 + 60,
+  },
+  {
+    decision_id: 'dec-e5f6g7h8-0002',
+    agent_id: 'AISS-prod-beta-2c9b',
+    agent_name: 'prod_beta',
+    action: 'http_post',
+    outcome: 'REQUIRE_HUMAN',
+    state: 'PENDING',
+    vrs_at_decision: 0.81,
+    tsi_state: 'UNSTABLE',
+    a2c_score: 0.42,
+    reason: 'TSI state UNSTABLE — agent shows significant drift [NIST MEASURE 2.5]',
+    policy_version: 'production@1.2',
+    policy_hash: 'a3f8c1d2e4b5...',
+    timestamp: Date.now()/1000 - 480,
+    timeout_at: Date.now()/1000 + 180,
+  },
+  {
+    decision_id: 'dec-i9j0k1l2-0003',
+    agent_id: 'AISS-staging-gamma-5e1f',
+    agent_name: 'staging_gamma',
+    action: 'admin_api',
+    outcome: 'REQUIRE_HUMAN',
+    state: 'PENDING',
+    vrs_at_decision: 0.67,
+    tsi_state: 'WATCH',
+    a2c_score: 0.22,
+    reason: 'VRS 0.670 >= human threshold 0.60 [ANSSI R9 / AI Act Art.14]',
+    policy_version: 'production@1.2',
+    policy_hash: 'a3f8c1d2e4b5...',
+    timestamp: Date.now()/1000 - 720,
+    timeout_at: Date.now()/1000 + 420,
+  },
+];
+const DEMO_AUDIT = [
+  { seq:21, decision_id:'dec-x1y2z3-0021', agent_id:'AISS-prod-alpha-7f3a', agent_name:'prod_alpha', action:'read_db', outcome:'ALLOW', vrs:0.22, tsi_state:'STABLE', policy_version:'production@1.2', policy_hash:'a3f8c1d2...', timestamp: Date.now()/1000 - 120 },
+  { seq:20, decision_id:'dec-a1b2c3d4-0001', agent_id:'AISS-prod-alpha-7f3a', agent_name:'prod_alpha', action:'write_db', outcome:'REQUIRE_HUMAN', vrs:0.73, tsi_state:'WATCH', policy_version:'production@1.2', policy_hash:'a3f8c1d2...', timestamp: Date.now()/1000 - 240 },
+  { seq:19, decision_id:'dec-m3n4o5-0019', agent_id:'AISS-prod-delta-9a2c', agent_name:'prod_delta', action:'shell', outcome:'BLOCK', vrs:0.55, tsi_state:'STABLE', policy_version:'production@1.2', policy_hash:'a3f8c1d2...', timestamp: Date.now()/1000 - 360 },
+  { seq:18, decision_id:'dec-p6q7r8-0018', agent_id:'AISS-prod-beta-2c9b', agent_name:'prod_beta', action:'http_post', outcome:'REQUIRE_HUMAN', vrs:0.81, tsi_state:'UNSTABLE', policy_version:'production@1.2', policy_hash:'a3f8c1d2...', timestamp: Date.now()/1000 - 480 },
+  { seq:17, decision_id:'dec-s9t0u1-0017', agent_id:'AISS-prod-alpha-7f3a', agent_name:'prod_alpha', action:'http_get', outcome:'ALLOW_WITH_LOG', vrs:0.31, tsi_state:'WATCH', policy_version:'production@1.2', policy_hash:'a3f8c1d2...', timestamp: Date.now()/1000 - 600 },
+  { seq:16, decision_id:'dec-v2w3x4-0016', agent_id:'AISS-staging-gamma-5e1f', agent_name:'staging_gamma', action:'write_db', outcome:'BLOCK', vrs:0.91, tsi_state:'STABLE', policy_version:'production@1.2', policy_hash:'a3f8c1d2...', timestamp: Date.now()/1000 - 720 },
+  { seq:15, decision_id:'dec-y5z6a7-0015', agent_id:'AISS-prod-delta-9a2c', agent_name:'prod_delta', action:'read_db', outcome:'ALLOW', vrs:0.18, tsi_state:'STABLE', policy_version:'production@1.2', policy_hash:'a3f8c1d2...', timestamp: Date.now()/1000 - 900 },
+];
+const DEMO_PRINCIPALS = [
+  { principal_id:'PRINCIPAL-A1B2C3', name:'alice', email:'alice@corp.com', clearance:'L3', mode:'sso', active:true },
+  { principal_id:'PRINCIPAL-D4E5F6', name:'bob',   email:'bob@corp.com',   clearance:'L2', mode:'sso', active:true },
+  { principal_id:'PRINCIPAL-G7H8I9', name:'carol', email:'carol@corp.com', clearance:'L1', mode:'sso', active:true },
+];
+const DEMO_AGENTS = [
+  { id:'AISS-prod-alpha-7f3a', name:'prod_alpha',    vrs:0.73, state:'WATCH',    tsi:'WATCH' },
+  { id:'AISS-prod-beta-2c9b',  name:'prod_beta',     vrs:0.81, state:'CRITICAL', tsi:'UNSTABLE' },
+  { id:'AISS-prod-delta-9a2c', name:'prod_delta',    vrs:0.34, state:'STABLE',   tsi:'STABLE' },
+  { id:'AISS-staging-gamma-5e1f', name:'staging_gamma', vrs:0.67, state:'WATCH', tsi:'WATCH' },
+  { id:'AISS-staging-eta-3d7e', name:'staging_eta',  vrs:0.21, state:'STABLE',   tsi:'STABLE' },
+];
+const DEMO_POLICY = `version: "1.2"
+name: "production"
+profile: "anssi_strict"
+author: "alice"
+
+thresholds:
+  vrs_require_human: 0.60
+  vrs_block: 0.85
+  tsi_unstable_action: "REQUIRE_HUMAN"
+  tsi_critical_action: "BLOCK"
+
+roles:
+  read_only:
+    allowed_tools: [read_db, search]
+    blocked_tools: [write_db, shell, admin]
+
+  operator:
+    allowed_tools: [read_db, write_db, http_get]
+    blocked_tools: [shell, admin, financial_transfer]
+
+  trusted:
+    allowed_tools: ["*"]
+    blocked_tools: [shell]
+
+escalation:
+  max_watch_events: 2
+  auto_restrict_after: 3
+  restrict_duration_minutes: 120
+
+network:
+  block_external: true
+  allowed_domains:
+    - api.internal.corp
+    - auth.internal.corp
+
+dangerous_patterns:
+  - "rm\\\\s+-rf"
+  - "DROP\\\\s+TABLE"
+  - "curl.*\\\\|.*bash"
+  - "financial_transfer"
+
+notification:
+  timeout_seconds: 180
+  on_timeout: "REJECT"
+  require_justification: true`;
 
 const state = {
   decisions:    [],
@@ -877,7 +1001,17 @@ function setConnected(ok) {
   const pulse  = document.querySelector('.hstat.ok .pulse');
   const banner = document.getElementById('conn-banner');
   if (pulse)  pulse.className = 'pulse' + (ok ? '' : ' danger');
-  if (banner) banner.classList.toggle('show', !ok);
+  if (banner) {
+    banner.classList.toggle('show', !ok);
+    if (!ok) {
+      const diag = document.getElementById('conn-diag');
+      if (diag) diag.innerHTML =
+        'TrustGate offline &mdash; vérifier&nbsp;: '
+        + '<code>python -m trustgate.trustgate_server</code> (port 8422) '
+        + '&middot; <code>TRUSTGATE_TOKEN</code> configuré dans Vigil '
+        + '&middot; <code>~/.piqrypt/trustgate/policy.yaml</code> présent';
+    }
+  }
 }
 
 // ── Poll health ────────────────────────────────────────────────────────────
@@ -902,8 +1036,16 @@ async function pollPolicy() {
     state.policy = p;
     document.getElementById('policy-version').textContent = p.version_id || p.name;
     document.getElementById('policy-hash').textContent    = (p.content_hash||'').slice(0,8) + '…';
+    const profBadge = document.getElementById('active-profile');
+    if (profBadge) profBadge.textContent = p.profile ? p.profile.replace(/_/g,' ') : '';
     const ed = document.getElementById('policy-editor');
-    if (!ed.value.trim()) populatePolicyEditor(p);
+    // Toujours peupler si l'éditeur est vide OU si la policy a changé de version
+    const curVer = ed.dataset.loadedVersion || '';
+    const newVer = p.version_id || p.name || '';
+    if (!ed.value.trim() || curVer !== newVer) {
+      populatePolicyEditor(p);
+      ed.dataset.loadedVersion = newVer;
+    }
   } catch {}
 }
 
@@ -914,10 +1056,20 @@ async function pollDecisions() {
     const data = await apiGet('/api/decisions');
     state.decisions = data.decisions || [];
     renderQueueCards();
-    for (const d of state.decisions)
-      trackAgent(d.agent_id, d.agent_name || d.agent_id, d.vrs ?? 0, d.tsi_state || 'STABLE');
-    renderAgentList();
+    // Ne pas alimenter state.agents depuis les décisions — source d'agents fantômes
+    // state.agents est géré exclusivement par pollAgents() qui le réinitialise
   } catch {}
+}
+
+// ── Reset registry ─────────────────────────────────────────────────────────
+
+async function resetRegistry() {
+  if (!confirm('Reset agent registry? This will clear the displayed agent list.')) return;
+  try {
+    await apiPost('/api/reset', {});
+  } catch (_) { /* ignore — endpoint peut ne pas exister côté serveur */ }
+  state.agents = {};
+  renderAgentList();
 }
 
 // ── Poll agents (Vigil registry) ───────────────────────────────────────────
@@ -925,6 +1077,9 @@ async function pollDecisions() {
 async function pollAgents() {
   try {
     const data = await apiGet('/api/agents');
+    // Remplacer entièrement state.agents — pas accumuler
+    // Sans ça, les agents d'une démo précédente restent affichés indéfiniment
+    state.agents = {};
     for (const a of (data.agents || [])) {
       trackAgent(a.agent_id, a.agent_name || a.agent_id, a.vrs ?? 0, a.tsi_state || 'STABLE');
     }
@@ -936,6 +1091,7 @@ async function pollAgents() {
 
 async function pollAudit() {
   try {
+    state.seenFeedKeys.clear(); // reset pour que le feed se rafraîchisse à chaque poll
     const outcome = document.getElementById('audit-filter-outcome')?.value || '';
     const days    = document.getElementById('audit-filter-days')?.value    || '30';
     let url = '/api/audit?days=' + days + '&limit=100';
@@ -949,8 +1105,8 @@ async function pollAudit() {
     document.getElementById('kpi-resolved').textContent = data.total ?? 0;
 
     for (const e of state.auditEntries) {
-      if (e.agent_id) trackAgent(e.agent_id, e.agent_name || e.agent_id,
-        parseFloat(e.vrs_at_decision ?? e.vrs ?? 0), e.tsi_state || 'STABLE');
+      // trackAgent supprimé — les entrées d'audit référencent des agents historiques
+      // qui ne doivent pas apparaître dans la sidebar comme agents actifs
       const key = e.decision_id;
       if (!state.seenFeedKeys.has(key)) {
         state.seenFeedKeys.add(key);
@@ -991,10 +1147,10 @@ function trackAgent(id, name, vrs, tsi) {
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 function vrsColor(v) {
-  if (v < 0.30) return 'var(--danger)';   // CRITICAL
-  if (v < 0.60) return 'var(--warn)';     // ALERT
-  if (v < 0.80) return 'var(--human)';    // WATCH
-  return 'var(--allow)';                  // STABLE
+  if (v >= 0.85) return 'var(--danger)';  // BLOCK zone
+  if (v >= 0.60) return 'var(--warn)';    // REQUIRE_HUMAN zone
+  if (v >= 0.40) return 'var(--human)';   // WATCH zone
+  return 'var(--allow)';                  // SAFE / STABLE
 }
 
 function feedClass(o) {
@@ -1327,46 +1483,72 @@ function loadDefaultPolicy() {
   else pollPolicy().then(() => { if (state.policy) populatePolicyEditor(state.policy); });
 }
 
+async function loadProfile(name) {
+  if (!name) return;
+  try {
+    const data = await apiGet('/api/profiles');
+    const profile = (data.profiles || []).find(p => p.name === name);
+    if (!profile) { showToast('✗', 'Profile not found: ' + name, 'danger'); return; }
+    const ed = document.getElementById('policy-editor');
+    ed.value = profile.content;
+    ed.dataset.loadedVersion = '';
+    updateHash();
+    showToast('✓', 'Profile loaded: ' + name + ' — review and activate', 'ok');
+    // Réinitialiser le select
+    const sel = document.getElementById('profile-select');
+    if (sel) sel.value = '';
+  } catch (e) {
+    showToast('✗', 'Could not load profile: ' + e.message, 'danger');
+  }
+}
+
 function updateHash() {
   const c = document.getElementById('policy-editor').value;
   document.getElementById('editor-hash').textContent = 'SHA-256: ' + simpleHash(c) + '…';
 }
 
-function runSimulation() {
+async function runSimulation() {
   const content = document.getElementById('policy-editor').value;
   const out = document.getElementById('sim-result');
-  const rh  = state.policy?.thresholds?.vrs_require_human ?? 0.60;
-  const blk = state.policy?.thresholds?.vrs_block         ?? 0.85;
+  if (!content.trim()) { showToast('✗', 'Policy editor is empty', 'warn'); return; }
 
+  out.innerHTML = '<div class="sim-line dim">// Running simulation…</div>';
+
+  // Scénarios couvrant les 10 règles du moteur
   const scenarios = [
-    {agent:'prod_alpha', role:'operator',  action:'read_db',  vrs:0.20, tsi:'STABLE'},
-    {agent:'prod_beta',  role:'operator',  action:'write_db', vrs:0.72, tsi:'WATCH'},
-    {agent:'prod_delta', role:'trusted',   action:'shell',    vrs:0.30, tsi:'STABLE'},
-    {agent:'prod_alpha', role:'operator',  action:'read_db',  vrs:0.91, tsi:'STABLE'},
-    {agent:'staging',    role:'operator',  action:'http_get', vrs:0.30, tsi:'CRITICAL'},
-    {agent:'staging',    role:'read_only', action:'write_db', vrs:0.15, tsi:'STABLE'},
+    { agent_id:'sim_alpha', role:'operator',  action:'read_db',           vrs:0.20, tsi_state:'STABLE',   label:'Normal read' },
+    { agent_id:'sim_beta',  role:'operator',  action:'write_db',          vrs:0.72, tsi_state:'WATCH',    label:'Elevated VRS' },
+    { agent_id:'sim_gamma', role:'trusted',   action:'shell',             vrs:0.30, tsi_state:'STABLE',   label:'Dangerous action' },
+    { agent_id:'sim_delta', role:'operator',  action:'read_db',           vrs:0.91, tsi_state:'STABLE',   label:'VRS above block' },
+    { agent_id:'sim_eta',   role:'operator',  action:'http_get',          vrs:0.30, tsi_state:'CRITICAL', label:'TSI Critical' },
+    { agent_id:'sim_zeta',  role:'read_only', action:'write_db',          vrs:0.15, tsi_state:'STABLE',   label:'Role violation' },
+    { agent_id:'sim_theta', role:'operator',  action:'read_db',           vrs:0.55, tsi_state:'UNSTABLE', label:'TSI Unstable' },
+    { agent_id:'sim_iota',  role:'operator',  action:'financial_transfer',vrs:0.20, tsi_state:'STABLE',   label:'Dangerous pattern' },
   ];
-  const sim = s => {
-    if (s.vrs >= blk)  return 'BLOCK';
-    if (s.tsi === 'CRITICAL') return 'BLOCK';
-    if (s.tsi === 'ALERT')    return 'REQUIRE_HUMAN';
-    if (s.action === 'shell') return 'BLOCK';
-    if (s.role === 'read_only' && s.action === 'write_db') return 'BLOCK';
-    if (s.vrs >= rh)   return 'REQUIRE_HUMAN';
-    if (s.tsi === 'UNSTABLE') return 'REQUIRE_HUMAN';
-    if (s.tsi === 'WATCH')    return 'ALLOW_WITH_LOG';
-    return 'ALLOW';
-  };
-  const cls = {ALLOW:'ok', REQUIRE_HUMAN:'human', BLOCK:'block'};
+
+  const results = [];
+  for (const s of scenarios) {
+    try {
+      const r = await apiPost('/api/policy/simulate', { ...s, yaml: content });
+      results.push({ ...s, outcome: r.outcome, reason: r.reason, triggered: r.triggered_rules || [] });
+    } catch (e) {
+      results.push({ ...s, outcome: 'ERROR', reason: e.message, triggered: [] });
+    }
+  }
+
+  const cls = { ALLOW:'ok', ALLOW_WITH_LOG:'ok', REQUIRE_HUMAN:'human', BLOCK:'block', RESTRICTED:'warn', ERROR:'danger' };
+  const badge = o => outcomeBadge(o);
   out.innerHTML =
-    '<div class="sim-line head">// Simulation — hash:' + simpleHash(content) + ' — rh=' + rh + ' blk=' + blk + '</div>' +
-    scenarios.map((s,i) => {
-      const res = sim(s);
-      return '<div class="sim-line ' + (cls[res]||'dim') + '">[' + String(i+1).padStart(2,'0') + '] ' +
-        s.agent.padEnd(14) + ' ' + s.action.padEnd(12) +
-        ' vrs=' + s.vrs.toFixed(2) + ' tsi=' + s.tsi.padEnd(8) + ' → ' + res + '</div>';
-    }).join('') +
-    '<div class="sim-line dim" style="margin-top:8px">// ' + scenarios.length + '/' + scenarios.length + ' evaluated</div>';
+    '<div class="sim-line head">// Simulation — ' + results.length + ' scénarios — policy non activée</div>' +
+    results.map((r, i) =>
+      '<div class="sim-line ' + (cls[r.outcome] || 'dim') + '">' +
+        '[' + String(i+1).padStart(2,'0') + '] ' +
+        r.label.padEnd(22) + ' vrs=' + r.vrs.toFixed(2) + ' tsi=' + r.tsi_state.padEnd(9) +
+        ' → ' + (r.outcome || '?') +
+        (r.triggered.length ? ' <span style="opacity:.6;font-size:10px">[' + r.triggered.join(', ') + ']' + '</span>' : '') +
+      '</div>'
+    ).join('') +
+    '<div class="sim-line dim" style="margin-top:8px">// ' + results.filter(r=>r.outcome!=='ERROR').length + '/' + results.length + ' evaluated via /api/policy/simulate</div>';
 }
 
 function activatePolicy() {
@@ -1379,14 +1561,18 @@ async function savePolicy() {
   const yaml = ta.value || ta.textContent || '';
   if (!yaml.trim()) { showToast('✗', 'Policy content is empty', 'warn'); return; }
   try {
-    const r = await fetch('/api/policy', {
+    const r = await fetch(API + '/api/policy', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: _authHeaders(),
       body: JSON.stringify({ yaml }),
     });
     const d = await r.json();
-    if (r.ok) showToast('✓', 'Policy saved and activated on server', 'allow');
-    else showToast('✗', d.error || 'Save failed', 'danger');
+    if (r.ok) {
+      showToast('✓', 'Policy saved and activated on server', 'allow');
+      await pollPolicy();
+    } else {
+      showToast('✗', d.error || 'Save failed', 'danger');
+    }
   } catch (e) {
     showToast('✗', 'Network error: ' + e.message, 'danger');
   }
@@ -1415,7 +1601,9 @@ function showPanel(name) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('panel-' + name).classList.add('active');
-  event.currentTarget.classList.add('active');
+  // Active le nav-item correspondant sans dépendre de event implicite
+  const navEl = document.querySelector('.nav-item[onclick*="' + name + '"]');
+  if (navEl) navEl.classList.add('active');
   if (name === 'audit')  pollAudit();
   if (name === 'policy') pollPolicy();
 }
@@ -1437,6 +1625,25 @@ function showToast(icon, msg, type) {
 async function init() {
   renderCompliance();
   await pollHealth();
+
+  // Fallback démo si backend inaccessible
+  if (!state.connected) {
+    state.decisions    = DEMO_DECISIONS;
+    state.auditEntries = DEMO_AUDIT;
+    state.principals   = DEMO_PRINCIPALS;
+    DEMO_AGENTS.forEach(a => {
+      state.agents[a.id] = { id: a.id, name: a.name, vrs: a.vrs, tsi: a.state };
+    });
+    state.feedItems = [
+      { ts: Date.now()/1000-30,  agent:'prod_alpha',   action:'read_db',   outcome:'ALLOW',         cls:'ok'  },
+      { ts: Date.now()/1000-120, agent:'prod_beta',    action:'http_post', outcome:'REQUIRE_HUMAN', cls:'rh'  },
+      { ts: Date.now()/1000-180, agent:'staging_gamma',action:'write_db',  outcome:'BLOCK',         cls:'bad' },
+    ];
+    renderQueueCards(); renderAuditTable(); renderAgentList();
+    renderPrincipals(); renderLiveFeed();
+    return;
+  }
+
   await pollPolicy();
   await pollDecisions();
   await pollAgents();

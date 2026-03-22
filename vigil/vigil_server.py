@@ -19,6 +19,7 @@ Endpoints:
   GET  /api/agent/<name>/export/pqz-memory  → memory .pqz archive
   GET  /api/agent/<name>/export/pdf         → PDF audit report
   POST /api/agent/<name>/record   → inject event (from bridge)
+  POST /api/agent/<name>/delete   → delete agent directory
   GET  /health                    → server health check
   GET  /api/credits               → certification credits (trust-server)
 
@@ -35,6 +36,7 @@ import os
 import sys
 import threading
 import time
+import shutil
 import signal
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -184,6 +186,55 @@ def _push_to_trustgate(
             pass  # TrustGate absent ou erreur — on ignore silencieusement
 
     t = threading.Thread(target=_do_push, daemon=True)
+    t.start()
+
+
+def _push_to_trustgate_critical(
+    agent_name: str,
+    vrs: float,
+) -> None:
+    """
+    Variante de _push_to_trustgate pour les incidents de sécurité de chaîne
+    (fork détecté). Force tsi_state=CRITICAL et alert_level=critical
+    indépendamment du score VRS, afin que TrustGate déclenche un BLOCK
+    immédiat sans passer par les seuils de la policy.
+    """
+    import urllib.request
+    import urllib.error
+
+    if not TRUSTGATE_TOKEN:
+        return
+
+    payload = json.dumps({
+        "agent_id":    agent_name,
+        "agent_name":  agent_name,
+        "vrs":         round(vrs, 4),
+        "trust_score": round(vrs, 4),
+        "tsi_state":   "CRITICAL",   # forcé — fork sur la chaîne
+        "a2c_score":   0.0,
+        "alert_level": "critical",   # forcé — contourne les seuils VRS
+        "fork_detected": True,
+        "source":      "vigil",
+        "timestamp":   _ts(),
+    }).encode()
+
+    def _do_push_critical():
+        try:
+            req = urllib.request.Request(
+                f"{TRUSTGATE_URL}/api/vigil/agent-state",
+                data=payload,
+                headers={
+                    "Content-Type":  "application/json",
+                    "Authorization": f"Bearer {TRUSTGATE_TOKEN}",
+                },
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=2):
+                pass
+        except Exception:
+            pass
+
+    t = threading.Thread(target=_do_push_critical, daemon=True)
     t.start()
 
 
@@ -422,6 +473,12 @@ class VIGILHandler(BaseHTTPRequestHandler):
                 self._send_error(400, "Invalid JSON")
                 return
             self._api_certify(payload)
+            return
+
+        # POST /api/agent/<name>/delete
+        if len(parts) == 5 and parts[1:3] == ["api", "agent"] and parts[4] == "delete":
+            name = parts[3]
+            self._api_delete_agent(name)
             return
 
         self._send_error(404, f"Not found: {path}")
@@ -854,6 +911,23 @@ class VIGILHandler(BaseHTTPRequestHandler):
             log.error("[Vigil] create_agent failed: %s", e)
             self._send_error(500, str(e))
 
+    def _api_delete_agent(self, name: str):
+        """POST /api/agent/<name>/delete — supprime le répertoire agent."""
+        if not name:
+            self._send_error(400, "name is required")
+            return
+        agent_dir = PIQRYPT_DIR / "agents" / name
+        if not agent_dir.exists():
+            self._send_error(404, f"Agent not found: {name}")
+            return
+        try:
+            shutil.rmtree(agent_dir)
+            log.info("[Vigil] Agent deleted: %s", name)
+            self._send_json({"status": "deleted", "agent": name})
+        except Exception as e:
+            log.error("[Vigil] _api_delete_agent failed: %s", e)
+            self._send_error(500, str(e))
+
     def _api_record(self, name: str, event: Dict):
         """Receive a stamped event from a bridge and feed it to Vigil."""
         if BACKEND_AVAILABLE:
@@ -864,7 +938,30 @@ class VIGILHandler(BaseHTTPRequestHandler):
                     vrs_data  = compute_vrs(name)
                     vrs_score = vrs_data.get("vrs", 0.5) if isinstance(vrs_data, dict) else 0.5
                     alerts    = get_agent_alerts(name, limit=5)
-                    _push_to_trustgate(name, vrs_score, alerts)
+
+                    # ── Fork detection → force CRITICAL in TrustGate ──────────
+                    # A fork on the agent's chain is a security incident that must
+                    # bypass VRS thresholds and land directly as CRITICAL in
+                    # TrustGate, regardless of the computed VRS score.
+                    fork_detected = False
+                    try:
+                        from aiss.memory import load_events as _load_events
+                        from aiss.fork import find_forks
+                        chain_events = _load_events(agent_name=name)
+                        if chain_events and find_forks(chain_events):
+                            fork_detected = True
+                            log.warning(
+                                "[Vigil] FORK detected on agent '%s' — forcing CRITICAL push to TrustGate",
+                                name,
+                            )
+                    except Exception as fork_err:
+                        log.debug("[Vigil] fork check failed for '%s': %s", name, fork_err)
+
+                    if fork_detected:
+                        _push_to_trustgate_critical(name, vrs_score)
+                    else:
+                        _push_to_trustgate(name, vrs_score, alerts)
+                    # ─────────────────────────────────────────────────────────
                 except Exception:
                     pass
                 self._send_json(200, {"status": "recorded", "agent": name, "timestamp": _ts()})
@@ -1261,7 +1358,26 @@ class VIGILServer:
                                 continue
                             vrs  = agent.get("vrs", 0.5)
                             a2c  = agent.get("a2c_risk", 0.0)
-                            _push_to_trustgate(aname, vrs, agent.get("alerts", []), a2c)
+
+                            # ── Fork check dans le sync périodique ───────────
+                            # Sans ce check, le heartbeat 10s écraserait un
+                            # CRITICAL fork-triggered avec un WATCH ordinaire.
+                            sync_fork = False
+                            if BACKEND_AVAILABLE:
+                                try:
+                                    from aiss.memory import load_events as _le
+                                    from aiss.fork import find_forks as _ff
+                                    _evts = _le(agent_name=aname)
+                                    if _evts and _ff(_evts):
+                                        sync_fork = True
+                                except Exception:
+                                    pass
+
+                            if sync_fork:
+                                _push_to_trustgate_critical(aname, vrs)
+                            else:
+                                _push_to_trustgate(aname, vrs, agent.get("alerts", []), a2c)
+                            # ─────────────────────────────────────────────────
                     except Exception:
                         pass
             threading.Thread(target=_sync_loop, daemon=True, name="vigil-tg-sync").start()
