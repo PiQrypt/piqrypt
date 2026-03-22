@@ -42,8 +42,8 @@ from typing import Any, Dict, List, Optional
 # Utilisée pour vérifier les JWT de licence offline.
 # La clé privée correspondante ne quitte jamais api.piqrypt.com
 # Remplacer par la vraie clé publique avant production.
-_PIQRYPT_PUBLIC_KEY_B64 = ("lZgug8ikGGgAXPZJ+lNpyd8tN45KMIRQJCA93dRYdvU="
-      # Ed25519 public key — v1.7.1
+_PIQRYPT_PUBLIC_KEY_B64 = ("YEBOYGhymhd2EjBcTGPpgSnq8//YCEmCdpnY86SIcP4="
+      # Ed25519 public key — v1.7.1 — rotated 2026-03-22
 )
 # ⚠️  La clé PRIVÉE correspondante est stockée uniquement dans api.piqrypt.com
 #     via la variable d'environnement PIQRYPT_LICENSE_SIGNING_KEY.
