@@ -1303,25 +1303,61 @@ class VIGILHandler(BaseHTTPRequestHandler):
     def _api_credits(self):
         """
         GET /api/credits — Fetch available certification credits from trust-server.
-
-        Response:
-            {
-                "simple":    { "available": 5 },
-                "timestamp": { "available": 2 },
-                "pq_bundle": { "available": 0 }
-            }
+        Sends the local license JWT as Bearer token so the trust-server can
+        identify the license and return the correct credit balances.
         """
         import urllib.request
         import urllib.error
 
         try:
+            # Lire le JWT de licence depuis ~/.piqrypt/license.jwt
+            license_jwt = None
+            license_file = Path.home() / ".piqrypt" / "license.jwt"
+            if license_file.exists():
+                try:
+                    license_jwt = license_file.read_text().strip()
+                except Exception:
+                    pass
+
+            headers = {"User-Agent": "PiQrypt-Vigil/1.7.1"}
+            if license_jwt:
+                headers["Authorization"] = f"Bearer {license_jwt}"
+
             req = urllib.request.Request(
                 f"{TRUST_SERVER_URL}/api/certification/credits",
-                headers={"User-Agent": "PiQrypt-Vigil/1.7.1"},
+                headers=headers,
                 method="GET",
             )
             with urllib.request.urlopen(req, timeout=10) as resp:
-                self._send_json(200, json.loads(resp.read().decode()))
+                data = json.loads(resp.read().decode())
+                # Normaliser la réponse du trust-server vers le format Vigil
+                # Trust-server : {license_id, credits: {simple: {total, used, remaining}}}
+                # Vigil attend  : {simple: {available}, timestamp: {available}, pq_bundle: {available}}
+                credits = data.get("credits", data)
+                normalized = {}
+                for ct, info in credits.items():
+                    if isinstance(info, dict):
+                        normalized[ct] = {
+                            "available": info.get("remaining", info.get("available", 0))
+                        }
+                    else:
+                        normalized[ct] = {"available": info}
+                self._send_json(200, normalized)
+
+        except urllib.error.HTTPError as e:
+            if e.code == 401:
+                # Pas de licence active — retourner zéro crédits (comportement normal Free)
+                self._send_json(200, {
+                    "simple":    {"available": 0},
+                    "timestamp": {"available": 0},
+                    "pq_bundle": {"available": 0},
+                })
+            else:
+                log.warning("[Vigil] Credits HTTP error %d", e.code)
+                self._send_json(503, {
+                    "error":   "trust_server_error",
+                    "message": f"HTTP {e.code}",
+                })
 
         except urllib.error.URLError as e:
             log.warning("[Vigil] Credits unreachable: %s", e.reason)
