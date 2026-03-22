@@ -125,4 +125,13 @@ dev_keypair.json
 generate_dev_licenses.py
 start_dev.ps1
 
+# Licence et tokens production
+.env.piqrypt
+*.env.piqrypt
+**/.env.piqrypt
+
+# Fichiers générés par generate_dev_licenses.py
+dev_licenses.env
+dev_licenses.json
+
 
