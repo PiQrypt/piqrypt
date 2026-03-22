@@ -1184,24 +1184,49 @@ class VIGILHandler(BaseHTTPRequestHandler):
             return
 
         # ── a. Locate local .pqz file ──────────────────────────────────────
+        agent_archive_dir = PIQRYPT_DIR / "agents" / agent / "archive"
         pqz_path = None
-        for d in [PIQRYPT_DIR / agent, PIQRYPT_DIR, Path.cwd() / agent]:
-            candidate = d / f"{agent}.pqz"
+        for candidate_name in [f"{agent}_memory.pqz", f"{agent}_certified.pqz", f"{agent}.pqz"]:
+            candidate = agent_archive_dir / candidate_name
             if candidate.exists():
                 pqz_path = candidate
                 break
-            if d.exists():
-                for f in d.glob("*.pqz"):
-                    pqz_path = f
-                    break
-            if pqz_path:
-                break
+
+        # Fallback : générer à la demande si aucune archive trouvée
+        if not pqz_path:
+            plain_dir = PIQRYPT_DIR / "agents" / agent / "events" / "plain"
+            events = []
+            if plain_dir.exists():
+                for fpath in sorted(plain_dir.glob("*.json")):
+                    try:
+                        data = json.loads(fpath.read_text())
+                        events.extend(data if isinstance(data, list) else [data])
+                    except Exception:
+                        pass
+            if events and BACKEND_AVAILABLE:
+                try:
+                    from aiss.archive import create_archive
+                    identity_path = PIQRYPT_DIR / "agents" / agent / "identity.json"
+                    identity = {}
+                    if identity_path.exists():
+                        raw = json.loads(identity_path.read_text())
+                        identity = raw.get("identity", raw)
+                    agent_archive_dir.mkdir(parents=True, exist_ok=True)
+                    out = agent_archive_dir / f"{agent}_memory.pqz"
+                    create_archive(
+                        events=events,
+                        agent_identity=identity,
+                        output_path=str(out),
+                        passphrase=None,
+                    )
+                    pqz_path = out
+                except Exception as e:
+                    log.warning("[Vigil] on-demand archive for certify failed: %s", e)
 
         if not pqz_path:
             self._send_error(
                 404,
-                f"No .pqz file found for agent '{agent}'. "
-                f"Run: piqrypt export --agent {agent}"
+                f"No archive found for agent '{agent}'. Export memory first.",
             )
             return
 
