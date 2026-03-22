@@ -850,7 +850,8 @@ class VIGILHandler(BaseHTTPRequestHandler):
                     identity = {}
                     if identity_path.exists():
                         try:
-                            identity = json.loads(identity_path.read_text())
+                            raw = json.loads(identity_path.read_text())
+                            identity = raw.get("identity", raw)
                         except Exception:
                             pass
 
@@ -1012,7 +1013,8 @@ class VIGILHandler(BaseHTTPRequestHandler):
                     identity = {}
                     if identity_path.exists():
                         try:
-                            identity = json.loads(identity_path.read_text())
+                            raw = json.loads(identity_path.read_text())
+                            identity = raw.get("identity", raw)
                         except Exception:
                             pass
 
@@ -1045,19 +1047,18 @@ class VIGILHandler(BaseHTTPRequestHandler):
 
         # ── Étape 2 : suppression effective ──────────────────────────────────
         try:
-            deleted = False
+            # Supprimer du registre (non-bloquant — le répertoire peut exister sans entry)
             if BACKEND_AVAILABLE:
                 try:
                     from aiss.agent_registry import unregister_agent
-                    unregister_agent(name, delete_files=True)
-                    deleted = True
-                    log.info("[Vigil] Agent '%s' deleted via unregister_agent", name)
+                    unregister_agent(name, delete_files=False)
                 except Exception as e:
-                    log.warning("[Vigil] unregister_agent failed, fallback shutil: %s", e)
+                    log.debug("[Vigil] unregister_agent: %s (non-bloquant)", e)
 
-            if not deleted and agent_dir.exists():
+            # Toujours supprimer le répertoire physique
+            if agent_dir.exists():
                 shutil.rmtree(agent_dir, ignore_errors=True)
-                log.info("[Vigil] Agent '%s' directory removed via shutil", name)
+                log.info("[Vigil] Agent '%s' directory removed", name)
 
             self._send_json(200, {"status": "deleted", "agent": name})
         except Exception as e:
