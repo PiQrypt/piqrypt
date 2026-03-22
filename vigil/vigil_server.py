@@ -807,26 +807,55 @@ class VIGILHandler(BaseHTTPRequestHandler):
                 self.wfile.write(data)
             else:
                 self._send_error(
-                    404, f"No certified archive for {name}. Run: piqrypt archive --agent {name}"
+                    404,
+                    f"No certified archive for '{name}'. "
+                    f"Use the Certify button in the dashboard to request certification, "
+                    f"or run: piqrypt archive --agent {name}",
                 )
 
         elif export_type == "pqz-memory":
-            path = PIQRYPT_DIR / "agents" / name / "archive" / f"{name}_memory.pqz"
-            if path.exists():
-                data = path.read_bytes()
-                self.send_response(200)
-                self.send_header("Content-Type",        "application/octet-stream")
-                self.send_header("Content-Disposition", f'attachment; filename="{name}_memory.pqz"')
-                self.send_header("Content-Length",      str(len(data)))
-                for k, v in CORS_HEADERS.items():
-                    self.send_header(k, v)
-                self.end_headers()
-                self.wfile.write(data)
-            else:
-                self._send_error(
-                    404,
-                    f"No memory archive for {name}. Run: piqrypt archive --agent {name} --memory",
-                )
+            archive_path = PIQRYPT_DIR / "agents" / name / "archive" / f"{name}_memory.pqz"
+
+            # Générer à la demande si absent
+            if not archive_path.exists():
+                if not BACKEND_AVAILABLE:
+                    self._send_error(503, "Backend non disponible — export impossible")
+                    return
+                try:
+                    from aiss.archive import create_archive
+                    from aiss.memory import load_events
+
+                    events = load_events(agent_name=name)
+                    if not events:
+                        self._send_error(404, f"No events found for agent '{name}'")
+                        return
+
+                    identity_path = PIQRYPT_DIR / "agents" / name / "identity.json"
+                    identity = json.loads(identity_path.read_text()) if identity_path.exists() else {}
+
+                    archive_path.parent.mkdir(parents=True, exist_ok=True)
+                    create_archive(
+                        events=events,
+                        agent_identity=identity,
+                        output_path=str(archive_path),
+                        passphrase=None,
+                        label=f"{name}_memory",
+                    )
+                    log.info("[Vigil] Memory archive generated on-demand: %s", archive_path)
+                except Exception as e:
+                    log.error("[Vigil] Memory archive generation failed: %s", e)
+                    self._send_error(500, f"Archive generation failed: {e}")
+                    return
+
+            data = archive_path.read_bytes()
+            self.send_response(200)
+            self.send_header("Content-Type",        "application/octet-stream")
+            self.send_header("Content-Disposition", f'attachment; filename="{name}_memory.pqz"')
+            self.send_header("Content-Length",      str(len(data)))
+            for k, v in CORS_HEADERS.items():
+                self.send_header(k, v)
+            self.end_headers()
+            self.wfile.write(data)
 
         elif export_type == "pdf":
             # Generate minimal text-based PDF report
@@ -935,26 +964,47 @@ class VIGILHandler(BaseHTTPRequestHandler):
         if not confirmed:
             # Étape 1 — proposer export mémoire avant suppression
             memory_path = None
-            events_dir = agent_dir / "events" / "plain"
-            has_events = events_dir.exists() and any(events_dir.glob("*.json"))
+            events_exist = False
 
-            if has_events and BACKEND_AVAILABLE:
+            if BACKEND_AVAILABLE:
                 try:
-                    from aiss.exports import create_memory_archive
-                    archive_dir = agent_dir / "archive"
-                    archive_dir.mkdir(parents=True, exist_ok=True)
-                    out = archive_dir / f"{name}_memory.pqz"
-                    create_memory_archive(name, str(out))
-                    memory_path = str(out)
-                    log.info("[Vigil] Memory archive created before delete: %s", out)
+                    from aiss.memory import load_events
+                    events = load_events(agent_name=name)
+                    events_exist = bool(events)
+
+                    if events_exist:
+                        from aiss.archive import create_archive
+
+                        identity_path = PIQRYPT_DIR / "agents" / name / "identity.json"
+                        identity = {}
+                        if identity_path.exists():
+                            try:
+                                identity = json.loads(identity_path.read_text())
+                            except Exception:
+                                pass
+
+                        archive_dir = PIQRYPT_DIR / "agents" / name / "archive"
+                        archive_dir.mkdir(parents=True, exist_ok=True)
+                        out = archive_dir / f"{name}_memory.pqz"
+
+                        create_archive(
+                            events=events,
+                            agent_identity=identity,
+                            output_path=str(out),
+                            passphrase=None,
+                            label=f"{name}_memory_before_delete",
+                        )
+                        memory_path = str(out)
+                        log.info("[Vigil] Memory backup created before delete: %s", out)
                 except Exception as e:
-                    log.warning("[Vigil] Memory export failed (non-blocking): %s", e)
+                    log.warning("[Vigil] Pre-delete memory backup failed (non-blocking): %s", e)
 
             self._send_json(200, {
                 "status":          "confirm_required",
                 "agent":           name,
                 "memory_exported": memory_path is not None,
                 "memory_path":     memory_path,
+                "events_count":    len(events) if events_exist else 0,
                 "message":         "Send confirmed=true to proceed with deletion",
             })
             return

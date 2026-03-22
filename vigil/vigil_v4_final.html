@@ -673,14 +673,17 @@ body::before{
           <div class="ftier-btn" id="tier-pro" onclick="setTier('pro')"><div class="ftier-name">Pro ⭐</div><div class="ftier-desc">Encrypted keys · TSA anchors · Vigil monitoring</div></div>
         </div>
       </div>
-      <div class="fgroup" id="passphrase-group" style="display:none">
+      <div class="fgroup" id="passphrase-group">
         <label class="flabel">PASSPHRASE (optional — encrypts private key)</label>
-        <input class="finput" id="new-agent-passphrase" type="password" placeholder="min 8 chars — leave empty for plaintext (dev only)">
+        <input class="finput" id="new-agent-passphrase" type="password" placeholder="min 8 chars — leave empty for plaintext (dev only)" oninput="updPassphraseHint()">
         <label class="flabel" style="margin-top:8px">CONFIRM PASSPHRASE</label>
         <input class="finput" id="new-agent-passphrase-confirm" type="password" placeholder="confirm passphrase" style="margin-top:4px">
       </div>
-      <div id="passphrase-warning" style="font-family:var(--mono);font-size:9px;color:var(--watch);margin-top:4px;display:none">
-        ⚠ No passphrase — private key stored in plaintext (dev use only)
+      <div id="passphrase-warning" style="font-family:var(--mono);font-size:9px;color:var(--watch);margin-top:4px;display:block">
+        ⚠ No passphrase — key stored in plaintext
+      </div>
+      <div id="passphrase-ok" style="font-family:var(--mono);font-size:9px;color:var(--safe);margin-top:4px;display:none">
+        🔒 Key will be encrypted
       </div>
     </div>
     <div class="wiz-pane" id="wp2">
@@ -1321,7 +1324,12 @@ function wizNext(){
   }
 }
 function wizBack(){if(wizStep>1)setWizStep(wizStep-1)}
-function setTier(t){wizTier=t;document.getElementById('tier-free').classList.toggle('sel',t==='free');document.getElementById('tier-pro').classList.toggle('sel',t==='pro');document.getElementById('passphrase-group').style.display=t==='pro'?'block':'none'}
+function setTier(t){wizTier=t;document.getElementById('tier-free').classList.toggle('sel',t==='free');document.getElementById('tier-pro').classList.toggle('sel',t==='pro');}
+function updPassphraseHint(){
+  const v=(document.getElementById('new-agent-passphrase')?.value||'').trim();
+  document.getElementById('passphrase-warning').style.display=v?'none':'block';
+  document.getElementById('passphrase-ok').style.display=v?'block':'none';
+}
 function selBridge(b,el){wizBridge=b;document.querySelectorAll('.bridge-card').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');if(wizStep===3)updateSnippet()}
 function updateSnippet(){
   const name=(document.getElementById('w-name').value||'my_agent').replace(/[^a-z0-9_]/gi,'_');
