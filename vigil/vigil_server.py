@@ -795,13 +795,16 @@ class VIGILHandler(BaseHTTPRequestHandler):
             if not _AUTH.check_feature(self, "export_pqz"):
                 return
         if export_type == "pqz-cert":
-            path = PIQRYPT_DIR / "agents" / name / "archive" / f"{name}_certified.pqz"
+            archive_dir = PIQRYPT_DIR / "agents" / name / "archive"
+            path = archive_dir / f"{name}_certified.pqz"
+            if not path.exists():
+                path = archive_dir / f"{name}_memory.pqz"
             if path.exists():
                 data = path.read_bytes()
                 self.send_response(200)
                 self.send_header("Content-Type",        "application/octet-stream")
                 self.send_header(
-                    "Content-Disposition", f'attachment; filename="{name}_certified.pqz"'
+                    "Content-Disposition", f'attachment; filename="{path.name}"'
                 )
                 self.send_header("Content-Length",      str(len(data)))
                 for k, v in CORS_HEADERS.items():
@@ -811,9 +814,7 @@ class VIGILHandler(BaseHTTPRequestHandler):
             else:
                 self._send_error(
                     404,
-                    f"No certified archive for '{name}'. "
-                    f"Use the Certify button in the dashboard to request certification, "
-                    f"or run: piqrypt archive --agent {name}",
+                    f"No archive for '{name}'. Export memory first.",
                 )
 
         elif export_type == "pqz-memory":
@@ -1186,8 +1187,8 @@ class VIGILHandler(BaseHTTPRequestHandler):
         # ── a. Locate local .pqz file ──────────────────────────────────────
         agent_archive_dir = PIQRYPT_DIR / "agents" / agent / "archive"
         pqz_path = None
-        for candidate_name in [f"{agent}_memory.pqz", f"{agent}_certified.pqz", f"{agent}.pqz"]:
-            candidate = agent_archive_dir / candidate_name
+        for name_candidate in [f"{agent}_memory.pqz", f"{agent}_certified.pqz", f"{agent}.pqz"]:
+            candidate = agent_archive_dir / name_candidate
             if candidate.exists():
                 pqz_path = candidate
                 break
