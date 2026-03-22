@@ -478,7 +478,14 @@ class VIGILHandler(BaseHTTPRequestHandler):
         # POST /api/agent/<name>/delete
         if len(parts) == 5 and parts[1:3] == ["api", "agent"] and parts[4] == "delete":
             name = parts[3]
-            self._api_delete_agent(name)
+            length = int(self.headers.get("Content-Length", 0))
+            body_raw = self.rfile.read(length) if length else b"{}"
+            try:
+                body = json.loads(body_raw)
+            except Exception:
+                body = {}
+            confirmed = body.get("confirmed", False)
+            self._api_delete_agent(name, confirmed=confirmed)
             return
 
         self._send_error(404, f"Not found: {path}")
@@ -911,22 +918,64 @@ class VIGILHandler(BaseHTTPRequestHandler):
             log.error("[Vigil] create_agent failed: %s", e)
             self._send_error(500, str(e))
 
-    def _api_delete_agent(self, name: str):
-        """POST /api/agent/<name>/delete — supprime le répertoire agent."""
-        if not name:
-            self._send_error(400, "name is required")
-            return
+    def _api_delete_agent(self, name: str, confirmed: bool = False):
+        """
+        POST /api/agent/<n>/delete
+        body: {"confirmed": true} pour confirmer après export mémoire
+
+        Flux :
+        1. Si confirmed=False : génère export mémoire si dispo, retourne memory_path
+        2. Si confirmed=True  : supprime répertoire + registre
+        """
         agent_dir = PIQRYPT_DIR / "agents" / name
         if not agent_dir.exists():
-            self._send_error(404, f"Agent not found: {name}")
+            self._send_json(404, {"error": f"Agent '{name}' not found"})
             return
+
+        if not confirmed:
+            # Étape 1 — proposer export mémoire avant suppression
+            memory_path = None
+            events_dir = agent_dir / "events" / "plain"
+            has_events = events_dir.exists() and any(events_dir.glob("*.json"))
+
+            if has_events and BACKEND_AVAILABLE:
+                try:
+                    from aiss.exports import create_memory_archive
+                    archive_dir = agent_dir / "archive"
+                    archive_dir.mkdir(parents=True, exist_ok=True)
+                    out = archive_dir / f"{name}_memory.pqz"
+                    create_memory_archive(name, str(out))
+                    memory_path = str(out)
+                    log.info("[Vigil] Memory archive created before delete: %s", out)
+                except Exception as e:
+                    log.warning("[Vigil] Memory export failed (non-blocking): %s", e)
+
+            self._send_json(200, {
+                "status":          "confirm_required",
+                "agent":           name,
+                "memory_exported": memory_path is not None,
+                "memory_path":     memory_path,
+                "message":         "Send confirmed=true to proceed with deletion",
+            })
+            return
+
+        # Étape 2 — suppression effective
         try:
-            shutil.rmtree(agent_dir)
-            log.info("[Vigil] Agent deleted: %s", name)
-            self._send_json({"status": "deleted", "agent": name})
+            if BACKEND_AVAILABLE:
+                try:
+                    from aiss.agent_registry import unregister_agent
+                    unregister_agent(name, delete_files=True)
+                except Exception as e:
+                    log.warning("[Vigil] unregister_agent failed, falling back to shutil: %s", e)
+                    shutil.rmtree(agent_dir, ignore_errors=True)
+            else:
+                shutil.rmtree(agent_dir, ignore_errors=True)
+
+            log.info("[Vigil] Agent '%s' deleted", name)
+            self._send_json(200, {"status": "deleted", "agent": name})
         except Exception as e:
-            log.error("[Vigil] _api_delete_agent failed: %s", e)
-            self._send_error(500, str(e))
+            log.error("[Vigil] delete_agent(%s) failed: %s", name, e)
+            self._send_json(500, {"error": str(e)})
 
     def _api_record(self, name: str, event: Dict):
         """Receive a stamped event from a bridge and feed it to Vigil."""

@@ -810,6 +810,10 @@
         ✗ Confirm Rejection
       </button>
       <button class="btn btn-detail" onclick="closeModalBtn()">Cancel</button>
+      <button class="btn" onclick="exportDecisionPDF()" id="modal-pdf-btn"
+        style="background:rgba(255,179,0,0.08);border-color:rgba(255,179,0,0.3);color:var(--warn);margin-left:auto">
+        ↓ PDF
+      </button>
     </div>
   </div>
 </div>
@@ -1235,7 +1239,7 @@ function renderQueueCards() {
       '<div class="queue-card-footer">' +
         '<button class="btn btn-approve" onclick="openModal(\'approve\',\'' + d.decision_id + '\')">✓ Approve</button>' +
         '<button class="btn btn-reject"  onclick="openModal(\'reject\',\''  + d.decision_id + '\')">✗ Reject</button>' +
-        '<button class="btn btn-detail">Details</button>' +
+        '<button class="btn btn-detail" onclick="openModal(\'detail\',\'' + d.decision_id + '\')">Details</button>' +
       '</div>' +
       '<div class="timeout-bar"><div class="timeout-fill' + (urgent?' urgent':'') + '" style="width:' + pct + '%"></div></div>' +
     '</div>';
@@ -1395,14 +1399,25 @@ function openModal(type, decisionId) {
   if (!d) return;
   state.currentAction = { type, decision: d };
 
-  document.getElementById('modal-title').textContent      = type === 'approve' ? 'Approve Decision' : 'Reject Decision';
-  document.getElementById('modal-decision-id').textContent= d.decision_id;
-  document.getElementById('modal-agent').textContent      = (d.agent_name||d.agent_id) + ' (' + (d.agent_id||'') + ')';
-  document.getElementById('modal-action').textContent     = d.action || '—';
+  if (type === 'detail') {
+    // Mode lecture seule — afficher tous les détails sans action
+    document.getElementById('modal-title').textContent = 'Decision Details';
+    document.getElementById('modal-confirm-btn').style.display    = 'none';
+    document.getElementById('modal-reject-confirm').style.display = 'none';
+  } else {
+    document.getElementById('modal-title').textContent =
+      type === 'approve' ? 'Approve Decision' : 'Reject Decision';
+    document.getElementById('modal-confirm-btn').style.display    = type === 'approve' ? 'inline-flex' : 'none';
+    document.getElementById('modal-reject-confirm').style.display = type === 'reject'  ? 'inline-flex' : 'none';
+  }
+
+  document.getElementById('modal-decision-id').textContent = d.decision_id;
+  document.getElementById('modal-agent').textContent       = (d.agent_name||d.agent_id) + ' (' + (d.agent_id||'') + ')';
+  document.getElementById('modal-action').textContent      = d.action || '—';
   const vrs = d.vrs ?? d.vrs_at_decision ?? 0;
-  document.getElementById('modal-vrs').textContent        = vrs.toFixed(3) + ' — ' + (d.tsi_state||'—');
-  document.getElementById('modal-reason').textContent     = d.reason || '—';
-  document.getElementById('modal-justification').value   = '';
+  document.getElementById('modal-vrs').textContent         = vrs.toFixed(3) + ' — ' + (d.tsi_state||'—');
+  document.getElementById('modal-reason').textContent      = d.reason || '—';
+  document.getElementById('modal-justification').value     = '';
 
   const sel = document.getElementById('modal-principal');
   sel.innerHTML = '<option value="">— Select principal —</option>' +
@@ -1410,8 +1425,6 @@ function openModal(type, decisionId) {
       '<option value="' + p.name + '">' + p.name + ' (' + p.clearance + ') — ' + (p.email||'') + '</option>'
     ).join('');
 
-  document.getElementById('modal-confirm-btn').style.display    = type === 'approve' ? 'inline-flex' : 'none';
-  document.getElementById('modal-reject-confirm').style.display = type === 'reject'  ? 'inline-flex' : 'none';
   document.getElementById('modal-overlay').classList.add('open');
 }
 
@@ -1618,6 +1631,51 @@ function showToast(icon, msg, type) {
   document.getElementById('toast-msg').textContent  = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+function exportDecisionPDF() {
+  if (!state.currentAction) return;
+  const d   = state.currentAction.decision;
+  const vrs = (d.vrs ?? d.vrs_at_decision ?? 0).toFixed(3);
+  const ts  = new Date((d.timestamp||0)*1000).toISOString().replace('T',' ').slice(0,19);
+
+  const lines = [
+    'TRUSTGATE DECISION REPORT',
+    'PiQrypt v1.7.1 — ' + new Date().toISOString().slice(0,10),
+    '═'.repeat(50),
+    '',
+    'Decision ID  : ' + (d.decision_id||'—'),
+    'Timestamp    : ' + ts,
+    'Agent        : ' + (d.agent_name||d.agent_id||'—'),
+    'Agent ID     : ' + (d.agent_id||'—'),
+    'Action       : ' + (d.action||'—'),
+    'Outcome      : REQUIRE_HUMAN',
+    '',
+    'Risk Scores',
+    '───────────',
+    'VRS          : ' + vrs,
+    'TSI State    : ' + (d.tsi_state||'—'),
+    '',
+    'Policy Reason',
+    '─────────────',
+    (d.reason||'—'),
+    '',
+    'Timeout      : ' + (d.timeout_at
+      ? new Date(d.timeout_at*1000).toISOString().replace('T',' ').slice(0,19)
+      : '—'),
+    '',
+    '═'.repeat(50),
+    'Generated by TrustGate Console — PiQrypt',
+    'e-Soleau DSO2026006483 / DSO2026009143',
+  ];
+
+  const blob = new Blob([lines.join('\n')], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'decision_' + (d.decision_id||'unknown').slice(0,12) + '.txt';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('↓', 'Decision report downloaded', 'ok');
 }
 
 // ── Boot ───────────────────────────────────────────────────────────────────

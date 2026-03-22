@@ -674,8 +674,13 @@ body::before{
         </div>
       </div>
       <div class="fgroup" id="passphrase-group" style="display:none">
-        <label class="flabel">Passphrase (Pro — encrypts private key)</label>
-        <input class="finput" id="w-pass" type="password" placeholder="Minimum 12 characters">
+        <label class="flabel">PASSPHRASE (optional — encrypts private key)</label>
+        <input class="finput" id="new-agent-passphrase" type="password" placeholder="min 8 chars — leave empty for plaintext (dev only)">
+        <label class="flabel" style="margin-top:8px">CONFIRM PASSPHRASE</label>
+        <input class="finput" id="new-agent-passphrase-confirm" type="password" placeholder="confirm passphrase" style="margin-top:4px">
+      </div>
+      <div id="passphrase-warning" style="font-family:var(--mono);font-size:9px;color:var(--watch);margin-top:4px;display:none">
+        ⚠ No passphrase — private key stored in plaintext (dev use only)
       </div>
     </div>
     <div class="wiz-pane" id="wp2">
@@ -962,19 +967,40 @@ function updSelInfo(){
 async function deleteSelectedAgents(){
   const names=Object.entries(sel).filter(([,v])=>v).map(([k])=>k);
   if(!names.length)return;
-  if(!confirm(`Delete ${names.length} agent(s)? This removes all local data permanently.`))return;
-  const token=window._VIGIL_TOKEN||'';
-  for(const name of names){
-    try{
-      await fetch(`/api/agent/${encodeURIComponent(name)}/delete`,{
-        method:'POST',
-        headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'},
-        body:'{}',
-      });
-    }catch(e){console.error('delete failed',name,e);}
+
+  // Étape 1 — vérifier si export mémoire disponible
+  const previews=await Promise.all(names.map(name=>
+    _vigilFetch('/api/agent/'+encodeURIComponent(name)+'/delete',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({confirmed:false})
+    }).then(r=>r.json()).catch(()=>({agent:name,memory_exported:false}))
+  ));
+
+  const withMemory=previews.filter(p=>p.memory_exported);
+  let msg='Delete '+names.length+' agent(s)?';
+  if(withMemory.length>0){
+    msg+='\n\n'+withMemory.length+' agent(s) have memory archives available:\n';
+    msg+=withMemory.map(p=>'  • '+p.agent+' → '+(p.memory_path||'archive')).join('\n');
+    msg+='\n\nMemory archives are saved in ~/.piqrypt/agents/<name>/archive/\nDownload them before confirming deletion.';
   }
-  names.forEach(n=>delete sel[n]);
-  loadFromBackend();
+  if(!confirm(msg))return;
+
+  // Étape 2 — suppression confirmée
+  const results=await Promise.all(names.map(name=>
+    _vigilFetch('/api/agent/'+encodeURIComponent(name)+'/delete',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({confirmed:true})
+    }).then(r=>r.json()).catch(()=>({error:'network'}))
+  ));
+
+  const ok=results.filter(r=>r.status==='deleted').length;
+  const fail=results.filter(r=>r.error).length;
+  if(ok)   showToast('✓ '+ok+' agent(s) deleted');
+  if(fail) showToast('⚠ '+fail+' agent(s) could not be deleted');
+  names.forEach(n=>{delete sel[n];});
+  setTimeout(loadFromBackend,800);
 }
 
 function showDetail(name){
@@ -1266,16 +1292,23 @@ function wizNext(){
     var name=(document.getElementById('w-name').value||'').trim()||'my_agent';
     var tier=typeof wizTier!=='undefined'?wizTier:'free';
     var bridge=typeof wizBridge!=='undefined'?wizBridge:'';
+    var passphrase=(document.getElementById('new-agent-passphrase')?.value||'').trim();
+    var confirm_pp=(document.getElementById('new-agent-passphrase-confirm')?.value||'').trim();
+    if(passphrase && passphrase!==confirm_pp){showToast('⚠ Passphrases do not match');return;}
+    if(passphrase && passphrase.length<8){showToast('⚠ Passphrase must be at least 8 characters');return;}
+    var warn=document.getElementById('passphrase-warning');
+    if(warn) warn.style.display=passphrase?'none':'block';
     showToast('Création de l\'agent "'+name+'"...');
     _vigilFetch('/api/agent/create',{
       method:'POST',
-      body:JSON.stringify({name:name,tier:tier,bridge:bridge})
+      body:JSON.stringify({name:name,tier:tier,bridge:bridge,passphrase:passphrase||null})
     })
     .then(function(r){return r.json();})
     .then(function(d){
       closeWizard();
       if(d.status==='ok'){
-        showToast('✅ Agent "'+d.agent_name+'" créé !');
+        if(d.encrypted){showToast('✓ Agent "'+d.agent_name+'" créé — clé chiffrée');}
+        else{showToast('⚠ Agent "'+d.agent_name+'" créé — clé en clair (dev only)');}
         setTimeout(loadFromBackend,800);
       } else {
         showToast('❌ '+(d.error||'Erreur inconnue'));
