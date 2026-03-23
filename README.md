@@ -1,131 +1,70 @@
+<div align="center">
+
 # PiQrypt
 
-**The trust and continuity layer for autonomous AI agents.**
+### Every action your AI agent takes — signed, chained, provable.
 
-[![PyPI](https://img.shields.io/pypi/v/piqrypt?color=blue&label=PyPI)](https://pypi.org/project/piqrypt/)
-[![Downloads](https://img.shields.io/pypi/dm/piqrypt)](https://pypi.org/project/piqrypt/)
-[![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://pypi.org/project/piqrypt/)
-[![License: MIT](https://img.shields.io/badge/AISS%20core-MIT-green)](LICENSE)
-[![AISS](https://img.shields.io/badge/AISS-v2.0-orange)](https://aiss.org)
-[![NIST FIPS 204](https://img.shields.io/badge/NIST-FIPS%20204-red)](https://csrc.nist.gov/pubs/fips/204/final)
-[![e-Soleau INPI](https://img.shields.io/badge/e--Soleau-DSO2026006483-lightgrey)](https://www.inpi.fr)
-[![AI Act](https://img.shields.io/badge/EU%20AI%20Act-Art.12%2F14-blue)](https://artificialintelligenceact.eu)
+[![PyPI](https://img.shields.io/pypi/v/piqrypt?color=00c8e0&label=PyPI&style=flat-square)](https://pypi.org/project/piqrypt/)
+[![Downloads](https://img.shields.io/pypi/dm/piqrypt?style=flat-square&color=00e09a)](https://pypi.org/project/piqrypt/)
+[![CI](https://img.shields.io/github/actions/workflow/status/piqrypt/piqrypt/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/piqrypt/piqrypt/actions)
+[![Python](https://img.shields.io/badge/python-3.9%2B-blue?style=flat-square)](https://pypi.org/project/piqrypt/)
+[![License](https://img.shields.io/badge/AISS%20core-MIT-green?style=flat-square)](LICENSE)
+[![Post-Quantum](https://img.shields.io/badge/Post--Quantum-Dilithium3-ff8c00?style=flat-square)](https://csrc.nist.gov/pubs/fips/204/final)
+[![e-Soleau](https://img.shields.io/badge/e--Soleau-DSO2026006483-7c3aed?style=flat-square)](https://www.inpi.fr)
 
-*Signed · Hash-chained · Timestamped · Observable · Governable*
+**142 tests · 9 framework bridges · 4-layer stack · EU AI Act compliant**
+
+[Website](https://piqrypt.com) · [Quick Start](QUICK-START.md) · [PyPI](https://pypi.org/project/piqrypt/) · [Protocol](docs/RFC_AISS_v2.0.md)
+
+---
+
+⭐ **If PiQrypt is useful to you, a star helps others find it** — [star on GitHub](https://github.com/piqrypt/piqrypt)
+[![GitHub Stars](https://img.shields.io/github/stars/piqrypt/piqrypt?style=social)](https://github.com/piqrypt/piqrypt)
+
+</div>
+
+---
+
+```
+WITHOUT PiQrypt                          WITH PiQrypt
+──────────────────────────────           ──────────────────────────────────────────
+agent.execute(action)                    event = aiss.stamp_event(priv, agent_id, {
+                                             "action": "portfolio_rebalance",
+What happened?                               "confidence": 0.94
+  UNKNOWN                                })
+                                         aiss.store_event(event)
+Who authorized it?
+  UNKNOWN                                # Who acted?      ✅ agent_id: PIQR1a3f8...
+                                         # What happened?  ✅ signed · hash-chained
+Can we prove it?                         # Authorized?     ✅ TrustGate: ALLOW
+  NO                                     # Provable?       ✅ .pqz · offline · legal
+```
 
 ---
 
 ## What is PiQrypt?
 
-PiQrypt introduces a new primitive for AI systems:
+PiQrypt is the **cryptographic identity, memory and governance layer** for autonomous AI agents.
 
-Proof of Continuity.
+It answers three questions regulators and auditors are asking today: *who acted, what happened, should it have?* — with cryptographic proof, offline-verifiable, cross-framework, portable in a self-contained `.pqz` archive readable without PiQrypt installed.
 
-TCP/IP → communication
-TLS → encryption
-OAuth → delegation
-PCP → continuity
-
-OAuth solved delegated authorization for web apps without sharing credentials.
-No one asks why OAuth exists anymore — it is infrastructure.
-PCP does the same for AI agent accountability: cryptographic continuity, offline,
-cross-framework, legally admissible. The layer that was missing.
-
-PiQrypt is a cryptographic identity, memory, and governance layer for autonomous AI agents.
-
-It answers three questions regulators, auditors, and security teams are asking today:
-
-- **Who acted?** — cryptographic identity per agent (Ed25519 / Dilithium3 NIST FIPS 204)
-- **What happened?** — signed, hash-chained, tamper-evident event log
-- **Should it have?** — real-time risk scoring (VRS) + governance and audit server (TrustGate)
-
-PiQrypt is not a logging system. It is a **verifiable continuity layer** — records that can be independently verified without access to the original infrastructure, usable in regulatory audits and legal proceedings.
+> Just as OAuth solved delegated authorization without sharing credentials —
+> **PCP (Proof of Continuity Protocol)** does the same for AI agent accountability.
+> The infrastructure primitive that was missing.
 
 ---
 
-## Why this matters
+## Why now
 
-Autonomous agents increasingly execute financial transactions, generate legally relevant content, coordinate with other agents without human review, and trigger downstream automated actions in critical systems.
+Autonomous agents execute financial transactions, generate legally relevant content, and coordinate without human review — in production, today. Three regulatory frameworks are converging simultaneously:
 
-Three regulatory frameworks are converging simultaneously:
+| Framework | What it requires |
+|---|---|
+| **EU AI Act** — Art. 12/14 | Inviolable logs · human oversight mandatory |
+| **ANSSI 2024** — R25/R29 | Dangerous pattern filtering · audit trail |
+| **NIST AI RMF** — MANAGE 2.2 | Agentic AI supervision · verifiable decisions |
 
-| Framework | Key requirements |
-|-----------|-----------------|
-| **EU AI Act** | Art.12 (inviolable logs), Art.14 (human oversight mandatory), Art.9 (risk management) |
-| **ANSSI 2024** | R25 (dangerous pattern filtering), R29 (audit trail), R30 (clearance-based access) |
-| **NIST AI RMF 1.0** | GOVERN 1.2, MANAGE 2.2, MEASURE 2.5, AI 600-1 (agentic AI supervision) |
-
-Autonomous AI agents are making decisions that affect people, money, and legal outcomes —
-without any infrastructure to prove who acted, when, and whether it was authorized.
-That infrastructure did not exist. Until now.
-
-Traditional logs are not designed for adversarial or legal scrutiny. PiQrypt addresses this gap.
-
----
-
-## Architecture — Four layers
-
-```
-┌──────────────────────────────────────────────────────────┐
-│  TrustGate  — Human oversight · Policy · Hash-chained audit │  Governance
-├──────────────────────────────────────────────────────────┤
-│  Vigil      — Real-time SOC dashboard · VRS · Alerts      │  Observability
-├──────────────────────────────────────────────────────────┤
-│  PiQrypt    — VRS scoring · .pqz certification · RFC 3161  │  Risk & Certification
-├──────────────────────────────────────────────────────────┤
-│  AISS       — Identity · Signed memory · A2C detection     │  (MIT) Fondation
-└──────────────────────────────────────────────────────────┘
-```
-
-### AISS — Agent Identity & Security Substrate
-
-Each agent gets a cryptographic identity and a signed, hash-linked event log.
-
-```
-[genesis] → [event 1] → [event 2] → [event 3]
-    │           │           │           │
- Ed25519     Ed25519     Ed25519     Ed25519
- prev_hash   prev_hash   prev_hash   prev_hash
-```
-
-Two signature tiers:
-
-| Tier | Algorithm | Quantum-resistant | Availability |
-|------|-----------|:-----------------:|-------------|
-| **STANDARD** (default) | Ed25519 (RFC 8032) | ❌ | All tiers |
-| **QUANTUM** | Dilithium3 (NIST FIPS 204) | ✅ | Pro+ |
-
-> Ed25519 (STANDARD) is **not** post-quantum resistant. For quantum resilience,
-> use `pip install piqrypt[post-quantum]` (Pro tier and above).
-
-**AISS works with no bridge.** Two lines of Python — `stamp_event()` + `store_event()` — implement the full protocol. Bridges (LangChain, AutoGen, CrewAI, ROS2, RPi) are optional adapters that handle the wiring for your specific framework. The protocol is the same regardless of the framework above it.
-
-### VRS — Vulnerability & Risk Score
-
-Composite real-time risk score [0.0 → 1.0] from four weighted components:
-
-| Component | Weight | What it measures |
-|-----------|--------|-----------------|
-| TSI | 35% | Trust Score Instability — drift in inter-agent relationships |
-| Trust Score | 20% | Concentration, volume, frequency anomalies |
-| A2C | 30% | 4 patterns: concentration, entropy drop, synchronisation, silence break |
-| Chain | 15% | Cryptographic integrity of the identity chain |
-
-### TrustGate — Governance & Audit
-
-TrustGate evaluates actions and issues authoritative decisions; enforcement is at the application layer.
-
-It is not inline middleware. The AISS bridge always records events unconditionally. Vigil computes the VRS from those events and pushes agent state to TrustGate. TrustGate runs the policy engine and returns a decision. The calling application reads `"blocked": true/false` and acts accordingly.
-
-Key features:
-
-- **Deterministic policy engine** — 10-priority rules, same input → same output. Full compliance mapping: ANSSI R9/R25/R27/R28, EU AI Act Art.14, NIST MANAGE 2.2
-- **Six decision outcomes** — `ALLOW`, `ALLOW_WITH_LOG`, `REQUIRE_HUMAN`, `RESTRICTED`, `BLOCK`, `QUARANTINE`
-- **REQUIRE_HUMAN queue** — TTL-based decisions, human principal clearance levels (L1–L3), approve/reject with mandatory justification
-- **Hash-chained audit journal** — every evaluation is logged, append-only, tamper-evident, verifiable without the live system
-- **Proof of disobedience** — if an agent continues acting after a BLOCK decision, two independent signed records (TrustGate audit journal + AISS chain) provide legally admissible evidence of the violation
-- **Three compliance profiles** out of the box — `ai_act_high_risk.yaml`, `anssi_strict.yaml`, `nist_balanced.yaml`
-- **Simulation mode** — test policy changes before activation (`POST /api/policy/simulate`)
+Traditional logs are forgeable. Traditional monitoring is session-scoped. Neither was designed for adversarial or legal scrutiny. PiQrypt was.
 
 ---
 
@@ -135,119 +74,110 @@ Key features:
 pip install piqrypt
 ```
 
-### Launch the stack
+Launch the full stack:
 
-```powershell
-# Production
-.\start_free.ps1          # Free — Vigil dashboard, read+write (agents connect and send events, 2 bridges max)
-.\start_pro.ps1           # Pro — Vigil full + exports + certified .pqz
-.\start_team.ps1          # Team — Vigil + TrustGate (manual)
-.\start_business.ps1      # Business/Enterprise — full stack
-
-# Demos & development
-.\demos\start_families.ps1   # Interactive menu — nexus / pixelflow / alphacore
-.\demos\start_legacy.ps1     # 10 agents — trading / compliance / rogue
+```bash
+piqrypt start                              # interactive tier selection
+piqrypt start --tier free                  # Vigil dashboard · port 8421
+piqrypt start --tier business --manual     # + TrustGate human approval queue
 ```
 
-### Onboarding in 60 seconds
-
-```
-1. .\start_free.ps1                 # dashboard opens automatically
-2. Click "+ NEW AGENT" in Vigil
-3. Choose your bridge (CrewAI, LangChain, MCP, Ollama…)
-4. Copy the generated snippet → paste into your agent code
-5. Agent appears live in the network graph
-```
-
-### Python API
+Python API — two lines to get started:
 
 ```python
 import piqrypt as aiss
 
-# Create agent identity
 private_key, public_key = aiss.generate_keypair()
 agent_id = aiss.derive_agent_id(public_key)
 
-# Stamp a signed, hash-linked event
 event = aiss.stamp_event(
-    private_key,
-    agent_id,
-    {"action": "recommendation", "asset": "AAPL", "value": "buy"}
+    private_key, agent_id,
+    {"action": "recommendation", "asset": "AAPL", "confidence": 0.94}
 )
 aiss.store_event(event)
-
-# Verify chain integrity — raises InvalidChainError on any tampering
-aiss.verify_chain([event])
+aiss.verify_chain([event])  # ✅ Chain verified — 1 event, 0 anomalies
 ```
 
+LangChain — one parameter, agent unchanged:
+
+```python
+from piqrypt.bridges.langchain import PiQryptCallbackHandler
+from langchain.agents import AgentExecutor
+
+agent = AgentExecutor(
+    agent=your_agent, tools=your_tools,
+    callbacks=[PiQryptCallbackHandler(identity=agent_id)]
+)
+# CrewAI:  from piqrypt.bridges.crewai import AuditedAgent as Agent
+# AutoGen: from piqrypt.bridges.autogen import AuditedAssistant
+# MCP:     from piqrypt.bridges.mcp import AuditedMCPClient
+```
+
+CLI:
+
 ```bash
-# CLI
 piqrypt identity create my_agent
-piqrypt stamp my_agent --payload '{"action": "trade", "symbol": "AAPL"}'
+piqrypt stamp my_agent --payload '{"action":"trade","symbol":"AAPL"}'
 piqrypt verify my_agent
-# ✅ Chain integrity verified — 1 event, 0 anomalies
-```
-
-With post-quantum signatures (Pro+):
-
-```bash
-pip install piqrypt[post-quantum]
-piqrypt license activate pk_pro_...
+# ✅ Chain integrity verified — 12 events · trust_score: 0.94 · TrustGate: ALLOW
 ```
 
 ---
 
-## Framework integrations
+## Architecture — 4 layers
 
-Bridges are framework-specific adapters. They connect the AISS protocol to your existing stack. The underlying protocol (identity, hash-linked chain, signatures) is identical across all frameworks — and available without any bridge via `aiss.stamp_event()` directly.
-
-```bash
-pip install piqrypt[langchain]   # LangChain
-pip install piqrypt[crewai]      # CrewAI
-pip install piqrypt[autogen]     # AutoGen
-pip install piqrypt[mcp]         # Model Context Protocol
-pip install piqrypt[ollama]      # Ollama
-pip install piqrypt[all-bridges] # All frameworks
+```
+Your agents (LangChain · CrewAI · AutoGen · MCP · Ollama · ROS2 · RPi · …)
+│
+│  2 lines of code
+│
+┌───────────────────────────▼─────────────────────────────────────────┐
+│  TrustGate — Policy engine                             port 8422     │
+│  ALLOW · REQUIRE_HUMAN · BLOCK · QUARANTINE                          │
+├─────────────────────────────────────────────────────────────────────┤
+│  Vigil — Real-time behavioral monitoring               port 8421     │
+│  VRS risk score · A2C anomaly detection · TSI                        │
+├─────────────────────────────────────────────────────────────────────┤
+│  PiQrypt Core — Continuity engine                                    │
+│  .pqz portable archives · RFC 3161 TSA · Dilithium3                 │
+├─────────────────────────────────────────────────────────────────────┤
+│  AISS — Agent Identity Signing Standard                MIT ©2026     │
+│  Ed25519 identity · SHA-256 hash chains · PCP                        │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
-| Framework | Repo |
-|-----------|------|
-| LangChain | [piqrypt-langchain-integration](https://github.com/piqrypt/piqrypt-langchain-integration) |
-| AutoGen | [piqrypt-autogen-integration](https://github.com/piqrypt/piqrypt-autogen-integration) |
-| CrewAI | [piqrypt-crewai-integration](https://github.com/piqrypt/piqrypt-crewai-integration) |
-| MCP | [piqrypt-mcp-integration](https://github.com/piqrypt/piqrypt-mcp-integration) |
-| Ollama | [bridges/ollama](bridges/ollama/) |
-
-**[→ Integration Guide](INTEGRATION.md)**
+| Layer | License | What it does |
+|---|---|---|
+| **AISS** | MIT | Identity, signing, chain verification, A2A handshake |
+| **PiQrypt Core** | ELv2 | VRS scoring, `.pqz` certified archives, RFC 3161 |
+| **Vigil** | ELv2 | Real-time behavioral dashboard — port 8421 |
+| **TrustGate** | ELv2 | Deterministic policy engine — port 8422 |
 
 ---
 
-## Works with any agent — 1 line
+## Framework Bridges
 
-> Add a cryptographic audit trail to any AI agent in under 5 minutes.
-> One callback. No cloud. No code changes. No raw data stored —
-> only signed, hash-chained evidence your auditors and regulators can verify.
+**9 bridges. Zero code change on your agent.**
 
-| Framework | Minimum integration |
-|-----------|---------------------|
-| LangChain | `callbacks=[PiQryptCallbackHandler(identity=id)]` — 1 parameter |
-| AutoGen | Rename `AssistantAgent` → `AuditedAssistant` — 1 class swap |
-| CrewAI | Rename `Agent` → `AuditedAgent` — 1 class swap |
-| Ollama | Swap `ollama.Client` → `AuditedOllama` — 1 import |
-| Any Python | 2 lines around any decision point |
-| REST / CLI | `@audit_endpoint("action_name")` decorator |
+| Bridge | Install | Integration |
+|---|---|---|
+| LangChain | `pip install piqrypt[langchain]` | `PiQryptCallbackHandler` |
+| CrewAI | `pip install piqrypt[crewai]` | `AuditedAgent`, `AuditedCrew` |
+| AutoGen | `pip install piqrypt[autogen]` | `AuditedAssistant` |
+| MCP | `pip install piqrypt[mcp]` | Tool middleware |
+| Ollama | `pip install piqrypt[ollama]` | Request wrapper |
+| Session | `pip install piqrypt[session]` | N-agent co-signed sessions |
+| OpenClaw | `pip install piqrypt[openclaw]` | Action stamper |
+| ROS2 | `pip install piqrypt[ros]` | `AuditedNode` |
+| Raspberry Pi | `pip install piqrypt[rpi]` | `AuditedPiAgent` |
+
+```bash
+pip install piqrypt[all-bridges]   # install all at once
+```
 
 **Privacy by design:** raw prompts, model responses, and tool outputs are never stored — only their SHA-256 fingerprints. Structural, not configurable.
 
 **Offline by default:** no third-party server receives any data. The `.pqz` audit archive is verifiable without access to the original infrastructure.
-
-> When two AI agents interact, PiQrypt makes both sign the interaction.
-> Cross-framework. Offline. The only system where "Agent B claimed it never talked
-> to Agent A" is cryptographically impossible.
-
-> PiQrypt doesn't just log what your agents did — it proves who authorized it,
-> who blocked it, and who ignored the block. Deterministic policies. HITL queue.
-> Hash-chained evidence. EU AI Act Art.14 compliance out of the box.
 
 ---
 
@@ -259,11 +189,9 @@ When agents from different frameworks collaborate, `AgentSession` records the fu
 from bridges.session import AgentSession
 import piqrypt as aiss
 
-# Agents can be from any framework — LangChain, AutoGen, custom Python
-# Each has its own independent Ed25519 keypair and AISS chain
-planner_key,  planner_pub  = aiss.generate_keypair()  # e.g. a LangChain AgentExecutor
-executor_key, executor_pub = aiss.generate_keypair()  # e.g. an AutoGen AssistantAgent
-reviewer_key, reviewer_pub = aiss.generate_keypair()  # e.g. a custom Python script
+planner_key,  planner_pub  = aiss.generate_keypair()
+executor_key, executor_pub = aiss.generate_keypair()
+reviewer_key, reviewer_pub = aiss.generate_keypair()
 
 session = AgentSession(agents=[
     {"name": "planner",  "agent_id": aiss.derive_agent_id(planner_pub),
@@ -276,36 +204,26 @@ session = AgentSession(agents=[
 session.start()
 # → 3 co-signed handshakes recorded (N*(N-1)/2 pairs), one in each agent's chain
 
-# Stamp cross-agent interactions — both chains updated simultaneously
 session.stamp("planner",  "task_delegation", {"task": "analyze_portfolio"}, peer="executor")
 session.stamp("executor", "task_completed",  {"result_hash": "…"},          peer="reviewer")
 session.stamp("reviewer", "review_signed",   {"approved": True},            peer="planner")
 ```
 
-What this produces for each interaction:
-
-- Both agents' chains receive an event with the same `interaction_hash`
-- The responder's event embeds the initiator's signature (`peer_signature` field)
-- Neither agent can deny the interaction or repudiate their identity
-- The full session is auditable cross-framework without a shared server
-
-**[→ A2A Session Guide](docs/A2A_SESSION_GUIDE.md)** for setup, handshake details, and audit export.
+**[→ A2A Session Guide](docs/A2A_SESSION_GUIDE.md)**
 
 ---
 
-## Pricing
+## Project Status
 
-| Tier | Agents | Events/month | Price (annual) | Key features |
-|------|--------|-------------|----------------|-------------|
-| **Free** | 3 | 10,000 | Free forever | AISS STANDARD, .pqz memory, Vigil read+write (2 bridges max) |
-| **Pro** | 50 | 500,000 | €290–390/year | QUANTUM, TSA RFC 3161, .pqz CERTIFIED, Vigil full, TrustGate manual |
-| **Startup** | 50 | 1,000,000 | €990/year | All Pro + team workspace |
-| **Team** | 150 | 5,000,000 | €2,990/year | All Startup + priority support |
-| **Business** | 500 | 20,000,000 | €14,990/year | All Team + TrustGate full, SIEM, multi-org |
-| **Enterprise** | Unlimited | Unlimited | On request | All Business + SSO, on-premise, SLA, air-gap |
+| Component | Status | Notes |
+|---|---|---|
+| AISS core | ✅ Stable | `pip install piqrypt` |
+| Framework bridges (9) | ✅ Stable | `pip install piqrypt[langchain]` etc. |
+| Vigil dashboard | ✅ Stable | Standalone · port 8421 |
+| TrustGate | ✅ Stable | Standalone · port 8422 |
+| Trust-server | ✅ Production | `trust-server-ucjb.onrender.com` |
 
-**[→ Full pricing & feature comparison](TIERS_PRICING.md)**  
-**[→ Certification pricing (.pqz CERTIFIED)](CERTIFICATION_PRICING.md)**
+**v1.7.1** · Python 3.9–3.12 · Linux · macOS · Windows
 
 ---
 
@@ -331,16 +249,19 @@ PiQrypt does **not** protect against compromised private keys, malicious logic b
 
 ---
 
-## Project status
+## Pricing
 
-| Component | Status | Distribution |
-|-----------|--------|-------------|
-| AISS core | ✅ Stable | `pip install piqrypt` |
-| Framework bridges | ✅ Published | `pip install piqrypt[langchain]` etc. |
-| Vigil dashboard | 🔶 Beta | Standalone — see [vigil/](vigil/) |
-| TrustGate | 🔶 Beta | Standalone — see [trustgate/](trustgate/) |
+| Tier | Agents | Events/month | Price (annual) | Key features |
+|------|--------|-------------|----------------|-------------|
+| **Free** | 3 | 10,000 | Free forever | AISS STANDARD, .pqz memory, Vigil read+write (2 bridges max) |
+| **Pro** | 50 | 500,000 | €290–390/year | QUANTUM, TSA RFC 3161, .pqz CERTIFIED, Vigil full, TrustGate manual |
+| **Startup** | 50 | 1,000,000 | €990/year | All Pro + team workspace |
+| **Team** | 150 | 5,000,000 | €2,990/year | All Startup + priority support |
+| **Business** | 500 | 20,000,000 | €14,990/year | All Team + TrustGate full, SIEM, multi-org |
+| **Enterprise** | Unlimited | Unlimited | On request | All Business + SSO, on-premise, SLA, air-gap |
 
-**Version:** 1.7.1 · **Python:** 3.9–3.12 · **Platforms:** Linux, macOS, Windows
+**[→ Full pricing & feature comparison](TIERS_PRICING.md)**
+**[→ Certification pricing (.pqz CERTIFIED)](CERTIFICATION_PRICING.md)**
 
 ---
 
@@ -363,15 +284,25 @@ PiQrypt does **not** protect against compromised private keys, malicious logic b
 
 ## License
 
-**AISS spec & bridges:** MIT / Apache-2.0 — see [LICENSE](LICENSE)  
-**PiQrypt Core, Vigil, TrustGate:** Elastic License 2.0 (ELv2) — see [LICENSE-SCHEMA.md](LICENSE-SCHEMA.md)  
-**Commercial use (hosted/managed service):** [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md) — contact@piqrypt.com
+| Component | License |
+|---|---|
+| AISS spec & bridges | MIT / Apache-2.0 |
+| PiQrypt Core, Vigil, TrustGate | Elastic License 2.0 (ELv2) |
+| Commercial (hosted/managed service) | [contact@piqrypt.com](mailto:contact@piqrypt.com) |
 
-**IP:** e-Soleau DSO2026006483 (19/02/2026) · DSO2026009143 (12/03/2026)  
-**Contact:** contact@piqrypt.com · **Security:** security@piqrypt.com
+**IP:** e-Soleau [DSO2026006483](https://www.inpi.fr) (19/02/2026) · [DSO2026009143](https://www.inpi.fr) (12/03/2026)
+**Contact:** [contact@piqrypt.com](mailto:contact@piqrypt.com) · [security@piqrypt.com](mailto:security@piqrypt.com)
 
 ---
 
-*PiQrypt does not change how agents think.*  
-*It records — verifiably, portably, in compliance with EU AI Act — what they did, how they interacted, and whether a human approved it.*  
-*The trust layer for autonomous AI agents.*
+<div align="center">
+
+*PiQrypt does not change how agents think.*
+*It records — verifiably, portably, in compliance with EU AI Act —*
+*what they did, how they interacted, and whether a human approved it.*
+
+**The trust layer for autonomous AI agents.**
+
+[⭐ Star on GitHub](https://github.com/piqrypt/piqrypt) · [piqrypt.com](https://piqrypt.com) · [contact@piqrypt.com](mailto:contact@piqrypt.com)
+
+</div>
