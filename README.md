@@ -12,7 +12,7 @@
 [![Post-Quantum](https://img.shields.io/badge/Post--Quantum-Dilithium3-ff8c00?style=flat-square)](https://csrc.nist.gov/pubs/fips/204/final)
 [![e-Soleau](https://img.shields.io/badge/e--Soleau-DSO2026006483-7c3aed?style=flat-square)](https://www.inpi.fr)
 
-**142 tests · 9 framework bridges · 4-layer stack · EU AI Act compliant**
+**472 tests · 9 framework bridges · 4-layer stack · EU AI Act compliant**
 
 [Website](https://piqrypt.com) · [Quick Start](QUICK-START.md) · [PyPI](https://pypi.org/project/piqrypt/) · [Protocol](docs/RFC_AISS_v2.0.md)
 
