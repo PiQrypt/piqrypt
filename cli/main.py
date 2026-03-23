@@ -1277,9 +1277,6 @@ def cmd_start(args):
         else:
             os.environ["TRUSTGATE_TOKEN"] = secrets.token_urlsafe(24)
 
-    vigil_token = os.environ["VIGIL_TOKEN"]
-    tg_token    = os.environ.get("TRUSTGATE_TOKEN", "")
-
     # ── Construction des args pour piqrypt_start.py ───────────────────────────
     launcher = Path(__file__).resolve().parent.parent / "piqrypt_start.py"
     if not launcher.exists():
