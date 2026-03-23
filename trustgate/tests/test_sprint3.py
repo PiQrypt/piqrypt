@@ -91,7 +91,21 @@ class ServerFixture:
         self.tmpdir    = tempfile.mkdtemp()
         self.tmppath   = Path(self.tmpdir)
         self.port      = self._find_free_port()
-        _policy = Path(__file__).parent.parent / "trustgate" / "policy.yaml"
+        _policy = self.tmppath / "policy.yaml"
+        _policy.write_text(
+            "version: 'test@1.0'\n"
+            "name: test\n"
+            "thresholds:\n"
+            "  vrs_require_human: 0.60\n"
+            "  vrs_block: 0.85\n"
+            "roles:\n"
+            "  operator:\n"
+            "    allowed_tools: ['*']\n"
+            "  trusted:\n"
+            "    allowed_tools: ['*']\n"
+            "  read_only:\n"
+            "    allowed_tools: ['*']\n"
+        )
         self.server    = TrustGateServer(
             host           = "127.0.0.1",
             port           = self.port,

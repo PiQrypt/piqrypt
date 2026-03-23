@@ -129,16 +129,6 @@ class TestCreateCertificationRequest:
 
     def test_missing_audit_raises(self, tmp_path):
         pytest.skip("Pro license required — run with real dev token")
-        try:
-            import pytest
-            with pytest.raises(CertificationError, match="Audit file not found"):
-                create_certification_request(
-                    str(tmp_path / "nope.json"),
-                    str(tmp_path / "nope.cert"),
-                    "x@x.com",
-                )
-        finally:
-            deactivate_license()
 
 
 # ─── verify_piqrypt_certification ─────────────────────────────────────────────
