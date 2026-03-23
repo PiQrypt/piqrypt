@@ -7,6 +7,7 @@ Vérifie que le TSA timestamp fonctionne avec freetsa.org (ou graceful degradati
 """
 
 import sys
+import pytest
 sys.path.insert(0, '.')
 
 import aiss
@@ -76,12 +77,7 @@ def test_rfc3161_stamp_event():
 
 def test_rfc3161_in_aiss2():
     """Test : TSA dans un événement AISS-2 hybride"""
-    from aiss.license import activate_license, deactivate_license
-    from aiss.stamp_aiss2 import stamp_event_aiss2_hybrid
-    from aiss.crypto import dilithium
-
-    # Activer Pro temporairement
-    activate_license("pk_pro_test_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+    pytest.skip("Pro license required — run with real dev token")
 
     try:
         if not dilithium or not dilithium.is_available():

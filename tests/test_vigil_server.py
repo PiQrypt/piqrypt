@@ -115,8 +115,12 @@ class TestVigilServerLive(unittest.TestCase):
         """GET / retourne du HTML"""
         if not self.server_available:
             self.skipTest("Serveur non disponible")
+        import os
         url = f"http://127.0.0.1:{self.TEST_PORT}/"
-        with urllib.request.urlopen(url, timeout=3) as r:
+        token = os.environ.get("VIGIL_TOKEN", "")
+        headers = {"Authorization": f"Bearer {token}"} if token else {}
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=3) as r:
             content_type = r.headers.get("Content-Type", "")
             self.assertIn("html", content_type.lower())
 
