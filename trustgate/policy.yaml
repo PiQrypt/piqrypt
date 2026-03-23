@@ -1,14 +1,21 @@
-# PiQrypt TrustGate — Policy v1.0
-# Seuils adaptes aux VRS de la demo (~0.40-0.85)
-#
-# vrs_require_human : en dessous -> decision REQUIRE_HUMAN (queue dashboard)
-# vrs_block         : en dessous -> decision BLOCK
-
-version: "1.0"
-name: default
+# Policy loaded from Trust Gate server
+version: "nist_balanced@1.0"
+name: "nist_balanced"
+profile: "nist_balanced"
 
 thresholds:
-  vrs_require_human: 0.80
-  vrs_block: 0.25
-  tsi_unstable_action: REQUIRE_HUMAN
-  tsi_critical_action: BLOCK
+  vrs_require_human: 0.6
+  vrs_block: 0.85
+
+roles:
+  read_only:
+    allowed_tools: ["*"]
+roles:
+  operator:
+    allowed_tools: ["*"]
+roles:
+  trusted:
+    allowed_tools: ["*"]
+
+# SHA-256: 1231f5637be0bb5739a145188a82786d2101bb5fd80977e229660b2471db916c
+# Dangerous patterns: 6 rules active

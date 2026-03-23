@@ -34,6 +34,9 @@ if (Test-Path $tokenFile) {
 
 if (-not $env:VIGIL_HOST) { $env:VIGIL_HOST = "127.0.0.1" }
 
+# -- Supprimer toute licence précédente (évite l'affichage d'un tier erroné)
+Remove-Item -Force "$env:USERPROFILE\.piqrypt\license.jwt" -ErrorAction SilentlyContinue
+
 # -- Lancement ---------------------------------------------------
 Write-Host "  Demarrage stack..." -ForegroundColor Cyan
 

@@ -103,7 +103,8 @@ if (-not $env:TRUSTGATE_HOST) { $env:TRUSTGATE_HOST = "0.0.0.0" }
 # -- Lancement ---------------------------------------------------
 Write-Host "  Demarrage stack..." -ForegroundColor Cyan
 
-$stackCmd = "`$env:PIQRYPT_LICENSE_KEY='$($env:PIQRYPT_LICENSE_KEY)'; `$env:VIGIL_TOKEN='$($env:VIGIL_TOKEN)'; `$env:TRUSTGATE_TOKEN='$($env:TRUSTGATE_TOKEN)'; `$env:VIGIL_HOST='$($env:VIGIL_HOST)'; `$env:TRUSTGATE_HOST='$($env:TRUSTGATE_HOST)'; Set-Location '$ROOT'; `$env:TRUSTGATE_MODE='$TG_MODE'; python piqrypt_start.py --all"
+$manualFlag = if ($TG_MODE -eq "manual") { "--manual" } else { "" }
+$stackCmd = "`$env:PIQRYPT_LICENSE_KEY='$($env:PIQRYPT_LICENSE_KEY)'; `$env:VIGIL_TOKEN='$($env:VIGIL_TOKEN)'; `$env:TRUSTGATE_TOKEN='$($env:TRUSTGATE_TOKEN)'; `$env:VIGIL_HOST='$($env:VIGIL_HOST)'; `$env:TRUSTGATE_HOST='$($env:TRUSTGATE_HOST)'; Set-Location '$ROOT'; python piqrypt_start.py --all $manualFlag"
 Start-Process powershell -ArgumentList @("-NoExit", "-Command", $stackCmd)
 
 # -- Attente ports -----------------------------------------------

@@ -237,6 +237,18 @@ class TrustGateServer:
                 log.warning(f"Policy file not found: {self.policy_path}")
                 if self.demo_mode:
                     self.policy = self._make_demo_policy()
+                    return False
+                # ── Fallback 1 : policy.yaml dans le même répertoire que le serveur ──
+                # Couvre le cas où le fichier est dans le repo mais pas dans ~/.piqrypt
+                local_policy = Path(__file__).parent / "policy.yaml"
+                for candidate in [local_policy, Path(__file__).parent / "profiles" / "nist_balanced.yaml"]:
+                    if candidate.exists():
+                        try:
+                            self.policy = load_policy(candidate)
+                            log.info("[TrustGate] Loaded policy from: %s", candidate.name)
+                            return True
+                        except Exception as _e:
+                            log.warning("[TrustGate] Could not load %s: %s", candidate.name, _e)
                 return False
         except Exception as e:
             log.error(f"Policy load failed: {e}")
@@ -311,7 +323,9 @@ class TrustGateServer:
                 self.send_response(204)
                 self.send_header("Access-Control-Allow-Origin", "*")
                 self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-                self.send_header("Access-Control-Allow-Headers", "Content-Type")
+                self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+                self.send_header("Access-Control-Max-Age", "86400")
+                self.send_header("Content-Length", "0")
                 self.end_headers()
 
             def log_message(self, fmt, *args):
@@ -325,6 +339,10 @@ class TrustGateServer:
         params = parse_qs(parsed.query)
 
         # ── Auth ────────────────────────────────────────────────────────────
+        # OPTIONS est un preflight CORS — pas de données exposées, pas d'auth requise
+        if method == "OPTIONS":
+            self._send(req, 204, {})
+            return
         if not _AUTH.check(req):
             return
 
@@ -425,6 +443,9 @@ class TrustGateServer:
             return {"ok": True, "cleared": True}, 200
 
         # ── Console HTML ────────────────────────────────────────────────────────
+        if path == "/api/profiles" and method == "GET":
+            return self._handle_list_profiles()
+
         if path == "/api/agents" and method == "GET":
             return self._handle_list_agents()
 
@@ -435,6 +456,28 @@ class TrustGateServer:
         return {"error": f"Not found: {method} {path}"}, 404
 
     # ── Handlers ─────────────────────────────────────────────────────────────
+
+    def _handle_list_profiles(self):
+        """GET /api/profiles — liste les profils de conformité disponibles."""
+        profiles_dir = Path(__file__).parent / "profiles"
+        profiles = []
+        descriptions = {
+            "anssi_strict":    "ANSSI 2024 — Secteur public français, OIV, infra critique",
+            "nist_balanced":   "NIST AI RMF 1.0 — Entreprise US, risque modéré",
+            "ai_act_high_risk":"EU AI Act — Finance, santé, RH, justice",
+        }
+        for yaml_file in sorted(profiles_dir.glob("*.yaml")):
+            name = yaml_file.stem
+            try:
+                content = yaml_file.read_text(encoding="utf-8")
+                profiles.append({
+                    "name":        name,
+                    "description": descriptions.get(name, name),
+                    "content":     content,
+                })
+            except Exception as e:
+                log.warning("[TrustGate] Could not read profile %s: %s", name, e)
+        return {"profiles": profiles, "count": len(profiles)}, 200
 
     def _handle_list_agents(self):
         """GET /api/agents — registre de tous les agents connus de Vigil."""
@@ -482,7 +525,7 @@ class TrustGateServer:
             if default_path.exists():
                 try:
                     from trustgate.policy_loader import load_policy
-                    self.policy = load_policy(str(default_path))
+                    self.policy = load_policy(default_path)
                     log.info("[TrustGate] Loaded default policy: nist_balanced")
                 except Exception as e:
                     log.warning(
@@ -517,12 +560,10 @@ class TrustGateServer:
             parsed = _yaml.safe_load(yaml_content)
             if not isinstance(parsed, dict):
                 return {"error": "invalid policy YAML"}, 400
-            policy_file = os.getenv(
-                "TRUSTGATE_POLICY_FILE",
-                str(Path(__file__).parent / "policy.yaml"),
-            )
-            Path(policy_file).parent.mkdir(parents=True, exist_ok=True)
-            with open(policy_file, "w") as f:
+            _env = os.getenv("TRUSTGATE_POLICY_FILE")
+            policy_file = Path(_env) if _env else Path(__file__).parent / "policy.yaml"
+            policy_file.parent.mkdir(parents=True, exist_ok=True)
+            with open(policy_file, "w", encoding="utf-8") as f:
                 f.write(yaml_content)
             from trustgate.policy_loader import load_policy
             self.policy = load_policy(policy_file)
@@ -533,14 +574,34 @@ class TrustGateServer:
             return {"error": str(e)}, 500
 
     def _handle_simulate(self, body: dict):
-        if not self.policy:
-            return {"error": "No policy loaded"}, 503
+        """
+        POST /api/policy/simulate
+        Accepte un champ optionnel "yaml" pour simuler un profil
+        non encore activé — ANSSI R22 / Policy Editor preview.
+        """
         try:
+            # Si un yaml est fourni, on crée une policy temporaire
+            yaml_content = body.get("yaml", "")
+            if yaml_content:
+                import tempfile, os
+                from trustgate.policy_loader import load_policy
+                tmp = Path(tempfile.mktemp(suffix=".yaml"))
+                try:
+                    tmp.write_text(yaml_content, encoding="utf-8")
+                    policy = load_policy(tmp)
+                finally:
+                    if tmp.exists(): tmp.unlink()
+            else:
+                if not self.policy:
+                    return {"error": "No policy loaded"}, 503
+                policy = self.policy
             ctx    = self._parse_context(body)
-            result = engine_simulate(ctx, self.policy)
+            result = engine_simulate(ctx, policy)
             return result, 200
         except (KeyError, ValueError) as e:
             return {"error": f"Invalid context: {e}"}, 400
+        except Exception as e:
+            return {"error": str(e)}, 500
 
     def _handle_evaluate(self, body: dict):
         """
@@ -936,7 +997,7 @@ class TrustGateServer:
             req.send_header("X-TrustGate-Version", "1.0.0")
             req.send_header("Access-Control-Allow-Origin", "*")
             req.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-            req.send_header("Access-Control-Allow-Headers", "Content-Type")
+            req.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
             req.end_headers()
             req.wfile.write(body)
         except (ConnectionAbortedError, BrokenPipeError, ConnectionResetError):

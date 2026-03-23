@@ -845,6 +845,14 @@ Examples:
 
     # ── badge ──
     badge_p = sub.add_parser('badge', help='Generate visual badge')
+
+    # ── start ──
+    start_p = sub.add_parser('start', help='Start PiQrypt stack (interactive)')
+    start_p.add_argument('--tier', '-t', help='Tier to use (free/pro/startup/team/business/enterprise)')
+    start_p.add_argument('--manual', action='store_true', help='TrustGate in manual mode (human approval queue)')
+    start_p.add_argument('--key', '-k', help='License key (skips interactive prompt)')
+    start_p.add_argument('--dev', action='store_true', help='Dev mode — use local dev keypair (no production license)')
+
     badge_s = badge_p.add_subparsers(dest='badge_command')
 
     badge_gen = badge_s.add_parser('generate', help='Generate badge')
@@ -1096,6 +1104,10 @@ Examples:
         elif args.command == 'status':
             cmd_status(args)
 
+        # Start — interactive launcher
+        elif args.command == 'start':
+            return cmd_start(args)
+
         return 0
 
     except Exception as e:
@@ -1107,6 +1119,201 @@ Examples:
 
 if __name__ == '__main__':
     sys.exit(main())
+
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# piqrypt start — Interactive launcher
+# ─────────────────────────────────────────────────────────────────────────────
+
+def cmd_start(args):
+    """
+    piqrypt start — Lance le stack PiQrypt de manière interactive.
+
+    Flux :
+      1. Choix du tier (menu ou --tier)
+      2. Si tier != free : saisie / validation de la clé de licence
+      3. Génération des tokens si absents
+      4. Lancement du stack via piqrypt_start.py
+      5. Ouverture automatique des dashboards
+    """
+    import os
+    import sys
+    import subprocess
+    import secrets
+    import hashlib
+    from pathlib import Path
+
+    # ── Couleurs ──────────────────────────────────────────────────────────────
+    def _c(t, code): return f"\033[{code}m{t}\033[0m" if sys.stdout.isatty() else t
+    def green(t):  return _c(t, "32")
+    def cyan(t):   return _c(t, "36")
+    def yellow(t): return _c(t, "33")
+    def red(t):    return _c(t, "31")
+    def bold(t):   return _c(t, "1")
+    def dim(t):    return _c(t, "2")
+
+    TIERS = {
+        "1": ("free",       "Free       — Vigil seul, 3 agents, 10k events/mois"),
+        "2": ("pro",        "Pro        — Vigil + TrustGate manuel, 50 agents"),
+        "3": ("startup",    "Startup    — Pro + workspace équipe, 50 agents"),
+        "4": ("team",       "Team       — Pro + registry org, 150 agents"),
+        "5": ("business",   "Business   — Vigil + TrustGate complet, 500 agents"),
+        "6": ("enterprise", "Enterprise — Tout illimité + SSO + HSM"),
+    }
+    FREE_TIERS  = {"free"}
+    MANUAL_TIERS = {"pro", "startup", "team"}   # TrustGate manuel uniquement
+
+    print()
+    print(bold("  ╔══════════════════════════════════════╗"))
+    print(bold("  ║       PiQrypt — Start Launcher       ║"))
+    print(bold("  ╚══════════════════════════════════════╝"))
+    print()
+
+    # ── Choix du tier ─────────────────────────────────────────────────────────
+    tier = getattr(args, 'tier', None)
+    if tier and tier.lower() in {v[0] for v in TIERS.values()}:
+        tier = tier.lower()
+        print(f"  Tier : {bold(tier.upper())}")
+    else:
+        print("  Choisissez votre tier :")
+        print()
+        for k, (t, label) in TIERS.items():
+            lic = dim("  (licence requise)") if t not in FREE_TIERS else green("  (gratuit)")
+            print(f"    {bold(k)}.  {label}{lic}")
+        print()
+        while True:
+            choice = input("  Votre choix [1-6] : ").strip()
+            if choice in TIERS:
+                tier, _ = TIERS[choice]
+                break
+            print(red("  Choix invalide — entrez un chiffre entre 1 et 6"))
+
+    print()
+    manual = getattr(args, 'manual', False)
+
+    # ── Mode dev ─────────────────────────────────────────────────────────────
+    dev_mode = getattr(args, 'dev', False)
+    if dev_mode and tier not in FREE_TIERS:
+        launcher_dir = Path(__file__).resolve().parent.parent
+        gen_script   = launcher_dir / 'generate_dev_licenses.py'
+        keyfile      = launcher_dir / 'dev_keypair.json'
+        if not keyfile.exists():
+            print(red(f'  dev_keypair.json introuvable dans {launcher_dir}'))
+            print(dim('  Générez-le une fois : python generate_dev_licenses.py --new-keypair'))
+            return 1
+        print(f'  {yellow("Mode DEV")} — activation locale ({tier.upper()})...')
+        result = subprocess.run(
+            [sys.executable, str(gen_script), '--activate', tier, '--keyfile', str(keyfile)],
+            capture_output=True, text=True
+        )
+        if result.returncode != 0:
+            print(red(f'  Erreur activation dev : {result.stderr or result.stdout}'))
+            return 1
+        print(green(f'  ✓ Licence dev {tier.upper()} activée'))
+        os.environ.setdefault('VIGIL_TOKEN',     'dev_token_local')
+        os.environ.setdefault('TRUSTGATE_TOKEN', 'dev_token_local')
+        os.environ['PIQRYPT_SCRYPT_N'] = '16384'
+        print()
+
+    # ── Licence (tiers payants) ───────────────────────────────────────────────
+    elif tier not in FREE_TIERS:
+        # Mode manuel forcé pour pro/startup/team
+        if tier in MANUAL_TIERS:
+            manual = True
+            print(f"  Mode TrustGate : {yellow('MANUEL')} (validation humaine — Decision Queue)")
+        else:
+            mode_lbl = yellow("MANUEL") if manual else green("AUTOMATIQUE")
+            print(f"  Mode TrustGate : {mode_lbl}")
+        print()
+
+        key = getattr(args, 'key', None) or os.getenv("PIQRYPT_LICENSE_KEY", "").strip()
+        if not key:
+            print(f"  {yellow('Clé de licence requise')} (reçue par email après achat sur piqrypt.com)")
+            print()
+            key = input("  Entrez votre clé de licence : ").strip()
+            if not key:
+                print(red("  Clé manquante — arrêt."))
+                return 1
+
+        print()
+        print("  Activation de la licence...")
+        try:
+            from aiss.license import activate, get_tier, get_license_info
+            activate(key)
+            activated_tier = get_tier()
+            info = get_license_info()
+            agents = info.get("agent_limit") or "illimité"
+            events = info.get("events_month_limit") or "illimité"
+            print(green(f"  ✓ Licence OK — Tier : {activated_tier.upper()}  |  Agents : {agents}  |  Events/mois : {events}"))
+            os.environ["PIQRYPT_LICENSE_KEY"] = key
+        except Exception as e:
+            print(red(f"  ✗ Activation échouée : {e}"))
+            print(dim("  Vérifiez votre clé sur https://piqrypt.com/account"))
+            return 1
+    elif tier in FREE_TIERS:
+        # Free — désactiver toute licence active
+        try:
+            from aiss.license import deactivate_license
+            deactivate_license()
+        except Exception:
+            pass
+        print(green("  ✓ Tier Free — aucune licence requise"))
+
+    print()
+
+    # ── Tokens ────────────────────────────────────────────────────────────────
+    if not os.environ.get("VIGIL_TOKEN"):
+        key_b = os.environ.get("PIQRYPT_LICENSE_KEY", "")
+        if key_b:
+            os.environ["VIGIL_TOKEN"] = hashlib.sha256(key_b.encode()).hexdigest()[:32]
+        else:
+            os.environ["VIGIL_TOKEN"] = secrets.token_urlsafe(24)
+
+    if not os.environ.get("TRUSTGATE_TOKEN") and tier not in FREE_TIERS:
+        key_b = os.environ.get("PIQRYPT_LICENSE_KEY", "")
+        if key_b:
+            os.environ["TRUSTGATE_TOKEN"] = hashlib.sha256((key_b + "_tg").encode()).hexdigest()[:32]
+        else:
+            os.environ["TRUSTGATE_TOKEN"] = secrets.token_urlsafe(24)
+
+    vigil_token = os.environ["VIGIL_TOKEN"]
+    tg_token    = os.environ.get("TRUSTGATE_TOKEN", "")
+
+    # ── Construction des args pour piqrypt_start.py ───────────────────────────
+    launcher = Path(__file__).resolve().parent.parent / "piqrypt_start.py"
+    if not launcher.exists():
+        print(red(f"  piqrypt_start.py introuvable : {launcher}"))
+        return 1
+
+    py_args = [sys.executable, str(launcher)]
+    if tier in FREE_TIERS:
+        py_args += ["--vigil"]
+    elif tier in ("business", "enterprise"):
+        py_args += ["--all"]
+        if manual:
+            py_args += ["--manual"]
+    else:
+        py_args += ["--vigil", "--trustgate"]
+        if manual:
+            py_args += ["--manual"]
+
+    # ── Lancement ─────────────────────────────────────────────────────────────
+    print(bold("  Démarrage du stack PiQrypt..."))
+    print()
+
+    env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
+    try:
+        proc = subprocess.Popen(py_args, env=env)
+        proc.wait()
+        return proc.returncode
+    except KeyboardInterrupt:
+        print()
+        print(dim("  Stack arrêté."))
+        return 0
+    except Exception as e:
+        print(red(f"  Erreur lancement : {e}"))
+        return 1
 
 # ─────────────────────────────────────────────────────────────────────────────
 # NOUVELLES COMMANDES v1.2.0

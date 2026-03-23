@@ -422,21 +422,29 @@ class PiQryptLauncher:
                 log.error("vigil_server.py introuvable -- Vigil non demarre")
 
         # ── TrustGate ──
+        # --trustgate ou --all → lancer TrustGate si le tier le permet
+        # Note: --vigil (vigil_only) ne bloque plus --trustgate explicite
         launch_tg = (
-            (self.args.trustgate or self.args.all or not self.args.vigil_only)
+            (self.args.trustgate or self.args.all)
             and tier_allows_trustgate(self.tier)
-            and not self.args.vigil_only
         )
         if launch_tg:
             tg_script = self._resolve_script(
                 _LAUNCHER_DIR / "trustgate" / "trustgate_server.py",
             )
             if tg_script:
+                tg_extra = []
+                # --manual ou TRUSTGATE_MODE=manual → --demo active le principal admin
+                _tg_mode = os.getenv("TRUSTGATE_MODE", "").lower()
+                if getattr(self.args, "manual", False) or _tg_mode == "manual":
+                    tg_extra.append("--demo")
+                    log.info("TrustGate : mode MANUEL — principal admin créé automatiquement")
                 services.append(ServiceProcess(
                     name="TrustGate",
                     script=tg_script,
                     host=DEFAULT_TRUSTGATE_HOST,
                     port=DEFAULT_TRUSTGATE_PORT,
+                    extra_args=tg_extra,
                 ))
             else:
                 log.warning("trustgate_server.py introuvable -- TrustGate non demarre")
@@ -655,6 +663,10 @@ def main():
     parser.add_argument(
         "--debug", action="store_true",
         help="Logging verbose"
+    )
+    parser.add_argument(
+        "--manual", action="store_true",
+        help="TrustGate en mode manuel — crée un principal admin pour la Decision Queue"
     )
 
     args = parser.parse_args()
