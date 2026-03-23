@@ -73,6 +73,7 @@ dmypy.json
 **/*-agent.json
 **/test-agent.json
 **/identity.json
+!test_vectors/identity.json
 
 # Archives certifiées
 *.pqz

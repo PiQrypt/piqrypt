@@ -105,6 +105,13 @@ class ServerFixture:
             "    allowed_tools: ['*']\n"
             "  read_only:\n"
             "    allowed_tools: ['*']\n"
+            "dangerous_patterns:\n"
+            "  - 'rm\\s+-rf'\n"
+            "  - 'DROP\\s+TABLE'\n"
+            "  - 'curl.*\\|.*bash'\n"
+            "  - '__import__'\n"
+            "  - 'eval\\s*\\('\n"
+            "  - 'exec\\s*\\('\n"
         )
         self.server    = TrustGateServer(
             host           = "127.0.0.1",

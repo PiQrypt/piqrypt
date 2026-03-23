@@ -1,0 +1,20 @@
+{
+  "description": "Agent ID derivation test vectors (RFC Section 5.1)",
+  "tests": [
+    {
+      "name": "vector_1",
+      "public_key_hex": "e96537fff87229d018dcc4b953f9b871ddd0755af435203f8471b545a3fff20f",
+      "expected_agent_id": "8sHS9JcWtWGoiUStjr6P1RbUBjNw3WT2"
+    },
+    {
+      "name": "vector_2",
+      "public_key_hex": "9621397ae6c868e30bd5e19244a73e424e1f1307522a048d2391bca1f9c6b19e",
+      "expected_agent_id": "5Do4M5KTHmThpvYPaCk5diznfGytP9mj"
+    },
+    {
+      "name": "vector_3",
+      "public_key_hex": "534f9eff17bf8df64785b534dfe8a9388b8e98533b21754c7328d9fb059526ff",
+      "expected_agent_id": "FGmfh6CXUUwySgYnX7kkw19Ye3GNJK8Y"
+    }
+  ]
+}
