@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.7.1] - 2026-03-12
+## [1.7.1] - 2026-03-23
 
 ### ✅ TrustGate — Governance Engine (New Major Component)
 
