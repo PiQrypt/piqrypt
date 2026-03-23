@@ -1,7 +1,7 @@
 # PiQrypt v1.7.1 — AISS RFC v2.0 Implementation Status
 
 **Version:** 1.7.1  
-**Date:** 2026-03-12  
+**Date:** 2026-03-23
 **AISS RFC:** v2.0  
 **Status:** Production Ready (Level 2)
 
@@ -121,10 +121,13 @@ PiQrypt is the reference implementation of the AISS (Agent Identity and Signatur
 | **Anomaly Monitor + VRS** | ✅ Complete | `aiss/anomaly_monitor.py` | **v1.5.0** |
 | Composite VRS score | ✅ | `aiss/anomaly_monitor.py` | v1.5.0 |
 | Alert journal with deduplication | ✅ | `aiss/anomaly_monitor.py` | v1.5.0 |
-| **Vigil Server** | ✅ Complete | `vigil/vigil_server.py` | **v1.5.0** |
+| **Vigil Server** | ✅ Stable | `vigil/vigil_server.py` | **v1.7.1** |
 | HTTP dashboard (port 18421) | ✅ | `vigil/vigil_server.py` | v1.5.0 |
 | REST API `/api/summary`, `/api/alerts` | ✅ | `vigil/vigil_server.py` | v1.5.0 |
 | Live backend with TSI hook | ✅ | `vigil/vigil_server.py` | v1.5.0 |
+| Agent CRUD + memory export + certify | ✅ | `vigil/vigil_server.py` | v1.7.1 |
+| Two-step agent delete with pqz backup | ✅ | `vigil/vigil_server.py` | v1.7.1 |
+| **Trust-server** | ✅ Production | Render deployed · TSA RFC 3161 · Dilithium3 · verify endpoint | **v1.7.1** |
 | **Identity Session** | ✅ Complete | `aiss/identity_session.py` | v1.5.0 |
 | Lock/unlock with RAM erasure | ✅ | `aiss/identity_session.py` | v1.5.0 |
 | `SessionLockedError` protection | ✅ | `aiss/identity_session.py` | v1.5.0 |
@@ -201,7 +204,7 @@ PiQrypt is the reference implementation of the AISS (Agent Identity and Signatur
 
 ## Testing
 
-**Test Results (v1.7.0):**
+**Test Results (v1.7.1):**
 
 | Suite | Tests | Status |
 |-------|-------|--------|
@@ -224,7 +227,7 @@ PiQrypt is the reference implementation of the AISS (Agent Identity and Signatur
 | Security — migration | 4 | ✅ |
 | Security — memory | 4 | ✅ |
 | Ollama bridge | 6 | ⏭ skipped (external dep) |
-| **Total** | **143** | **136 passed / 7 skipped / 0 failed** |
+| **Total** | **472** | **472 passed · 14 skipped · 0 failed — CI vert Python 3.9-3.12** |
 
 **Security coverage:**
 - Cryptographic resistance: timing, corruption, forgery, RAM erasure
