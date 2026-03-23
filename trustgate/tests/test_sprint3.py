@@ -28,6 +28,7 @@ Coverage:
 """
 
 import json
+import os
 import sys
 import tempfile
 import threading
@@ -46,12 +47,21 @@ from trustgate_server import TrustGateServer
 class APIClient:
     def __init__(self, base_url: str):
         self.base_url = base_url.rstrip("/")
+        self._token = os.environ.get("TRUSTGATE_TOKEN", "")
+
+    def _make_headers(self, extra: dict = None) -> dict:
+        h = {"Content-Type": "application/json"}
+        if self._token:
+            h["Authorization"] = f"Bearer {self._token}"
+        if extra:
+            h.update(extra)
+        return h
 
     def get(self, path: str, params: str = "") -> tuple:
         url = f"{self.base_url}{path}"
         if params:
             url += f"?{params}"
-        req = urllib.request.Request(url)
+        req = urllib.request.Request(url, headers=self._make_headers())
         return self._send(req)
 
     def post(self, path: str, body: dict = None) -> tuple:
@@ -60,7 +70,7 @@ class APIClient:
             f"{self.base_url}{path}",
             data    = data,
             method  = "POST",
-            headers = {"Content-Type": "application/json"},
+            headers = self._make_headers(),
         )
         return self._send(req)
 
