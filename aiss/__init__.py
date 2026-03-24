@@ -63,7 +63,7 @@ from aiss.license import (
 )
 
 # Logging with PRO_HINT level
-from aiss.logger import get_logger
+from aiss.logger import get_logger, log_identity_created
 
 # Telemetry
 from aiss.telemetry import (
