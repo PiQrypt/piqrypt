@@ -240,7 +240,21 @@ def cmd_identity_rotate(args):
 def cmd_stamp(args):
     print("Loading identity...")
     identity_data = load_json(args.identity_file)
-    private_key = aiss.crypto.ed25519.decode_base64(identity_data['private_key'])
+    if 'private_key' in identity_data:
+        private_key = aiss.crypto.ed25519.decode_base64(identity_data['private_key'])
+    elif 'key_path' in identity_data:
+        from aiss.key_store import load_plaintext_key, load_encrypted_key, is_encrypted
+        from pathlib import Path
+        key_path = Path(identity_data['key_path'])
+        if is_encrypted(key_path):
+            import getpass
+            passphrase = getpass.getpass("Passphrase pour dechiffrer la cle : ")
+            private_key = load_encrypted_key(key_path, passphrase)
+        else:
+            private_key = load_plaintext_key(key_path)
+    else:
+        print("Error: impossible de trouver la cle privee.", file=sys.stderr)
+        sys.exit(1)
     agent_id = identity_data['identity']['agent_id']
 
     # Load payload: JSON string or file
@@ -357,9 +371,22 @@ def cmd_export(args):
             sys.exit(1)
 
         identity_data = load_json(args.identity)
-        private_key = aiss.crypto.ed25519.decode_base64(identity_data['private_key'])
+        if 'private_key' in identity_data:
+            private_key = aiss.crypto.ed25519.decode_base64(identity_data['private_key'])
+        elif 'key_path' in identity_data:
+            from aiss.key_store import load_plaintext_key, load_encrypted_key, is_encrypted
+            from pathlib import Path
+            key_path = Path(identity_data['key_path'])
+            if is_encrypted(key_path):
+                import getpass
+                passphrase = getpass.getpass("Passphrase pour dechiffrer la cle : ")
+                private_key = load_encrypted_key(key_path, passphrase)
+            else:
+                private_key = load_plaintext_key(key_path)
+        else:
+            print("Error: impossible de trouver la cle privee.", file=sys.stderr)
+            sys.exit(1)
         agent_id = identity_data['identity']['agent_id']
-
         from aiss.exports import certify_export
         cert_path = certify_export(args.audit_file, private_key, agent_id)
         print(f"\n✓ Certified export created: {cert_path}")
@@ -1278,6 +1305,8 @@ def cmd_start(args):
             os.environ["TRUSTGATE_TOKEN"] = secrets.token_urlsafe(24)
 
     # ── Construction des args pour piqrypt_start.py ───────────────────────────
+    launcher = Path(__file__).resolve().parent / "piqrypt_start.py"
+if not launcher.exists():
     launcher = Path(__file__).resolve().parent.parent / "piqrypt_start.py"
     if not launcher.exists():
         print(red(f"  piqrypt_start.py introuvable : {launcher}"))
