@@ -190,14 +190,13 @@ class StartupCheck:
                 f"Python 3.9+ requis — version actuelle : {sys.version.split()[0]}"
             )
 
-    def _check_auth_middleware(self):
         auth_path = _PACKAGE_ROOT / "auth_middleware.py"
-if not auth_path.exists():
-    auth_path = _LAUNCHER_DIR / "auth_middleware.py"
+        if not auth_path.exists():
+            auth_path = _LAUNCHER_DIR / "auth_middleware.py"
         if not auth_path.exists():
             self.errors.append(
-                f"auth_middleware.py introuvable dans {_PACKAGE_ROOT}. "
-                "Placez auth_middleware.py à la racine du repo piqrypt/."
+                f"auth_middleware.py introuvable dans {_PACKAGE_ROOT} ni dans {_LAUNCHER_DIR}. "
+                "Reinstallez piqrypt : pip install piqrypt --upgrade"
             )
 
     def _check_aiss_importable(self):
@@ -693,6 +692,7 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+
 
 
 
