@@ -34,13 +34,18 @@ Quick Start — Archive (Pro):
     >>> create_archive(events, identity, "backup.pqz", passphrase="strong-pass")
 """
 
-__version__ = "1.7.1"
+__version__ = "1.7.2"
 
 # Core AISS-1
 from aiss.identity import (
     generate_keypair, derive_agent_id, export_identity,
     create_rotation_attestation,
     create_rotation_pcp_event,
+    # v1.7.0
+    create_agent_identity,
+    load_agent_identity,
+    list_agent_identities,
+    secure_agent_key,
 )
 from aiss.stamp import stamp_event, stamp_genesis_event
 from aiss.verify import verify_signature, verify_chain, verify_event
