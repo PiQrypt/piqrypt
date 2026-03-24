@@ -164,7 +164,7 @@ def log_event_signed(agent_id: str, event_hash: str):
     log.piqrypt(f"Event signed (hash: {event_hash[:5]}...)")
 
 
-def log_chain_verified(agent_id: str, event_count: int):
+def log_chain_verified(agent_id: str, event_count: int, chain_hash: str = ""):
     """[PiQrypt] Chain integrity verified"""
     log = get_logger("piqrypt.verify")
     log.piqrypt("Chain integrity verified")
@@ -275,7 +275,7 @@ def log_key_rotation(old_id: str, new_id: str):
     log.piqrypt("Rotation event recorded in PCP chain")
 
 
-def log_license_activated(tier: str):
+def log_license_activated(tier: str, license_id: str = ""):
     """License activated."""
     get_logger("piqrypt.license").piqrypt(f"License activated: {tier.upper()}")
 

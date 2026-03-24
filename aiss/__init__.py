@@ -7,7 +7,7 @@
 
 """
 AISS (Agent Identity and Signature Standard)
-PiQrypt v1.7.6
+PiQrypt v1.7.7
 
 RFC Compliance:
 - RFC 8785  (JSON Canonicalization Scheme) — MANDATORY
@@ -63,7 +63,7 @@ from aiss.license import (
 )
 
 # Logging with PRO_HINT level
-from aiss.logger import get_logger, log_identity_created
+from aiss.logger import get_logger, log_identity_created, log_chain_verified, log_license_activated
 
 # Telemetry
 from aiss.telemetry import (
