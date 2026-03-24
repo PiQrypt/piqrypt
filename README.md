@@ -12,7 +12,7 @@
 [![Post-Quantum](https://img.shields.io/badge/Post--Quantum-Dilithium3-ff8c00?style=flat-square)](https://csrc.nist.gov/pubs/fips/204/final)
 [![e-Soleau](https://img.shields.io/badge/e--Soleau-DSO2026006483-7c3aed?style=flat-square)](https://www.inpi.fr)
 
-**472 tests · 9 framework bridges · 4-layer stack · EU AI Act compliant**
+**472 tests · 9 framework bridges · 4-layer stack · EU AI Act ready**
 
 [Website](https://piqrypt.com) · [Quick Start](QUICK-START.md) · [PyPI](https://pypi.org/project/piqrypt/) · [Protocol](docs/RFC_AISS_v2.0.md)
 
@@ -291,7 +291,7 @@ PiQrypt does **not** protect against compromised private keys, malicious logic b
 | Commercial (hosted/managed service) | [contact@piqrypt.com](mailto:contact@piqrypt.com) |
 
 **IP:** e-Soleau [DSO2026006483](https://www.inpi.fr) (19/02/2026) · [DSO2026009143](https://www.inpi.fr) (12/03/2026)
-**Contact:** [contact@piqrypt.com](mailto:contact@piqrypt.com) · [security@piqrypt.com](mailto:security@piqrypt.com)
+**Contact:** [contact@piqrypt.com](mailto:contact@piqrypt.com) · 
 
 ---
 
