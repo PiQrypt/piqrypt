@@ -242,13 +242,34 @@ def cmd_stamp(args):
     identity_data = load_json(args.identity_file)
     if 'private_key' in identity_data:
         private_key = aiss.crypto.ed25519.decode_base64(identity_data['private_key'])
-    elif 'key_path' in identity_data:
+    elif 'key_path' in identity_data or 'agent_id' in identity_data:
         from aiss.key_store import load_plaintext_key, load_encrypted_key, is_encrypted
         from pathlib import Path
-        key_path = Path(identity_data['key_path'])
+        import os
+        if 'key_path' in identity_data:
+            key_path = Path(identity_data['key_path'])
+        else:
+            # Cherche dans ~/.piqrypt/agents/<agent_id>/
+            agent_id_val = identity_data.get('agent_id') or identity_data.get('identity', {}).get('agent_id')
+            piqrypt_dir = Path(os.path.expanduser("~")) / ".piqrypt" / "agents"
+            # Cherche le dossier dont registry.json contient cet agent_id
+            key_path = None
+            for agent_dir in piqrypt_dir.iterdir():
+                enc = agent_dir / "private.key.enc"
+                plain = agent_dir / "private.key.json"
+                ident = agent_dir / "identity.json"
+                if ident.exists():
+                    import json as _json
+                    data = _json.loads(ident.read_text())
+                    if data.get('agent_id') == agent_id_val:
+                        key_path = enc if enc.exists() else plain
+                        break
+            if key_path is None:
+                print(f"Error: aucune cle trouvee pour agent_id {agent_id_val}", file=sys.stderr)
+                sys.exit(1)
         if is_encrypted(key_path):
             import getpass
-            passphrase = getpass.getpass("Passphrase pour dechiffrer la cle : ")
+            passphrase = getpass.getpass("Passphrase : ")
             private_key = load_encrypted_key(key_path, passphrase)
         else:
             private_key = load_plaintext_key(key_path)
