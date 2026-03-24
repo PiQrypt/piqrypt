@@ -184,6 +184,16 @@ class StartupCheck:
             self._check_trustgate_files()
         return len(self.errors) == 0
 
+    def _check_auth_middleware(self):
+        auth_path = _PACKAGE_ROOT / "auth_middleware.py"
+        if not auth_path.exists():
+            auth_path = _LAUNCHER_DIR / "auth_middleware.py"
+        if not auth_path.exists():
+            self.errors.append(
+                f"auth_middleware.py introuvable dans {_PACKAGE_ROOT} ni dans {_LAUNCHER_DIR}. "
+                "Reinstallez piqrypt : pip install piqrypt --upgrade"
+            )
+
     def _check_python_version(self):
         if sys.version_info < (3, 9):
             self.errors.append(
