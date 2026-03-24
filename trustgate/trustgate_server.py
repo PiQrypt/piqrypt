@@ -82,10 +82,14 @@ for _p in [str(_ROOT), str(_TG_DIR)]:
 try:
     from auth_middleware import AuthMiddleware
 except ImportError:
-    raise ImportError(
-        "auth_middleware.py introuvable. "
-        "Placez-le dans piqrypt/ (racine du repo)."
-    )
+    try:
+        _sys.path.insert(0, str(_ROOT / "cli"))
+        from auth_middleware import AuthMiddleware
+    except ImportError:
+        raise ImportError(
+            "auth_middleware.py introuvable. "
+            "Placez-le dans piqrypt/ ou piqrypt/cli/."
+        )
 
 # ── Trust Gate imports ────────────────────────────────────────────────────────
 sys.path.insert(0, str(Path(__file__).parent.parent))

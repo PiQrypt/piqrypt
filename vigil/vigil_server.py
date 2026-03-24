@@ -63,9 +63,14 @@ for _p in [str(_PROJECT_DIR), str(_VIGIL_DIR)]:
 try:
     from auth_middleware import AuthMiddleware, generate_token_hint  # noqa: F401
 except ImportError:
-    # Fallback si auth_middleware pas encore dans le path
+    # Fallback 1 : racine projet
     sys.path.insert(0, str(_PROJECT_DIR))
-    from auth_middleware import AuthMiddleware
+    try:
+        from auth_middleware import AuthMiddleware
+    except ImportError:
+        # Fallback 2 : pip install — auth_middleware est dans cli/
+        sys.path.insert(0, str(_PROJECT_DIR / "cli"))
+        from auth_middleware import AuthMiddleware
 
 # ── PiQrypt imports ────────────────────────────────────────────────────────────
 try:
