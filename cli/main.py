@@ -1306,8 +1306,8 @@ def cmd_start(args):
 
     # ── Construction des args pour piqrypt_start.py ───────────────────────────
     launcher = Path(__file__).resolve().parent / "piqrypt_start.py"
-if not launcher.exists():
-    launcher = Path(__file__).resolve().parent.parent / "piqrypt_start.py"
+    if not launcher.exists():
+        launcher = Path(__file__).resolve().parent.parent / "piqrypt_start.py"
     if not launcher.exists():
         print(red(f"  piqrypt_start.py introuvable : {launcher}"))
         return 1
