@@ -3,7 +3,7 @@
 # e-Soleau: DSO2026006483 (19/02/2026) -- DSO2026009143 (12/03/2026)
 #!/usr/bin/env python3
 """
-run_all.py — Lance tous les tests PiQrypt v1.8.1
+run_all.py — Lance tous les tests PiQrypt v1.8.2
 ================================================
 
 Usage :
@@ -74,14 +74,14 @@ def run_module(module_name: str, verbosity: int = 1) -> unittest.TestResult:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="PiQrypt v1.8.1 — Test runner")
+    parser = argparse.ArgumentParser(description="PiQrypt v1.8.2 — Test runner")
     parser.add_argument("-v", "--verbose", action="store_true")
     parser.add_argument("--module", help="Lancer un seul module (ex: tsi_engine)")
     args = parser.parse_args()
 
     _ = 2 if args.verbose else 1
 
-    print(f"\n{BOLD}{CYAN}PiQrypt v1.8.1 — Test Suite{RESET}")
+    print(f"\n{BOLD}{CYAN}PiQrypt v1.8.2 — Test Suite{RESET}")
     print(f"Racine projet : {ROOT}")
     print("=" * 60)
 

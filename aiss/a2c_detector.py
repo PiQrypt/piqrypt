@@ -14,7 +14,7 @@
 # Commercial license: contact@piqrypt.com -- Subject: Commercial License Inquiry
 
 """
-A2C Detector — PiQrypt Vigil v1.8.1
+A2C Detector — PiQrypt Vigil v1.8.2
 
 Détection des anomalies relationnelles Agent-to-Agent (A2C).
 Complète le Trust Score (comportement individuel) avec une analyse
@@ -36,7 +36,7 @@ Vigil Risk Score (VRS) — contribution A2C :
     VRS += 0.20 × A2C_risk
     A2C_risk = max(concentration, entropy_drop, synchronization, silence_break)
 
-Hook v1.6.0 → v1.8.1 :
+Hook v1.6.0 → v1.8.2 :
     trust_score.get_a2c_risk() appelle compute_a2c_risk() ici.
     Aucune modification nécessaire dans trust_score.py.
 """

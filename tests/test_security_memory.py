@@ -18,7 +18,7 @@ import unittest
 def _make_event(payload: dict, agent_id: str = "test_agent") -> dict:
     """Construit un event minimal valide pour store_event_free."""
     return {
-        "version": "1.8.1",
+        "version": "1.8.2",
         "agent_id": agent_id,
         "timestamp": int(time.time()),
         "nonce": f"nonce-{time.time_ns()}",

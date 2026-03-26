@@ -56,7 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **`trustgate/human_principal.py` — Human Oversight Registry**
 - `HumanPrincipal` with role-based permissions (approver / auditor / admin)
-- Authentication via HMAC token (v1.7.1) — OIDC/SSO planned for v1.8.1
+- Authentication via HMAC token (v1.7.1) — OIDC/SSO planned for v1.8.2
 - `DecisionQueue` — live queue of pending REQUIRE_HUMAN decisions
 
 **`trustgate/trustgate_server.py` — HTTP Governance API**
@@ -210,15 +210,15 @@ Smoke test: 70/74 (4 acceptable failures — Pro features, external deps)
 
 | Limitation | Impact | Planned |
 |-----------|--------|---------|
-| `verify_tsa_token()` checks DER structure only — no CMS/PKCS7 verification | Forged TSA token could pass | v1.8.1 |
-| Vigil/TrustGate use static `VIGIL_TOKEN`/`TRUSTGATE_TOKEN` env var | No per-user auth | v1.8.1 OIDC/SSO |
+| `verify_tsa_token()` checks DER structure only — no CMS/PKCS7 verification | Forged TSA token could pass | v1.8.2 |
+| Vigil/TrustGate use static `VIGIL_TOKEN`/`TRUSTGATE_TOKEN` env var | No per-user auth | v1.8.2 OIDC/SSO |
 | JSON flat-file event storage | Degrades >100k events/agent | v2.0 PostgreSQL |
 | `license.py` HMAC (Free tier) is client-side | Bypassable by motivated developer | By design |
 
 
 ---
 
-## [1.8.1] - 2026-03-02
+## [1.8.2] - 2026-03-02
 
 ### ✅ Security Hardening & API Stabilization
 

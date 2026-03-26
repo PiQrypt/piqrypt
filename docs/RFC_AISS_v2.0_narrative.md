@@ -1483,7 +1483,7 @@ Attacker attempts to inject synthetic SAFE events via Vigil API:
   → verify_chain_linkage() runs on actual chain regardless ✅
 ```
 
-**Residual risk (documented, v1.7.1):** The Vigil HTTP API (`/api/summary`, `/api/alerts`) uses a static `VIGIL_TOKEN` environment variable for authentication. Per-user authentication (OIDC/SSO) is planned for v1.8.1. Until then, Vigil endpoints MUST be treated as internal-only services.
+**Residual risk (documented, v1.7.1):** The Vigil HTTP API (`/api/summary`, `/api/alerts`) uses a static `VIGIL_TOKEN` environment variable for authentication. Per-user authentication (OIDC/SSO) is planned for v1.8.2. Until then, Vigil endpoints MUST be treated as internal-only services.
 
 ---
 
@@ -1740,7 +1740,7 @@ All AISS-compliant implementations MUST pass the normative test vectors:
 |---------|-------------|-------|
 | v1.0.0 | Level 1 | 18/18 |
 | v1.5.0 | Level 2 | 69/69 |
-| v1.8.1 | Level 2 | 136/143 (7 skipped — external Ollama) |
+| v1.8.2 | Level 2 | 136/143 (7 skipped — external Ollama) |
 | **v1.7.1** | **Level 2** | **325 passed, 17 known infrastructure failures** |
 
 The 17 known failures in v1.7.1 are infrastructure-dependent (external cert authority, live server, Pro-tier features not activated in CI). They are not protocol failures.

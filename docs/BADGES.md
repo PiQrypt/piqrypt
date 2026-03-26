@@ -107,7 +107,7 @@ Visual badges for your README files, documentation, and websites.
 
 **Version:**
 ```markdown
-[![Version](https://img.shields.io/badge/version-1.8.1-blue)](https://github.com/piqrypt/piqrypt/releases)
+[![Version](https://img.shields.io/badge/version-1.8.2-blue)](https://github.com/piqrypt/piqrypt/releases)
 ```
 
 **License:**
@@ -133,7 +133,7 @@ Visual badges for your README files, documentation, and websites.
 
 **Full Stack:**
 ```markdown
-[![PiQrypt](https://img.shields.io/badge/PiQrypt-v1.8.1-blue)](https://piqrypt.org)
+[![PiQrypt](https://img.shields.io/badge/PiQrypt-v1.8.2-blue)](https://piqrypt.org)
 [![AISS-1](https://img.shields.io/badge/AISS--1-Compliant-green)](https://piqrypt.org/docs/AISS-1)
 [![AISS-2](https://img.shields.io/badge/AISS--2-Ready-brightgreen)](https://piqrypt.org/docs/AISS-2)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -322,7 +322,7 @@ piqrypt badge generate --tier pro --copy
 
 ```markdown
 <!-- Update version when upgrading -->
-[![Version](https://img.shields.io/badge/version-1.8.1-blue)](...)
+[![Version](https://img.shields.io/badge/version-1.8.2-blue)](...)
 
 <!-- Update tier if licensing changes -->
 [![PiQrypt Pro](https://img.shields.io/badge/PiQrypt-Pro-gold)](...)

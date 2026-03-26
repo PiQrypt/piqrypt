@@ -14,7 +14,7 @@
 # Commercial license: contact@piqrypt.com -- Subject: Commercial License Inquiry
 
 """
-Anomaly Monitor — PiQrypt Vigil v1.8.1
+Anomaly Monitor — PiQrypt Vigil v1.8.2
 
 Hub central du système Vigil. Agrège tous les signaux disponibles
 en un Vigil Risk Score (VRS) unique par agent et par installation.

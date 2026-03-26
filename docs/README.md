@@ -499,14 +499,14 @@ event = aiss.stamp_event(priv, agent_id, {
 - Visual dashboard
 - A2A Network (DHT)
 
-### v1.8.1 ✅
+### v1.8.2 ✅
 - Witness network
 - HSM integration
 - Blockchain anchoring
 
 ---
 
-### v1.8.1 (Q2 2026)
+### v1.8.2 (Q2 2026)
 - OIDC/SSO for Vigil + TrustGate authentication
 - Full CMS/PKCS7 TSA token verification
 - PostgreSQL event storage backend
