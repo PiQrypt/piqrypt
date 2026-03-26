@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "piqrypt"
-version = "1.8.0"
+version = "1.8.1"
 description = "Trust infrastructure for autonomous AI agents â€” identity, observability, governance"
 readme = "README.md"
 license = {text = "MIT (AISS spec/bridges) AND Apache-2.0 (cli) AND Elastic-2.0 (aiss/vigil/trustgate)"}
 authors = [
-    {name = "PiQrypt Inc.", email = "contact@piqrypt.com"}
+    { name = "PiQrypt Inc.", email = "contact@piqrypt.com" }
 ]
 requires-python = ">=3.9"
 keywords = [
@@ -80,30 +80,40 @@ piqrypt = "cli.main:main"
 
 [project.urls]
 Homepage      = "https://piqrypt.com"
-Documentation = "https://docs.piqrypt.com"
+Documentation = "https://github.com/piqrypt/piqrypt"
 Repository    = "https://github.com/piqrypt/piqrypt"
 "Bug Tracker" = "https://github.com/piqrypt/piqrypt/issues"
-Standard      = "https://aiss-standard.org"
+
 
 [tool.setuptools.packages.find]
 where   = ["."]
 include = [
-    "piqrypt*",     # â† AJOUTÃ‰ : module piqrypt/ avec __init__.py
-    "aiss*",
-    "cli*",
-    "vigil*",
-    "trustgate*",
-    "bridges*",
+    "piqrypt",
+    "aiss",
+    "aiss.crypto",
+    "cli",
+    "vigil",
+    "trustgate",
+    "bridges",
+    "bridges.autogen",
+    "bridges.crewai",
+    "bridges.langchain",
+    "bridges.mcp",
+    "bridges.ollama",
+    "bridges.openclaw",
+    "bridges.ros",
+    "bridges.rpi",
+    "bridges.session",
 ]
 exclude = ["tests*", "docs*", "*.tests", "*.tests.*"]
 
 [tool.setuptools.package-data]
-"piqrypt"   = ["py.typed"]                              # â† AJOUTÃ‰
-"vigil"     = ["*.html"]
-"trustgate" = ["profiles/*.yaml", "console/*.html"]
-"aiss"      = ["schemas/*.json", "ca/*.key", "templates/*.py"]
-"docs"      = ["RFC_AISS_v2.0.md"]
-"cli"       = ["piqrypt_start.py", "auth_middleware.py"]
+"piqrypt"   = ["py.typed"]
+"vigil"     = ["py.typed", "*.html", "*.py"]
+"trustgate" = ["py.typed", "profiles/*.yaml", "console/*.html", "*.py"]
+"aiss"      = ["py.typed", "schemas/*.json", "ca/*.key", "templates/*.py"]
+"cli"       = ["py.typed", "*.py", "piqrypt_start.py", "auth_middleware.py"]
+"bridges"   = ["py.typed"]
 
 [tool.pytest.ini_options]
 testpaths    = ["tests"]

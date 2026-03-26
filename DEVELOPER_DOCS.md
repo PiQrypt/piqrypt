@@ -1363,8 +1363,8 @@ Full threat model: see [RFC AISS v2.0 §21](https://docs.piqrypt.com/rfc/securit
 
 | Limitation | Impact | Planned fix |
 |-----------|--------|-------------|
-| `verify_tsa_token()` checks DER structure only — no full CMS/PKCS7 verification | A crafted TSA token could pass as verified | v1.8.0 |
-| Vigil/TrustGate use static `VIGIL_TOKEN` env var | No per-user auth | v1.8.0 OIDC/SSO |
+| `verify_tsa_token()` checks DER structure only — no full CMS/PKCS7 verification | A crafted TSA token could pass as verified | v1.8.1 |
+| Vigil/TrustGate use static `VIGIL_TOKEN` env var | No per-user auth | v1.8.1 OIDC/SSO |
 | Flat-file event storage | Degrades >100k events/agent | v2.0 PostgreSQL |
 
 ### 17.4 Responsible disclosure

@@ -43,10 +43,10 @@ Stockage :
     Format : liste de snapshots {timestamp, score}
     Fenêtre glissante : 30 jours (anciens snapshots purgés)
 
-Hook Sentinel v1.7.0 :
+Hook Sentinel v1.8.1 :
     Quand tsi_state → UNSTABLE ou CRITICAL,
     anomaly_monitor reçoit un événement trust_drift.
-    En v1.6.0 : l'événement est loggé localement (prêt pour v1.7.0).
+    En v1.6.0 : l'événement est loggé localement (prêt pour v1.8.1).
 """
 
 import json
@@ -221,7 +221,7 @@ def _detect_drift(
     return "STABLE", reasons, metrics
 
 
-# ─── Hook Sentinel v1.7.0 ─────────────────────────────────────────────────────
+# ─── Hook Sentinel v1.8.1 ─────────────────────────────────────────────────────
 
 def _emit_sentinel_event(
     agent_id: str,
@@ -232,12 +232,12 @@ def _emit_sentinel_event(
     current_time: int,
 ) -> None:
     """
-    Hook pour Sentinel v1.7.0.
+    Hook pour Sentinel v1.8.1.
 
     v1.6.0 : log local uniquement.
-    v1.7.0 : anomaly_monitor.record() sera appelé ici.
+    v1.8.1 : anomaly_monitor.record() sera appelé ici.
 
-    L'interface est déjà prête — aucune modification nécessaire en v1.7.0,
+    L'interface est déjà prête — aucune modification nécessaire en v1.8.1,
     il suffira d'importer anomaly_monitor.
     """
     if new_state not in ("UNSTABLE", "CRITICAL"):
@@ -266,7 +266,7 @@ def _emit_sentinel_event(
         f"reasons={reasons}"
     )
 
-    # Hook v1.7.0 — décommenter quand anomaly_monitor disponible :
+    # Hook v1.8.1 — décommenter quand anomaly_monitor disponible :
     # try:
     #     from aiss.anomaly_monitor import AnomalyMonitor
     #     AnomalyMonitor.record(event)

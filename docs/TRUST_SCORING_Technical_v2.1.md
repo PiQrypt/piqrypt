@@ -3,7 +3,7 @@
 **Version:** 2.1  
 **Date:** 2026-03-02  
 **Standard:** AISS v1.1 (Agent Identity and Signature Standard)  
-**Status:** ✅ Fully implemented — v1.7.0
+**Status:** ✅ Fully implemented — v1.8.1
 
 ---
 
@@ -13,7 +13,7 @@ Le Trust Scoring dans PiQrypt n'est pas un score moral.
 
 Il est un **indicateur structurel de cohérence, stabilité et continuité cryptographique** d'un agent autonome.
 
-**Sentinel** est un moteur local de détection de dérive comportementale et structurelle, pleinement opérationnel depuis v1.7.0.
+**Sentinel** est un moteur local de détection de dérive comportementale et structurelle, pleinement opérationnel depuis v1.8.1.
 
 Le système complet est :
 
@@ -52,8 +52,8 @@ Agent
  │    │    ├── tsi_engine.py       ← TSI dynamics          ✅ v1.5.0
  │    │    ├── a2c_detector.py     ← Relational drift      ✅ v1.5.0
  │    │    ├── anomaly_monitor.py  ← Event hub + VRS       ✅ v1.5.0
- │    │    ├── key_store.py        ← Encrypted key storage ✅ v1.7.0
- │    │    └── agent_registry.py   ← Agent isolation       ✅ v1.7.0
+ │    │    ├── key_store.py        ← Encrypted key storage ✅ v1.8.1
+ │    │    └── agent_registry.py   ← Agent isolation       ✅ v1.8.1
  │    ├── history.py               ← Rotation chain        ✅ v1.6.0
  │    ├── index.py                 ← SQLite index          ✅ v1.6.0
  │    └── memory.py
@@ -429,7 +429,7 @@ Lors d'un échange A2A, un agent peut partager son Trust Signal :
 **Règles :**
 - Signal **informatif uniquement** — jamais bloquant
 - L'agent receveur peut recalculer localement sans faire confiance au signal
-- Tous les champs sont ✅ disponibles depuis v1.7.0
+- Tous les champs sont ✅ disponibles depuis v1.8.1
 
 ---
 
@@ -464,7 +464,7 @@ aiss/history.py          ✅  load_full_history(), get_history_summary()
 aiss/index.py            ✅  successor_agent_id, session_id, migration
 ```
 
-### v1.7.0 — Security Hardening & API Stabilization
+### v1.8.1 — Security Hardening & API Stabilization
 ```
 aiss/key_store.py        ✅  scrypt N=2¹⁷ + AES-256-GCM, magic bytes, RAM erasure
 aiss/agent_registry.py   ✅  AgentRegistry class, path traversal protection
@@ -588,7 +588,7 @@ Date         TS     I     V_t   D_t   F     R     TSI       A2C
 2026-02-10   0.87  1.00  0.82  0.71  0.95  0.90  WATCH     LOW
 2026-02-17   0.85  0.98  0.80  0.68  0.94  0.90  WATCH     MEDIUM
 
-# Sentinel status (v1.7.0)
+# Sentinel status (v1.8.1)
 $ piqrypt sentinel status pq_abc123...
 Sentinel Status : pq_abc123...
   Trust Score  : 0.87  [A+]

@@ -13,7 +13,7 @@ This module implements:
 - Identity document generation (Section 6)
 - Key rotation attestation (Section 12)
 
-v1.7.0 additions:
+v1.8.1 additions:
 - create_agent_identity() : création complète avec nom + passphrase + stockage
 - load_agent_identity()   : chargement depuis ~/.piqrypt/agents/<n>/
 - list_agent_identities() : liste tous les agents enregistrés
@@ -295,7 +295,7 @@ def create_rotation_pcp_event(
     return event
 
 
-# ─── v1.7.0 : Création identité avec stockage isolé ──────────────────────────
+# ─── v1.8.1 : Création identité avec stockage isolé ──────────────────────────
 
 def create_agent_identity(
     agent_name: str,
@@ -492,7 +492,7 @@ __all__ = [
     "export_identity",
     "create_rotation_attestation",
     "create_rotation_pcp_event",
-    # v1.7.0
+    # v1.8.1
     "create_agent_identity",
     "load_agent_identity",
     "list_agent_identities",

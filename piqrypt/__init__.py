@@ -1,4 +1,4 @@
-﻿# SPDX-License-Identifier: Elastic-2.0
+# SPDX-License-Identifier: Elastic-2.0
 # Copyright (c) 2026 PiQrypt Inc.
 # e-Soleau: DSO2026006483 (19/02/2026) -- DSO2026009143 (12/03/2026)
 """
@@ -6,7 +6,7 @@ PiQrypt -- Trust & Continuity Layer for Autonomous AI Agents
 AISS v2.0 Reference Implementation
 """
 
-__version__ = "1.7.9"
+__version__ = "1.8.1"
 __author__ = "PiQrypt Inc."
 __email__ = "contact@piqrypt.com"
 __license__ = "Elastic-2.0"

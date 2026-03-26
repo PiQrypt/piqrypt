@@ -285,7 +285,7 @@ class StartupCheck:
 
     def print_report(self):
         print()
-        print(bold("PiQrypt Stack Launcher v1.7.0"))
+        print(bold("PiQrypt Stack Launcher v1.8.1"))
         print(dim(_SEP * 50))
         print(f"  Tier      : {bold(self.tier.upper())}")
         _vigil_str = (
@@ -526,6 +526,22 @@ class PiQryptLauncher:
         print()
         print(dim("  Ctrl+C pour arreter."))
         print()
+
+        # ── Ouverture automatique des dashboards ──
+        import webbrowser
+        time.sleep(1.5)  # laisser les services démarrer
+
+        _vigil_token = os.getenv("VIGIL_TOKEN", "")
+        if _vigil_token and not self.args.trustgate_only:
+            _vigil_url = f"http://localhost:{DEFAULT_VIGIL_PORT}?token={_vigil_token}"
+            webbrowser.open(_vigil_url)
+
+        _tg_token = os.getenv("TRUSTGATE_TOKEN", "")
+        if _tg_token and tier_allows_trustgate(self.tier) and not self.args.vigil_only:
+            if self.args.trustgate or self.args.all or self.args.trustgate_only:
+                _tg_url = f"http://localhost:{DEFAULT_TRUSTGATE_PORT}/console?token={_tg_token}"
+                time.sleep(0.5)  # petit délai entre les deux ouvertures
+                webbrowser.open(_tg_url)
 
         # ── Graceful shutdown ──
         def _shutdown(sig, frame):

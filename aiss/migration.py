@@ -8,13 +8,13 @@
 # Commercial license: contact@piqrypt.com
 
 """
-Migration v1.6.0 → v1.7.0 — PiQrypt
+Migration v1.6.0 → v1.8.1 — PiQrypt
 
 Détecte les structures legacy et migre vers l'architecture
 isolée par agent (~/.piqrypt/agents/<name>/).
 
 Flow :
-    1. Détection automatique au premier lancement v1.7.0
+    1. Détection automatique au premier lancement v1.8.1
     2. Proposition interactive (ou silencieuse en mode --non-interactive)
     3. Migration non-destructive : backup conservé
     4. Chiffrement optionnel de la clé privée existante
@@ -96,7 +96,7 @@ def run_migration(
     dry_run: bool = False,
 ) -> Dict[str, Any]:
     """
-    Exécute la migration v1.6.0 → v1.7.0.
+    Exécute la migration v1.6.0 → v1.8.1.
 
     Args:
         agent_name:  Nom de l'agent pour les données existantes
@@ -219,10 +219,10 @@ def _migrate_key(
     dry_run: bool,
 ) -> Dict[str, Any]:
     """
-    Migre la clé privée legacy (JSON en clair) vers le format v1.7.0.
+    Migre la clé privée legacy (JSON en clair) vers le format v1.8.1.
 
     Si passphrase fournie → chiffre avec key_store.
-    Sinon → copie en format plaintext v1.7.0.
+    Sinon → copie en format plaintext v1.8.1.
     """
     result: Dict[str, Any] = {}
 
@@ -243,7 +243,7 @@ def _migrate_key(
                 save_encrypted_key(raw_key, passphrase, dest)
             result["encrypted"] = True
         else:
-            # Format plaintext v1.7.0
+            # Format plaintext v1.8.1
             dest = agent_dir / "private.key.json"
             if not dry_run:
                 from aiss.key_store import save_plaintext_key
@@ -327,7 +327,7 @@ def _create_backup(backup_path: Path, report: Dict[str, Any]) -> None:
 def prompt_migration(non_interactive: bool = False) -> Optional[Dict[str, Any]]:
     """
     Interface interactive de migration.
-    Appelée automatiquement au premier lancement v1.7.0 si legacy détecté.
+    Appelée automatiquement au premier lancement v1.8.1 si legacy détecté.
 
     Args:
         non_interactive: Si True, utilise les variables d'environnement
@@ -349,7 +349,7 @@ def prompt_migration(non_interactive: bool = False) -> Optional[Dict[str, Any]]:
 
     # Mode interactif
     print("\n" + "─" * 50)
-    print("  PiQrypt v1.7.0 — Migration détectée")
+    print("  PiQrypt v1.8.1 — Migration détectée")
     print("─" * 50)
     print(f"\n  Structure v1.6.0 trouvée dans : {preview['source_dir']}")
     print(f"  Événements plain  : {preview['plain_events']}")
@@ -359,7 +359,7 @@ def prompt_migration(non_interactive: bool = False) -> Optional[Dict[str, Any]]:
 
     # Confirmation
     try:
-        answer = input("\n  Migrer vers v1.7.0 maintenant ? [O/n] ").strip().lower()
+        answer = input("\n  Migrer vers v1.8.1 maintenant ? [O/n] ").strip().lower()
         if answer == "n":
             print("  Migration annulée. Vous pouvez relancer avec : piqrypt migrate")
             return None

@@ -16,7 +16,7 @@ Implements cryptographically-backed agent memory:
 
 RFC Sections 6 (Mémoire d'Agent), 11.2 (AISS-2 nonce retention)
 
-Architecture v1.7.0 (isolation par agent) :
+Architecture v1.8.1 (isolation par agent) :
     ~/.piqrypt/
     └── agents/
         └── <agent_name>/
@@ -71,7 +71,7 @@ KEYS_DIR = PIQRYPT_DIR / "keys"
 MASTER_KEY_FILE = KEYS_DIR / "master.key.enc"
 CONFIG_FILE = PIQRYPT_DIR / "config.json"
 
-# ─── Agent Registry (v1.7.0) ──────────────────────────────────────────────────
+# ─── Agent Registry (v1.8.1) ──────────────────────────────────────────────────
 try:
     from aiss.agent_registry import (
         get_events_plain_dir as _reg_plain_dir,
@@ -89,7 +89,7 @@ def _get_dirs(agent_name: Optional[str] = None, session: Any = None):
     """
     Résout les chemins de stockage pour un agent.
 
-    v1.7.0 : utilise agent_registry pour l'isolation par agent.
+    v1.8.1 : utilise agent_registry pour l'isolation par agent.
     Fallback v1.6.0 : chemins globaux historiques.
 
     Returns:
@@ -188,10 +188,10 @@ def _derive_key_from_passphrase(passphrase: str, salt: bytes) -> bytes:
 
 # ─── Directory initialization ─────────────────────────────────────────────────
 def init_memory_dirs(agent_name: Optional[str] = None, base_dir: Optional[str] = None) -> None:
-    """Create directory structure for an agent (v1.7.0) or global (v1.6.0 compat).
+    """Create directory structure for an agent (v1.8.1) or global (v1.6.0 compat).
 
     Args:
-        agent_name: Nom de l'agent (v1.7.0)
+        agent_name: Nom de l'agent (v1.8.1)
         base_dir:   Répertoire racine alternatif (utile en tests/CI)
     """
     if base_dir is not None:
@@ -207,7 +207,7 @@ def init_memory_dirs(agent_name: Optional[str] = None, base_dir: Optional[str] =
     for d in [PIQRYPT_DIR, EVENTS_PLAIN_DIR, EVENTS_ENC_DIR, KEYS_DIR]:
         d.mkdir(parents=True, exist_ok=True)
     if not CONFIG_FILE.exists():
-        config = {"version": "1.7.0", "retention_years": 10, "auto_backup": False,
+        config = {"version": "1.8.1", "retention_years": 10, "auto_backup": False,
                   "backup_interval_months": 6, "created_at": int(time.time())}
         CONFIG_FILE.write_text(json.dumps(config, indent=2))
     logger.info(f"[PiQrypt] Memory directories initialized at {PIQRYPT_DIR}")
@@ -320,7 +320,7 @@ def store_event_free(
 
     Args:
         event:      Signed AISS event dict
-        agent_name: Agent name for isolation (v1.7.0). None = fallback "default"
+        agent_name: Agent name for isolation (v1.8.1). None = fallback "default"
         session:    IdentitySession — agent_name déduit si fourni
     """
     plain_dir, _, _, _ = _get_dirs(agent_name, session)
@@ -499,12 +499,12 @@ def store_event(
     """
     Stocke un événement signé en mémoire.
 
-    v1.7.0 : agent_name et session optionnels pour isolation par agent.
+    v1.8.1 : agent_name et session optionnels pour isolation par agent.
     Backward compat : si omis → agent "default".
 
     Args:
         event:      Événement signé à stocker
-        agent_name: Nom de l'agent (v1.7.0)
+        agent_name: Nom de l'agent (v1.8.1)
         session:    Session IdentitySession active (optionnel)
         base_dir:   Répertoire racine alternatif (tests/CI) — stockage JSON plain
     """
@@ -544,12 +544,12 @@ def load_events(
     """
     Charge les événements d'un agent.
 
-    v1.7.0 : agent_name et session optionnels pour isolation par agent.
+    v1.8.1 : agent_name et session optionnels pour isolation par agent.
 
     Args:
         month:      Filtre par mois (YYYY-MM)
         agent_id:   Filtre par agent_id
-        agent_name: Nom de l'agent (v1.7.0)
+        agent_name: Nom de l'agent (v1.8.1)
         session:    Session IdentitySession active (optionnel)
         base_dir:   Répertoire racine alternatif (tests/CI)
     """
@@ -783,7 +783,7 @@ def get_memory_stats(
     agent_name: Optional[str] = None,
     session: Any = None,
 ) -> Dict[str, Any]:
-    """Statistiques mémoire d'un agent. agent_name optionnel (v1.7.0)."""
+    """Statistiques mémoire d'un agent. agent_name optionnel (v1.8.1)."""
     config = get_config()
     retention_years = config.get("retention_years", 10)
     from aiss.license import is_pro
