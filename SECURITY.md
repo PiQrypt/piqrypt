@@ -99,9 +99,9 @@ The provided `.gitignore` excludes all key files — verify before every push.
 
 | Limitation | Impact | Planned fix |
 |-----------|--------|-------------|
-| `verify_tsa_token()` checks DER structure only — does not verify TSA signature (CMS/PKCS7) | A forged token could pass as "verified" | v1.8.2 — full CMS verification |
+| `verify_tsa_token()` checks DER structure only — does not verify TSA signature (CMS/PKCS7) | A forged token could pass as "verified" | v1.8.3 — full CMS verification |
 | JSON flat-file event storage — not designed for >100k events/agent | High-frequency agents (>10 events/s) will degrade | v2.0 — PostgreSQL backend |
-| Vigil/TrustGate use static `VIGIL_TOKEN`/`TRUSTGATE_TOKEN` env var | No per-user auth | v1.8.2 — OIDC/SSO |
+| Vigil/TrustGate use static `VIGIL_TOKEN`/`TRUSTGATE_TOKEN` env var | No per-user auth | v1.8.3 — OIDC/SSO |
 | `license.py` HMAC validation (Free) is client-side | Motivated developer can bypass | By design for Free tier — Pro+ uses Ed25519 JWT |
 
 ---

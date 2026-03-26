@@ -35,8 +35,8 @@ Philosophie :
     - Audit-able : chaque composante traçable à des événements concrets
     - Local-first : aucune dépendance réseau
 
-Hooks Sentinel (v1.8.2) :
-    - get_a2c_risk() → None en v1.6.0, peuplé en v1.8.2
+Hooks Sentinel (v1.8.3) :
+    - get_a2c_risk() → None en v1.6.0, peuplé en v1.8.3
     - D_t.top_peer_ratio disponible pour a2c_detector.concentration_score
     - V_t.weighted_ratio disponible pour a2c_detector.entropy_drop
 """
@@ -233,7 +233,7 @@ def compute_D_t(
 
     D_t = H / H_max
 
-    Hook A2C v1.8.2 : top_peer_ratio disponible pour
+    Hook A2C v1.8.3 : top_peer_ratio disponible pour
     a2c_detector.concentration_score().
     """
     if current_time is None:
@@ -288,7 +288,7 @@ def compute_D_t(
             "total_recent":   total,
             "entropy":        round(entropy, 4),
             "max_entropy":    round(max_entropy, 4),
-            "top_peer_ratio": round(top_ratio, 4),  # Hook A2C v1.8.2
+            "top_peer_ratio": round(top_ratio, 4),  # Hook A2C v1.8.3
             "window_days":    window_days,
         },
     }
@@ -407,13 +407,13 @@ def compute_R(
     }
 
 
-# ─── Hook Sentinel v1.8.2 ─────────────────────────────────────────────────────
+# ─── Hook Sentinel v1.8.3 ─────────────────────────────────────────────────────
 
 def get_a2c_risk(agent_id: str) -> Optional[Dict[str, Any]]:
     """
     Hook A2C Detection Layer.
     v1.6.0 → None (graceful degradation)
-    v1.8.2 → score de risque relationnel complet
+    v1.8.3 → score de risque relationnel complet
     """
     try:
         from aiss.a2c_detector import compute_a2c_risk

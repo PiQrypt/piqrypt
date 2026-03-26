@@ -277,7 +277,7 @@ for event in suspicious_events:
 
 ### Encrypted Memory (Recommended for Production)
 
-The `KeyStore` (v1.8.2) provides scrypt N=2¹⁷ + AES-256-GCM encryption for the private key at rest. See example above.
+The `KeyStore` (v1.8.3) provides scrypt N=2¹⁷ + AES-256-GCM encryption for the private key at rest. See example above.
 
 ```bash
 # All OpenClaw decisions encrypted at rest

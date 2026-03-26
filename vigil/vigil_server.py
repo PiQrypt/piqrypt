@@ -397,7 +397,7 @@ class VIGILHandler(BaseHTTPRequestHandler):
                 "backend": BACKEND_AVAILABLE,
                 "demo_mode": not BACKEND_AVAILABLE,
                 "timestamp": _ts(),
-                "version": "1.8.2",
+                "version": "1.8.3",
                 "auth": "enabled" if _AUTH.token else "misconfigured",
                 "tier_info": _AUTH.tier_info(),
             })
@@ -1434,7 +1434,7 @@ class VIGILHandler(BaseHTTPRequestHandler):
 
         content_lines = [
             "VIGIL AUDIT REPORT",
-            "PiQrypt v1.8.2 — AISS v1.1",
+            "PiQrypt v1.8.3 — AISS v1.1",
             "",
             "!!! NOTICE: LOCAL EXPORT — NOT CERTIFIED BY PIQRYPT !!!",
             "This PDF is a local readable report only. It has no legal",
@@ -1497,8 +1497,10 @@ class VIGILServer:
     def start(self, blocking: bool = True):
         self._server = HTTPServer((self.host, self.port), VIGILHandler)
         log.info("━" * 56)
-        log.info("  VIGIL Server v1.8.2")
-        log.info("  Dashboard → http://%s:%d", self.host, self.port)
+        log.info("  VIGIL Server v1.8.3")
+        _token = os.environ.get("VIGIL_TOKEN", "")
+        _url = f"http://{self.host}:{self.port}/?token={_token}" if _token else f"http://{self.host}:{self.port}"
+        log.info("  Dashboard → %s", _url)
         log.info("  API       → http://%s:%d/api/summary", self.host, self.port)
         log.info("  Backend   → %s", "LIVE" if BACKEND_AVAILABLE else "DEMO MODE")
 
@@ -1633,7 +1635,7 @@ class VIGILServer:
 
 # ── CLI ────────────────────────────────────────────────────────────────────────
 def main():
-    parser = argparse.ArgumentParser(description="Vigil HTTP Server — PiQrypt v1.8.2")
+    parser = argparse.ArgumentParser(description="Vigil HTTP Server — PiQrypt v1.8.3")
     parser.add_argument("--host",  default=DEFAULT_HOST,  help=f"Bind host (default: {DEFAULT_HOST})")  # noqa: E501
     parser.add_argument("--port",  default=DEFAULT_PORT,  type=int, help=f"Port (default: {DEFAULT_PORT})")  # noqa: E501
     parser.add_argument("--debug", action="store_true",   help="Verbose logging")

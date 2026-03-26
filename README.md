@@ -254,10 +254,10 @@ PiQrypt does **not** protect against compromised private keys, malicious logic b
 | Tier | Agents | Events/month | Price (annual) | Key features |
 |------|--------|-------------|----------------|-------------|
 | **Free** | 3 | 10,000 | Free forever | AISS STANDARD, .pqz memory, Vigil read+write (2 bridges max) |
-| **Pro** | 50 | 500,000 | €290–390/year | QUANTUM, TSA RFC 3161, .pqz CERTIFIED, Vigil full, TrustGate manual |
+| **Pro** | 50 | 500,000 | €390/year | QUANTUM, TSA RFC 3161, .pqz CERTIFIED, Vigil full, TrustGate manual |
 | **Startup** | 50 | 1,000,000 | €990/year | All Pro + team workspace |
-| **Team** | 150 | 5,000,000 | €2,990/year | All Startup + priority support |
-| **Business** | 500 | 20,000,000 | €14,990/year | All Team + TrustGate full, SIEM, multi-org |
+| **Team** | 150 | 5,000,000 | On request | All Startup + priority support |
+| **Business** | 500 | 20,000,000 | On request | All Team + TrustGate full, SIEM, multi-org |
 | **Enterprise** | Unlimited | Unlimited | On request | All Business + SSO, on-premise, SLA, air-gap |
 
 **[→ Full pricing & feature comparison](TIERS_PRICING.md)**

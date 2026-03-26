@@ -65,7 +65,7 @@ piqrypt telemetry status
 **Example payload:**
 ```json
 {
-  "version": "1.8.2",
+  "version": "1.8.3",
   "python": "3.10",
   "os": "linux",
   "license_tier": "free",
@@ -181,8 +181,8 @@ export PIQRYPT_TELEMETRY_ENDPOINT=https://your-server.com
   "forks_detected": 2,
   "replay_attacks_blocked": 5,
   "audit_exports": 10,
-  "keystore_created": 3,     # v1.8.2
-  "agents_registered": 5     # v1.8.2
+  "keystore_created": 3,     # v1.8.3
+  "agents_registered": 5     # v1.8.3
 }
 ```
 
@@ -193,7 +193,7 @@ export PIQRYPT_TELEMETRY_ENDPOINT=https://your-server.com
   "avg_stamp_duration_ms": 2.3,
   "avg_verify_duration_ms": 1.2,
   "avg_chain_validation_ms": 45.6,
-  "avg_keystore_load_ms": 420.0    # v1.8.2 — scrypt expected ~400ms
+  "avg_keystore_load_ms": 420.0    # v1.8.3 — scrypt expected ~400ms
 }
 ```
 
@@ -225,7 +225,7 @@ export PIQRYPT_TELEMETRY_ENDPOINT=https://your-server.com
     "ForkDetected": 2,
     "ReplayAttackDetected": 5,
     "LicenseRequiredError": 3,
-    "KeyStoreAuthError": 1       # v1.8.2
+    "KeyStoreAuthError": 1       # v1.8.3
   }
 }
 ```
@@ -345,7 +345,7 @@ It helps us improve the product, fix bugs faster, and prioritize features — wh
 ```json
 {
   "schema_version": "1.1",
-  "piqrypt_version": "1.8.2",
+  "piqrypt_version": "1.8.3",
   "python_version": "3.10.4",
   "os": "linux",
   "license_tier": "free",

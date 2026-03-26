@@ -1,7 +1,7 @@
 # TSI — Trust Stability Index
 
 **Module :** `aiss/tsi_engine.py`  
-**Version :** PiQrypt v1.8.2  
+**Version :** PiQrypt v1.8.3  
 **Dépendances :** `aiss.trust_score`, `aiss.agent_registry`
 
 ---
@@ -192,7 +192,7 @@ if state in ("UNSTABLE", "CRITICAL"):
 
 ---
 
-*PiQrypt v1.8.2 — MIT License*
+*PiQrypt v1.8.3 — MIT License*
 
 ---
 

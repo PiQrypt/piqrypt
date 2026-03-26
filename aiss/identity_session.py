@@ -8,7 +8,7 @@
 # Commercial license: contact@piqrypt.com
 
 """
-Identity Session — PiQrypt v1.8.2
+Identity Session — PiQrypt v1.8.3
 
 Gestion de la session d'identité d'un agent.
 La clé privée est chargée en RAM uniquement pendant la session,
@@ -105,7 +105,7 @@ def get_key_path(agent_name: str) -> Optional[Path]:
     """
     agent_dir = get_agent_dir(agent_name)
 
-    # Format v1.8.2 chiffré
+    # Format v1.8.3 chiffré
     enc_path = agent_dir / "private.key.enc"
     if enc_path.exists():
         return enc_path

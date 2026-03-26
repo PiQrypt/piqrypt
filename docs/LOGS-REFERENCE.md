@@ -69,7 +69,7 @@ event_type: identity_rotated
   - new_agent_id: "..."
 ```
 
-### KeyStore Operations (v1.8.2)
+### KeyStore Operations (v1.8.3)
 
 ```
 event_type: keystore_created
@@ -86,7 +86,7 @@ event_type: key_erased_from_ram
   - agent_id: "5Z8n...A2z"
 ```
 
-### AgentRegistry Operations (v1.8.2)
+### AgentRegistry Operations (v1.8.3)
 
 ```
 event_type: agent_registered

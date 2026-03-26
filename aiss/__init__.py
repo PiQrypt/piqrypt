@@ -7,7 +7,7 @@
 
 """
 AISS (Agent Identity and Signature Standard)
-PiQrypt v1.8.2
+PiQrypt v1.8.3
 
 RFC Compliance:
 - RFC 8785  (JSON Canonicalization Scheme) — MANDATORY
@@ -34,14 +34,14 @@ Quick Start — Archive (Pro):
     >>> create_archive(events, identity, "backup.pqz", passphrase="strong-pass")
 """
 
-__version__ = "1.8.2"
+__version__ = "1.8.3"
 
 # Core AISS-1
 from aiss.identity import (
     generate_keypair, derive_agent_id, export_identity,
     create_rotation_attestation,
     create_rotation_pcp_event,
-    # v1.8.2
+    # v1.8.3
     create_agent_identity,
     load_agent_identity,
     list_agent_identities,

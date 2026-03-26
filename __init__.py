@@ -18,7 +18,7 @@ Quick start:
 IP: e-Soleau DSO2026006483 + DSO2026009143 (INPI France)
 """
 
-__version__ = "1.8.2"
+__version__ = "1.8.3"
 __author__ = "PiQrypt Inc."
 __email__ = "contact@piqrypt.com"
 __license__ = "Elastic-2.0"
