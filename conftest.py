@@ -7,6 +7,15 @@ _REPO_ROOT = Path(__file__).resolve().parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
+# Diagnostic CI
+try:
+    import aiss as _aiss_diag
+    print(f"[conftest] aiss.__file__ = {getattr(_aiss_diag, '__file__', 'NO __file__')}")
+    print(f"[conftest] aiss.__path__ = {getattr(_aiss_diag, '__path__', 'NO __path__')}")
+    print(f"[conftest] sys.path[0:3] = {sys.path[0:3]}")
+except Exception as e:
+    print(f"[conftest] aiss import error: {e}")
+
 # SPDX-License-Identifier: MIT
 """
 Configuration pytest — PiQrypt v1.7.1
