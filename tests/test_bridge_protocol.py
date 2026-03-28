@@ -67,6 +67,10 @@ def _setup_piqrypt_mock():
     sys.modules["piqrypt"] = mock
     return mock
 
+# Sauvegarder les modules existants avant injection des mocks
+_saved_modules = {k: v for k, v in __import__('sys').modules.items()
+                  if k == 'piqrypt' or k.startswith('piqrypt.')}
+
 _mock_pq = _setup_piqrypt_mock()
 
 # ── Mock aiss.memory (load_events) ────────────────────────────────────────────
@@ -107,7 +111,21 @@ def _setup_aiss_mock():
 
     return memory_mod, a2a_mod
 
-_memory_mod, _a2a_mod = _setup_aiss_mock()
+# Ne pas ecraser un vrai aiss si deja charge depuis le repo local
+import sys as _sys_check
+_aiss_already_loaded = 'aiss' in _sys_check.modules and hasattr(_sys_check.modules.get('aiss'), '__path__')
+if not _aiss_already_loaded:
+    _memory_mod, _a2a_mod = _setup_aiss_mock()
+else:
+    # aiss reel disponible - creer des mocks minimaux sans ecraser sys.modules
+    import types as _types_min
+    _memory_mod = _types_min.ModuleType("aiss.memory.mock")
+    _memory_mod.load_events = lambda agent_name=None, **kw: _memory_store
+    _memory_mod.store_event = lambda e, **kw: _memory_store.append(e)
+    from pathlib import Path as _Path
+    _memory_mod.PIQRYPT_DIR = _Path("/tmp/piqrypt_test")
+    _a2a_mod = _types_min.ModuleType("aiss.a2a.mock")
+    _a2a_mod.get_peer = lambda agent_id: None
 
 # ── Mock frameworks externes ──────────────────────────────────────────────────
 
