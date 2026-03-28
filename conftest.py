@@ -1,3 +1,12 @@
+import sys
+from pathlib import Path
+
+# Force resolution locale de aiss/ en CI (pip install -e . avec importlib)
+# Meme pattern que vigil_server.py et cli/piqrypt_start.py
+_REPO_ROOT = Path(__file__).resolve().parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
 # SPDX-License-Identifier: MIT
 """
 Configuration pytest — PiQrypt v1.7.1
