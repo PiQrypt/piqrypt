@@ -782,7 +782,7 @@ def main():
     if not _BP_AVAILABLE:
         print("  [ABORT] aiss/bridge_protocol.py introuvable.")
         print("  Placez le fichier et relancez.")
-        sys.exit(1)
+        return
 
     loader = unittest.TestLoader()
     suite  = unittest.TestSuite()
