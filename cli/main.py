@@ -56,7 +56,7 @@ def print_json(data: Dict[str, Any]) -> None:
 # ─────────────────────────────────────────────
 
 def cmd_identity_create(args):
-    """Création d'une identité agent v1.8.3 — nom + passphrase + stockage isolé."""
+    """Création d'une identité agent v1.8.4 — nom + passphrase + stockage isolé."""
     import getpass
     import os
 
@@ -192,11 +192,11 @@ def cmd_unlock(args):
 
 
 def cmd_migrate(args):
-    """Migration manuelle v1.6.0 → v1.8.3."""
+    """Migration manuelle v1.6.0 → v1.8.4."""
     try:
         from aiss.migration import prompt_migration, needs_migration
         if not needs_migration():
-            print("✅ Aucune migration nécessaire — structure déjà en v1.8.3.")
+            print("✅ Aucune migration nécessaire — structure déjà en v1.8.4.")
             return
         non_interactive = getattr(args, 'non_interactive', False)
         prompt_migration(non_interactive=non_interactive)
@@ -760,7 +760,7 @@ def main():
     if hasattr(sys.stderr, 'reconfigure'):
         sys.stderr.reconfigure(encoding='utf-8')
 
-    # Vérification migration v1.6.0 → v1.8.3 au démarrage
+    # Vérification migration v1.6.0 → v1.8.4 au démarrage
     try:
         from aiss.migration import needs_migration, prompt_migration
         if needs_migration():
@@ -807,12 +807,12 @@ Examples:
     id_rotate.add_argument('--output', '-o', help='Attestation output file')
 
     # ── stamp ──
-    # ── unlock (v1.8.3) ──
+    # ── unlock (v1.8.4) ──
     unlock_p = sub.add_parser('unlock', help='Unlock agent identity session')
     unlock_p.add_argument('--agent', '-a', help='Agent name')
 
-    # ── migrate (v1.8.3) ──
-    migrate_p = sub.add_parser('migrate', help='Migrate v1.6.0 structure to v1.8.3')
+    # ── migrate (v1.8.4) ──
+    migrate_p = sub.add_parser('migrate', help='Migrate v1.6.0 structure to v1.8.4')
     migrate_p.add_argument('--non-interactive', action='store_true',
                            help='Use env vars, no prompts')
 
@@ -1019,11 +1019,11 @@ Examples:
             else:
                 id_p.print_help()
 
-        # unlock (v1.8.3)
+        # unlock (v1.8.4)
         elif args.command == 'unlock':
             cmd_unlock(args)
 
-        # migrate (v1.8.3)
+        # migrate (v1.8.4)
         elif args.command == 'migrate':
             cmd_migrate(args)
 
@@ -1759,7 +1759,7 @@ def cmd_trust_score_compute(args):
             print(f"    {key}: {detail}")
 
     a2c = result.get("a2c_risk")
-    print(f"\n  A2C Risk      : {'N/A (disponible v1.8.3)' if a2c is None else a2c}")
+    print(f"\n  A2C Risk      : {'N/A (disponible v1.8.4)' if a2c is None else a2c}")
     print(f"  Événements    : {result['event_count']}")
     print()
 
@@ -1867,7 +1867,7 @@ def cmd_sentinel_status(args):
     else:
         print("  Alertes       : 0 actives")
 
-    print("  A2C Risk      : N/A (disponible v1.8.3)")
+    print("  A2C Risk      : N/A (disponible v1.8.4)")
     print(f"  Snapshots     : {tsi['snapshot_count']} (fenêtre {tsi['window_days']}j)")
     print()
 

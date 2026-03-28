@@ -8,7 +8,7 @@
 # Commercial license: contact@piqrypt.com
 
 """
-Key Store — PiQrypt v1.8.3
+Key Store — PiQrypt v1.8.4
 
 Chiffrement et déchiffrement de la clé privée Ed25519 au repos.
 
@@ -315,7 +315,7 @@ def save_plaintext_key(private_key_bytes: bytes, path: Path) -> None:
 
     data = {
         "format":      "plaintext",
-        "version":     "1.8.3",
+        "version":     "1.8.4",
         "private_key": base64.b64encode(private_key_bytes).decode("ascii"),
         "warning":     "UNENCRYPTED — do not share or commit",
     }
@@ -372,7 +372,7 @@ def re_encrypt_key(
 ) -> None:
     """
     Rechiffre une clé avec une nouvelle passphrase.
-    Utile pour la migration v1.6.0 → v1.8.3.
+    Utile pour la migration v1.6.0 → v1.8.4.
 
     Args:
         path:           Fichier .enc ou JSON en clair

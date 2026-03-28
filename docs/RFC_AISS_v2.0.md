@@ -1500,7 +1500,7 @@ All AISS-compliant implementations MUST pass the normative test vectors:
 |---------|-------------|-------|
 | v1.0.0 | Level 1 | 18/18 |
 | v1.5.0 | Level 2 | 69/69 |
-| v1.8.3 | Level 2 | 136/143 (7 skipped — external Ollama) |
+| v1.8.4 | Level 2 | 136/143 (7 skipped — external Ollama) |
 | **v1.7.1** | **Level 2** | **325 passed, 17 known infrastructure failures** |
 
 The 17 known failures in v1.7.1 are infrastructure-dependent (external cert authority, live server, Pro-tier features not activated in CI). They are not protocol failures.

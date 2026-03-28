@@ -273,7 +273,7 @@ class StartupCheck:
 
     def print_report(self):
         print()
-        print(bold("PiQrypt Stack Launcher v1.8.3"))
+        print(bold("PiQrypt Stack Launcher v1.8.4"))
         print(dim(_SEP * 50))
         print(f"  Tier      : {bold(self.tier.upper())}")
         _vigil_str = (

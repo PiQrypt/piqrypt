@@ -403,7 +403,7 @@ def main():
     parser.add_argument("--interval",    type=int, default=20, help="Secondes entre cycles (défaut: 20)")  # noqa: E501
     args = parser.parse_args()
 
-    print(BOLD(CYAN("DemoLab Runner — PiQrypt v1.8.3 + Vigil + Trust Gate")))
+    print(BOLD(CYAN("DemoLab Runner — PiQrypt v1.8.4 + Vigil + Trust Gate")))
     print(DIM("─" * 60))
 
     if args.reset:

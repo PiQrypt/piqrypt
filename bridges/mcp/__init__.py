@@ -19,7 +19,7 @@ Usage:
     from piqrypt_mcp import AuditedMCPClient
 """
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __author__  = "PiQrypt Contributors"
 __license__ = "Apache-2.0"
 
@@ -31,6 +31,15 @@ try:
     import piqrypt as aiss
 except ImportError:
     raise ImportError("piqrypt is required. Install with: pip install piqrypt")
+
+# ── BridgeProtocol — contrat moteur AISS ──────────────────────────────────────
+try:
+    from aiss.bridge_protocol import BridgeProtocol, BridgeAction
+    _BRIDGE_PROTOCOL_AVAILABLE = True
+except ImportError:
+    BridgeProtocol = object
+    BridgeAction = None
+    _BRIDGE_PROTOCOL_AVAILABLE = False
 
 
 def _h(value: Any) -> str:
@@ -45,19 +54,24 @@ def _resolve_identity(identity_file, agent_name):
     return pq_priv, aiss.derive_agent_id(pq_pub)
 
 
-class AuditedMCPClient:
+class AuditedMCPClient(BridgeProtocol):
     """
     MCP client with PiQrypt cryptographic audit trail.
 
-    Every tool call, resource read, and prompt invocation is signed
-    with Ed25519, hash-chained, and stored in a tamper-proof audit trail.
+    v1.1.0 — BridgeProtocol intégré :
+        - Injection mémoire au démarrage (__aenter__)
+        - Gate TrustGate avant call_tool()
+        - read_resource() et get_prompt() : pas de gate (lecture seule)
 
     Usage:
         client = AuditedMCPClient(
             server_url="http://localhost:8000",
             identity_file="~/.piqrypt/agent.json",
+            agent_name="mcp_agent",
         )
         async with client:
+            # Bloc mémoire disponible après __aenter__ :
+            print(client.memory_context)
             result = await client.call_tool("search", {"query": "AAPL"})
     """
 
@@ -66,17 +80,39 @@ class AuditedMCPClient:
         server_url: str = "http://localhost:8000",
         identity_file: Optional[str] = None,
         agent_name: Optional[str] = None,
+        memory_depth: int = 10,
+        enable_gate: bool = True,
     ):
         self.server_url  = server_url
         self._priv, self.piqrypt_id = _resolve_identity(identity_file, agent_name)
         self._last_hash: Optional[str] = None
         self._event_count = 0
+        self._enable_gate = enable_gate
+
+        # Résolution nom agent
+        self._agent_name = agent_name or self.piqrypt_id[:16]
+
+        # BridgeProtocol
+        if _BRIDGE_PROTOCOL_AVAILABLE:
+            BridgeProtocol.__init__(
+                self,
+                agent_name=self._agent_name,
+                memory_depth=memory_depth,
+            )
+
+        # Bloc mémoire — chargé dans __aenter__ (contexte async)
+        self.memory_context: str = ""
 
     # ── Context manager ───────────────────────────────────────────────────────
 
     async def __aenter__(self):
+        # Injection mémoire au démarrage de la session MCP
+        if _BRIDGE_PROTOCOL_AVAILABLE:
+            self.memory_context = self.on_session_start()
+
         self._stamp("mcp_session_start", {
-            "server_hash": _h(self.server_url),
+            "server_hash":     _h(self.server_url),
+            "memory_injected": bool(self.memory_context),
         })
         return self
 
@@ -105,19 +141,53 @@ class AuditedMCPClient:
     # ── MCP operations ────────────────────────────────────────────────────────
 
     async def call_tool(self, tool_name: str, arguments: Dict[str, Any]) -> Any:
+        """
+        Call an MCP tool with PiQrypt audit trail.
+
+        v1.1.0 : gate TrustGate avant l'appel.
+        Les tool calls sont des actions — elles passent par le gate.
+        Lève RuntimeError si bloqué.
+        """
+        # ── Gate TrustGate ────────────────────────────────────────────────────
+        if self._enable_gate and _BRIDGE_PROTOCOL_AVAILABLE:
+            action = BridgeAction(
+                name=tool_name,
+                payload={"args_hash": _h(arguments)},
+            )
+            allowed = self.on_action_gate(action)
+            if not allowed:
+                self._stamp("mcp_tool_blocked", {
+                    "tool_name": tool_name,
+                    "args_hash": _h(arguments),
+                })
+                raise RuntimeError(
+                    f"[PiQrypt TrustGate] Tool '{tool_name}' bloqué. "
+                    f"Consultez le dashboard TrustGate (port 8422)."
+                )
+
+        # ── Appel (inchangé) ──────────────────────────────────────────────────
         self._stamp("mcp_tool_call", {
             "tool_name": tool_name,
             "args_hash": _h(arguments),
             "ts":        time.time(),
         })
         try:
-            # Delegate to actual MCP client if available
             result = await self._do_call_tool(tool_name, arguments)
             self._stamp("mcp_tool_result", {
                 "tool_name":   tool_name,
                 "result_hash": _h(result),
             })
+
+            # Delta mémoire après chaque tool call réussi
+            if _BRIDGE_PROTOCOL_AVAILABLE:
+                delta = self.on_session_update()
+                if delta:
+                    self.memory_context = delta
+
             return result
+        except RuntimeError:
+            # Re-raise sans stamp supplémentaire (déjà stamped)
+            raise
         except Exception as e:
             self._stamp("mcp_tool_error", {
                 "tool_name":  tool_name,
@@ -127,6 +197,10 @@ class AuditedMCPClient:
             raise
 
     async def read_resource(self, uri: str) -> Any:
+        """
+        Read an MCP resource.
+        Pas de gate — lecture seule, pas d'action irréversible.
+        """
         self._stamp("mcp_resource_read_start", {
             "uri_hash": _h(uri),
             "ts":       time.time(),
@@ -139,6 +213,10 @@ class AuditedMCPClient:
         return result
 
     async def get_prompt(self, name: str, arguments: Optional[Dict] = None) -> Any:
+        """
+        Get an MCP prompt.
+        Pas de gate — récupération de template, pas d'action.
+        """
         self._stamp("mcp_prompt_get", {
             "prompt_name": name,
             "args_hash":   _h(arguments or {}),
@@ -150,16 +228,22 @@ class AuditedMCPClient:
         })
         return result
 
-    # ── Override these in subclasses or inject a real MCP client ─────────────
+    # ── Override ces méthodes dans les sous-classes ───────────────────────────
 
     async def _do_call_tool(self, tool_name: str, arguments: Dict) -> Any:
-        raise NotImplementedError("Inject a real MCP client via subclass or composition")
+        raise NotImplementedError(
+            "Inject a real MCP client via subclass or composition"
+        )
 
     async def _do_read_resource(self, uri: str) -> Any:
-        raise NotImplementedError("Inject a real MCP client via subclass or composition")
+        raise NotImplementedError(
+            "Inject a real MCP client via subclass or composition"
+        )
 
     async def _do_get_prompt(self, name: str, arguments: Optional[Dict]) -> Any:
-        raise NotImplementedError("Inject a real MCP client via subclass or composition")
+        raise NotImplementedError(
+            "Inject a real MCP client via subclass or composition"
+        )
 
     # ── Inspection / export ───────────────────────────────────────────────────
 
@@ -176,7 +260,11 @@ class AuditedMCPClient:
         return path
 
     def __repr__(self):
-        return f"AuditedMCPClient(server={self.server_url!r}, id={self.piqrypt_id[:16]}...)"
+        return (
+            f"AuditedMCPClient("
+            f"server={self.server_url!r}, "
+            f"id={self.piqrypt_id[:16]}...)"
+        )
 
 
 def export_audit(path: str) -> str:

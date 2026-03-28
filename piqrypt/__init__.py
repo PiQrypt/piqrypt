@@ -6,7 +6,7 @@ PiQrypt -- Trust & Continuity Layer for Autonomous AI Agents
 AISS v2.0 Reference Implementation
 """
 
-__version__ = "1.8.3"
+__version__ = "1.8.4"
 __author__ = "PiQrypt Inc."
 __email__ = "contact@piqrypt.com"
 __license__ = "Elastic-2.0"

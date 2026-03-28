@@ -8,7 +8,7 @@
 # Commercial license: contact@piqrypt.com
 
 """
-Agent Registry — PiQrypt v1.8.3
+Agent Registry — PiQrypt v1.8.4
 
 Registre central des agents PiQrypt installés sur la machine.
 Gère la résolution des répertoires, la création des structures,
@@ -20,7 +20,7 @@ Stockage :
 
     Répertoire agent :
         identity.json              ← document identité public
-        private.key.enc            ← clé privée chiffrée (v1.8.3)
+        private.key.enc            ← clé privée chiffrée (v1.8.4)
         private.key.json           ← clé privée en clair (legacy / Free sans passphrase)
         events/plain/              ← événements Free tier
         events/encrypted/          ← événements Pro tier
@@ -156,7 +156,7 @@ def _load_registry() -> Dict[str, Any]:
     PIQRYPT_DIR.mkdir(parents=True, exist_ok=True)
 
     if not REGISTRY_FILE.exists():
-        return {"version": "1.8.3", "agents": {}}
+        return {"version": "1.8.4", "agents": {}}
 
     try:
         data = json.loads(REGISTRY_FILE.read_text())
@@ -165,7 +165,7 @@ def _load_registry() -> Dict[str, Any]:
         return data
     except Exception as e:
         logger.warning(f"[Registry] Fichier registre illisible : {e} — reset")
-        return {"version": "1.8.3", "agents": {}}
+        return {"version": "1.8.4", "agents": {}}
 
 
 def _save_registry(data: Dict[str, Any]) -> None:
@@ -203,7 +203,7 @@ def register_agent(
             "created_at", now
         ),
         "last_seen":  now,
-        "version":    "1.8.3",
+        "version":    "1.8.4",
     }
 
     if metadata:

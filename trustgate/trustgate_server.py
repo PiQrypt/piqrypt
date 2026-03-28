@@ -1044,7 +1044,7 @@ def main():
     _lic_exp    = _tier_inf.get("license_expires")
 
     print(f"\n{'━'*56}")
-    print("  Trust Gate HTTP Server v1.8.3")
+    print("  Trust Gate HTTP Server v1.8.4")
     print(f"  Listening on http://{args.host}:{args.port}")
     print(f"  Policy     : {args.policy}")
     print(f"  Demo mode  : {args.demo}")

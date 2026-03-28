@@ -7,11 +7,11 @@
 
 """
 piqrypt-ollama — PiQrypt bridge for Ollama
-==========================================
 
-Adds cryptographic audit trails to Ollama local LLM calls.
-Every generate() and chat() call is signed with Ed25519,
-hash-chained, and tamper-proof.
+v1.1.0 — BridgeProtocol intégré :
+    - Injection mémoire au démarrage
+    - Gate TrustGate avant generate() et chat()
+    - Delta mémoire après chaque appel
 
 Install:
     pip install piqrypt-ollama
@@ -22,30 +22,17 @@ Usage:
     llm = AuditedOllama(
         model="llama3.2",
         identity_file="my_agent.json",
+        agent_name="my_agent",
     )
+    # Bloc mémoire disponible pour le system prompt :
+    system_prompt = BASE_PROMPT + llm.memory_context
 
-    # generate
     response = llm.generate("What is the capital of France?")
-    print(response["response"])
-
-    # chat
-    response = llm.chat([
-        {"role": "user", "content": "Hello!"}
-    ])
-    print(response["message"]["content"])
-
-    # streaming
-    for chunk in llm.generate("Tell me a story", stream=True):
-        print(chunk["response"], end="", flush=True)
-
-    # tool use
-    response = llm.chat_with_tools(messages, tools, dispatcher)
-
-    # export audit trail
+    response = llm.chat([{"role": "user", "content": "Hello!"}])
     llm.export_audit("ollama_audit.json")
 """
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __author__  = "PiQrypt Contributors"
 __license__ = "Apache-2.0"
 
@@ -69,6 +56,15 @@ except ImportError:
         "ollama is required. Install with: pip install ollama>=0.1.0"
     )
 
+# ── BridgeProtocol — contrat moteur AISS ──────────────────────────────────────
+try:
+    from aiss.bridge_protocol import BridgeProtocol, BridgeAction
+    _BRIDGE_PROTOCOL_AVAILABLE = True
+except ImportError:
+    BridgeProtocol = object
+    BridgeAction = None
+    _BRIDGE_PROTOCOL_AVAILABLE = False
+
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -78,13 +74,11 @@ def _h(value: Any) -> str:
 
 
 def _load_identity(identity_file: str):
-    """Load a PiQrypt identity from a .json file."""
     identity = aiss.load_identity(identity_file)
     return identity["private_key_bytes"], identity["agent_id"]
 
 
 def _resolve_identity(identity_file, private_key, agent_id):
-    """Resolve PiQrypt identity — file, explicit keys, or ephemeral."""
     if identity_file:
         return _load_identity(identity_file)
     elif private_key and agent_id:
@@ -96,47 +90,39 @@ def _resolve_identity(identity_file, private_key, agent_id):
 
 # ── AuditedOllama ─────────────────────────────────────────────────────────────
 
-class AuditedOllama:
+class AuditedOllama(BridgeProtocol):
     """
     Ollama LLM client with PiQrypt cryptographic audit trail.
 
-    Drop-in replacement for ollama.Client — every generate() and chat()
-    call is Ed25519-signed, hash-chained, and stored locally.
+    v1.1.0 — BridgeProtocol intégré :
+        - Injection mémoire au démarrage (memory_context)
+        - Gate TrustGate avant generate() et chat()
+        - Delta mémoire après chaque inférence
 
     Parameters
     ----------
     model : str
-        Ollama model name — "llama3.2", "mistral", "phi3", "gemma3", etc.
+        Ollama model name — "llama3.2", "mistral", "phi3", etc.
     identity_file : str, optional
         Path to PiQrypt identity JSON.
-        If None, an ephemeral identity is generated (not persisted).
-    private_key : bytes, optional
-        Explicit Ed25519 private key bytes (alternative to identity_file).
-    agent_id : str, optional
-        Explicit agent ID (required if private_key is provided).
     agent_name : str, optional
-        Human-readable name in audit events. Defaults to model name.
+        Human-readable name. Defaults to model name.
     host : str
         Ollama server URL. Default: http://localhost:11434
     tier : str
-        "free" or "pro". Pro enables TSA anchoring.
+        "free" or "pro".
+    inject_memory : bool
+        Injecter la mémoire au démarrage. Default: True.
+    memory_depth : int
+        Nombre d'events récents à injecter. Default: 10.
+    enable_gate : bool
+        Activer le gate TrustGate. Default: True.
     stamp_prompts : bool
         Include SHA-256 of prompts in audit events. Default: True.
-        Set False for sensitive prompts — responses are still audited.
     stamp_responses : bool
         Include SHA-256 of responses in audit events. Default: True.
     vigil_endpoint : str, optional
         Vigil server URL for live monitoring.
-        e.g. "http://localhost:8421"
-
-    Examples
-    --------
-    >>> llm = AuditedOllama(model="llama3.2", identity_file="agent.json")
-    >>> r = llm.generate("What is 2+2?")
-    >>> print(r["response"])
-
-    >>> for chunk in llm.generate("Tell me a story", stream=True):
-    ...     print(chunk["response"], end="")
     """
 
     def __init__(
@@ -148,37 +134,58 @@ class AuditedOllama:
         agent_name: Optional[str] = None,
         host: str = "http://localhost:11434",
         tier: str = "free",
+        inject_memory: bool = True,
+        memory_depth: int = 10,
+        enable_gate: bool = True,
         stamp_prompts: bool = True,
         stamp_responses: bool = True,
         vigil_endpoint: Optional[str] = None,
     ):
         self.model           = model
-        self.agent_name      = agent_name or model.replace(":", "_")
         self.tier            = tier
         self.stamp_prompts   = stamp_prompts
         self.stamp_responses = stamp_responses
         self.vigil_endpoint  = vigil_endpoint.rstrip("/") if vigil_endpoint else None
         self._last_hash: Optional[str] = None
+        self._enable_gate = enable_gate
 
-        # Identity
+        # ── Identité cryptographique ──────────────────────────────────────────
         self._pq_key, self._pq_id = _resolve_identity(
             identity_file, private_key, agent_id
         )
 
-        # Ollama client
+        # ── Résolution nom agent ──────────────────────────────────────────────
+        self.agent_name = agent_name or model.replace(":", "_")
+
+        # ── Ollama client ─────────────────────────────────────────────────────
         self._client = OllamaClient(host=host)
 
-        # Stamp initialization
+        # ── BridgeProtocol ────────────────────────────────────────────────────
+        if _BRIDGE_PROTOCOL_AVAILABLE:
+            BridgeProtocol.__init__(
+                self,
+                agent_name=self.agent_name,
+                memory_depth=memory_depth,
+            )
+
+        # ── Injection mémoire au démarrage ────────────────────────────────────
+        # Disponible via llm.memory_context pour injection dans le system prompt
+        self.memory_context: str = ""
+        if inject_memory and _BRIDGE_PROTOCOL_AVAILABLE:
+            self.memory_context = self.on_session_start()
+
+        # ── Event de démarrage (inchangé) ─────────────────────────────────────
         self._stamp("agent_initialized", {
-            "model":        model,
-            "agent_name":   self.agent_name,
-            "tier":         tier,
-            "host":         host,
-            "framework":    "ollama",
-            "aiss_profile": "AISS-1",
+            "model":           model,
+            "agent_name":      self.agent_name,
+            "tier":            tier,
+            "host":            host,
+            "framework":       "ollama",
+            "memory_injected": bool(self.memory_context),
+            "aiss_profile":    "AISS-1",
         })
 
-    # ── Internal stamp ─────────────────────────────────────────────────────────
+    # ── Internal stamp (inchangé) ─────────────────────────────────────────────
 
     def _stamp(self, event_type: str, payload: Dict) -> Dict:
         """Sign, chain and store one audit event."""
@@ -203,35 +210,52 @@ class AuditedOllama:
         """Non-blocking forward to Vigil server. Never raises."""
         try:
             import urllib.request
-            body = json.dumps(event, default=str).encode()
+            data = json.dumps(event).encode("utf-8")
             req  = urllib.request.Request(
                 f"{self.vigil_endpoint}/api/agent/{self.agent_name}/record",
-                data=body,
+                data=data,
                 headers={"Content-Type": "application/json"},
                 method="POST",
             )
-            urllib.request.urlopen(req, timeout=1)
+            urllib.request.urlopen(req, timeout=0.5)
         except Exception:
             pass
 
-    # ── generate() ─────────────────────────────────────────────────────────────
+    # ── generate() — GATE TRUSTGATE ──────────────────────────────────────────
 
     def generate(
         self,
         prompt: str,
         *,
         stream: bool = False,
-        options: Optional[Dict] = None,
         system: Optional[str] = None,
         template: Optional[str] = None,
-        context: Optional[List[int]] = None,
+        context: Optional[List] = None,
+        options: Optional[Dict] = None,
         keep_alive: Optional[Union[str, int]] = None,
         **kwargs,
     ) -> Union[Dict, Generator]:
         """
-        Generate a completion — mirrors ollama.generate() exactly.
-        Returns raw Ollama response (or generator for stream=True).
+        Generate completion with PiQrypt audit trail.
+        v1.1.0 : gate TrustGate avant génération.
         """
+        # ── Gate TrustGate ────────────────────────────────────────────────────
+        if self._enable_gate and _BRIDGE_PROTOCOL_AVAILABLE:
+            action = BridgeAction(
+                name="ollama_generate",
+                payload={"prompt_hash": _h(prompt), "model": self.model},
+            )
+            if not self.on_action_gate(action):
+                self._stamp("ollama_generate_blocked", {
+                    "prompt_hash": _h(prompt),
+                    "model":       self.model,
+                })
+                raise RuntimeError(
+                    f"[PiQrypt TrustGate] generate() bloqué pour '{self.agent_name}'. "
+                    f"Consultez le dashboard TrustGate (port 8422)."
+                )
+
+        # ── Appel (inchangé) ──────────────────────────────────────────────────
         call_kwargs = {
             k: v for k, v in dict(
                 model=self.model, prompt=prompt, stream=stream,
@@ -256,7 +280,13 @@ class AuditedOllama:
         if stream:
             return self._gen_stream(call_kwargs, t0)
         else:
-            return self._gen_sync(call_kwargs, t0)
+            result = self._gen_sync(call_kwargs, t0)
+            # Delta mémoire après inférence
+            if _BRIDGE_PROTOCOL_AVAILABLE:
+                delta = self.on_session_update()
+                if delta:
+                    self.memory_context = delta
+            return result
 
     def _gen_sync(self, kwargs: Dict, t0: float) -> Dict:
         response = self._client.generate(**kwargs)
@@ -291,7 +321,7 @@ class AuditedOllama:
             result["response_hash"] = _h("".join(chunks))
         self._stamp("ollama_generate_stream_complete", result)
 
-    # ── chat() ─────────────────────────────────────────────────────────────────
+    # ── chat() — GATE TRUSTGATE ───────────────────────────────────────────────
 
     def chat(
         self,
@@ -304,9 +334,29 @@ class AuditedOllama:
         **kwargs,
     ) -> Union[Dict, Generator]:
         """
-        Chat completion — mirrors ollama.chat() exactly.
-        Every turn is signed and chained.
+        Chat completion with PiQrypt audit trail.
+        v1.1.0 : gate TrustGate avant génération.
         """
+        # ── Gate TrustGate ────────────────────────────────────────────────────
+        if self._enable_gate and _BRIDGE_PROTOCOL_AVAILABLE:
+            action = BridgeAction(
+                name="ollama_chat",
+                payload={
+                    "messages_hash": _h(json.dumps(messages, default=str)),
+                    "model":         self.model,
+                },
+            )
+            if not self.on_action_gate(action):
+                self._stamp("ollama_chat_blocked", {
+                    "messages_hash": _h(json.dumps(messages, default=str)),
+                    "model":         self.model,
+                })
+                raise RuntimeError(
+                    f"[PiQrypt TrustGate] chat() bloqué pour '{self.agent_name}'. "
+                    f"Consultez le dashboard TrustGate (port 8422)."
+                )
+
+        # ── Appel (inchangé) ──────────────────────────────────────────────────
         call_kwargs = {
             k: v for k, v in dict(
                 model=self.model, messages=messages, stream=stream,
@@ -330,7 +380,13 @@ class AuditedOllama:
         if stream:
             return self._chat_stream(call_kwargs, t0)
         else:
-            return self._chat_sync(call_kwargs, t0)
+            result = self._chat_sync(call_kwargs, t0)
+            # Delta mémoire après inférence
+            if _BRIDGE_PROTOCOL_AVAILABLE:
+                delta = self.on_session_update()
+                if delta:
+                    self.memory_context = delta
+            return result
 
     def _chat_sync(self, kwargs: Dict, t0: float) -> Dict:
         response = self._client.chat(**kwargs)
@@ -362,7 +418,7 @@ class AuditedOllama:
             result["response_hash"] = _h("".join(chunks))
         self._stamp("ollama_chat_stream_complete", result)
 
-    # ── chat_with_tools() ──────────────────────────────────────────────────────
+    # ── chat_with_tools() (inchangé) ──────────────────────────────────────────
 
     def chat_with_tools(
         self,
@@ -371,38 +427,16 @@ class AuditedOllama:
         tool_dispatcher: Optional[Callable[[str, Dict], str]] = None,
         max_rounds: int = 10,
     ) -> Dict:
-        """
-        Multi-turn tool use loop — each tool call and result is stamped.
-
-        Parameters
-        ----------
-        messages : list
-            Initial message list.
-        tools : list
-            Ollama tool definitions.
-        tool_dispatcher : callable(name, args) -> str, optional
-            Executes tool calls. If None, calls are stamped but not run.
-        max_rounds : int
-            Maximum tool call iterations before stopping.
-
-        Returns
-        -------
-        dict : final Ollama response
-        """
-        rounds = 0
+        """Multi-turn tool use loop — each tool call and result is stamped."""
+        rounds  = 0
         history = list(messages)
 
         while rounds < max_rounds:
-            response = self._client.chat(
-                model=self.model,
-                messages=history,
-                tools=tools,
-            )
-            rounds += 1
+            response   = self._client.chat(model=self.model, messages=history, tools=tools)
+            rounds    += 1
             tool_calls = response.get("message", {}).get("tool_calls") or []
 
             if not tool_calls:
-                # Final answer — stamp and return
                 final: Dict = {"model": self.model, "rounds": rounds}
                 if self.stamp_responses:
                     content = response.get("message", {}).get("content", "")
@@ -410,7 +444,6 @@ class AuditedOllama:
                 self._stamp("ollama_tool_final_answer", final)
                 return response
 
-            # Stamp each tool call
             history.append(response["message"])
             for tc in tool_calls:
                 fn   = tc.get("function", {})
@@ -421,8 +454,6 @@ class AuditedOllama:
                     "args_hash": _h(args),
                     "round":     rounds,
                 })
-
-                # Execute and stamp result
                 if tool_dispatcher:
                     try:
                         result = str(tool_dispatcher(name, args))
@@ -437,7 +468,7 @@ class AuditedOllama:
 
         return response
 
-    # ── Convenience ────────────────────────────────────────────────────────────
+    # ── Convenience (inchangé) ────────────────────────────────────────────────
 
     def stamp_event(self, event_type: str, payload: Optional[Dict] = None) -> Dict:
         """Stamp an arbitrary custom event into the audit chain."""
@@ -450,12 +481,10 @@ class AuditedOllama:
 
     @property
     def piqrypt_id(self) -> str:
-        """This agent's PiQrypt identity (agent_id)."""
         return self._pq_id
 
     @property
     def last_event_hash(self) -> Optional[str]:
-        """Hash of the last stamped event — chain tip."""
         return self._last_hash
 
     def __repr__(self) -> str:
@@ -468,7 +497,7 @@ class AuditedOllama:
         )
 
 
-# ── stamp_ollama decorator ─────────────────────────────────────────────────────
+# ── stamp_ollama decorator (inchangé) ─────────────────────────────────────────
 
 def stamp_ollama(
     task_name: str,
@@ -476,15 +505,7 @@ def stamp_ollama(
     private_key: Optional[bytes] = None,
     agent_id: Optional[str] = None,
 ):
-    """
-    Decorator — stamp any function that wraps Ollama with PiQrypt proof.
-
-    Usage:
-        @stamp_ollama("summarize", identity_file="agent.json")
-        def summarize(text: str) -> str:
-            r = ollama.generate(model="llama3.2", prompt=f"Summarize: {text}")
-            return r["response"]
-    """
+    """Decorator — stamp any function that wraps Ollama with PiQrypt proof."""
     def decorator(func: Callable) -> Callable:
         _key, _id = _resolve_identity(identity_file, private_key, agent_id)
 
@@ -497,9 +518,7 @@ def stamp_ollama(
                 "aiss_profile": "AISS-1",
             })
             aiss.store_event(start_event)
-
             result = func(*args, **kwargs)
-
             aiss.store_event(aiss.stamp_event(_key, _id, {
                 "event_type":          f"{task_name}_complete",
                 "result_hash":         _h(result),
@@ -512,15 +531,13 @@ def stamp_ollama(
     return decorator
 
 
-# ── Module-level export helper ─────────────────────────────────────────────────
+# ── Module-level export helper (inchangé) ────────────────────────────────────
 
 def export_audit(output_path: str = "ollama_audit.json") -> str:
     """Export full audit trail for all Ollama events in this session."""
     aiss.export_audit_chain(output_path)
     return output_path
 
-
-# ── Public API ─────────────────────────────────────────────────────────────────
 
 __all__ = [
     "AuditedOllama",

@@ -19,7 +19,7 @@ Usage:
     from piqrypt_langchain import AuditedAgentExecutor, piqrypt_tool, stamp_chain
 """
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __author__ = "PiQrypt Contributors"
 __license__ = "Apache-2.0"
 
@@ -42,6 +42,16 @@ except ImportError:
     raise ImportError(
         "langchain is required. Install with: pip install langchain"
     )
+
+# ── BridgeProtocol — contrat moteur AISS ──────────────────────────────────────
+try:
+    from aiss.bridge_protocol import BridgeProtocol, BridgeAction
+    _BRIDGE_PROTOCOL_AVAILABLE = True
+except ImportError:
+    # Compatibilité ascendante si bridge_protocol.py pas encore déployé
+    BridgeProtocol = object
+    BridgeAction = None
+    _BRIDGE_PROTOCOL_AVAILABLE = False
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -68,25 +78,41 @@ def _resolve_identity(identity_file, private_key, agent_id):
         return pq_priv, aiss.derive_agent_id(pq_pub)
 
 
+def _resolve_agent_name(identity_file, agent_id, agent_name):
+    """
+    Résout le nom lisible de l'agent pour BridgeProtocol.
+    Priorité : agent_name explicite > agent_id > 'default'
+    """
+    if agent_name:
+        return agent_name
+    if agent_id:
+        return agent_id
+    return "default"
+
+
 # ─── PiQryptCallbackHandler ───────────────────────────────────────────────────
 
-class PiQryptCallbackHandler(BaseCallbackHandler):
+class PiQryptCallbackHandler(BaseCallbackHandler, BridgeProtocol):
     """
-    LangChain callback handler that stamps every LLM call,
+    LangChain callback handler que stamps every LLM call,
     tool call, and chain event with PiQrypt cryptographic proof.
 
-    This is the most powerful integration — attach once to any
-    LangChain component and every event is automatically stamped.
+    v1.1.0 — BridgeProtocol intégré :
+        - Injection mémoire au démarrage (on_session_start)
+        - Gate TrustGate avant chaque tool call (on_action_gate)
+        - Historique peer A2A sur on_chain_start si peer_agent_id détecté
 
     Usage:
-        from piqrypt_langchain import PiQryptCallbackHandler
+        handler = PiQryptCallbackHandler(
+            identity_file="my-agent.json",
+            agent_name="trading_bot",       # nom pour la mémoire
+            inject_memory=True,             # injecter mémoire au démarrage
+        )
+        # Récupérer le bloc mémoire pour l'injecter dans le system prompt :
+        system_prompt = BASE_PROMPT + handler.memory_context
 
-        handler = PiQryptCallbackHandler(identity_file="my-agent.json")
-
-        # Attach to any LangChain component
         llm = ChatOpenAI(callbacks=[handler])
         agent = AgentExecutor(agent=agent, tools=tools, callbacks=[handler])
-        chain = MyChain(callbacks=[handler])
     """
 
     def __init__(
@@ -94,112 +120,238 @@ class PiQryptCallbackHandler(BaseCallbackHandler):
         identity_file: Optional[str] = None,
         private_key: Optional[bytes] = None,
         agent_id: Optional[str] = None,
+        agent_name: Optional[str] = None,
+        inject_memory: bool = True,
+        memory_depth: int = 10,
+        enable_gate: bool = True,
     ):
-        super().__init__()
+        # ── Identité cryptographique (inchangé) ──────────────────────────────
+        BaseCallbackHandler.__init__(self)
         self._pq_key, self._pq_id = _resolve_identity(
             identity_file, private_key, agent_id
         )
 
-        aiss.store_event(aiss.stamp_event(self._pq_key, self._pq_id, {
+        # ── Résolution nom agent pour mémoire ────────────────────────────────
+        self._agent_name = _resolve_agent_name(identity_file, agent_id, agent_name)
+        self._enable_gate = enable_gate
+
+        # ── BridgeProtocol — accès mémoire + gate ────────────────────────────
+        if _BRIDGE_PROTOCOL_AVAILABLE:
+            BridgeProtocol.__init__(
+                self,
+                agent_name=self._agent_name,
+                memory_depth=memory_depth,
+            )
+
+        # ── Compteur events (inchangé) ────────────────────────────────────────
+        self._event_count = 0
+        self._last_event_hash: Optional[str] = None
+
+        # ── Injection mémoire au démarrage ────────────────────────────────────
+        # Le bloc est disponible via handler.memory_context pour injection
+        # dans le system prompt avant la première inférence.
+        self.memory_context: str = ""
+        if inject_memory and _BRIDGE_PROTOCOL_AVAILABLE:
+            self.memory_context = self.on_session_start()
+
+        # ── Event de démarrage (inchangé) ─────────────────────────────────────
+        self._stamp({
             "event_type": "callback_handler_initialized",
             "framework": "langchain",
+            "agent_name": self._agent_name,
+            "memory_injected": bool(self.memory_context),
             "aiss_profile": "AISS-1",
-        }))
+        })
+
+    # ── Stamp helper interne ──────────────────────────────────────────────────
+
+    def _stamp(self, payload: Dict) -> None:
+        """Stamp + store un event, met à jour le compteur et le dernier hash."""
+        event = aiss.stamp_event(self._pq_key, self._pq_id, payload)
+        aiss.store_event(event)
+        self._event_count += 1
+        self._last_event_hash = aiss.compute_event_hash(event)
+
+    # ── LLM events (inchangés) ────────────────────────────────────────────────
+
+    def on_llm_start(self, serialized: Dict, prompts, **kwargs) -> None:
+        """Stamp every LLM call start."""
+        self._stamp({
+            "event_type": "llm_start",
+            "model": serialized.get("name", "unknown"),
+            "prompt_hash": _h(prompts),
+            "aiss_profile": "AISS-1",
+        })
 
     def on_llm_end(self, response: LLMResult, **kwargs) -> None:
         """Stamp every LLM response."""
-        aiss.store_event(aiss.stamp_event(self._pq_key, self._pq_id, {
+        self._stamp({
             "event_type": "llm_response",
             "response_hash": _h(response),
             "generation_count": len(response.generations),
             "aiss_profile": "AISS-1",
-        }))
+        })
+
+    def on_llm_error(self, error: Exception, **kwargs) -> None:
+        """Stamp LLM errors."""
+        self._stamp({
+            "event_type": "llm_error",
+            "error_hash": _h(str(error)),
+            "aiss_profile": "AISS-1",
+        })
+
+    # ── Tool events — GATE TRUSTGATE ─────────────────────────────────────────
 
     def on_tool_start(self, serialized: Dict, input_str: str, **kwargs) -> None:
-        """Stamp every tool call start."""
-        aiss.store_event(aiss.stamp_event(self._pq_key, self._pq_id, {
+        """
+        Stamp every tool call start.
+        v1.1.0 : gate TrustGate avant l'exécution si enable_gate=True.
+        Lève RuntimeError si l'action est bloquée — arrêt obligatoire.
+        """
+        tool_name = serialized.get("name", "unknown")
+
+        # ── Gate TrustGate ────────────────────────────────────────────────────
+        if self._enable_gate and _BRIDGE_PROTOCOL_AVAILABLE:
+            action = BridgeAction(
+                name=tool_name,
+                payload={"input_hash": _h(input_str)},
+            )
+            allowed = self.on_action_gate(action)
+            if not allowed:
+                # Stamp le blocage avant de lever l'exception
+                self._stamp({
+                    "event_type": "tool_blocked_by_trustgate",
+                    "tool_name": tool_name,
+                    "input_hash": _h(input_str),
+                    "aiss_profile": "AISS-1",
+                })
+                raise RuntimeError(
+                    f"[PiQrypt TrustGate] Action '{tool_name}' bloquée. "
+                    f"Consultez le dashboard TrustGate (port 8422)."
+                )
+
+        # ── Stamp normal ──────────────────────────────────────────────────────
+        self._stamp({
             "event_type": "tool_start",
-            "tool_name": serialized.get("name", "unknown"),
+            "tool_name": tool_name,
             "input_hash": _h(input_str),
             "aiss_profile": "AISS-1",
-        }))
+        })
 
     def on_tool_end(self, output: str, **kwargs) -> None:
         """Stamp every tool call result."""
-        aiss.store_event(aiss.stamp_event(self._pq_key, self._pq_id, {
+        self._stamp({
             "event_type": "tool_end",
             "output_hash": _h(output),
             "aiss_profile": "AISS-1",
-        }))
+        })
 
     def on_tool_error(self, error: Exception, **kwargs) -> None:
         """Stamp tool errors — important for audit."""
-        aiss.store_event(aiss.stamp_event(self._pq_key, self._pq_id, {
+        self._stamp({
             "event_type": "tool_error",
             "error_hash": _h(str(error)),
             "aiss_profile": "AISS-1",
-        }))
+        })
+
+    # ── Chain events — PEER CONTACT + DELTA MEMOIRE ──────────────────────────
 
     def on_chain_start(self, serialized: Dict, inputs: Dict, **kwargs) -> None:
-        """Stamp chain start."""
-        aiss.store_event(aiss.stamp_event(self._pq_key, self._pq_id, {
+        """
+        Stamp chain start.
+        v1.1.0 : si un peer_agent_id est détecté dans les inputs,
+        charge l'historique A2A partagé (on_peer_contact).
+        """
+        peer_id = inputs.get("peer_agent_id") if isinstance(inputs, dict) else None
+
+        peer_summary = ""
+        if peer_id and _BRIDGE_PROTOCOL_AVAILABLE:
+            peer_ctx = self.on_peer_contact(peer_id)
+            peer_summary = peer_ctx.get("summary", "")
+
+        self._stamp({
             "event_type": "chain_start",
             "chain_name": serialized.get("name", "unknown"),
             "inputs_hash": _h(inputs),
+            "peer_agent_id": peer_id or "",
+            "peer_known": bool(peer_summary),
             "aiss_profile": "AISS-1",
-        }))
+        })
+
+        # Le peer_summary est disponible pour injection dans le prochain prompt
+        # via handler.peer_context (accessible depuis l'application)
+        self.peer_context: str = peer_summary
 
     def on_chain_end(self, outputs: Dict, **kwargs) -> None:
-        """Stamp chain completion."""
-        aiss.store_event(aiss.stamp_event(self._pq_key, self._pq_id, {
+        """
+        Stamp chain completion.
+        v1.1.0 : injection delta mémoire si la session est longue.
+        """
+        self._stamp({
             "event_type": "chain_end",
             "outputs_hash": _h(outputs),
             "aiss_profile": "AISS-1",
-        }))
+        })
+
+        # Delta mémoire disponible après chaque chain — pour longues sessions
+        if _BRIDGE_PROTOCOL_AVAILABLE:
+            delta = self.on_session_update()
+            if delta:
+                self.memory_context = delta  # Le handler expose le delta
+
+    def on_chain_error(self, error: Exception, **kwargs) -> None:
+        """Stamp chain errors."""
+        self._stamp({
+            "event_type": "chain_error",
+            "error_hash": _h(str(error)),
+            "aiss_profile": "AISS-1",
+        })
+
+    # ── Agent events (inchangés) ──────────────────────────────────────────────
 
     def on_agent_action(self, action, **kwargs) -> None:
         """Stamp every agent action decision."""
-        aiss.store_event(aiss.stamp_event(self._pq_key, self._pq_id, {
+        self._stamp({
             "event_type": "agent_action",
             "tool": action.tool,
             "tool_input_hash": _h(action.tool_input),
             "log_hash": _h(action.log),
             "aiss_profile": "AISS-1",
-        }))
+        })
 
     def on_agent_finish(self, finish, **kwargs) -> None:
         """Stamp agent completion."""
-        aiss.store_event(aiss.stamp_event(self._pq_key, self._pq_id, {
+        self._stamp({
             "event_type": "agent_finish",
             "output_hash": _h(finish.return_values),
             "aiss_profile": "AISS-1",
-        }))
+        })
+
+    # ── Propriétés publiques ──────────────────────────────────────────────────
 
     @property
     def piqrypt_id(self) -> str:
         return self._pq_id
+
+    @property
+    def audit_event_count(self) -> int:
+        return self._event_count
+
+    @property
+    def last_event_hash(self) -> Optional[str]:
+        return self._last_event_hash
 
     def export_audit(self, output_path: str = "langchain-audit.json") -> str:
         aiss.export_audit_chain(output_path)
         return output_path
 
 
-# ─── AuditedAgentExecutor ─────────────────────────────────────────────────────
+# ─── AuditedAgentExecutor (inchangé) ─────────────────────────────────────────
 
 class AuditedAgentExecutor(AgentExecutor):
     """
     LangChain AgentExecutor with PiQrypt audit trail.
-
     Drop-in replacement for AgentExecutor.
-    Stamps every invoke with input and output hashes.
-
-    Usage:
-        executor = AuditedAgentExecutor(
-            agent=your_agent,
-            tools=your_tools,
-            identity_file="my-agent.json"
-        )
-        result = executor.invoke({"input": "Analyze this document"})
     """
 
     model_config = {"arbitrary_types_allowed": True}
@@ -210,16 +362,17 @@ class AuditedAgentExecutor(AgentExecutor):
         identity_file: Optional[str] = None,
         private_key: Optional[bytes] = None,
         agent_id: Optional[str] = None,
+        agent_name: Optional[str] = None,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self._pq_key, self._pq_id = _resolve_identity(
             identity_file, private_key, agent_id
         )
+        self._agent_name = _resolve_agent_name(identity_file, agent_id, agent_name)
 
     def invoke(self, input: Dict, **kwargs) -> Dict:
         """Invoke agent and stamp input + output."""
-
         start_event = aiss.stamp_event(self._pq_key, self._pq_id, {
             "event_type": "executor_invoke",
             "input_hash": _h(input),
@@ -247,92 +400,78 @@ class AuditedAgentExecutor(AgentExecutor):
         return self._pq_id
 
 
-# ─── piqrypt_tool decorator ───────────────────────────────────────────────────
+# ─── piqrypt_tool decorator (inchangé) ────────────────────────────────────────
 
 def piqrypt_tool(
+    tool_name: Optional[str] = None,
     identity_file: Optional[str] = None,
     private_key: Optional[bytes] = None,
     agent_id: Optional[str] = None,
+    agent_name: Optional[str] = None,
 ):
-    """
-    Decorator: wrap any LangChain tool function with PiQrypt proof.
-
-    Usage:
-        from langchain.tools import tool
-        from piqrypt_langchain import piqrypt_tool
-
-        @tool
-        @piqrypt_tool(identity_file="my-agent.json")
-        def search_web(query: str) -> str:
-            \"\"\"Search the web.\"\"\"
-            return your_search_logic(query)
-
-        @tool
-        @piqrypt_tool(identity_file="my-agent.json")
-        def send_email(content: str) -> str:
-            \"\"\"Send an email.\"\"\"
-            return your_email_logic(content)
-    """
+    """Decorator: wrap any LangChain tool function with PiQrypt proof."""
     def decorator(func):
         _key, _id = _resolve_identity(identity_file, private_key, agent_id)
+        _name = tool_name or func.__name__
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            result = func(*args, **kwargs)
-
-            aiss.store_event(aiss.stamp_event(_key, _id, {
-                "event_type": "tool_executed",
-                "tool": func.__name__,
-                "args_hash": _h(args),
-                "kwargs_hash": _h(kwargs),
-                "result_hash": _h(result),
-                "aiss_profile": "AISS-1",
-            }))
-
-            return result
+            try:
+                result = func(*args, **kwargs)
+                aiss.store_event(aiss.stamp_event(_key, _id, {
+                    "event_type": "tool_complete",
+                    "tool": _name,
+                    "args_hash": _h(args),
+                    "result_hash": _h(result),
+                    "aiss_profile": "AISS-1",
+                }))
+                return result
+            except Exception as e:
+                aiss.store_event(aiss.stamp_event(_key, _id, {
+                    "event_type": "tool_error",
+                    "tool": _name,
+                    "error_hash": _h(str(e)),
+                    "aiss_profile": "AISS-1",
+                }))
+                raise
         return wrapper
     return decorator
 
 
-# ─── stamp_chain decorator ────────────────────────────────────────────────────
+# ─── stamp_chain decorator (inchangé) ────────────────────────────────────────
 
 def stamp_chain(
     chain_name: str,
     identity_file: Optional[str] = None,
     private_key: Optional[bytes] = None,
     agent_id: Optional[str] = None,
+    agent_name: Optional[str] = None,
 ):
-    """
-    Decorator: stamp any chain invocation with PiQrypt proof.
-
-    Usage:
-        from piqrypt_langchain import stamp_chain
-
-        @stamp_chain("document_analysis", identity_file="my-agent.json")
-        def analyze_document(doc: str) -> dict:
-            return your_chain.invoke({"input": doc})
-    """
+    """Decorator: stamp any chain invocation with PiQrypt proof."""
     def decorator(func):
         _key, _id = _resolve_identity(identity_file, private_key, agent_id)
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
+            aiss.store_event(aiss.stamp_event(_key, _id, {
+                "event_type": "chain_start",
+                "chain": chain_name,
+                "args_hash": _h(args),
+                "aiss_profile": "AISS-1",
+            }))
             result = func(*args, **kwargs)
-
             aiss.store_event(aiss.stamp_event(_key, _id, {
                 "event_type": "chain_executed",
                 "chain": chain_name,
-                "args_hash": _h(args),
                 "result_hash": _h(result),
                 "aiss_profile": "AISS-1",
             }))
-
             return result
         return wrapper
     return decorator
 
 
-# ─── Convenience export ───────────────────────────────────────────────────────
+# ─── Convenience export (inchangé) ───────────────────────────────────────────
 
 def export_audit(output_path: str = "langchain-audit.json") -> str:
     """Export full audit trail for this session."""

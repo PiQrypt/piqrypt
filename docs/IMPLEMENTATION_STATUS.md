@@ -60,7 +60,7 @@ PiQrypt is the reference implementation of the AISS (Agent Identity and Signatur
 | §8.2.2 | FreeTSA support | ✅ | `aiss/rfc3161.py` | v1.1.0 |
 | **§13** | **Key Lifecycle** | ✅ Complete | `aiss/identity.py` | v1.1.0 |
 | §13.1 | Secure generation | ✅ | `aiss/crypto/` | v1.0.0 |
-| §13.2 | Encrypted storage | ✅ | `aiss/key_store.py` | **v1.8.3** |
+| §13.2 | Encrypted storage | ✅ | `aiss/key_store.py` | **v1.8.4** |
 | **Crypto** | **Dilithium3** | ✅ Complete | `aiss/crypto/dilithium_liboqs.py` | v1.1.0 |
 | | ML-DSA-65 (NIST FIPS 204) | ✅ | `aiss/crypto/dilithium_liboqs.py` | v1.1.0 |
 
@@ -103,15 +103,15 @@ PiQrypt is the reference implementation of the AISS (Agent Identity and Signatur
 
 | Feature | Status | Module | Version |
 |---------|--------|--------|---------|
-| **KeyStore — Encrypted Key Storage** | ✅ Complete | `aiss/key_store.py` | **v1.8.3** |
-| scrypt N=2¹⁷ + AES-256-GCM | ✅ | `aiss/key_store.py` | v1.8.3 |
-| Magic bytes validation (`PQKY`) | ✅ | `aiss/key_store.py` | v1.8.3 |
-| RAM erasure (`_secure_erase`) | ✅ | `aiss/key_store.py` | v1.8.3 |
-| Fixed file size (97 bytes) | ✅ | `aiss/key_store.py` | v1.8.3 |
-| **Agent Registry** | ✅ Complete | `aiss/agent_registry.py` | **v1.8.3** |
-| Class `AgentRegistry` (OO API) | ✅ | `aiss/agent_registry.py` | v1.8.3 |
-| Path traversal protection | ✅ | `aiss/agent_registry.py` | v1.8.3 |
-| Per-agent directory isolation | ✅ | `aiss/agent_registry.py` | v1.8.3 |
+| **KeyStore — Encrypted Key Storage** | ✅ Complete | `aiss/key_store.py` | **v1.8.4** |
+| scrypt N=2¹⁷ + AES-256-GCM | ✅ | `aiss/key_store.py` | v1.8.4 |
+| Magic bytes validation (`PQKY`) | ✅ | `aiss/key_store.py` | v1.8.4 |
+| RAM erasure (`_secure_erase`) | ✅ | `aiss/key_store.py` | v1.8.4 |
+| Fixed file size (97 bytes) | ✅ | `aiss/key_store.py` | v1.8.4 |
+| **Agent Registry** | ✅ Complete | `aiss/agent_registry.py` | **v1.8.4** |
+| Class `AgentRegistry` (OO API) | ✅ | `aiss/agent_registry.py` | v1.8.4 |
+| Path traversal protection | ✅ | `aiss/agent_registry.py` | v1.8.4 |
+| Per-agent directory isolation | ✅ | `aiss/agent_registry.py` | v1.8.4 |
 | **TSI Engine** | ✅ Complete | `aiss/tsi_engine.py` | **v1.5.0** |
 | Trust State Index (STABLE/WATCH/UNSTABLE/CRITICAL) | ✅ | `aiss/tsi_engine.py` | v1.5.0 |
 | 24h drift detection | ✅ | `aiss/tsi_engine.py` | v1.5.0 |
@@ -137,13 +137,13 @@ PiQrypt is the reference implementation of the AISS (Agent Identity and Signatur
 | **Memory System** | ✅ Complete | `aiss/memory.py` | v1.1.0 |
 | Free: JSON plaintext | ✅ | `aiss/memory.py` | v1.1.0 |
 | Pro: AES-256-GCM encrypted | ✅ | `aiss/memory.py` | v1.1.0 |
-| Agent isolation via registry | ✅ | `aiss/memory.py` | v1.8.3 |
+| Agent isolation via registry | ✅ | `aiss/memory.py` | v1.8.4 |
 | **SQLite Indexing** | ✅ Complete | `aiss/index.py` | v1.2.0 |
 | Key rotation chain traversal | ✅ | `aiss/index.py` | v1.6.0 |
 | Session search | ✅ | `aiss/index.py` | v1.6.0 |
-| **Migration** | ✅ Complete | `aiss/migration.py` | v1.8.3 |
-| v1.6→v1.7 non-destructive | ✅ | `aiss/migration.py` | v1.8.3 |
-| Automatic backup creation | ✅ | `aiss/migration.py` | v1.8.3 |
+| **Migration** | ✅ Complete | `aiss/migration.py` | v1.8.4 |
+| v1.6→v1.7 non-destructive | ✅ | `aiss/migration.py` | v1.8.4 |
+| Automatic backup creation | ✅ | `aiss/migration.py` | v1.8.4 |
 | **License System** | ✅ Complete | `aiss/license.py` | v1.1.0 |
 | **Certification Service** | ✅ Complete | `aiss/certification.py` | v1.5.0 |
 | **Structured Logging** | ✅ Complete | `aiss/logger.py` | v1.1.0 |
@@ -156,36 +156,36 @@ PiQrypt is the reference implementation of the AISS (Agent Identity and Signatur
 
 | Feature | Status | Module | Version |
 |---------|--------|--------|---------|
-| Policy engine (deterministic, 10-priority) | ✅ Complete | `trustgate/policy_engine.py` | v1.8.3 |
-| Hash-chained governance journal | ✅ Complete | `trustgate/audit_journal.py` | v1.8.3 |
-| Immutable policy versioning + SHA-256 | ✅ Complete | `trustgate/policy_versioning.py` | v1.8.3 |
-| REQUIRE_HUMAN with TTL + auto-deny | ✅ Complete | `trustgate/decision.py` | v1.8.3 |
-| Policy simulation (dry-run) | ✅ Complete | `trustgate/policy_engine.py` | v1.8.3 |
-| 3 built-in compliance profiles | ✅ Complete | `trustgate/profiles/` | v1.8.3 |
-| EU AI Act Art.14 human oversight | ✅ Complete | `trustgate/policy_engine.py` | v1.8.3 |
+| Policy engine (deterministic, 10-priority) | ✅ Complete | `trustgate/policy_engine.py` | v1.8.4 |
+| Hash-chained governance journal | ✅ Complete | `trustgate/audit_journal.py` | v1.8.4 |
+| Immutable policy versioning + SHA-256 | ✅ Complete | `trustgate/policy_versioning.py` | v1.8.4 |
+| REQUIRE_HUMAN with TTL + auto-deny | ✅ Complete | `trustgate/decision.py` | v1.8.4 |
+| Policy simulation (dry-run) | ✅ Complete | `trustgate/policy_engine.py` | v1.8.4 |
+| 3 built-in compliance profiles | ✅ Complete | `trustgate/profiles/` | v1.8.4 |
+| EU AI Act Art.14 human oversight | ✅ Complete | `trustgate/policy_engine.py` | v1.8.4 |
 
 ### AgentSession — Cross-Framework Co-Signed Sessions
 
 | Feature | Status | Module | Version |
 |---------|--------|--------|---------|
-| N-agent session with pairwise handshakes | ✅ Complete | `bridges/session/__init__.py` | v1.8.3 |
-| Same interaction_hash in both memories | ✅ Complete | `bridges/session/__init__.py` | v1.8.3 |
-| Payload auto-hashing (RGPD by design) | ✅ Complete | `bridges/session/__init__.py` | v1.8.3 |
-| Cross-framework audit export | ✅ Complete | `bridges/session/__init__.py` | v1.8.3 |
+| N-agent session with pairwise handshakes | ✅ Complete | `bridges/session/__init__.py` | v1.8.4 |
+| Same interaction_hash in both memories | ✅ Complete | `bridges/session/__init__.py` | v1.8.4 |
+| Payload auto-hashing (RGPD by design) | ✅ Complete | `bridges/session/__init__.py` | v1.8.4 |
+| Cross-framework audit export | ✅ Complete | `bridges/session/__init__.py` | v1.8.4 |
 
 ### Framework Bridges (9)
 
 | Bridge | Status | Module | Version |
 |--------|--------|--------|---------|
-| LangChain | ✅ Complete | `bridges/langchain/` | v1.8.3 |
-| CrewAI | ✅ Complete | `bridges/crewai/` | v1.8.3 |
-| AutoGen | ✅ Complete | `bridges/autogen/` | v1.8.3 |
-| OpenClaw | ✅ Complete | `bridges/openclaw/` | v1.8.3 |
-| Session | ✅ Complete | `bridges/session/` | v1.8.3 |
-| MCP | ✅ Complete | `bridges/mcp/` | v1.8.3 |
-| Ollama | ✅ Complete | `bridges/ollama/` | v1.8.3 |
-| ROS2 | ✅ Complete | `bridges/ros/` | v1.8.3 |
-| RPi | ✅ Complete | `bridges/rpi/` | v1.8.3 |
+| LangChain | ✅ Complete | `bridges/langchain/` | v1.8.4 |
+| CrewAI | ✅ Complete | `bridges/crewai/` | v1.8.4 |
+| AutoGen | ✅ Complete | `bridges/autogen/` | v1.8.4 |
+| OpenClaw | ✅ Complete | `bridges/openclaw/` | v1.8.4 |
+| Session | ✅ Complete | `bridges/session/` | v1.8.4 |
+| MCP | ✅ Complete | `bridges/mcp/` | v1.8.4 |
+| Ollama | ✅ Complete | `bridges/ollama/` | v1.8.4 |
+| ROS2 | ✅ Complete | `bridges/ros/` | v1.8.4 |
+| RPi | ✅ Complete | `bridges/rpi/` | v1.8.4 |
 
 ### Planned Features (Future)
 
