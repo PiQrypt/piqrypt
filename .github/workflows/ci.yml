@@ -41,6 +41,16 @@ jobs:
         run: mypy aiss/ --ignore-missing-imports
         continue-on-error: true
 
+      - name: Debug aiss location
+        run: |
+          python -c "import aiss; print('aiss from:', aiss.__file__)"
+          pip show piqrypt || echo "piqrypt not installed separately"
+          python -c "import sys; [print(p) for p in sys.path]"
+      - name: Debug aiss location
+        run: |
+          python -c "import aiss; print('aiss from:', aiss.__file__)"
+          pip show piqrypt || echo "piqrypt not installed separately"
+          python -c "import sys; [print(p) for p in sys.path]"
       - name: Run tests with coverage
         env:
           VIGIL_TOKEN: ci_vigil_test_token
