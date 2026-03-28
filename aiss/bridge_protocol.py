@@ -7,6 +7,15 @@
 
 from __future__ import annotations
 
+
+
+import logging
+import time
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+
 """
 aiss/bridge_protocol.py — Contrat d'interface pour les bridges PiQrypt
 
@@ -45,13 +54,6 @@ Usage dans un bridge :
             # Stamp l'event comme d'habitude
             ...
 """
-
-import logging
-import time
-from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Any, Dict, List, Optional
-
 logger = logging.getLogger(__name__)
 
 # ── Chemin policy TrustGate par défaut ───────────────────────────────────────
@@ -273,7 +275,7 @@ class BridgeProtocol:
 
         try:
             from trustgate.policy_engine import evaluate
-            from trustgate.decision import EvaluationContext, Outcome
+            from trustgate.decision import EvaluationContext
 
             ctx = EvaluationContext(
                 agent_id    = self._agent_name,

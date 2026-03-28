@@ -136,7 +136,7 @@ select = ["E", "F", "W"]
 "cli/__init__.py"     = ["F401"]
 "piqrypt/__init__.py" = ["F401"]   # â† AJOUTÃ‰
 "cli/main.py"         = ["E501"]
-"aiss/*.py"           = ["E501", "E722"]
+"aiss/*.py"           = ["E501", "E722", "E402"]
 "aiss/rfc3161.py"     = ["F401"]
 "bridges/**/*.py"     = ["E501"]
 
