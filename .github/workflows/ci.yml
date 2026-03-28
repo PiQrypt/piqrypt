@@ -32,6 +32,7 @@ jobs:
           python -m pip install --upgrade pip
           pip uninstall piqrypt -y || true
           pip install -e .[dev]
+          python -c "import aiss; print(aiss.__file__); import aiss.license; print([x for x in dir(aiss.license) if not x.startswith('_')])"
 
       - name: Lint with ruff
         run: ruff check aiss/ cli/
