@@ -1,20 +1,16 @@
 import sys
 from pathlib import Path
 
-# Force resolution locale de aiss/ en CI (pip install -e . avec importlib)
-# Meme pattern que vigil_server.py et cli/piqrypt_start.py
 _REPO_ROOT = Path(__file__).resolve().parent
-if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
 
-# Diagnostic CI
-try:
-    import aiss as _aiss_diag
-    print(f"[conftest] aiss.__file__ = {getattr(_aiss_diag, '__file__', 'NO __file__')}")
-    print(f"[conftest] aiss.__path__ = {getattr(_aiss_diag, '__path__', 'NO __path__')}")
-    print(f"[conftest] sys.path[0:3] = {sys.path[0:3]}")
-except Exception as e:
-    print(f"[conftest] aiss import error: {e}")
+def pytest_configure(config):
+    """Insert repo root at head of sys.path before any test collection."""
+    if str(_REPO_ROOT) not in sys.path:
+        sys.path.insert(0, str(_REPO_ROOT))
+    # Force reload de aiss depuis le repo local si deja charge
+    for mod_name in list(sys.modules.keys()):
+        if mod_name == 'aiss' or mod_name.startswith('aiss.'):
+            del sys.modules[mod_name]
 
 # SPDX-License-Identifier: MIT
 """
