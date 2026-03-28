@@ -88,22 +88,12 @@ Repository    = "https://github.com/piqrypt/piqrypt"
 [tool.setuptools.packages.find]
 where   = ["."]
 include = [
-    "piqrypt",
-    "aiss",
-    "aiss.crypto",
-    "cli",
-    "vigil",
-    "trustgate",
-    "bridges",
-    "bridges.autogen",
-    "bridges.crewai",
-    "bridges.langchain",
-    "bridges.mcp",
-    "bridges.ollama",
-    "bridges.openclaw",
-    "bridges.ros",
-    "bridges.rpi",
-    "bridges.session",
+    "piqrypt*",
+    "aiss*",
+    "cli*",
+    "vigil*",
+    "trustgate*",
+    "bridges*",
 ]
 exclude = ["tests*", "docs*", "*.tests", "*.tests.*"]
 
