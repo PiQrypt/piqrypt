@@ -38,7 +38,7 @@ jobs:
         run: ruff check aiss/ cli/
 
       - name: Type check with mypy
-        run: mypy aiss/ --ignore-missing-imports
+        run: mypy aiss/ --ignore-missing-imports --explicit-package-bases
         continue-on-error: true
 
       - name: Run tests with coverage
