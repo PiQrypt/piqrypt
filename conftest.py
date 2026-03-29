@@ -61,3 +61,11 @@ def _dep_available(pkg):
 for bridge_path, dep in _BRIDGE_DEPS.items():
     if not _dep_available(dep):
         collect_ignore_glob.append(f"{bridge_path}/*")
+
+
+def pytest_collection_modifyitems(session, config, items):
+    """Force test_bridge_protocol.py to be collected last to avoid
+    sys.modules contamination of aiss mocks affecting other test files."""
+    bridge_items = [i for i in items if 'test_bridge_protocol' in str(i.fspath)]
+    other_items  = [i for i in items if 'test_bridge_protocol' not in str(i.fspath)]
+    items[:] = other_items + bridge_items
