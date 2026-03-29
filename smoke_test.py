@@ -3,7 +3,7 @@
 # e-Soleau: DSO2026006483 (19/02/2026) -- DSO2026009143 (12/03/2026)
 #!/usr/bin/env python3
 """
-PiQrypt v1.8.4 — Smoke Test / Validation Complète
+PiQrypt v1.8.5 — Smoke Test / Validation Complète
 ==================================================
 
 Valide l'ensemble du stack de bout en bout :
@@ -99,7 +99,7 @@ def print_summary():
     ok = sum(1 for r in _results if r[2] == "OK")
     fail = sum(1 for r in _results if r[2] == "FAIL")
     print("\n" + "=" * 65)
-    print(f"{BOLD}BILAN — PiQrypt v1.8.4 Smoke Test{RESET}")
+    print(f"{BOLD}BILAN — PiQrypt v1.8.5 Smoke Test{RESET}")
     print("=" * 65)
     blocs = {}
     for bloc, name, status, detail in _results:
@@ -1059,7 +1059,7 @@ BLOCS = [
 
 def main():
     global _verbose, _stop_on_first_fail
-    p = argparse.ArgumentParser(description="PiQrypt v1.8.4 — Smoke Test")
+    p = argparse.ArgumentParser(description="PiQrypt v1.8.5 — Smoke Test")
     p.add_argument("-v", "--verbose", action="store_true")
     p.add_argument("--stop", action="store_true")
     p.add_argument("--bloc", type=int, choices=range(1, 15), metavar="N")
@@ -1067,7 +1067,7 @@ def main():
     _verbose = args.verbose
     _stop_on_first_fail = args.stop
 
-    print(f"\n{BOLD}{CYAN}PiQrypt v1.8.4 — Smoke Test / Validation Complète{RESET}")
+    print(f"\n{BOLD}{CYAN}PiQrypt v1.8.5 — Smoke Test / Validation Complète{RESET}")
     print(f"Projet : {PIQRYPT_ROOT}")
     print(f"scrypt N : {os.environ.get('PIQRYPT_SCRYPT_N')} (test mode, prod=131072)")
     print("=" * 65)

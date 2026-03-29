@@ -218,6 +218,14 @@ Smoke test: 70/74 (4 acceptable failures — Pro features, external deps)
 
 ---
 
+## [1.8.5] - 2026-03-29
+
+### Changed
+- CI green: 501 tests passing on all OS/Python versions
+- Fixed aiss mock contamination in test_bridge_protocol.py
+- Fixed piqrypt.aiss namespace conflict (piqrypt* -> piqrypt in packages.find)
+- BridgeProtocol v1.1.0 — 9 bridges unified
+
 ## [1.8.4] - 2026-03-02
 
 ### ✅ Security Hardening & API Stabilization

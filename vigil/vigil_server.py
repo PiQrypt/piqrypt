@@ -1434,7 +1434,7 @@ class VIGILHandler(BaseHTTPRequestHandler):
 
         content_lines = [
             "VIGIL AUDIT REPORT",
-            "PiQrypt v1.8.4 — AISS v1.1",
+            "PiQrypt v1.8.5 — AISS v1.1",
             "",
             "!!! NOTICE: LOCAL EXPORT — NOT CERTIFIED BY PIQRYPT !!!",
             "This PDF is a local readable report only. It has no legal",
@@ -1635,7 +1635,7 @@ class VIGILServer:
 
 # ── CLI ────────────────────────────────────────────────────────────────────────
 def main():
-    parser = argparse.ArgumentParser(description="Vigil HTTP Server — PiQrypt v1.8.4")
+    parser = argparse.ArgumentParser(description="Vigil HTTP Server — PiQrypt v1.8.5")
     parser.add_argument("--host",  default=DEFAULT_HOST,  help=f"Bind host (default: {DEFAULT_HOST})")  # noqa: E501
     parser.add_argument("--port",  default=DEFAULT_PORT,  type=int, help=f"Port (default: {DEFAULT_PORT})")  # noqa: E501
     parser.add_argument("--debug", action="store_true",   help="Verbose logging")
