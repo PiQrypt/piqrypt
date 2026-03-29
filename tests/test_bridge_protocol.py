@@ -67,7 +67,10 @@ def _setup_piqrypt_mock():
     sys.modules["piqrypt"] = mock
     return mock
 
-_mock_pq = _setup_piqrypt_mock()
+# Mocks injectes via fixture - pas au niveau module
+_mock_pq = None
+_memory_mod = None
+_a2a_mod = None
 
 # ── Mock aiss.memory (load_events) ────────────────────────────────────────────
 
@@ -107,7 +110,7 @@ def _setup_aiss_mock():
 
     return memory_mod, a2a_mod
 
-_memory_mod, _a2a_mod = _setup_aiss_mock()
+# _memory_mod et _a2a_mod initialises via fixture ci-dessous
 
 # ── Mock frameworks externes ──────────────────────────────────────────────────
 
@@ -241,6 +244,26 @@ except Exception as e:
     BridgeProtocol = object
     BridgeAction   = None
 
+
+
+import pytest as _pytest
+
+@_pytest.fixture(autouse=True)
+def _inject_aiss_mocks():
+    """Injecte les mocks aiss/piqrypt pour les tests bridge, restaure apres."""
+    global _mock_pq, _memory_mod, _a2a_mod
+    # Sauvegarder modules existants
+    _saved = {k: v for k, v in sys.modules.items()
+              if k in ('aiss', 'piqrypt') or k.startswith('aiss.') or k.startswith('piqrypt.')}
+    # Injecter mocks
+    _mock_pq = _setup_piqrypt_mock()
+    _memory_mod, _a2a_mod = _setup_aiss_mock()
+    yield
+    # Restaurer modules originaux
+    for k in list(sys.modules.keys()):
+        if k in ('aiss', 'piqrypt') or k.startswith('aiss.') or k.startswith('piqrypt.'):
+            del sys.modules[k]
+    sys.modules.update(_saved)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 2. TESTS BRIDGE_PROTOCOL DIRECT
