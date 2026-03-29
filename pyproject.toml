@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "piqrypt"
-version = "1.8.5"
+version = "1.8.6"
 description = "Trust infrastructure for autonomous AI agents â€” identity, observability, governance"
 readme = "README.md"
 license = {text = "MIT (AISS spec/bridges) AND Apache-2.0 (cli) AND Elastic-2.0 (aiss/vigil/trustgate)"}
