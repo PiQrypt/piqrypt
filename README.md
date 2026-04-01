@@ -23,6 +23,7 @@
 
 </div>
 
+![Vigil Dashboard](docs/screenshots/vigil-dashboard.png)
 ---
 
 ```
@@ -121,7 +122,7 @@ piqrypt stamp my_agent --payload '{"action":"trade","symbol":"AAPL"}'
 piqrypt verify my_agent
 # ✅ Chain integrity verified — 12 events · trust_score: 0.94 · TrustGate: ALLOW
 ```
-
+![TrustGate Console](docs/screenshots/trustgate-console.png)
 ---
 
 ## Architecture — 4 layers
