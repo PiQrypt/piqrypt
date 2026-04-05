@@ -1,0 +1,100 @@
+name: Sync AISS core to aiss-standard
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Déclenché automatiquement à chaque GitHub Release publiée dans piqrypt.
+# Peut aussi être déclenché manuellement (workflow_dispatch) pour forcer un sync.
+#
+# Ce workflow :
+#   1. Checkout piqrypt (source)
+#   2. Checkout aiss-standard (destination, via PAT)
+#   3. Copie les fichiers AISS core vers aiss-standard
+#   4. Applique les transformations nécessaires (licence MIT, chemins, version)
+#   5. Commit + push dans aiss-standard si des changements existent
+#
+# Prérequis :
+#   - Secret AISS_STANDARD_TOKEN dans piqrypt
+#     (PAT GitHub avec scope "repo" sur piqrypt/aiss-standard)
+#     → Settings → Secrets and variables → Actions → New repository secret
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run — affiche les diffs sans pusher"
+        required: false
+        default: "false"
+        type: choice
+        options: ["true", "false"]
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    name: Sync AISS core → aiss-standard
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout piqrypt (source) ───────────────────────────────────────
+      - name: Checkout piqrypt
+        uses: actions/checkout@v4
+        with:
+          path: piqrypt
+
+      # ── 2. Checkout aiss-standard (destination) ───────────────────────────
+      - name: Checkout aiss-standard
+        uses: actions/checkout@v4
+        with:
+          repository: piqrypt/aiss-standard
+          token: ${{ secrets.AISS_STANDARD_TOKEN }}
+          path: aiss-standard
+
+      # ── 3. Setup Python ───────────────────────────────────────────────────
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # ── 4. Sync — copie + transformations ─────────────────────────────────
+      - name: Run sync script
+        env:
+          PIQRYPT_VERSION: ${{ github.event.release.tag_name || 'manual' }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+        run: |
+          python piqrypt/.github/scripts/sync_aiss.py \
+            --src piqrypt \
+            --dst aiss-standard \
+            --piqrypt-version "$PIQRYPT_VERSION" \
+            --dry-run "$DRY_RUN"
+
+      # ── 5. Commit et push ─────────────────────────────────────────────────
+      - name: Commit and push to aiss-standard
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: |
+          cd aiss-standard
+          git config user.name  "piqrypt-sync-bot"
+          git config user.email "sync-bot@piqrypt.com"
+
+          git add -A
+
+          # Ne commiter que s'il y a des changements réels
+          if git diff --cached --quiet; then
+            echo "✓ No changes to sync — aiss-standard already up to date."
+            exit 0
+          fi
+
+          PIQRYPT_VERSION="${{ github.event.release.tag_name || 'manual' }}"
+          COMMIT_MSG="sync: piqrypt ${PIQRYPT_VERSION} → aiss 2.x
+
+Automated sync from piqrypt/piqrypt@${PIQRYPT_VERSION}
+Files: aiss/ core modules + vigil/ standard
+
+Source: https://github.com/piqrypt/piqrypt/releases/tag/${PIQRYPT_VERSION}
+"
+
+          git commit -m "$COMMIT_MSG"
+          git push origin main
+          echo "✓ aiss-standard updated from piqrypt ${PIQRYPT_VERSION}"
