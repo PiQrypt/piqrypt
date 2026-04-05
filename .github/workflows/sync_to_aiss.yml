@@ -4,16 +4,9 @@ name: Sync AISS core to aiss-standard
 # Déclenché automatiquement à chaque GitHub Release publiée dans piqrypt.
 # Peut aussi être déclenché manuellement (workflow_dispatch) pour forcer un sync.
 #
-# Ce workflow :
-#   1. Checkout piqrypt (source)
-#   2. Checkout aiss-standard (destination, via PAT)
-#   3. Copie les fichiers AISS core vers aiss-standard
-#   4. Applique les transformations nécessaires (licence MIT, chemins, version)
-#   5. Commit + push dans aiss-standard si des changements existent
-#
 # Prérequis :
 #   - Secret AISS_STANDARD_TOKEN dans piqrypt
-#     (PAT GitHub avec scope "repo" sur piqrypt/aiss-standard)
+#     (Fine-grained PAT, Contents: Read and write sur piqrypt/aiss-standard)
 #     → Settings → Secrets and variables → Actions → New repository secret
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -73,28 +66,19 @@ jobs:
       # ── 5. Commit et push ─────────────────────────────────────────────────
       - name: Commit and push to aiss-standard
         if: ${{ github.event.inputs.dry_run != 'true' }}
+        env:
+          PIQRYPT_VERSION: ${{ github.event.release.tag_name || 'manual' }}
         run: |
           cd aiss-standard
           git config user.name  "piqrypt-sync-bot"
           git config user.email "sync-bot@piqrypt.com"
-
           git add -A
 
-          # Ne commiter que s'il y a des changements réels
           if git diff --cached --quiet; then
             echo "✓ No changes to sync — aiss-standard already up to date."
             exit 0
           fi
 
-          PIQRYPT_VERSION="${{ github.event.release.tag_name || 'manual' }}"
-          COMMIT_MSG="sync: piqrypt ${PIQRYPT_VERSION} → aiss 2.x
-
-Automated sync from piqrypt/piqrypt@${PIQRYPT_VERSION}
-Files: aiss/ core modules + vigil/ standard
-
-Source: https://github.com/piqrypt/piqrypt/releases/tag/${PIQRYPT_VERSION}
-"
-
-          git commit -m "$COMMIT_MSG"
+          git commit -m "sync: piqrypt ${PIQRYPT_VERSION} → aiss 2.x — automated sync"
           git push origin main
           echo "✓ aiss-standard updated from piqrypt ${PIQRYPT_VERSION}"
