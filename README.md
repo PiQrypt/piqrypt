@@ -11,6 +11,7 @@
 [![License](https://img.shields.io/badge/AISS%20core-MIT-green?style=flat-square)](LICENSE)
 [![Post-Quantum](https://img.shields.io/badge/Post--Quantum-Dilithium3-ff8c00?style=flat-square)](https://csrc.nist.gov/pubs/fips/204/final)
 [![e-Soleau](https://img.shields.io/badge/e--Soleau-DSO2026006483-7c3aed?style=flat-square)](https://www.inpi.fr)
+[![AISS](https://img.shields.io/badge/AISS-v2.0-green)](https://aiss-standard.org)
 
 **472 tests · 9 framework bridges · 4-layer stack · EU AI Act ready**
 
@@ -149,10 +150,27 @@ Your agents (LangChain · CrewAI · AutoGen · MCP · Ollama · ROS2 · RPi · �
 
 | Layer | License | What it does |
 |---|---|---|
-| **AISS** | MIT | Identity, signing, chain verification, A2A handshake |
+| **AISS** | MIT | Identity, signing, chain verification, A2A handshake · [aiss-standard.org](https://aiss-standard.org) |
 | **PiQrypt Core** | ELv2 | VRS scoring, `.pqz` certified archives, RFC 3161 |
 | **Vigil** | ELv2 | Real-time behavioral dashboard — port 8421 |
 | **TrustGate** | ELv2 | Deterministic policy engine — port 8422 |
+
+---
+
+## AISS — Open Standard
+
+AISS (Agent Identity and Signature Standard) is an independent MIT
+protocol, usable without PiQrypt.
+
+```bash
+pip install aiss-standard   # MIT · no quotas · no accounts
+```
+
+→ Spec: [aiss-standard.org](https://aiss-standard.org)  
+→ GitHub: [github.com/PiQrypt/aiss-standard](https://github.com/PiQrypt/aiss-standard)
+
+**PiQrypt** is the reference implementation — adds Vigil, TrustGate,
+9 bridges, certified exports, and Doorkeeper on top of AISS.
 
 ---
 
@@ -218,7 +236,8 @@ session.stamp("reviewer", "review_signed",   {"approved": True},            peer
 
 | Component | Status | Notes |
 |---|---|---|
-| AISS core | ✅ Stable | `pip install piqrypt` |
+| AISS standard | ✅ Stable | `pip install aiss-standard` · [aiss-standard.org](https://aiss-standard.org) · MIT |
+| AISS core (PiQrypt impl.) | ✅ Stable | bundled in `pip install piqrypt` |
 | Framework bridges (9) | ✅ Stable | `pip install piqrypt[langchain]` etc. |
 | Vigil dashboard | ✅ Stable | Standalone · port 8421 |
 | TrustGate | ✅ Stable | Standalone · port 8422 |
