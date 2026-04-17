@@ -343,7 +343,7 @@ type LogEntry = {
 ---
 
 **Last Updated:** 2026-03-12
-**Version:** 1.7.1
+**Version:** 1.8.6
 
 ---
 

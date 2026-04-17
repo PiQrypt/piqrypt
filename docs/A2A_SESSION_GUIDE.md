@@ -1,6 +1,6 @@
 # A2A Session Guide — Cross-framework Multi-Agent Trust
 
-*PiQrypt v1.7.1 — AISS v2.0*
+*PiQrypt v1.8.6 — AISS v2.0*
 
 ---
 

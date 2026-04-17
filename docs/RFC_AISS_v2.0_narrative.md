@@ -743,7 +743,7 @@ New Chain:                                           [genesis referencing rotati
 - Incident response plan (REQUIRED)
 - Independent security audit (annual, REQUIRED)
 
-> PiQrypt v1.7.1 implements Level 2 key lifecycle. Level 3 HSM support is planned for v2.1.
+> PiQrypt v1.8.6 implements Level 2 key lifecycle. Level 3 HSM support is planned for v2.1.
 
 ---
 
@@ -2002,7 +2002,7 @@ audit_all: bool                 # If true, EVERY action produces a trustgate_aud
 
 ## Appendix H — Security Test Coverage
 
-PiQrypt v1.7.1 includes 61 dedicated security tests:
+PiQrypt v1.8.6 includes 61 dedicated security tests:
 
 | Category | Tests | Coverage |
 |----------|-------|---------|

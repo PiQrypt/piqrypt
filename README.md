@@ -224,7 +224,7 @@ session.stamp("reviewer", "review_signed",   {"approved": True},            peer
 | TrustGate | ✅ Stable | Standalone · port 8422 |
 | Trust-server | ✅ Production | `trust-server-ucjb.onrender.com` |
 
-**v1.7.1** · Python 3.9–3.12 · Linux · macOS · Windows
+**v1.8.6** · Python 3.9–3.12 · Linux · macOS · Windows
 
 ---
 
