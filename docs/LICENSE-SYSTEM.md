@@ -1,6 +1,6 @@
 # PiQrypt License System
 
-**Version:** 1.8.7
+**Version:** 1.8.8
 **Last Updated:** 2026-03-12
 
 ---

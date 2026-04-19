@@ -765,7 +765,7 @@ Upgrade path is seamless — same API, same patterns, stronger crypto.
 
 ---
 
-*PiQrypt v1.8.7 — AISS v2.0 Reference Implementation*
+*PiQrypt v1.8.8 — AISS v2.0 Reference Implementation*
 
 ---
 
