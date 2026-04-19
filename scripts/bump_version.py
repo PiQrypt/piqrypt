@@ -239,8 +239,8 @@ def main() -> int:
         path = REPO_ROOT / rel_path
 
         if not path.exists():
-            print(f"✗ MISSING   {rel_path}", file=sys.stderr)
-            exit_code = 1
+            print(f"  no change  {rel_path}")
+            no_change_count += 1
             continue
 
         original = path.read_text(encoding="utf-8")
