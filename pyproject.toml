@@ -77,7 +77,8 @@ dev = [
 ]
 
 [project.scripts]
-piqrypt = "cli.main:main"
+piqrypt         = "cli.main:main"
+piqrypt-welcome = "cli.onboarding_welcome:main"
 
 [project.urls]
 Homepage      = "https://piqrypt.com"
@@ -99,6 +100,7 @@ include = [
 exclude = ["tests*", "docs*", "*.tests", "*.tests.*"]
 
 [tool.setuptools.package-data]
+"static"    = ["onboarding/*.html", "onboarding/**/*"]
 "piqrypt"   = ["py.typed"]
 "vigil"     = ["py.typed", "*.html", "*.py"]
 "trustgate" = ["py.typed", "profiles/*.yaml", "console/*.html", "*.py"]

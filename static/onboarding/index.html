@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PiQrypt — Trust layer for autonomous AI agents</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #080b12;
+    --surface: #0d1120;
+    --border:  #1a2235;
+    --accent:  #00d4ff;
+    --green:   #00e5a0;
+    --text:    #c8d4e8;
+    --muted:   #4a5878;
+    --red:     #ff4d6d;
+    --yellow:  #f59e0b;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse 80% 60% at 50% -10%, rgba(0,212,255,0.12) 0%, transparent 60%),
+      radial-gradient(circle at 1px 1px, rgba(0,212,255,0.15) 1px, transparent 0);
+    background-size: auto, 40px 40px;
+  }
+
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ── Nav ── */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 40px;
+    background: rgba(8,11,18,0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: #fff;
+  }
+  .logo-icon {
+    width: 32px; height: 32px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, var(--accent) 0%, #7c6fff 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    color: #080b12;
+    font-family: 'Syne', sans-serif;
+    flex-shrink: 0;
+  }
+  .version-badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    background: rgba(0,212,255,0.12);
+    border: 1px solid rgba(0,212,255,0.3);
+    border-radius: 20px;
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+  }
+  .nav-links {
+    display: flex;
+    gap: 24px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .nav-links a { color: var(--muted); transition: color .15s; }
+  .nav-links a:hover { color: var(--text); text-decoration: none; }
+
+  /* ── Hero ── */
+  .hero {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 100px 40px 80px;
+    text-align: center;
+  }
+  .hero-label {
+    display: inline-block;
+    font-size: 11px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid rgba(0,212,255,0.3);
+    border-radius: 20px;
+    padding: 4px 14px;
+    margin-bottom: 28px;
+    font-family: 'Space Mono', monospace;
+  }
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(32px, 5vw, 56px);
+    font-weight: 800;
+    line-height: 1.15;
+    color: #fff;
+    margin-bottom: 24px;
+  }
+  h1 .accent { color: var(--accent); }
+  .hero-sub {
+    font-size: 16px;
+    color: var(--muted);
+    max-width: 620px;
+    margin: 0 auto 44px;
+    line-height: 1.7;
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* ── Install bar ── */
+  .install-bar {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    font-size: 15px;
+    margin-bottom: 14px;
+  }
+  .install-cmd {
+    padding: 12px 20px;
+    color: var(--green);
+    letter-spacing: .02em;
+  }
+  .install-cmd span.prompt { color: var(--muted); margin-right: 8px; }
+  .copy-btn {
+    padding: 12px 18px;
+    background: rgba(0,212,255,0.1);
+    border: none;
+    border-left: 1px solid var(--border);
+    color: var(--accent);
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    transition: background .15s;
+    white-space: nowrap;
+  }
+  .copy-btn:hover { background: rgba(0,212,255,0.2); }
+  .install-hint {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+  .install-hint code { color: var(--accent); }
+
+  /* ── Section ── */
+  section {
+    max-width: 1060px;
+    margin: 0 auto;
+    padding: 80px 40px;
+  }
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+  .section-sub {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 40px;
+  }
+
+  /* ── Bridge grid ── */
+  .bridge-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .bridge-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--text);
+    transition: border-color .15s, background .15s;
+    text-align: left;
+  }
+  .bridge-btn:hover { border-color: var(--accent); background: rgba(0,212,255,0.05); }
+  .bridge-btn.active { border-color: var(--accent); background: rgba(0,212,255,0.08); }
+  .bridge-icon { font-size: 20px; flex-shrink: 0; }
+  .bridge-label { font-weight: 700; font-size: 12px; }
+
+  /* ── Snippet panel ── */
+  .snippet-panel {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    animation: fadeUp .2s ease;
+  }
+  .snippet-panel.visible { display: block; }
+  .snippet-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .snippet-title { color: var(--text); font-size: 13px; }
+  .snippet-actions { display: flex; gap: 8px; }
+  .snippet-code {
+    padding: 20px;
+    overflow-x: auto;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    white-space: pre;
+    color: var(--text);
+  }
+  .snippet-code .kw  { color: #c792ea; }
+  .snippet-code .fn  { color: var(--accent); }
+  .snippet-code .cm  { color: var(--muted); font-style: italic; }
+  .snippet-code .str { color: var(--green); }
+  .snippet-code .num { color: #f78c6c; }
+  .snippet-footer {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+  }
+  .dl-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: rgba(0,212,255,0.08);
+    border: 1px solid rgba(0,212,255,0.2);
+    border-radius: 6px;
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .dl-btn:hover { background: rgba(0,212,255,0.15); }
+
+  /* ── Demo cards ── */
+  .demo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 20px;
+  }
+  .demo-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    cursor: pointer;
+    transition: border-color .15s, transform .15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .demo-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--card-color);
+    opacity: 0.7;
+  }
+  .demo-card:hover { border-color: rgba(255,255,255,0.15); transform: translateY(-2px); }
+  .demo-badge {
+    display: inline-block;
+    font-size: 10px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid;
+    margin-bottom: 12px;
+    font-family: 'Space Mono', monospace;
+  }
+  .demo-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+  .demo-desc {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 16px;
+    line-height: 1.6;
+  }
+  .demo-agents {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .agent-tag {
+    font-size: 10px;
+    padding: 2px 8px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+  }
+  .demo-stack {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+  .demo-cmd {
+    font-size: 11px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: var(--green);
+    font-family: 'Space Mono', monospace;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    background: var(--surface);
+    border: 1px solid var(--green);
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-size: 13px;
+    color: var(--green);
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity .2s, transform .2s;
+    pointer-events: none;
+    z-index: 999;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  /* ── Wizard ── */
+  .wizard {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 36px;
+    max-width: 640px;
+  }
+  .wizard-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 28px;
+  }
+  .field {
+    margin-bottom: 20px;
+  }
+  .field label {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+  .field input, .field select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color .15s;
+    appearance: none;
+  }
+  .field input:focus, .field select:focus { border-color: var(--accent); }
+  .field input::placeholder { color: var(--muted); }
+  .field select option { background: var(--bg); }
+  .wizard-btn {
+    width: 100%;
+    padding: 13px;
+    background: linear-gradient(90deg, rgba(0,212,255,0.2), rgba(124,111,255,0.2));
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    color: var(--accent);
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .15s;
+    margin-top: 8px;
+  }
+  .wizard-btn:hover { background: linear-gradient(90deg, rgba(0,212,255,0.3), rgba(124,111,255,0.3)); }
+  .wizard-output {
+    display: none;
+    margin-top: 24px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    animation: fadeUp .2s ease;
+  }
+  .wizard-output.visible { display: block; }
+  .wizard-output-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .wizard-output-code {
+    padding: 16px;
+    font-size: 12px;
+    line-height: 1.8;
+    color: var(--green);
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .wizard-note {
+    padding: 12px 16px;
+    font-size: 11px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    line-height: 1.6;
+  }
+
+  /* ── Footer ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 32px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--muted);
+    max-width: 100%;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  footer a { color: var(--muted); }
+  footer a:hover { color: var(--text); text-decoration: none; }
+  .footer-links { display: flex; gap: 18px; }
+
+  /* ── Utilities ── */
+  .small-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .small-btn:hover { background: rgba(255,255,255,0.1); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 640px) {
+    nav { padding: 12px 20px; }
+    .hero { padding: 60px 20px 50px; }
+    section { padding: 60px 20px; }
+    footer { padding: 24px 20px; flex-direction: column; }
+    .wizard { padding: 24px; }
+    .nav-links { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Nav ── -->
+<nav>
+  <div class="nav-logo">
+    <div class="logo-icon">P</div>
+    PiQrypt
+    <span class="version-badge" id="nav-version">v1.8.6</span>
+  </div>
+  <div class="nav-links">
+    <a href="https://piqrypt.com" target="_blank" rel="noopener">Website</a>
+    <a href="https://github.com/piqrypt/piqrypt" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://aiss-standard.org" target="_blank" rel="noopener">AISS</a>
+    <a href="https://pypi.org/project/piqrypt" target="_blank" rel="noopener">PyPI</a>
+  </div>
+</nav>
+
+<!-- ── Hero ── -->
+<div class="hero">
+  <div class="hero-label">Proof of Continuity Protocol</div>
+  <h1>Trust layer for <span class="accent">autonomous AI agents.</span></h1>
+  <p class="hero-sub">
+    Every agent action signed, every decision hash-chained,
+    tamper-evident forever. 2 lines of code. Zero friction. Offline-verifiable.
+  </p>
+
+  <div>
+    <div class="install-bar">
+      <div class="install-cmd">
+        <span class="prompt">$</span>pip install piqrypt
+      </div>
+      <button class="copy-btn" onclick="copyInstall(this)">Copy</button>
+    </div>
+    <div class="install-hint">
+      Then run: <code>piqrypt demo</code> or <code>piqrypt init</code>
+    </div>
+  </div>
+</div>
+
+<!-- ── Bridges ── -->
+<section id="bridges">
+  <div class="section-title">Choose your framework</div>
+  <div class="section-sub">Click a bridge to get the integration snippet.</div>
+
+  <div class="bridge-grid" id="bridge-grid">
+    <button class="bridge-btn" data-bridge="langchain" onclick="selectBridge('langchain',this)" style="--c:#1c7c54">
+      <span class="bridge-icon">🦜</span>
+      <span class="bridge-label">LangChain</span>
+    </button>
+    <button class="bridge-btn" data-bridge="crewai" onclick="selectBridge('crewai',this)" style="--c:#e85d04">
+      <span class="bridge-icon">🤖</span>
+      <span class="bridge-label">CrewAI</span>
+    </button>
+    <button class="bridge-btn" data-bridge="autogen" onclick="selectBridge('autogen',this)" style="--c:#0078d4">
+      <span class="bridge-icon">⚡</span>
+      <span class="bridge-label">AutoGen</span>
+    </button>
+    <button class="bridge-btn" data-bridge="mcp" onclick="selectBridge('mcp',this)" style="--c:#7c6fff">
+      <span class="bridge-icon">🔌</span>
+      <span class="bridge-label">MCP</span>
+    </button>
+    <button class="bridge-btn" data-bridge="ollama" onclick="selectBridge('ollama',this)" style="--c:#00e5a0">
+      <span class="bridge-icon">🦙</span>
+      <span class="bridge-label">Ollama</span>
+    </button>
+    <button class="bridge-btn" data-bridge="ros2" onclick="selectBridge('ros2',this)" style="--c:#22b8cf">
+      <span class="bridge-icon">🦾</span>
+      <span class="bridge-label">ROS2</span>
+    </button>
+    <button class="bridge-btn" data-bridge="rpi" onclick="selectBridge('rpi',this)" style="--c:#c0392b">
+      <span class="bridge-icon">🍓</span>
+      <span class="bridge-label">Raspberry Pi</span>
+    </button>
+    <button class="bridge-btn" data-bridge="nocode" onclick="selectBridge('nocode',this)" style="--c:#f59e0b">
+      <span class="bridge-icon">✨</span>
+      <span class="bridge-label">No-Code / MCP</span>
+    </button>
+  </div>
+
+  <div class="snippet-panel" id="snippet-panel">
+    <div class="snippet-header">
+      <span class="snippet-title" id="snippet-title">LangChain</span>
+      <div class="snippet-actions">
+        <button class="small-btn" onclick="copySnippet()">Copy code</button>
+      </div>
+    </div>
+    <div class="snippet-code" id="snippet-code"></div>
+    <div class="snippet-footer">
+      <button class="dl-btn" onclick="downloadScript('sh')">↓ install_piqrypt_<span id="dl-bridge-sh">langchain</span>.sh</button>
+      <button class="dl-btn" onclick="downloadScript('ps1')">↓ install_piqrypt_<span id="dl-bridge-ps1">langchain</span>.ps1</button>
+    </div>
+  </div>
+</section>
+
+<!-- ── Demos ── -->
+<section id="demos">
+  <div class="section-title">Live demos</div>
+  <div class="section-sub">See Vigil in action — no setup needed.</div>
+
+  <div class="demo-grid">
+    <div class="demo-card" style="--card-color:#22b8cf" onclick="copyDemo('python demos/demo_families.py --family nexus --loop')">
+      <div class="demo-badge" style="color:#22b8cf;border-color:rgba(34,184,207,0.4)">DevOps · Infra</div>
+      <div class="demo-title">Nexus Labs</div>
+      <div class="demo-desc">CI/CD orchestration with real-time fork detection.</div>
+      <div class="demo-agents">
+        <span class="agent-tag">nexus_cicd</span>
+        <span class="agent-tag">nexus_monitor</span>
+        <span class="agent-tag">nexus_reviewer</span>
+      </div>
+      <div class="demo-stack">Ollama / CodeLlama · LangGraph · Prometheus</div>
+      <div class="demo-cmd">python demos/demo_families.py --family nexus --loop</div>
+    </div>
+
+    <div class="demo-card" style="--card-color:#e879f9" onclick="copyDemo('python demos/demo_families.py --family pixelflow --loop')">
+      <div class="demo-badge" style="color:#e879f9;border-color:rgba(232,121,249,0.4)">Digital Agency</div>
+      <div class="demo-title">PixelFlow</div>
+      <div class="demo-desc">Content creation crew with TSI drift detection.</div>
+      <div class="demo-agents">
+        <span class="agent-tag">pixelflow_content</span>
+        <span class="agent-tag">pixelflow_seo</span>
+        <span class="agent-tag">pixelflow_scheduler</span>
+      </div>
+      <div class="demo-stack">CrewAI · A2C Detector</div>
+      <div class="demo-cmd">python demos/demo_families.py --family pixelflow --loop</div>
+    </div>
+
+    <div class="demo-card" style="--card-color:#f59e0b" onclick="copyDemo('python demos/demo_families.py --family alphacore --loop')">
+      <div class="demo-badge" style="color:#f59e0b;border-color:rgba(245,158,11,0.4)">Quant Trading</div>
+      <div class="demo-title">AlphaCore</div>
+      <div class="demo-desc">High-frequency trading agents with CRITICAL temporal sync alerts.</div>
+      <div class="demo-agents">
+        <span class="agent-tag">alphacore_analyst</span>
+        <span class="agent-tag">alphacore_executor</span>
+        <span class="agent-tag">alphacore_risk</span>
+      </div>
+      <div class="demo-stack">AutoGen · GPT-4o · vLLM</div>
+      <div class="demo-cmd">python demos/demo_families.py --family alphacore --loop</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Identity Wizard ── -->
+<section id="wizard">
+  <div class="section-title">Create your agent identity</div>
+  <div class="section-sub">Generate install commands and launch Vigil locally.</div>
+
+  <div class="wizard">
+    <div class="field">
+      <label>Agent name</label>
+      <input type="text" id="wiz-name" placeholder="my-agent" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="field">
+      <label>Passphrase <span style="color:var(--muted);font-size:10px;text-transform:none;letter-spacing:0">(encrypts your private key)</span></label>
+      <input type="password" id="wiz-pass" placeholder="Encrypts your private key (optional)">
+    </div>
+    <div class="field">
+      <label>Framework bridge</label>
+      <select id="wiz-bridge">
+        <option value="langchain">🦜  LangChain</option>
+        <option value="crewai">🤖  CrewAI</option>
+        <option value="autogen">⚡  AutoGen</option>
+        <option value="mcp">🔌  MCP</option>
+        <option value="ollama">🦙  Ollama</option>
+        <option value="ros2">🦾  ROS2</option>
+        <option value="rpi">🍓  Raspberry Pi</option>
+        <option value="nocode">✨  No-Code / MCP</option>
+      </select>
+    </div>
+    <button class="wizard-btn" onclick="generateWizard()">→ Generate install commands &amp; open Vigil</button>
+
+    <div class="wizard-output" id="wiz-output">
+      <div class="wizard-output-header">
+        <span>Terminal commands</span>
+        <button class="small-btn" onclick="copyWizard()">Copy all</button>
+      </div>
+      <div class="wizard-output-code" id="wiz-code"></div>
+      <div class="wizard-note">
+        Copy → paste in your terminal → Vigil opens automatically.<br>
+        Your private key is generated locally and never transmitted.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Footer ── -->
+<footer>
+  <div>
+    © 2026 PiQrypt —
+    IP protected: e-Soleau INPI France DSO2026006483 · DSO2026009143<br>
+    AISS (MIT) · PiQrypt Core, Vigil, TrustGate (ELv2)
+  </div>
+  <div class="footer-links">
+    <a href="https://piqrypt.com" target="_blank" rel="noopener">piqrypt.com</a>
+    <a href="https://aiss-standard.org" target="_blank" rel="noopener">aiss-standard.org</a>
+    <a href="mailto:contact@piqrypt.com">contact@piqrypt.com</a>
+  </div>
+</footer>
+
+<!-- ── Toast ── -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Data ──────────────────────────────────────────────────────────────────────
+
+const SNIPPETS = {
+  langchain: `<span class="kw">from</span> piqrypt.bridges.langchain <span class="kw">import</span> <span class="fn">PiQryptCallbackHandler</span>
+
+handler = <span class="fn">PiQryptCallbackHandler</span>(agent_name=<span class="str">"{name}"</span>)
+chain = your_chain.with_config(callbacks=[handler])`,
+
+  crewai: `<span class="kw">from</span> piqrypt.bridges.crewai <span class="kw">import</span> <span class="fn">AuditedAgent</span> <span class="kw">as</span> Agent
+
+agent = <span class="fn">Agent</span>(
+    role=<span class="str">"Analyst"</span>,
+    goal=<span class="str">"..."</span>,
+    agent_name=<span class="str">"{name}"</span>,
+)`,
+
+  autogen: `<span class="kw">from</span> piqrypt.bridges.autogen <span class="kw">import</span> <span class="fn">AuditedAssistant</span>
+
+assistant = <span class="fn">AuditedAssistant</span>(
+    name=<span class="str">"{name}"</span>,
+    agent_name=<span class="str">"{name}"</span>,
+)`,
+
+  mcp: `<span class="cm">// claude_desktop_config.json</span>
+{
+  <span class="str">"mcpServers"</span>: {
+    <span class="str">"piqrypt"</span>: {
+      <span class="str">"command"</span>: <span class="str">"piqrypt"</span>,
+      <span class="str">"args"</span>: [<span class="str">"mcp-server"</span>],
+      <span class="str">"env"</span>: {
+        <span class="str">"PIQRYPT_IDENTITY"</span>: <span class="str">"~/.piqrypt/{name}.json"</span>
+      }
+    }
+  }
+}`,
+
+  ollama: `<span class="kw">from</span> piqrypt.bridges.ollama <span class="kw">import</span> <span class="fn">AuditedOllama</span>
+
+llm = <span class="fn">AuditedOllama</span>(
+    model=<span class="str">"llama3.2"</span>,
+    agent_name=<span class="str">"{name}"</span>,
+)`,
+
+  ros2: `<span class="kw">from</span> piqrypt.bridges.ros2 <span class="kw">import</span> <span class="fn">AuditedLifecycleNode</span>
+
+<span class="kw">class</span> <span class="fn">MyNode</span>(<span class="fn">AuditedLifecycleNode</span>):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        super().__init__(<span class="str">"my_node"</span>, agent_name=<span class="str">"{name}"</span>)`,
+
+  rpi: `<span class="kw">from</span> piqrypt.bridges.rpi <span class="kw">import</span> <span class="fn">AuditedPiAgent</span>
+
+agent = <span class="fn">AuditedPiAgent</span>(
+    agent_name=<span class="str">"{name}"</span>,
+    gpio_pin=<span class="num">18</span>,
+)`,
+
+  nocode: `<span class="cm"># 3 steps — no code required</span>
+<span class="cm"># 1. pip install piqrypt</span>
+<span class="cm"># 2. piqrypt mcp-config --name {name}</span>
+<span class="cm"># 3. Open Claude Desktop → Settings → MCP → Refresh</span>`
+};
+
+const SNIPPETS_PLAIN = {
+  langchain: `from piqrypt.bridges.langchain import PiQryptCallbackHandler\n\nhandler = PiQryptCallbackHandler(agent_name="{name}")\nchain = your_chain.with_config(callbacks=[handler])\n`,
+  crewai:    `from piqrypt.bridges.crewai import AuditedAgent as Agent\n\nagent = Agent(\n    role="Analyst",\n    goal="...",\n    agent_name="{name}",\n)\n`,
+  autogen:   `from piqrypt.bridges.autogen import AuditedAssistant\n\nassistant = AuditedAssistant(\n    name="{name}",\n    agent_name="{name}",\n)\n`,
+  mcp:       `// claude_desktop_config.json\n{\n  "mcpServers": {\n    "piqrypt": {\n      "command": "piqrypt",\n      "args": ["mcp-server"],\n      "env": {\n        "PIQRYPT_IDENTITY": "~/.piqrypt/{name}.json"\n      }\n    }\n  }\n}\n`,
+  ollama:    `from piqrypt.bridges.ollama import AuditedOllama\n\nllm = AuditedOllama(\n    model="llama3.2",\n    agent_name="{name}",\n)\n`,
+  ros2:      `from piqrypt.bridges.ros2 import AuditedLifecycleNode\n\nclass MyNode(AuditedLifecycleNode):\n    def __init__(self):\n        super().__init__("my_node", agent_name="{name}")\n`,
+  rpi:       `from piqrypt.bridges.rpi import AuditedPiAgent\n\nagent = AuditedPiAgent(\n    agent_name="{name}",\n    gpio_pin=18,\n)\n`,
+  nocode:    `# 3 steps — no code required\n# 1. pip install piqrypt\n# 2. piqrypt mcp-config --name {name}\n# 3. Open Claude Desktop → Settings → MCP → Refresh\n`,
+};
+
+const BRIDGE_LABELS = {
+  langchain: 'LangChain', crewai: 'CrewAI', autogen: 'AutoGen', mcp: 'MCP',
+  ollama: 'Ollama', ros2: 'ROS2', rpi: 'Raspberry Pi', nocode: 'No-Code / MCP'
+};
+
+let currentBridge = 'langchain';
+let currentAgentName = 'my-agent';
+
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function copyText(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text) {
+  const el = document.createElement('textarea');
+  el.value = text;
+  el.style.position = 'fixed';
+  el.style.opacity = '0';
+  document.body.appendChild(el);
+  el.select();
+  document.execCommand('copy');
+  document.body.removeChild(el);
+}
+
+function getName() {
+  const n = (document.getElementById('wiz-name').value || 'my-agent').trim().replace(/\s+/g, '-');
+  return n || 'my-agent';
+}
+
+
+// ── Install bar ───────────────────────────────────────────────────────────────
+
+function copyInstall(btn) {
+  copyText('pip install piqrypt');
+  const orig = btn.textContent;
+  btn.textContent = 'Copied!';
+  setTimeout(() => btn.textContent = orig, 1500);
+}
+
+
+// ── Bridge section ────────────────────────────────────────────────────────────
+
+function selectBridge(bridge, el) {
+  document.querySelectorAll('.bridge-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  currentBridge = bridge;
+
+  const name = getName();
+  const html = (SNIPPETS[bridge] || '').replace(/\{name\}/g, name);
+
+  document.getElementById('snippet-title').textContent = BRIDGE_LABELS[bridge] || bridge;
+  document.getElementById('snippet-code').innerHTML = html;
+  document.getElementById('dl-bridge-sh').textContent  = bridge;
+  document.getElementById('dl-bridge-ps1').textContent = bridge;
+
+  const panel = document.getElementById('snippet-panel');
+  panel.classList.remove('visible');
+  requestAnimationFrame(() => panel.classList.add('visible'));
+}
+
+function copySnippet() {
+  const name = getName();
+  const plain = (SNIPPETS_PLAIN[currentBridge] || '').replace(/\{name\}/g, name);
+  copyText(plain);
+  showToast('Code copied!');
+}
+
+function downloadScript(ext) {
+  const name = getName();
+  let content;
+  if (ext === 'sh') {
+    content = [
+      '#!/usr/bin/env bash',
+      '# PiQrypt — ' + BRIDGE_LABELS[currentBridge] + ' setup',
+      'pip install piqrypt',
+      'piqrypt identity create --name "' + name + '" ~/.piqrypt/' + name + '.json',
+      'piqrypt onboard --identity ~/.piqrypt/' + name + '.json',
+    ].join('\n') + '\n';
+  } else {
+    content = [
+      '# PiQrypt — ' + BRIDGE_LABELS[currentBridge] + ' setup',
+      'pip install piqrypt',
+      'piqrypt identity create --name "' + name + '" "$env:USERPROFILE\\.piqrypt\\' + name + '.json"',
+      'piqrypt onboard --identity "$env:USERPROFILE\\.piqrypt\\' + name + '.json"',
+    ].join('\r\n') + '\r\n';
+  }
+  const blob = new Blob([content], { type: 'text/plain' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'install_piqrypt_' + currentBridge + '.' + ext;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+
+// ── Demo cards ────────────────────────────────────────────────────────────────
+
+function copyDemo(cmd) {
+  copyText(cmd);
+  showToast('Command copied!');
+}
+
+
+// ── Wizard ────────────────────────────────────────────────────────────────────
+
+function generateWizard() {
+  const name   = getName();
+  const pass   = document.getElementById('wiz-pass').value;
+  const bridge = document.getElementById('wiz-bridge').value;
+
+  let identityCmd = 'piqrypt identity create --name "' + name + '" ~/.piqrypt/' + name + '.json';
+  if (pass) {
+    identityCmd += ' \\\n  --passphrase "••••••"';
+  }
+
+  const lines = [
+    '$ pip install piqrypt',
+    '$ ' + identityCmd,
+    '$ piqrypt onboard --identity ~/.piqrypt/' + name + '.json',
+  ];
+
+  document.getElementById('wiz-code').textContent = lines.join('\n');
+
+  const out = document.getElementById('wiz-output');
+  out.classList.remove('visible');
+  requestAnimationFrame(() => out.classList.add('visible'));
+}
+
+function copyWizard() {
+  const code = document.getElementById('wiz-code').textContent;
+  copyText(code);
+  showToast('Commands copied!');
+}
+
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Pre-select first bridge
+  const firstBtn = document.querySelector('.bridge-btn[data-bridge="langchain"]');
+  if (firstBtn) selectBridge('langchain', firstBtn);
+
+  // Live-update snippet name when wizard name changes
+  document.getElementById('wiz-name').addEventListener('input', () => {
+    if (currentBridge) {
+      const btn = document.querySelector('.bridge-btn.active');
+      if (btn) selectBridge(currentBridge, btn);
+    }
+  });
+});
+</script>
+</body>
+</html>
