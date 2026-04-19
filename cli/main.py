@@ -33,6 +33,14 @@ except ImportError:
     print("Run: pip install piqrypt", file=sys.stderr)
     sys.exit(1)
 
+try:
+    from cli.cmd_onboarding import cmd_demo, cmd_init, cmd_onboard
+except ImportError:
+    try:
+        from cmd_onboarding import cmd_demo, cmd_init, cmd_onboard
+    except ImportError:
+        cmd_demo = cmd_init = cmd_onboard = None
+
 
 # ─────────────────────────────────────────────
 # Helpers
@@ -998,6 +1006,22 @@ Examples:
     stat_p = sub.add_parser('status', help='Agent status (replaces legacy)')
     stat_p.add_argument('--deep', action='store_true', help='Show network status (Pro)')
 
+    # ── demo — live agents + Vigil ──
+    demo_p = sub.add_parser('demo', help='Launch live demo agents and open Vigil dashboard')
+    demo_p.add_argument('--family', choices=['nexus', 'pixelflow', 'alphacore'], default=None)
+    demo_p.add_argument('--no-browser', action='store_true')
+
+    # ── init — wizard setup ──
+    init_p = sub.add_parser('init', help='Interactive setup wizard — agent identity + bridge + Vigil')
+    init_p.add_argument('--name', default=None)
+    init_p.add_argument('--bridge', default=None,
+        choices=['langchain', 'crewai', 'autogen', 'mcp', 'ollama', 'ros2', 'rpi', 'nocode'])
+    init_p.add_argument('--no-browser', action='store_true')
+
+    # ── onboard — open onboarding page ──
+    onboard_p = sub.add_parser('onboard',
+        help='Open the interactive onboarding page in your browser')
+
     # ─────────────────────────────────────────
     args = parser.parse_args()
 
@@ -1155,6 +1179,27 @@ Examples:
         # Start — interactive launcher
         elif args.command == 'start':
             return cmd_start(args)
+
+        # Demo — live agents + Vigil
+        elif args.command == 'demo':
+            if cmd_demo is None:
+                print("Error: cmd_onboarding not available", file=sys.stderr)
+                return 1
+            return cmd_demo(args)
+
+        # Init — wizard setup
+        elif args.command == 'init':
+            if cmd_init is None:
+                print("Error: cmd_onboarding not available", file=sys.stderr)
+                return 1
+            return cmd_init(args)
+
+        # Onboard — open onboarding page
+        elif args.command == 'onboard':
+            if cmd_onboard is None:
+                print("Error: cmd_onboarding not available", file=sys.stderr)
+                return 1
+            return cmd_onboard(args)
 
         return 0
 
