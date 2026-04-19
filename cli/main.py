@@ -1019,7 +1019,7 @@ Examples:
     init_p.add_argument('--no-browser', action='store_true')
 
     # ── onboard — open onboarding page ──
-    onboard_p = sub.add_parser('onboard',
+    sub.add_parser('onboard',
         help='Open the interactive onboarding page in your browser')
 
     # ─────────────────────────────────────────

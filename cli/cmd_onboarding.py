@@ -304,7 +304,7 @@ def cmd_demo(args):
     _open_vigil(no_browser)
 
     print(bold(f"  {'━' * 44}"))
-    print(f"  Agents en live dans Vigil — Ctrl+C pour arrêter")
+    print("  Agents en live dans Vigil — Ctrl+C pour arrêter")
     print(bold(f"  {'━' * 44}"))
     print()
 
@@ -470,7 +470,7 @@ def cmd_init(args):
         vigil_proc.terminate()
         print()
         print(bold(f"  {'━' * 44}"))
-        print(f"  Prochaine étape : collez le snippet dans votre code.")
+        print("  Prochaine étape : collez le snippet dans votre code.")
         print(bold(f"  {'━' * 44}"))
         print()
         return 0
@@ -482,7 +482,7 @@ def cmd_init(args):
     _open_vigil(no_browser)
 
     print(bold(f"  {'━' * 44}"))
-    print(f"  Vigil ouvert — Ctrl+C pour arrêter")
+    print("  Vigil ouvert — Ctrl+C pour arrêter")
     print(bold(f"  {'━' * 44}"))
     print()
 
