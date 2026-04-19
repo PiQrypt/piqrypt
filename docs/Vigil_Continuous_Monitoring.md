@@ -1,7 +1,7 @@
 # Vigil — Monitoring Continu
 
 **Module :** `vigil/vigil_server.py`  
-**Version :** PiQrypt v1.8.6  
+**Version :** PiQrypt v1.8.7  
 **Port :** 8421 (défaut)  
 **Dépendances :** `aiss.anomaly_monitor`, `aiss.a2c_detector`, `aiss.tsi_engine`
 
@@ -241,7 +241,7 @@ curl http://localhost:8421/api/alerts
 
 ---
 
-*PiQrypt v1.8.6 — MIT License*
+*PiQrypt v1.8.7 — MIT License*
 
 ---
 

@@ -726,7 +726,7 @@ PCP occupies the same structural position in the AI agent stack that TLS occupie
 
 ## 16. Implementation Status
 
-PCP's reference implementation is **PiQrypt v1.8.6**.
+PCP's reference implementation is **PiQrypt v1.8.7**.
 
 ### 16.1 Protocol Coverage
 

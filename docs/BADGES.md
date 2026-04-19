@@ -1,7 +1,7 @@
 # Visual Badges System
 
-**Version:** 1.8.6
-**Date:** 2026-04-17
+**Version:** 1.8.7
+**Date:** 2026-04-19
 **Status:** Current
 
 ---
@@ -107,7 +107,7 @@ Visual badges for your README files, documentation, and websites.
 
 **Version:**
 ```markdown
-[![Version](https://img.shields.io/badge/version-1.8.6-blue)](https://github.com/piqrypt/piqrypt/releases)
+[![Version](https://img.shields.io/badge/version-1.8.7-blue)](https://github.com/piqrypt/piqrypt/releases)
 ```
 
 **License:**
@@ -322,7 +322,7 @@ piqrypt badge generate --tier pro --copy
 
 ```markdown
 <!-- Update version when upgrading -->
-[![Version](https://img.shields.io/badge/version-1.8.6-blue)](...)
+[![Version](https://img.shields.io/badge/version-1.8.7-blue)](...)
 
 <!-- Update tier if licensing changes -->
 [![PiQrypt Pro](https://img.shields.io/badge/PiQrypt-Pro-gold)](...)
@@ -350,7 +350,7 @@ Caret:  %5E
 ---
 
 **Last Updated:** 2026-03-12
-**Version:** 1.8.6
+**Version:** 1.8.7
 
 ---
 
