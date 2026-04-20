@@ -59,6 +59,12 @@ def _read_version(toml_path: Path) -> str:
 #   - docs/WHITEPAPER_v2.0.md               (**Version:** = whitepaper edition)
 #   - docs/A2A_HANDSHAKE_GUIDE.md           (**Version:** = protocol revision)
 FILES = [
+    (
+        "piqrypt/__init__.py",
+        [
+            (r'__version__ = "[\d.]+"', '__version__ = "{V}"'),
+        ],
+    ),
     # ── docs/ — **Version:** + **Date:** headers ────────────────────────────
     (
         "docs/BADGES.md",

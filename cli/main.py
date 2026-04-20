@@ -34,12 +34,12 @@ except ImportError:
     sys.exit(1)
 
 try:
-    from cli.cmd_onboarding import cmd_demo, cmd_init, cmd_onboard
+    from cli.cmd_onboarding import cmd_demo, cmd_init, cmd_onboard, cmd_vigil
 except ImportError:
     try:
-        from cmd_onboarding import cmd_demo, cmd_init, cmd_onboard
+        from cmd_onboarding import cmd_demo, cmd_init, cmd_onboard, cmd_vigil
     except ImportError:
-        cmd_demo = cmd_init = cmd_onboard = None
+        cmd_demo = cmd_init = cmd_onboard = cmd_vigil = None
 
 
 # ─────────────────────────────────────────────
@@ -1018,6 +1018,11 @@ Examples:
         choices=['langchain', 'crewai', 'autogen', 'mcp', 'ollama', 'ros2', 'rpi', 'nocode'])
     init_p.add_argument('--no-browser', action='store_true')
 
+    # ── vigil — open Vigil dashboard ──
+    vigil_p = sub.add_parser('vigil',
+        help='Open Vigil dashboard with existing agents')
+    vigil_p.add_argument('--no-browser', action='store_true')
+
     # ── onboard — open onboarding page ──
     sub.add_parser('onboard',
         help='Open the interactive onboarding page in your browser')
@@ -1193,6 +1198,13 @@ Examples:
                 print("Error: cmd_onboarding not available", file=sys.stderr)
                 return 1
             return cmd_init(args)
+
+        # Vigil — open dashboard with existing agents
+        elif args.command == 'vigil':
+            if cmd_vigil is None:
+                print("Error: cmd_onboarding not available", file=sys.stderr)
+                return 1
+            return cmd_vigil(args)
 
         # Onboard — open onboarding page
         elif args.command == 'onboard':

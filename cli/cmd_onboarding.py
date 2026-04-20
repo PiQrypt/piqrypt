@@ -329,32 +329,34 @@ def cmd_demo(args):
             time.sleep(1)
     except KeyboardInterrupt:
         pass
-
-    print()
-    print(dim("  Arrêt..."))
-    for proc in (demo_proc, vigil_proc):
-        try:
-            proc.terminate()
-            proc.wait(timeout=5)
-        except Exception:
+    finally:
+        # Guaranteed cleanup — always runs
+        print()
+        print(dim("  Arrêt..."))
+        for proc in (demo_proc, vigil_proc):
             try:
-                proc.kill()
+                proc.terminate()
+                proc.wait(timeout=5)
             except Exception:
-                pass
+                try:
+                    proc.kill()
+                except Exception:
+                    pass
+        try:
+            import shutil as _shutil
+            _agents_dir = Path.home() / ".piqrypt" / "agents"
+            if _agents_dir.exists():
+                _shutil.rmtree(_agents_dir, ignore_errors=True)
+            _peers = Path.home() / ".piqrypt" / "peers.json"
+            if _peers.exists():
+                _peers.unlink(missing_ok=True)
+            _lockfile = Path.home() / ".piqrypt" / ".demo_active"
+            if _lockfile.exists():
+                _lockfile.unlink(missing_ok=True)
+        except Exception:
+            pass
+        print(dim("  Stack arrêté."))
 
-    # Post-demo cleanup — leave user's Vigil clean
-    try:
-        import shutil as _shutil
-        _agents_dir = Path.home() / ".piqrypt" / "agents"
-        if _agents_dir.exists():
-            _shutil.rmtree(_agents_dir, ignore_errors=True)
-        _peers = Path.home() / ".piqrypt" / "peers.json"
-        if _peers.exists():
-            _peers.unlink(missing_ok=True)
-    except Exception:
-        pass
-
-    print(dim("  Stack arrêté."))
     print()
     return 0
 
@@ -417,6 +419,21 @@ def cmd_init(args):
     except (KeyboardInterrupt, EOFError):
         passphrase = None
 
+    # ── Free tier agent limit check ───────────────────────────────────────────
+    try:
+        from aiss.license import get_tier
+        _agents_dir = Path.home() / ".piqrypt" / "agents"
+        _count = len([d for d in _agents_dir.iterdir()
+                      if d.is_dir()]) if _agents_dir.exists() else 0
+        if get_tier() == "free" and _count >= 3:
+            print()
+            print(red("  ✗ Free tier limit reached (3 agents)"))
+            print(yellow("  → Upgrade at https://piqrypt.com/pricing"))
+            print()
+            return 1
+    except Exception:
+        pass
+
     # ── Génération des clés ───────────────────────────────────────────────────
     print()
     print(f"  {dim('Génération des clés Ed25519...')}", end="", flush=True)
@@ -474,17 +491,19 @@ def cmd_init(args):
     # Genesis event — makes the agent immediately visible in Vigil
     try:
         from aiss import stamp_genesis_event
-        _agent_dir = Path.home() / ".piqrypt" / "agents" / agent_name
-        _agent_dir.mkdir(parents=True, exist_ok=True)
-        _genesis = stamp_genesis_event(private_key_bytes, agent_id, {
+        from aiss.agent_registry import init_agent_dirs, register_agent
+        _agent_dir = init_agent_dirs(agent_name)
+        register_agent(agent_name, agent_id)
+        _genesis = stamp_genesis_event(private_key_bytes, public_key_bytes, agent_id, {
             "bridge": bridge_id,
             "created_via": "piqrypt init",
         })
-        _events_file = _agent_dir / "events.jsonl"
-        with open(_events_file, "a", encoding="utf-8") as _f:
-            _f.write(json.dumps(_genesis) + "\n")
-    except Exception:
-        pass  # non-blocking
+        _plain_dir = _agent_dir / "events" / "plain"
+        _events_file = _plain_dir / f"{_genesis['timestamp']}_genesis.json"
+        with open(_events_file, "w", encoding="utf-8") as _f:
+            _f.write(json.dumps(_genesis))
+    except Exception as e:
+        print(yellow(f"  ⚠  Agent not yet visible in Vigil ({e})"))
 
     # ── Snippet d'intégration ──────────────────────────────────────────────────
     snippet = SNIPPETS.get(bridge_id, SNIPPETS["langchain"]).replace("{name}", agent_name)
@@ -548,6 +567,70 @@ def cmd_init(args):
 
     print(dim("  Vigil arrêté."))
     print()
+    return 0
+
+
+# ── cmd_vigil ─────────────────────────────────────────────────────────────────
+
+def cmd_vigil(args):
+    """piqrypt vigil — Start Vigil and open the dashboard."""
+    no_browser = getattr(args, 'no_browser', False)
+
+    print()
+    print(bold("  ╔══════════════════════════════════════╗"))
+    print(bold("  ║       PiQrypt — Vigil Dashboard      ║"))
+    print(bold("  ╚══════════════════════════════════════╝"))
+    print()
+
+    print(f"  {dim('Démarrage Vigil...')}", end="", flush=True)
+    vigil_proc = _start_vigil_bg()
+
+    ok = _wait_vigil(timeout=12)
+    if not ok:
+        print(red(" ✗"))
+        print(red("  Vigil n'a pas démarré — port 8421 occupé ?"))
+        vigil_proc.terminate()
+        return 1
+    print(green(" ✓"))
+
+    agents_dir = Path.home() / ".piqrypt" / "agents"
+    agent_count = len([d for d in agents_dir.iterdir()
+                       if d.is_dir()]) if agents_dir.exists() else 0
+
+    if agent_count > 0:
+        print(f"  {green('✓')} Agents    : {cyan(str(agent_count))} agent(s) chargés")
+    else:
+        print(f"  {yellow('→')} Aucun agent — le wizard s'ouvrira dans Vigil")
+
+    print(f"  {green('✓')} Vigil     : {cyan(f'{VIGIL_URL}/?token={VIGIL_TOKEN}')}")
+    print()
+
+    _open_vigil(no_browser)
+
+    print(bold(f"  {'━' * 44}"))
+    print("  Vigil ouvert — Ctrl+C pour arrêter")
+    print(bold(f"  {'━' * 44}"))
+    print()
+
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        print()
+        print(dim("  Arrêt Vigil..."))
+        try:
+            vigil_proc.terminate()
+            vigil_proc.wait(timeout=5)
+        except Exception:
+            try:
+                vigil_proc.kill()
+            except Exception:
+                pass
+        print(dim("  Vigil arrêté."))
+        print()
+
     return 0
 
 

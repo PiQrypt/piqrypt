@@ -36,6 +36,7 @@ import os
 import re
 import sys
 import threading
+import subprocess
 import time
 import shutil
 import signal
@@ -129,6 +130,11 @@ TRUST_SERVER_URL = os.getenv(
 
 # ── Auth instance (partagée par tous les handlers) ────────────────────────────
 _AUTH = AuthMiddleware("VIGIL_TOKEN", service="vigil")
+
+# ── Demo process handle (singleton) ───────────────────────────────────────────
+_demo_proc: Optional["subprocess.Popen"] = None
+_demo_active: bool = False
+_DEMO_LOCKFILE = PIQRYPT_DIR / ".demo_active"
 
 
 # ── TrustGate push (fire-and-forget, thread séparé) ──────────────────────────
@@ -360,6 +366,11 @@ class VIGILHandler(BaseHTTPRequestHandler):
             self._send_json(200, _AUTH.tier_info())
             return
 
+        # ── Demo status (publique — pour l'UI) ──
+        if path == "/api/demo/status":
+            self._send_json(200, {"active": _demo_active})
+            return
+
         # ── Features (publique — pour l'UI) ──
         if path == "/api/features":
             vf = _AUTH.vigil_features()
@@ -443,6 +454,23 @@ class VIGILHandler(BaseHTTPRequestHandler):
         # ── Auth + feature gating ──
         if not _AUTH.check(self):
             return
+
+        # ── Demo routes — auth only, no record feature required ──
+        if path == "/api/demo/start":
+            length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(length) if length else b"{}"
+            try:
+                payload = json.loads(body)
+            except json.JSONDecodeError:
+                self._send_error(400, "Invalid JSON")
+                return
+            self._api_demo_start(payload)
+            return
+
+        if path == "/api/demo/stop":
+            self._api_demo_stop()
+            return
+
         if not _AUTH.check_feature(self, "record"):
             return
 
@@ -947,6 +975,34 @@ class VIGILHandler(BaseHTTPRequestHandler):
             self._send_error(503, "Backend non disponible — mode DEMO")
             return
 
+        # ── Agent count limit (Free tier: 3 agents max) ───────────────────────
+        try:
+            from aiss.license import get_tier as _get_license_tier, TIERS as _TIERS
+            _tier = _get_license_tier()
+            _agents_max = _TIERS.get(_tier, _TIERS["free"]).get("agents_max")
+            if _agents_max is not None:
+                _agents_dir = PIQRYPT_DIR / "agents"
+                _existing = 0
+                if _agents_dir.exists():
+                    _existing = len([
+                        d for d in _agents_dir.iterdir() if d.is_dir()
+                    ])
+                if _existing >= _agents_max:
+                    self._send_json(403, {
+                        "error":   "agent_limit_reached",
+                        "message": (
+                            f"Free tier limit reached ({_agents_max} agents) "
+                            "— upgrade at piqrypt.com"
+                        ),
+                        "limit":   _agents_max,
+                        "current": _existing,
+                        "tier":    _tier,
+                        "upgrade": "https://piqrypt.com/pricing",
+                    })
+                    return
+        except Exception as e:
+            log.debug("[Vigil] agent_limit check failed (non-blocking): %s", e)
+
         # ── Bridge limit enforcement (Free tier: 2 bridges max) ──────────────
         bridge_limit = _AUTH.get_bridge_limit()
         if bridge_limit is not None and bridge:
@@ -1094,6 +1150,94 @@ class VIGILHandler(BaseHTTPRequestHandler):
         except Exception as e:
             log.error("[Vigil] delete_agent(%s) failed: %s", name, e)
             self._send_json(500, {"error": str(e)})
+
+    def _api_demo_start(self, payload: Dict):
+        """POST /api/demo/start — launch demo_families.py for the given family."""
+        global _demo_proc, _demo_active
+
+        family = (payload.get("family") or "nexus").strip()
+        if family not in ("nexus", "pixelflow", "alphacore"):
+            family = "nexus"
+
+        # Kill any running demo
+        if _demo_proc is not None:
+            try:
+                _demo_proc.terminate()
+            except Exception:
+                pass
+            _demo_proc = None
+
+        # Purge agent state
+        agents_dir = PIQRYPT_DIR / "agents"
+        if agents_dir.exists():
+            shutil.rmtree(agents_dir, ignore_errors=True)
+        agents_dir.mkdir(parents=True, exist_ok=True)
+
+        peers_file = PIQRYPT_DIR / "peers.json"
+        if peers_file.exists():
+            try:
+                peers_file.unlink()
+            except Exception:
+                pass
+
+        # Locate demo script
+        demo_script = Path(__file__).resolve().parent.parent / "demos" / "demo_families.py"
+        if not demo_script.exists():
+            self._send_error(404, f"demo_families.py not found at {demo_script}")
+            return
+
+        token = _AUTH.token or ""
+        _demo_proc = subprocess.Popen(
+            [sys.executable, str(demo_script), "--family", family, "--loop", "--fast"],
+            env={
+                **os.environ,
+                "VIGIL_TOKEN":         token,
+                "PIQRYPT_SCRYPT_N":    "16384",
+                "VIGIL_DEV_DELETE":    "1",
+                "PYTHONIOENCODING":    "utf-8",
+            },
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        _demo_active = True
+        try:
+            _DEMO_LOCKFILE.write_text(family)
+        except Exception:
+            pass
+        log.info("[Vigil] Demo started — family=%s pid=%d", family, _demo_proc.pid)
+        self._send_json(200, {"status": "ok", "family": family})
+
+    def _api_demo_stop(self):
+        """POST /api/demo/stop — terminate demo process and purge agent state."""
+        global _demo_proc, _demo_active
+
+        if _demo_proc is not None:
+            try:
+                _demo_proc.terminate()
+            except Exception:
+                pass
+            _demo_proc = None
+
+        agents_dir = PIQRYPT_DIR / "agents"
+        if agents_dir.exists():
+            shutil.rmtree(agents_dir, ignore_errors=True)
+        agents_dir.mkdir(parents=True, exist_ok=True)
+
+        peers_file = PIQRYPT_DIR / "peers.json"
+        if peers_file.exists():
+            try:
+                peers_file.unlink()
+            except Exception:
+                pass
+
+        _demo_active = False
+        try:
+            if _DEMO_LOCKFILE.exists():
+                _DEMO_LOCKFILE.unlink()
+        except Exception:
+            pass
+        log.info("[Vigil] Demo stopped")
+        self._send_json(200, {"status": "ok"})
 
     def _api_record(self, name: str, event: Dict):
         """Receive a stamped event from a bridge and feed it to Vigil."""
@@ -1495,6 +1639,21 @@ class VIGILServer:
         self._thread: Optional[threading.Thread] = None
 
     def start(self, blocking: bool = True):
+        # ── Demo lockfile check — purge stale demo state on restart ──────────
+        if _DEMO_LOCKFILE.exists():
+            log.info("[Vigil] Demo lockfile found — purging stale demo state")
+            try:
+                agents_dir = PIQRYPT_DIR / "agents"
+                if agents_dir.exists():
+                    shutil.rmtree(agents_dir, ignore_errors=True)
+                agents_dir.mkdir(parents=True, exist_ok=True)
+                peers_file = PIQRYPT_DIR / "peers.json"
+                if peers_file.exists():
+                    peers_file.unlink()
+                _DEMO_LOCKFILE.unlink()
+            except Exception as e:
+                log.warning("[Vigil] Demo cleanup failed: %s", e)
+
         self._server = HTTPServer((self.host, self.port), VIGILHandler)
         log.info("━" * 56)
         log.info("  VIGIL Server v1.8.4")
