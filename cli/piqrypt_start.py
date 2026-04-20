@@ -532,7 +532,8 @@ class PiQryptLauncher:
         time.sleep(1.5)  # laisser les services démarrer
 
         _vigil_token = os.getenv("VIGIL_TOKEN", "")
-        if _vigil_token and not self.args.trustgate_only:
+        _no_browser  = os.getenv("VIGIL_NO_BROWSER", "0") == "1"
+        if _vigil_token and not self.args.trustgate_only and not _no_browser:
             _vigil_url = f"http://localhost:{DEFAULT_VIGIL_PORT}?token={_vigil_token}"
             webbrowser.open(_vigil_url)
 

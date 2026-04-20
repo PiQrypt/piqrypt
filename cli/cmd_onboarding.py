@@ -266,13 +266,26 @@ def cmd_demo(args):
 
     print(f"  {dim('Reset des agents demo...')}", end="", flush=True)
     try:
+        import shutil as _shutil
+        # Full purge — demo is an isolated sandbox, never touches user data
+        _agents_dir = Path.home() / ".piqrypt" / "agents"
+        if _agents_dir.exists():
+            _shutil.rmtree(_agents_dir, ignore_errors=True)
+        _agents_dir.mkdir(parents=True, exist_ok=True)
+        # Reset demo scripts
+        legacy_script = root / "demos" / "demo_piqrypt_live.py"
+        if legacy_script.exists():
+            subprocess.run(
+                [sys.executable, str(legacy_script), "--reset"],
+                cwd=str(root),
+                env={**os.environ, "PYTHONIOENCODING": "utf-8"},
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=15,
+            )
         subprocess.run(
             [sys.executable, str(demo_script), "--reset"],
             cwd=str(root),
             env={**os.environ, "PYTHONIOENCODING": "utf-8"},
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            timeout=15,
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=15,
         )
         print(green(" ✓"))
     except Exception:
@@ -325,6 +338,15 @@ def cmd_demo(args):
                 proc.kill()
             except Exception:
                 pass
+
+    # Post-demo cleanup — leave user's Vigil clean
+    try:
+        import shutil as _shutil
+        _agents_dir = Path.home() / ".piqrypt" / "agents"
+        if _agents_dir.exists():
+            _shutil.rmtree(_agents_dir, ignore_errors=True)
+    except Exception:
+        pass
 
     print(dim("  Stack arrêté."))
     print()
@@ -442,6 +464,21 @@ def cmd_init(args):
     print(f"  {green('✓')} Agent ID    : {cyan(agent_id[:24])}...")
     print(f"  {green('✓')} Clé         : {'🔒 chiffrée' if passphrase else dim('non chiffrée')}")
     print(f"  {green('✓')} Bridge      : {bridge_label}")
+
+    # Genesis event — makes the agent immediately visible in Vigil
+    try:
+        from aiss import stamp_genesis_event
+        _agent_dir = Path.home() / ".piqrypt" / "agents" / agent_name
+        _agent_dir.mkdir(parents=True, exist_ok=True)
+        _genesis = stamp_genesis_event(private_key_bytes, agent_id, {
+            "bridge": bridge_id,
+            "created_via": "piqrypt init",
+        })
+        _events_file = _agent_dir / "events.jsonl"
+        with open(_events_file, "a", encoding="utf-8") as _f:
+            _f.write(json.dumps(_genesis) + "\n")
+    except Exception:
+        pass  # non-blocking
 
     # ── Snippet d'intégration ──────────────────────────────────────────────────
     snippet = SNIPPETS.get(bridge_id, SNIPPETS["langchain"]).replace("{name}", agent_name)
