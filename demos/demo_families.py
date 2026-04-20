@@ -926,6 +926,14 @@ def reset_agents():
         if d.exists():
             shutil.rmtree(d)
             print(f"  {GREEN('removed')} {ag['name']}")
+    # Purge external peers
+    peers_file = PIQRYPT_DIR / "peers.json"
+    if peers_file.exists():
+        try:
+            peers_file.unlink()
+            print(f"  {GREEN('removed')} peers.json")
+        except Exception as e:
+            print(f"  {YELLOW('!')} peers.json: {e}")
     print(GREEN("  Done."))
 
 

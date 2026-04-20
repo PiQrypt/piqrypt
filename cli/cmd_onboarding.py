@@ -272,6 +272,9 @@ def cmd_demo(args):
         if _agents_dir.exists():
             _shutil.rmtree(_agents_dir, ignore_errors=True)
         _agents_dir.mkdir(parents=True, exist_ok=True)
+        _peers = Path.home() / ".piqrypt" / "peers.json"
+        if _peers.exists():
+            _peers.unlink(missing_ok=True)
         # Reset demo scripts
         legacy_script = root / "demos" / "demo_piqrypt_live.py"
         if legacy_script.exists():
@@ -345,6 +348,9 @@ def cmd_demo(args):
         _agents_dir = Path.home() / ".piqrypt" / "agents"
         if _agents_dir.exists():
             _shutil.rmtree(_agents_dir, ignore_errors=True)
+        _peers = Path.home() / ".piqrypt" / "peers.json"
+        if _peers.exists():
+            _peers.unlink(missing_ok=True)
     except Exception:
         pass
 
