@@ -19,9 +19,6 @@
 
 ---
 
-⭐ **If PiQrypt is useful to you, a star helps others find it** — [star on GitHub](https://github.com/piqrypt/piqrypt)
-[![GitHub Stars](https://img.shields.io/github/stars/piqrypt/piqrypt?style=social)](https://github.com/piqrypt/piqrypt)
-
 </div>
 
 ![Vigil Dashboard](docs/screenshots/vigil-dashboard.png)
@@ -301,7 +298,9 @@ PiQrypt does **not** protect against compromised private keys, malicious logic b
 | 🖥️ CLI Reference | `piqrypt --help` |
 
 ---
-
+⭐ **If PiQrypt is useful to you, a star helps others find it** — [star on GitHub](https://github.com/piqrypt/piqrypt)
+[![GitHub Stars](https://img.shields.io/github/stars/piqrypt/piqrypt?style=social)](https://github.com/piqrypt/piqrypt)
+---
 ## License
 
 | Component | License |
