@@ -5,7 +5,7 @@
 ### Every action your AI agent takes — signed, chained, provable.
 
 [![PyPI](https://img.shields.io/pypi/v/piqrypt?color=00c8e0&label=PyPI&style=flat-square)](https://pypi.org/project/piqrypt/)
-[![Downloads](https://img.shields.io/pypi/dm/piqrypt?style=flat-square&color=00e09a)](https://pypi.org/project/piqrypt/)
+[![Downloads](https://img.shields.io/pepy/dt/piqrypt?style=flat-square&color=00e09a)](https://pypi.org/project/piqrypt/)
 [![CI](https://img.shields.io/github/actions/workflow/status/piqrypt/piqrypt/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/piqrypt/piqrypt/actions)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue?style=flat-square)](https://pypi.org/project/piqrypt/)
 [![License](https://img.shields.io/badge/AISS%20core-MIT-green?style=flat-square)](LICENSE)
