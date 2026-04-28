@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "piqrypt"
-version = "1.8.10"
-description = "Trust infrastructure for autonomous AI agents â€” identity, observability, governance"
+version = "1.9.0"
+description = "Trust infrastructure for autonomous AI agents Ã¢â‚¬â€ identity, observability, governance"
 readme = "README.md"
 license = {text = "MIT (AISS spec/bridges) AND Apache-2.0 (cli) AND Elastic-2.0 (aiss/vigil/trustgate)"}
 authors = [
@@ -127,7 +127,7 @@ select = ["E", "F", "W"]
 [tool.ruff.lint.per-file-ignores]
 "aiss/__init__.py"    = ["F401"]
 "cli/__init__.py"     = ["F401"]
-"piqrypt/__init__.py" = ["F401"]   # â† AJOUTÃ‰
+"piqrypt/__init__.py" = ["F401"]   # Ã¢â€ Â AJOUTÃƒâ€°
 "cli/main.py"         = ["E501"]
 "aiss/*.py"           = ["E501", "E722", "E402"]
 "aiss/rfc3161.py"     = ["F401"]

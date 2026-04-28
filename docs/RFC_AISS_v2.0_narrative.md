@@ -1,8 +1,8 @@
-# AISS — Agent Identity and Signature Standard
-## RFC v2.0 — Standards Track
+# AISS â€” Agent Identity and Signature Standard
+## RFC v2.0 â€” Standards Track
 
 ```
-Status:     Standards Track — Public Review Draft
+Status:     Standards Track â€” Public Review Draft
 Version:    2.0.0
 Date:       March 2026
 Supersedes: AISS RFC v1.1
@@ -16,21 +16,21 @@ IP:         e-Soleau DSO2026006483 + DSO2026009143 (INPI France)
 
 ## Abstract
 
-Digital infrastructure advances in layers. TCP/IP established reliable communication. TLS secured it. OAuth made it delegable. Each layer introduced a primitive so fundamental it became invisible — and made the layer above it possible.
+Digital infrastructure advances in layers. TCP/IP established reliable communication. TLS secured it. OAuth made it delegable. Each layer introduced a primitive so fundamental it became invisible â€” and made the layer above it possible.
 
 **AISS is that primitive for autonomous agent trust.**
 
-The Agent Identity and Signature Standard defines the cryptographic foundation of the Proof of Continuity Protocol (PCP): deterministic agent identity that survives infrastructure changes, tamper-evident event chains that cannot be silently rewritten, cross-agent trust without centralized PKI, and the structural interfaces between the four PCP layers — AISS, PiQrypt Core, Vigil, and TrustGate.
+The Agent Identity and Signature Standard defines the cryptographic foundation of the Proof of Continuity Protocol (PCP): deterministic agent identity that survives infrastructure changes, tamper-evident event chains that cannot be silently rewritten, cross-agent trust without centralized PKI, and the structural interfaces between the four PCP layers â€” AISS, PiQrypt Core, Vigil, and TrustGate.
 
-Together, these layers answer the five questions that autonomous system accountability requires: *who acted, what did they decide, in what order, did their behaviour remain coherent, and was a human in the loop.* No prior protocol addressed all five. AISS makes them answerable — independently, portably, without access to the original infrastructure.
+Together, these layers answer the five questions that autonomous system accountability requires: *who acted, what did they decide, in what order, did their behaviour remain coherent, and was a human in the loop.* No prior protocol addressed all five. AISS makes them answerable â€” independently, portably, without access to the original infrastructure.
 
 Version 2.0 extends AISS v1.1 with:
 
-- **§ 17 — TrustGate**: formal specification of the governance and human oversight gate
-- **§ 15 — External Peer Observation**: unilateral recording of interactions with non-AISS systems
-- **§ 14 — PCP Protocol Stack**: formal definition of the four-layer architecture
-- **§ 16 — Vigil Behavioral Monitoring**: complete VRS, TSI, and A2C specifications
-- Updated conformance table (v1.7.1 — 325 tests passing)
+- **Â§ 17 â€” TrustGate**: formal specification of the governance and human oversight gate
+- **Â§ 15 â€” External Peer Observation**: unilateral recording of interactions with non-AISS systems
+- **Â§ 14 â€” PCP Protocol Stack**: formal definition of the four-layer architecture
+- **Â§ 16 â€” Vigil Behavioral Monitoring**: complete VRS, TSI, and A2C specifications
+- Updated conformance table (v1.7.1 â€” 325 tests passing)
 - Updated bridge framework appendix (9 bridges)
 
 AISS does not evaluate the correctness, legality, safety, or quality of a decision.  
@@ -41,14 +41,14 @@ AISS establishes **verifiable attribution** and **historical integrity** across 
 ## Table of Contents
 
 ```
-PART I — FOUNDATIONS
+PART I â€” FOUNDATIONS
   0.  Purpose and Legal Effect
   1.  Introduction
   2.  Terminology
   3.  Canonicalization (MANDATORY)
   4.  Cryptographic Algorithms
 
-PART II — PROTOCOL
+PART II â€” PROTOCOL
   5.  Agent Identity
   6.  Agent Identity Document
   7.  Event Stamp Structure
@@ -59,18 +59,18 @@ PART II — PROTOCOL
   12. Key Rotation
   13. Key Lifecycle Management
 
-PART III — TRUST & CONTINUITY
-  14. Proof of Continuity Protocol (PCP) — Architecture
+PART III â€” TRUST & CONTINUITY
+  14. Proof of Continuity Protocol (PCP) â€” Architecture
   15. External Peer Observation
   16. Agent-to-Agent (A2A) Protocol
   17. Authority Binding Layer
   18. Canonical History Rule
 
-PART IV — MONITORING & GOVERNANCE
-  19. Vigil — Behavioral Monitoring
-  20. TrustGate — Governance & Human Oversight
+PART IV â€” MONITORING & GOVERNANCE
+  19. Vigil â€” Behavioral Monitoring
+  20. TrustGate â€” Governance & Human Oversight
 
-PART V — OPERATIONS
+PART V â€” OPERATIONS
   21. Security Requirements
   22. Audit Export Format
   23. Compliance Profile (AISS-2)
@@ -93,9 +93,9 @@ APPENDICES
 
 ---
 
-## PART I — FOUNDATIONS
+## PART I â€” FOUNDATIONS
 
-> *PCP context: The sections in this part establish the invariants that the entire protocol stack depends on. Before any event is signed, before any chain is built, before any governance decision is recorded — the cryptographic foundations here must hold. A failure at this layer invalidates everything above it.*
+> *PCP context: The sections in this part establish the invariants that the entire protocol stack depends on. Before any event is signed, before any chain is built, before any governance decision is recorded â€” the cryptographic foundations here must hold. A failure at this layer invalidates everything above it.*
 
 ---
 
@@ -139,7 +139,7 @@ A valid VDR provides cryptographic proof that:
 
 ### 0.4 Legal Effect of a Valid Record
 
-If a VDR is validated according to § 26 (Verification Procedure), the following are cryptographically established:
+If a VDR is validated according to Â§ 26 (Verification Procedure), the following are cryptographically established:
 
 | Property | Established |
 |----------|-------------|
@@ -169,7 +169,7 @@ Within this standard, **non-repudiation** means:
 
 > The inability for a delegating authority to credibly deny that the identified agent instance emitted the recorded decision sequence, after successful verification of a valid VDR.
 
-Non-repudiation applies to **emission only** — not to intent, correctness, or consequence.
+Non-repudiation applies to **emission only** â€” not to intent, correctness, or consequence.
 
 ### 0.7 Independence of Verification
 
@@ -185,7 +185,7 @@ Two independent conforming implementations MUST reach identical verification res
 
 ## 1. Introduction
 
-> *PCP context — Identity Continuity: This section specifies the first of PCP's four primitives. An autonomous agent without persistent cryptographic identity is ephemeral — indistinguishable from any other process after a restart. AISS gives it an anchor: a stable, self-sovereign identity that survives model upgrades, infrastructure migrations, and key rotations, without depending on any central registry.*
+> *PCP context â€” Identity Continuity: This section specifies the first of PCP's four primitives. An autonomous agent without persistent cryptographic identity is ephemeral â€” indistinguishable from any other process after a restart. AISS gives it an anchor: a stable, self-sovereign identity that survives model upgrades, infrastructure migrations, and key rotations, without depending on any central registry.*
 
 AISS defines a deterministic, cryptographically verifiable identity and signing framework for autonomous agents. The standard addresses the fundamental challenge of establishing trust between agents without relying on centralized certificate authorities or blockchain infrastructure.
 
@@ -217,24 +217,24 @@ AISS does NOT:
 - Define consensus mechanisms
 - Specify network transport protocols
 - Mandate storage backend implementations
-- Guarantee privacy (see § 24)
+- Guarantee privacy (see Â§ 24)
 - Evaluate correctness or safety of agent decisions
 - Replace TLS for transport security
 
 ### 1.4 Relationship Between AISS and PCP
 
-AISS defines the cryptographic identity, signature, and hash-chain mechanisms — Layer 1 of the PCP stack.
+AISS defines the cryptographic identity, signature, and hash-chain mechanisms â€” Layer 1 of the PCP stack.
 
 The Proof of Continuity Protocol (PCP) extends AISS across four layers:
 
 ```
-AISS        → cryptographic identity, event signing, hash chains
-PiQrypt     → fork resolution, TSA integration, certification, anti-replay
-Vigil       → behavioural monitoring (TSI, VRS, A2C), real-time dashboard
-TrustGate   → policy enforcement, human oversight gate
+AISS        â†’ cryptographic identity, event signing, hash chains
+PiQrypt     â†’ fork resolution, TSA integration, certification, anti-replay
+Vigil       â†’ behavioural monitoring (TSI, VRS, A2C), real-time dashboard
+TrustGate   â†’ policy enforcement, human oversight gate
 ```
 
-Full PCP architecture is specified in § 14.
+Full PCP architecture is specified in Â§ 14.
 
 ---
 
@@ -249,16 +249,16 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 | **Event** | A discrete action or decision recorded and signed by an agent |
 | **Stamp** | The act of signing an event and linking it to the hash chain |
 | **Hash Chain** | A sequence of events where each event cryptographically references the hash of the previous event |
-| **Genesis Event** | The first event in a hash chain with no predecessor (`previous_hash` = `"0" × 64`) |
+| **Genesis Event** | The first event in a hash chain with no predecessor (`previous_hash` = `"0" Ã— 64`) |
 | **Fork** | A condition where two or more events reference the same `previous_hash` |
-| **VDR** | Verifiable Decision Record — a complete, validated event chain |
-| **PCP** | Proof of Continuity Protocol — the full four-layer trust stack |
-| **PAC** | Proof of Agent Continuity — the aggregate property established by a valid PCP record |
-| **TSA** | Time Stamping Authority — external RFC 3161 timestamp provider |
-| **TSI** | Trust State Index — behavioural stability indicator (STABLE / WATCH / UNSTABLE / CRITICAL) |
-| **VRS** | Vigil Risk Score — composite real-time risk metric [0.0 → 1.0] |
-| **A2C** | Agent-to-Context detector — relational anomaly detection across agent interactions |
-| **TrustGate** | Governance and human oversight layer — evaluates actions against policy before execution |
+| **VDR** | Verifiable Decision Record â€” a complete, validated event chain |
+| **PCP** | Proof of Continuity Protocol â€” the full four-layer trust stack |
+| **PAC** | Proof of Agent Continuity â€” the aggregate property established by a valid PCP record |
+| **TSA** | Time Stamping Authority â€” external RFC 3161 timestamp provider |
+| **TSI** | Trust State Index â€” behavioural stability indicator (STABLE / WATCH / UNSTABLE / CRITICAL) |
+| **VRS** | Vigil Risk Score â€” composite real-time risk metric [0.0 â†’ 1.0] |
+| **A2C** | Agent-to-Context detector â€” relational anomaly detection across agent interactions |
+| **TrustGate** | Governance and human oversight layer â€” evaluates actions against policy before execution |
 | **External Peer** | A system interacting with a monitored agent that is not itself equipped with AISS |
 | **Canonical Chain** | The single valid history selected by the Canonical History Rule when a fork exists |
 
@@ -266,9 +266,9 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 ## 3. Canonicalization (MANDATORY)
 
-> *PCP context: Cryptographic interoperability depends on identical byte representations. RFC 8785 is the single serialization contract that makes an event signed in Python verifiable in Go, in Rust, in a courtroom. Divergence here breaks the entire verification chain — which is why this section carries a MANDATORY tag and a CRITICAL warning.*
+> *PCP context: Cryptographic interoperability depends on identical byte representations. RFC 8785 is the single serialization contract that makes an event signed in Python verifiable in Go, in Rust, in a courtroom. Divergence here breaks the entire verification chain â€” which is why this section carries a MANDATORY tag and a CRITICAL warning.*
 
-All JSON structures that are hashed or signed MUST use **RFC 8785** (JSON Canonicalization Scheme — JCS).
+All JSON structures that are hashed or signed MUST use **RFC 8785** (JSON Canonicalization Scheme â€” JCS).
 
 > **CRITICAL**: No alternative serialization method is permitted. Implementations that do not use RFC 8785 are non-compliant.
 
@@ -283,13 +283,13 @@ All JSON structures that are hashed or signed MUST use **RFC 8785** (JSON Canoni
 ### 3.2 Common Pitfalls
 
 ```python
-# NON-COMPLIANT — json.dumps with sort_keys is NOT RFC 8785
+# NON-COMPLIANT â€” json.dumps with sort_keys is NOT RFC 8785
 import json
-json.dumps(obj, sort_keys=True)   # ✗
+json.dumps(obj, sort_keys=True)   # âœ—
 
 # COMPLIANT
 import canonicaljson
-canonicaljson.encode_canonical_json(obj)   # ✓
+canonicaljson.encode_canonical_json(obj)   # âœ“
 ```
 
 ### 3.3 Signature Scope
@@ -302,14 +302,14 @@ Implementations MUST remove the signature field before computing the signing byt
 
 ## 4. Cryptographic Algorithms
 
-> *PCP context: Algorithm choice here is a decision about time horizons. AISS-1 (Ed25519) is secure today and sufficient for most deployments. AISS-2 (ML-DSA-65 hybrid) is designed for records that must remain verifiable in 2035 and beyond — finance archives, medical records, legal evidence. The hybrid approach means that AISS-2 archives are valid under both classical and post-quantum verification simultaneously: a continuity record created today does not become unverifiable when quantum computers arrive.*
+> *PCP context: Algorithm choice here is a decision about time horizons. AISS-1 (Ed25519) is secure today and sufficient for most deployments. AISS-2 (ML-DSA-65 hybrid) is designed for records that must remain verifiable in 2035 and beyond â€” finance archives, medical records, legal evidence. The hybrid approach means that AISS-2 archives are valid under both classical and post-quantum verification simultaneously: a continuity record created today does not become unverifiable when quantum computers arrive.*
 
 ### 4.1 AISS-1 Algorithms
 |-----------|-----------|----------|----------|
 | Signature | Ed25519 | RFC 8032 | Base64 (RFC 4648) |
 | Hash function | SHA-256 | NIST FIPS 180-4 | Hex (lowercase) |
 | Canonicalization | JCS | RFC 8785 | UTF-8 |
-| Agent ID derivation | BASE58(SHA256(pubkey))[0:32] | — | Base58 (Bitcoin alphabet) |
+| Agent ID derivation | BASE58(SHA256(pubkey))[0:32] | â€” | Base58 (Bitcoin alphabet) |
 | Nonce | UUIDv4 | RFC 4122 | String |
 
 > **Encoding note**: Agent IDs use Base58 for human readability. All signatures and keys embedded in events use standard Base64 (RFC 4648). Do not mix these encodings.
@@ -323,9 +323,9 @@ Implementations MUST remove the signature field before computing the signing byt
 | Key encapsulation | ML-KEM-768 | NIST FIPS 203 | Base64 |
 | Hash function | SHA-512 | NIST FIPS 180-4 | Hex |
 | Canonicalization | JCS | RFC 8785 | UTF-8 |
-| Timestamps | RFC 3161 TSP | IETF | — |
-| Key encryption | AES-256-GCM | NIST FIPS 197 | — |
-| Key derivation | scrypt | RFC 7914 | N=2¹⁷, r=8, p=1 |
+| Timestamps | RFC 3161 TSP | IETF | â€” |
+| Key encryption | AES-256-GCM | NIST FIPS 197 | â€” |
+| Key derivation | scrypt | RFC 7914 | N=2Â¹â·, r=8, p=1 |
 
 ### 4.3 Key Storage Requirements
 
@@ -335,19 +335,19 @@ Private keys MUST be stored encrypted using the following scheme:
 
 ```
 passphrase + salt (32 bytes random)
-    ↓ scrypt(N=2¹⁷, r=8, p=1)          # ≥ 400ms per derivation — intentional
-    ↓
+    â†“ scrypt(N=2Â¹â·, r=8, p=1)          # â‰¥ 400ms per derivation â€” intentional
+    â†“
 derived_key (32 bytes)
-    ↓ AES-256-GCM(nonce=12 bytes random)
-    ↓
+    â†“ AES-256-GCM(nonce=12 bytes random)
+    â†“
 .key.enc = MAGIC(4) + VERSION(1) + SALT(32) + NONCE(12) + CIPHER(32) + TAG(16)
          = 97 bytes exactly
 ```
 
 File format invariants:
-- Magic bytes `PQKY` (4 bytes) — format validation on load
-- Fixed total size of 97 bytes — detects truncation and padding attacks
-- AES-GCM authentication tag — any byte modification is detected
+- Magic bytes `PQKY` (4 bytes) â€” format validation on load
+- Fixed total size of 97 bytes â€” detects truncation and padding attacks
+- AES-GCM authentication tag â€” any byte modification is detected
 
 **Level 3 (AISS-2):**  
 HSM integration REQUIRED (FIPS 140-3 Level 2+). All Level 2 requirements apply additionally.
@@ -357,17 +357,17 @@ HSM integration REQUIRED (FIPS 140-3 Level 2+). All Level 2 requirements apply a
 | Period | Status |
 |--------|--------|
 | 2026 | Ed25519 secure (~10 years before credible quantum threat) |
-| 2030–2035 | First cryptographically-relevant quantum computers expected |
+| 2030â€“2035 | First cryptographically-relevant quantum computers expected |
 | 2035+ | Ed25519 potentially vulnerable (Shor's algorithm) |
-| **PiQrypt strategy** | **Hybrid Ed25519 + ML-DSA-65 for AISS-2 — archives remain valid post-quantum** |
+| **PiQrypt strategy** | **Hybrid Ed25519 + ML-DSA-65 for AISS-2 â€” archives remain valid post-quantum** |
 
 ---
 
 ---
 
-## PART II — PROTOCOL
+## PART II â€” PROTOCOL
 
-> *PCP context — Memory Continuity: This part specifies how Identity Continuity (Part I) is extended into Memory Continuity — the second PCP primitive. An identity without a decision history is just a name. These sections define how every decision is cryptographically bound to the agent that made it, linked to every decision before it, and protected against modification, deletion, reordering, and replay. The result is the agent's memory: portable, independently verifiable, and tamper-evident by construction.*
+> *PCP context â€” Memory Continuity: This part specifies how Identity Continuity (Part I) is extended into Memory Continuity â€” the second PCP primitive. An identity without a decision history is just a name. These sections define how every decision is cryptographically bound to the agent that made it, linked to every decision before it, and protected against modification, deletion, reordering, and replay. The result is the agent's memory: portable, independently verifiable, and tamper-evident by construction.*
 
 ---
 
@@ -381,14 +381,14 @@ agent_id = BASE58( SHA256(public_key_bytes) )[0:32]
 
 **Example:** `5Z8nY7KpL9mN3qR4sT6uV8wX`
 
-**Rationale:** 32 Base58 characters ≈ 186 bits of entropy. Collision probability negligible up to 2⁹³ agents.
+**Rationale:** 32 Base58 characters â‰ˆ 186 bits of entropy. Collision probability negligible up to 2â¹Â³ agents.
 
 ### 5.2 Properties
 
 | Property | Guarantee |
 |----------|-----------|
 | **Deterministic** | Same public key always produces same agent ID |
-| **Collision-resistant** | SHA-256 birthday paradox < 0.01% at 10²⁷ agents |
+| **Collision-resistant** | SHA-256 birthday paradox < 0.01% at 10Â²â· agents |
 | **No registry dependency** | Generated independently without coordination |
 | **Cryptographic binding** | Identity cannot be claimed without the private key |
 | **Portable** | Survives infrastructure changes, model upgrades, environment migrations |
@@ -404,7 +404,7 @@ Each agent MUST be allocated an isolated storage directory under `~/.piqrypt/age
 
 Implementations MUST enforce:
 
-- **Name sanitization**: `../`, backslashes, null bytes, spaces — all neutralized by `_safe_name()` before path construction
+- **Name sanitization**: `../`, backslashes, null bytes, spaces â€” all neutralized by `_safe_name()` before path construction
 - **Path traversal protection**: all computed paths verified to remain within `~/.piqrypt/agents/`
 - **Directory permissions**: `chmod 700` per agent directory (Linux/macOS)
 - **Idempotency**: re-registering an agent updates metadata; never duplicates
@@ -453,7 +453,7 @@ Implementations MUST enforce:
 
 ## 7. Event Stamp Structure
 
-> *PCP context: The event stamp is the atomic unit of agent memory. Every agent decision — a trade, a diagnosis, a robotic movement, an LLM tool call — produces exactly one stamp. The stamp binds the decision to an identity (via `agent_id`), to a moment in time (via `timestamp` and `nonce`), and to the decisions that preceded it (via `previous_hash`). Removing or modifying any of these bindings breaks the chain. The stamp is the continuity record.*
+> *PCP context: The event stamp is the atomic unit of agent memory. Every agent decision â€” a trade, a diagnosis, a robotic movement, an LLM tool call â€” produces exactly one stamp. The stamp binds the decision to an identity (via `agent_id`), to a moment in time (via `timestamp` and `nonce`), and to the decisions that preceded it (via `previous_hash`). Removing or modifying any of these bindings breaks the chain. The stamp is the continuity record.*
 
 ### 7.1 AISS-1 Event
 
@@ -509,10 +509,10 @@ Implementations MUST enforce:
 | Field | Requirement |
 |-------|-------------|
 | `version` | MUST be `"AISS-1.0"` or `"AISS-2.0"` |
-| `agent_id` | MUST be 32-character Base58 string derived per § 5.1 |
+| `agent_id` | MUST be 32-character Base58 string derived per Â§ 5.1 |
 | `timestamp` | MUST be Unix UTC seconds (integer) |
 | `nonce` | MUST be unique per event within agent scope; UUIDv4 RECOMMENDED |
-| `previous_hash` | MUST reference SHA-256 hex hash of immediately preceding event (excluding its signature); genesis events use 64 × `"0"` |
+| `previous_hash` | MUST reference SHA-256 hex hash of immediately preceding event (excluding its signature); genesis events use 64 Ã— `"0"` |
 | `payload` | MUST contain complete event data; MUST NOT be null or empty |
 | `signature` | MUST sign the RFC 8785 canonical form of the event excluding the `signature` field |
 
@@ -539,14 +539,14 @@ The genesis event is the first event in a chain. It has no predecessor.
 ### 8.1 AISS-1
 
 - Format: Unix UTC seconds (integer)
-- Clock drift tolerance: ±300 seconds
+- Clock drift tolerance: Â±300 seconds
 - Monotonic timestamps SHOULD be enforced within a single chain
 - Time source: system clock (NTP synchronization RECOMMENDED)
 
 ### 8.2 AISS-2
 
 - Format: Unix UTC seconds (integer)
-- Clock drift tolerance: ±60 seconds (strictly enforced)
+- Clock drift tolerance: Â±60 seconds (strictly enforced)
 - Monotonic timestamps MUST be enforced
 - RFC 3161 trusted timestamping REQUIRED for every event
 - External NTP/PTP time source REQUIRED
@@ -565,7 +565,7 @@ RFC 3161 tokens MUST be validated by verifying:
 
 ## 9. Hash Chain Specification
 
-> *PCP context: The hash chain is what transforms a collection of signed events into a memory. Without chaining, an agent could delete inconvenient decisions and produce a clean new event to replace them. With chaining, every event's hash depends on all events before it — deletion or modification anywhere in the chain propagates forward as a detectable break. This is Memory Continuity's core tamper-evidence property.*
+> *PCP context: The hash chain is what transforms a collection of signed events into a memory. Without chaining, an agent could delete inconvenient decisions and produce a clean new event to replace them. With chaining, every event's hash depends on all events before it â€” deletion or modification anywhere in the chain propagates forward as a detectable break. This is Memory Continuity's core tamper-evidence property.*
 
 ### 9.1 Event Hash Calculation
 
@@ -581,7 +581,7 @@ For AISS-2: `SHA512( JCS(event_excluding_signatures_object) )`
 current_event.previous_hash == event_hash(previous_event)
 ```
 
-For genesis: `current_event.previous_hash == "0" × 64`
+For genesis: `current_event.previous_hash == "0" Ã— 64`
 
 ### 9.3 Verification Algorithm
 
@@ -607,7 +607,7 @@ for i in range(1, len(events)):
 
 ## 10. Fork Handling
 
-> *PCP context: A fork is not a protocol error — it is a security signal. Two branches from the same history mean either a synchronisation failure or a deliberate attempt to maintain two parallel accounts of reality. PCP treats all forks as CRITICAL because the consequence of tolerating an unresolved fork is exactly what the protocol was designed to prevent: an agent that can credibly claim two different histories depending on who is asking.*
+> *PCP context: A fork is not a protocol error â€” it is a security signal. Two branches from the same history mean either a synchronisation failure or a deliberate attempt to maintain two parallel accounts of reality. PCP treats all forks as CRITICAL because the consequence of tolerating an unresolved fork is exactly what the protocol was designed to prevent: an agent that can credibly claim two different histories depending on who is asking.*
 
 ### 10.1 Fork Definition
 
@@ -615,10 +615,10 @@ A fork occurs when two or more events share the same `previous_hash`, producing 
 
 ```
 Event 0
-  ↓
+  â†“
 Event 1
-  ├──→ Event 2a  (Branch A — hash: abc...)
-  └──→ Event 2b  (Branch B — hash: def...)  ← FORK DETECTED
+  â”œâ”€â”€â†’ Event 2a  (Branch A â€” hash: abc...)
+  â””â”€â”€â†’ Event 2b  (Branch B â€” hash: def...)  â† FORK DETECTED
 ```
 
 ### 10.2 Fork Classification
@@ -626,8 +626,8 @@ Event 1
 | Classification | Meaning |
 |----------------|---------|
 | `FORK_DETECTED` | Two valid branches exist; resolution pending |
-| `NON_CANONICAL_HISTORY` | Branch not selected by Canonical History Rule (§ 18) |
-| `FORK_AFTER_FINALIZATION` | Fork after a TSA-anchored event — indicates compromise attempt |
+| `NON_CANONICAL_HISTORY` | Branch not selected by Canonical History Rule (Â§ 18) |
+| `FORK_AFTER_FINALIZATION` | Fork after a TSA-anchored event â€” indicates compromise attempt |
 
 ### 10.3 Vigil Response
 
@@ -636,7 +636,7 @@ When a fork is detected, the Vigil server MUST:
 1. Raise a `CRITICAL`-severity alert in the Alert Journal
 2. Record the fork in the Risk Narrative with both branch hashes
 3. Transmit the fork event to TrustGate (if active) with outcome `AUDIT`
-4. Apply the Canonical History Rule (§ 18) and log the selected branch
+4. Apply the Canonical History Rule (Â§ 18) and log the selected branch
 
 ### 10.4 Fork Alert Structure
 
@@ -684,7 +684,7 @@ for event in events:
 
 ## 12. Key Rotation
 
-> *PCP context: Key rotation is where Identity Continuity and Memory Continuity intersect. A new keypair produces a new agent_id — which would ordinarily break the continuity chain. The rotation attestation solves this: it is a signed bridge between two identities, recorded as the final event of the old chain and referenced by the genesis of the new one. An agent can rotate its keys without losing its history.*
+> *PCP context: Key rotation is where Identity Continuity and Memory Continuity intersect. A new keypair produces a new agent_id â€” which would ordinarily break the continuity chain. The rotation attestation solves this: it is a signed bridge between two identities, recorded as the final event of the old chain and referenced by the genesis of the new one. An agent can rotate its keys without losing its history.*
 
 ### 12.1 Identity Continuity Model
 
@@ -716,26 +716,26 @@ Key rotation generates a new `agent_id`. Continuity between old and new identity
 ### 12.3 Continuity Chain
 
 ```
-Old Chain: [... event N-1] → [rotation_attestation] ─── (hash reference)
-                                                              ↓
+Old Chain: [... event N-1] â†’ [rotation_attestation] â”€â”€â”€ (hash reference)
+                                                              â†“
 New Chain:                                           [genesis referencing rotation]
-                                                              ↓
-                                                     [event 1] → [event 2] → ...
+                                                              â†“
+                                                     [event 1] â†’ [event 2] â†’ ...
 ```
 
 ---
 
 ## 13. Key Lifecycle Management
 
-### 13.1 AISS-1 — Level 2 (Software)
+### 13.1 AISS-1 â€” Level 2 (Software)
 
 - CSPRNG for key generation (REQUIRED)
 - Private key zeroization (`_secure_erase()`) after every use (REQUIRED)
-- Encrypted storage per § 4.3 (REQUIRED)
+- Encrypted storage per Â§ 4.3 (REQUIRED)
 - Annual key rotation policy (RECOMMENDED)
 - Key escrow: NOT PERMITTED without explicit authority delegation
 
-### 13.2 AISS-2 — Level 3 (Hardware)
+### 13.2 AISS-2 â€” Level 3 (Hardware)
 
 - HSM integration REQUIRED (FIPS 140-3 Level 2+)
 - All Level 2 requirements additionally apply
@@ -743,19 +743,19 @@ New Chain:                                           [genesis referencing rotati
 - Incident response plan (REQUIRED)
 - Independent security audit (annual, REQUIRED)
 
-> PiQrypt v1.8.10 implements Level 2 key lifecycle. Level 3 HSM support is planned for v2.1.
+> PiQrypt v1.9.0 implements Level 2 key lifecycle. Level 3 HSM support is planned for v2.1.
 
 ---
 
 ---
 
-## PART III — TRUST & CONTINUITY
+## PART III â€” TRUST & CONTINUITY
 
-> *PCP context: Parts I and II established how a single agent builds and protects its memory. This part specifies how that memory extends into a network. Agents interact — with each other, with external systems that may not be PCP-equipped, and under delegated authority from human operators. Each interaction is either co-signed (A2A), unilaterally recorded (external peer), or authority-bound (delegation chain). Together, these mechanisms establish the third and fourth PCP properties: Interaction Traceability and the foundation for Governance Continuity.*
+> *PCP context: Parts I and II established how a single agent builds and protects its memory. This part specifies how that memory extends into a network. Agents interact â€” with each other, with external systems that may not be PCP-equipped, and under delegated authority from human operators. Each interaction is either co-signed (A2A), unilaterally recorded (external peer), or authority-bound (delegation chain). Together, these mechanisms establish the third and fourth PCP properties: Interaction Traceability and the foundation for Governance Continuity.*
 
 ---
 
-## 14. Proof of Continuity Protocol (PCP) — Architecture
+## 14. Proof of Continuity Protocol (PCP) â€” Architecture
 
 ### 14.1 Definition
 
@@ -767,7 +767,7 @@ PCP establishes **Proof of Agent Continuity (PAC)**:
 PAC = Identity Integrity         (AISS)
     + Event Chain Integrity      (PiQrypt Core)
     + Interaction Traceability   (A2A + External Peer Observation)
-    + Behavioural Stability      (Vigil — TSI, VRS, A2C)
+    + Behavioural Stability      (Vigil â€” TSI, VRS, A2C)
     + Policy Compliance          (TrustGate)
 ```
 
@@ -776,70 +776,70 @@ PAC does not verify the *correctness* of decisions. It verifies who made them, w
 ### 14.2 Four-Layer Stack
 
 ```
-┌──────────────────────────────────────────────────────┐
-│  TRUSTGATE  — Policy · Human oversight · Governance  │  Layer 4
-├──────────────────────────────────────────────────────┤
-│  VIGIL      — TSI · VRS · A2C · Network graph        │  Layer 3
-├──────────────────────────────────────────────────────┤
-│  PIQRYPT    — Fork · TSA · .pqz · Certification      │  Layer 2
-├──────────────────────────────────────────────────────┤
-│  AISS       — Identity · Stamps · Hash chains · A2A  │  Layer 1
-└──────────────────────────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚  TRUSTGATE  â€” Policy Â· Human oversight Â· Governance  â”‚  Layer 4
+â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â”‚  VIGIL      â€” TSI Â· VRS Â· A2C Â· Network graph        â”‚  Layer 3
+â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â”‚  PIQRYPT    â€” Fork Â· TSA Â· .pqz Â· Certification      â”‚  Layer 2
+â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â”‚  AISS       â€” Identity Â· Stamps Â· Hash chains Â· A2A  â”‚  Layer 1
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ### 14.3 Agent Lifecycle Under PCP
 
 ```
-Create Identity (AISS §5)
-        ↓
+Create Identity (AISS Â§5)
+        â†“
 Agent Initialization
-        ↓
+        â†“
 Agent Action / Decision
-        ↓
-Event Signing + Hash Chain Linking (AISS §7–9)
-        ↓
-External Peer Observation (§15, if applicable)
-        ↓
-Behavioural Monitoring — VRS updated (Vigil §19)
-        ↓
-TrustGate Policy Evaluation (§20)
-        ↓
-    ALLOW │ DENY │ AUDIT │ ESCALATE
-        ↓         ↓
+        â†“
+Event Signing + Hash Chain Linking (AISS Â§7â€“9)
+        â†“
+External Peer Observation (Â§15, if applicable)
+        â†“
+Behavioural Monitoring â€” VRS updated (Vigil Â§19)
+        â†“
+TrustGate Policy Evaluation (Â§20)
+        â†“
+    ALLOW â”‚ DENY â”‚ AUDIT â”‚ ESCALATE
+        â†“         â†“
     Compliance Storage (.pqz)
 ```
 
 ### 14.4 Interface Contracts Between Layers
 
-**AISS → PiQrypt Core:**  
+**AISS â†’ PiQrypt Core:**  
 PiQrypt Core consumes AISS-signed events and:
 - Applies fork detection and Canonical History Rule
 - Attaches RFC 3161 TSA tokens (AISS-2)
 - Packages events into .pqz certification bundles
 - Exposes the audit export endpoint
 
-**PiQrypt Core → Vigil:**  
+**PiQrypt Core â†’ Vigil:**  
 On every event stamp, PiQrypt Core MUST transmit to Vigil:
 - `agent_id`, `timestamp`, `payload.event_type`
 - Current chain length and `previous_hash`
 - `peer_id` and `external: true/false` (if interaction event)
 - Any fork or replay alert
 
-**Vigil → TrustGate:**  
+**Vigil â†’ TrustGate:**  
 After computing VRS, Vigil MUST transmit to TrustGate:
 - Current VRS value and state (SAFE / WATCH / ALERT / CRITICAL)
 - TSI state
 - Any active A2C alert
 - Risk Narrative summary
 
-**TrustGate → Chain:**  
-Every TrustGate decision (ALLOW / DENY / AUDIT / ESCALATE) MUST be stamped as a signed event appended to the agent's AISS chain (§ 20.4).
+**TrustGate â†’ Chain:**  
+Every TrustGate decision (ALLOW / DENY / AUDIT / ESCALATE) MUST be stamped as a signed event appended to the agent's AISS chain (Â§ 20.4).
 
 ---
 
 ## 15. External Peer Observation
 
-> *PCP context: Most real-world agents interact primarily with systems that will never adopt PCP — market data feeds, cloud APIs, payment processors, legacy infrastructure. External Peer Observation solves the accountability gap this creates: a monitored agent records these interactions unilaterally, classifies the external system by its interaction pattern, and feeds the data into Vigil's anomaly detection. The external system has no knowledge of PiQrypt. The record exists regardless.*
+> *PCP context: Most real-world agents interact primarily with systems that will never adopt PCP â€” market data feeds, cloud APIs, payment processors, legacy infrastructure. External Peer Observation solves the accountability gap this creates: a monitored agent records these interactions unilaterally, classifies the external system by its interaction pattern, and feeds the data into Vigil's anomaly detection. The external system has no knowledge of PiQrypt. The record exists regardless.*
 
 ### 15.1 Definition
 
@@ -875,9 +875,9 @@ Implementations SHOULD classify external peers by interaction pattern to enable 
 
 | Pattern | Description | Trigger | Examples |
 |---------|-------------|---------|---------|
-| `burst_open` | High-volume bursts at market open/close | 09:00, 17:30 (± 15min) | Binance WS, Bloomberg Terminal, Polygon.io |
+| `burst_open` | High-volume bursts at market open/close | 09:00, 17:30 (Â± 15min) | Binance WS, Bloomberg Terminal, Polygon.io |
 | `burst` | Spikes around deployment events | On push/deploy | GitHub webhook, GitLab CI, Docker registry |
-| `scheduled` | Fixed daily sessions | 3× per day at fixed hours | Anthropic API, OpenAI API, Instagram API |
+| `scheduled` | Fixed daily sessions | 3Ã— per day at fixed hours | Anthropic API, OpenAI API, Instagram API |
 | `steady` | Continuous low-volume flow | Constant interval | Prometheus, Redis, Vault |
 
 ### 15.4 Auto-Discovery and Registration
@@ -885,7 +885,7 @@ Implementations SHOULD classify external peers by interaction pattern to enable 
 When an unregistered peer is observed, implementations SHOULD:
 
 1. Create a `peers.json` entry with `external: true`
-2. Record `external_type` (one of the patterns in § 15.3)
+2. Record `external_type` (one of the patterns in Â§ 15.3)
 3. Compute `avg_latency_ms` from observed events (rolling 24h window)
 4. Compute initial trust contribution based on interaction regularity
 5. Inject the peer as a distinct node in the Vigil network graph (outer ring)
@@ -894,12 +894,12 @@ This registration requires no manual configuration. It is derived entirely from 
 
 ### 15.5 Anomaly Detection on External Peers
 
-The A2C detector (§ 19.4) MUST evaluate external peer interactions for:
+The A2C detector (Â§ 19.4) MUST evaluate external peer interactions for:
 
 - **Concentration**: proportion of total interactions directed at a single external peer
 - **Temporal synchronisation**: multiple agents calling the same external endpoint within a tight time window
-- **Latency anomaly**: observed latency deviating > 3σ from established baseline for this peer type
-- **Abnormal burst**: interaction count per time window deviating > 3σ from peer type baseline
+- **Latency anomaly**: observed latency deviating > 3Ïƒ from established baseline for this peer type
+- **Abnormal burst**: interaction count per time window deviating > 3Ïƒ from peer type baseline
 
 ### 15.6 Vigil Network Graph Integration
 
@@ -914,22 +914,22 @@ External peers MUST be visually distinguished in the Vigil network graph:
 
 ## 16. Agent-to-Agent (A2A) Protocol
 
-> *PCP context: When two PCP-equipped agents interact, neither party can later deny that the interaction occurred. The co-signed handshake is recorded in both chains simultaneously — it is bilaterally immutable. This is the difference between a log and a contract: a log is one party's account; a co-signed chain event is a shared cryptographic fact. A2A is the foundation for autonomous agent trust networks where no central authority mediates disputes.*
+> *PCP context: When two PCP-equipped agents interact, neither party can later deny that the interaction occurred. The co-signed handshake is recorded in both chains simultaneously â€” it is bilaterally immutable. This is the difference between a log and a contract: a log is one party's account; a co-signed chain event is a shared cryptographic fact. A2A is the foundation for autonomous agent trust networks where no central authority mediates disputes.*
 
 ### 16.1 Handshake Sequence
 
 ```
 Agent A (initiator)                      Agent B (responder)
-        │
-        │── identity_proposal ──────────→
-        │                                │
-        │← identity_response ────────────│
-        │                                │
-        │── session_confirm ─────────────→
-        │                                │
-        │  Both agents MUST append       │
-        │  co-signed handshake event     │
-        │  to their own AISS chains      │
+        â”‚
+        â”‚â”€â”€ identity_proposal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â†’
+        â”‚                                â”‚
+        â”‚â† identity_response â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”‚
+        â”‚                                â”‚
+        â”‚â”€â”€ session_confirm â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â†’
+        â”‚                                â”‚
+        â”‚  Both agents MUST append       â”‚
+        â”‚  co-signed handshake event     â”‚
+        â”‚  to their own AISS chains      â”‚
 ```
 
 ### 16.2 Co-Signed Handshake Event
@@ -962,11 +962,11 @@ After handshake completion:
 
 - Each agent MUST record the co-signed event in its own AISS chain
 - Free tier: stored in plaintext local memory
-- Pro tier: stored encrypted (AES-256-GCM per § 4.3)
+- Pro tier: stored encrypted (AES-256-GCM per Â§ 4.3)
 
 ### 16.4 Non-AISS Peer Fallback (External Interaction)
 
-When an agent interacts with a non-AISS peer, it MUST record the interaction unilaterally per § 15:
+When an agent interacts with a non-AISS peer, it MUST record the interaction unilaterally per Â§ 15:
 
 ```json
 {
@@ -985,13 +985,13 @@ When an agent interacts with a non-AISS peer, it MUST record the interaction uni
 The Trust Score is a derived metric of PCP, computed from the agent's interaction history:
 
 ```
-T = w1·S + w2·C + w3·X + w4·R + w5·A
+T = w1Â·S + w2Â·C + w3Â·X + w4Â·R + w5Â·A
 
 S = Signature Integrity Score  = valid_sigs / total_sigs
 C = Chain Stability Score      = 1 - (fork_events / total_events)
 X = Cross-Agent Validation     = cross_validated / total_external_interactions
 R = Replay Resistance          = 1 - (replay_attempts / total_events)
-A = Anomaly Stability          = e^(-k × anomaly_rate)
+A = Anomaly Stability          = e^(-k Ã— anomaly_rate)
 
 Default weights: w1=0.25, w2=0.20, w3=0.25, w4=0.15, w5=0.15
 ```
@@ -999,9 +999,9 @@ Default weights: w1=0.25, w2=0.20, w3=0.25, w4=0.15, w5=0.15
 | Score Range | Tier |
 |-------------|------|
 | > 0.95 | Elite |
-| 0.90–0.95 | A+ |
-| 0.80–0.90 | A |
-| 0.70–0.80 | B |
+| 0.90â€“0.95 | A+ |
+| 0.80â€“0.90 | A |
+| 0.70â€“0.80 | B |
 | < 0.70 | At Risk |
 
 ---
@@ -1016,13 +1016,13 @@ The Authority Binding Layer establishes a verifiable delegation chain connecting
 
 ```
 Legal Entity (organisation)
-        ↓  signs delegation
+        â†“  signs delegation
 Operational System
-        ↓  authorises
+        â†“  authorises
 AI Model (version hash)
-        ↓  instantiates
+        â†“  instantiates
 Agent Instance (agent_id)
-        ↓  emits
+        â†“  emits
 Decision Event (signed, hash-chained)
 ```
 
@@ -1068,7 +1068,7 @@ Revocation affects authority attribution but MUST NOT invalidate historical inte
 
 ## 18. Canonical History Rule
 
-> *PCP context: A protocol that resolves forks ambiguously is not a protocol — it is a suggestion. The Canonical History Rule closes the ambiguity completely: given the same fork, every conforming implementation in the world reaches the same decision about which branch is canonical. This determinism is what makes PCP records legally credible: there is no room for two parties to present two different "valid" histories of the same agent.*
+> *PCP context: A protocol that resolves forks ambiguously is not a protocol â€” it is a suggestion. The Canonical History Rule closes the ambiguity completely: given the same fork, every conforming implementation in the world reaches the same decision about which branch is canonical. This determinism is what makes PCP records legally credible: there is no room for two parties to present two different "valid" histories of the same agent.*
 
 ### 18.1 Objective
 
@@ -1078,16 +1078,16 @@ The Canonical History Rule ensures that independent verifiers always select the 
 
 Given multiple valid branches from the same agent identity, implementations MUST apply in order:
 
-**Step 1 — Anchored Continuity**  
+**Step 1 â€” Anchored Continuity**  
 Select the branch with the greatest number of events anchored to an external RFC 3161 TSA.
 
-**Step 2 — Earliest Trust Anchor**  
+**Step 2 â€” Earliest Trust Anchor**  
 If equal: select the branch whose most recent anchored event has the earliest verifiable trusted timestamp.
 
-**Step 3 — Longest Chain**  
+**Step 3 â€” Longest Chain**  
 If equal: select the branch with the greatest number of valid sequential events.
 
-**Step 4 — Deterministic Tie-Breaker**  
+**Step 4 â€” Deterministic Tie-Breaker**  
 If equal: select the branch whose final event hash is lexicographically lowest (hex string comparison).
 
 > All conforming implementations MUST produce identical results for the same input.
@@ -1098,7 +1098,7 @@ If equal: select the branch whose final event hash is lexicographically lowest (
 |----------------|-----------|
 | `FORK_DETECTED` | Two valid branches exist; resolution pending |
 | `NON_CANONICAL_HISTORY` | Branch not selected by the algorithm above |
-| `FORK_AFTER_FINALIZATION` | Fork after a TSA-anchored event — indicates compromise attempt |
+| `FORK_AFTER_FINALIZATION` | Fork after a TSA-anchored event â€” indicates compromise attempt |
 
 ### 18.4 Finalization Property
 
@@ -1110,15 +1110,15 @@ A FINAL event cannot be superseded. Any branch forking after a FINAL event MUST 
 
 ---
 
-## PART IV — MONITORING & GOVERNANCE
+## PART IV â€” MONITORING & GOVERNANCE
 
-> *PCP context — Behavioural and Governance Continuity: An intact chain proves the past was not rewritten. It does not prove the agent remained coherent, or that critical actions were approved by a human. This part specifies the two remaining PCP primitives. Vigil adds a temporal dimension — continuous behavioural monitoring that detects drift before it becomes an incident. TrustGate closes the loop — every governance decision is itself a signed chain event, making the governance record cryptographically inseparable from the action record. Together, they satisfy EU AI Act Art. 9, 12, and 14 simultaneously.*
+> *PCP context â€” Behavioural and Governance Continuity: An intact chain proves the past was not rewritten. It does not prove the agent remained coherent, or that critical actions were approved by a human. This part specifies the two remaining PCP primitives. Vigil adds a temporal dimension â€” continuous behavioural monitoring that detects drift before it becomes an incident. TrustGate closes the loop â€” every governance decision is itself a signed chain event, making the governance record cryptographically inseparable from the action record. Together, they satisfy EU AI Act Art. 9, 12, and 14 simultaneously.*
 
 ---
 
-## 19. Vigil — Behavioural Monitoring
+## 19. Vigil â€” Behavioural Monitoring
 
-> *PCP context — Behavioural Continuity: Vigil answers the question that a static chain cannot: "Is this agent still behaving like itself?" A perfect chain can be produced by an agent that has been manipulated, corrupted, or is colluding with others — every event legitimately signed, nothing tampered. Vigil detects the drift. The TSI watches the trajectory of trust over 24 hours. The VRS aggregates four risk dimensions into a single signal. The A2C detector looks for structural anomalies across the interaction graph. None of this modifies the chain — Vigil observes and scores. The chain remains the ground truth; Vigil provides the context to interpret it.*
+> *PCP context â€” Behavioural Continuity: Vigil answers the question that a static chain cannot: "Is this agent still behaving like itself?" A perfect chain can be produced by an agent that has been manipulated, corrupted, or is colluding with others â€” every event legitimately signed, nothing tampered. Vigil detects the drift. The TSI watches the trajectory of trust over 24 hours. The VRS aggregates four risk dimensions into a single signal. The A2C detector looks for structural anomalies across the interaction graph. None of this modifies the chain â€” Vigil observes and scores. The chain remains the ground truth; Vigil provides the context to interpret it.*
 
 Vigil is Layer 3 of the PCP stack. It consumes AISS events from PiQrypt Core and computes continuous behavioural risk metrics for each monitored agent.
 
@@ -1130,22 +1130,22 @@ The TSI evaluates behavioural stability over a 24-hour sliding window of trust s
 
 | State | Condition | Vigil Action |
 |-------|-----------|-------------|
-| `STABLE` | Score stable; Δ24h ≥ -0.08 | No alert |
-| `WATCH` | Mild drift; -0.15 ≤ Δ24h < -0.08 | `MEDIUM` alert logged |
-| `UNSTABLE` | Significant deviation; Δ24h < -0.15 | `HIGH` alert raised |
+| `STABLE` | Score stable; Î”24h â‰¥ -0.08 | No alert |
+| `WATCH` | Mild drift; -0.15 â‰¤ Î”24h < -0.08 | `MEDIUM` alert logged |
+| `UNSTABLE` | Significant deviation; Î”24h < -0.15 | `HIGH` alert raised |
 | `CRITICAL` | `UNSTABLE` persisting > 48h | `CRITICAL` alert; TrustGate notified |
 
 TSI state is exposed via the Vigil API at `/api/summary` and per-agent at `/api/agent/<id>`.
 
 ### 19.3 Vigil Risk Score (VRS)
 
-The VRS is a composite real-time risk score in [0.0 → 1.0], recomputed on every event:
+The VRS is a composite real-time risk score in [0.0 â†’ 1.0], recomputed on every event:
 
 ```
-VRS = w_tsi × TSI_weight
-    + w_ts  × (1 - TrustScore)
-    + w_a2c × A2C_risk
-    + w_ch  × ChainIssueScore
+VRS = w_tsi Ã— TSI_weight
+    + w_ts  Ã— (1 - TrustScore)
+    + w_a2c Ã— A2C_risk
+    + w_ch  Ã— ChainIssueScore
 
 Default weights:
   w_tsi = 0.30
@@ -1158,23 +1158,23 @@ VRS States:
 
 | State | VRS Range | Default Action |
 |-------|-----------|---------------|
-| `SAFE` | [0.00 – 0.25) | Normal operation |
-| `WATCH` | [0.25 – 0.50) | `MEDIUM` alert |
-| `ALERT` | [0.50 – 0.75) | `HIGH` alert; TrustGate `AUDIT` |
-| `CRITICAL` | [0.75 – 1.00] | `CRITICAL` alert; TrustGate `ESCALATE` |
+| `SAFE` | [0.00 â€“ 0.25) | Normal operation |
+| `WATCH` | [0.25 â€“ 0.50) | `MEDIUM` alert |
+| `ALERT` | [0.50 â€“ 0.75) | `HIGH` alert; TrustGate `AUDIT` |
+| `CRITICAL` | [0.75 â€“ 1.00] | `CRITICAL` alert; TrustGate `ESCALATE` |
 
-### 19.4 A2C Detector — Relational Anomaly Detection
+### 19.4 A2C Detector â€” Relational Anomaly Detection
 
 The A2C (Agent-to-Context) detector evaluates four relational anomaly patterns across the interaction graph:
 
 | Pattern | Definition | Threshold |
 |---------|------------|-----------|
 | **Concentration** | Proportion of interactions directed at a single peer | > 80% |
-| **Entropy drop** | Sudden reduction in interaction diversity (Shannon entropy) | Δ > 50% in 1h window |
+| **Entropy drop** | Sudden reduction in interaction diversity (Shannon entropy) | Î” > 50% in 1h window |
 | **Synchronisation** | Multiple agents acting in tight temporal lock-step | < 500ms spread across > 3 agents |
-| **Silence break** | Abnormal burst following a period of inactivity | > 10× baseline rate after > 2h silence |
+| **Silence break** | Abnormal burst following a period of inactivity | > 10Ã— baseline rate after > 2h silence |
 
-A2C evaluates both agent-to-agent (§ 16) and agent-to-external-peer (§ 15) interactions.
+A2C evaluates both agent-to-agent (Â§ 16) and agent-to-external-peer (Â§ 15) interactions.
 
 ### 19.5 Risk Narrative
 
@@ -1182,10 +1182,10 @@ For each monitored agent, Vigil MUST generate a human-readable narrative priorit
 
 Example:
 ```
-⛓ FORK DETECTED — Event chain fork on merge
-  → Canonical branch resolved by TSA timestamp (branch A selected).
-  → Non-canonical branch logged. Recommend: review Events #2a vs #2b.
-  → TrustGate notified: AUDIT triggered.
+â›“ FORK DETECTED â€” Event chain fork on merge
+  â†’ Canonical branch resolved by TSA timestamp (branch A selected).
+  â†’ Non-canonical branch logged. Recommend: review Events #2a vs #2b.
+  â†’ TrustGate notified: AUDIT triggered.
 ```
 
 ### 19.6 Network Graph
@@ -1211,13 +1211,13 @@ Full API schema is specified in Appendix F.
 
 ---
 
-## 20. TrustGate — Governance & Human Oversight
+## 20. TrustGate â€” Governance & Human Oversight
 
-> *PCP context — Governance Continuity: TrustGate is PCP's answer to EU AI Act Art. 14 — not as a compliance checkbox, but as a structural property. The defining invariant is not the policy evaluation itself: any rules engine can deny a request. The invariant is that the denial is a signed event in the same chain as the action it blocked. You cannot remove a DENY from the chain without breaking it. You cannot bypass TrustGate silently — the bypass leaves a trace. You cannot claim "a human approved this" without the approval event being there, signed, timestamped, in sequence. Governance Continuity means the governance record is as tamper-evident as the action record, because they are the same record.*
+> *PCP context â€” Governance Continuity: TrustGate is PCP's answer to EU AI Act Art. 14 â€” not as a compliance checkbox, but as a structural property. The defining invariant is not the policy evaluation itself: any rules engine can deny a request. The invariant is that the denial is a signed event in the same chain as the action it blocked. You cannot remove a DENY from the chain without breaking it. You cannot bypass TrustGate silently â€” the bypass leaves a trace. You cannot claim "a human approved this" without the approval event being there, signed, timestamped, in sequence. Governance Continuity means the governance record is as tamper-evident as the action record, because they are the same record.*
 
 ### 20.1 Role in PCP
 
-TrustGate is Layer 4 of the PCP stack — the policy enforcement and human oversight gate. It is the direct technical implementation of EU AI Act Art. 14 (human oversight mandatory for high-risk AI systems).
+TrustGate is Layer 4 of the PCP stack â€” the policy enforcement and human oversight gate. It is the direct technical implementation of EU AI Act Art. 14 (human oversight mandatory for high-risk AI systems).
 
 TrustGate receives VRS and TSI from Vigil, evaluates each proposed action against a configurable policy profile, and returns a decision before the action is executed.
 
@@ -1341,9 +1341,9 @@ TrustGate is available in AISS-2 / Pro+ tier deployments. It is not part of the 
 
 ---
 
-## PART V — OPERATIONS
+## PART V â€” OPERATIONS
 
-> *PCP context: This part specifies the operational requirements that make the protocol deployable in production — security hardening, audit export formats, compliance profiles, privacy handling, and the normative test vectors that conformance depends on. These sections are deliberately free of narrative: they are the implementation contract. A system that passes the § 25 test vectors and satisfies the § 23 compliance profile is a conforming PCP implementation.*
+> *PCP context: This part specifies the operational requirements that make the protocol deployable in production â€” security hardening, audit export formats, compliance profiles, privacy handling, and the normative test vectors that conformance depends on. These sections are deliberately free of narrative: they are the implementation contract. A system that passes the Â§ 25 test vectors and satisfies the Â§ 23 compliance profile is a conforming PCP implementation.*
 
 ---
 
@@ -1361,143 +1361,143 @@ TrustGate is available in AISS-2 / Pro+ tier deployments. It is not part of the 
 
 | Attack | Coverage |
 |--------|---------|
-| Retroactive event modification | ✅ Hash chain invalidates all subsequent events |
-| Decision repudiation | ✅ Ed25519 / ML-DSA-65 non-repudiation |
-| Identity fabrication | ✅ Deterministic derivation from private key |
-| Selective event deletion | ✅ Chain hash break detectable |
-| History divergence (fork) | ✅ Canonical History Rule (§ 18) |
-| Replay attack | ✅ UUIDv4 nonce + retention |
-| Timestamp backdating | ✅ RFC 3161 TSA (AISS-2) |
-| Brute-force key attack | ✅ scrypt N=2¹⁷ (Level 2) / HSM (Level 3) |
-| Key in RAM after use | ✅ `_secure_erase()` zeros bytearray |
-| Path traversal (agent names) | ✅ `_safe_name()` sanitization |
-| Agent impersonation | ✅ Public key binding in identity document |
-| Unsupervised critical action | ✅ TrustGate ESCALATE / DENY (AISS-2) |
-| Anomalous behavioural drift | ✅ Vigil TSI / VRS / A2C continuous monitoring |
-| FORK_AFTER_FINALIZATION | ✅ Detected and escalated to TrustGate |
-| Quantum attack (2035+) | ✅ ML-DSA-65 hybrid (AISS-2) |
+| Retroactive event modification | âœ… Hash chain invalidates all subsequent events |
+| Decision repudiation | âœ… Ed25519 / ML-DSA-65 non-repudiation |
+| Identity fabrication | âœ… Deterministic derivation from private key |
+| Selective event deletion | âœ… Chain hash break detectable |
+| History divergence (fork) | âœ… Canonical History Rule (Â§ 18) |
+| Replay attack | âœ… UUIDv4 nonce + retention |
+| Timestamp backdating | âœ… RFC 3161 TSA (AISS-2) |
+| Brute-force key attack | âœ… scrypt N=2Â¹â· (Level 2) / HSM (Level 3) |
+| Key in RAM after use | âœ… `_secure_erase()` zeros bytearray |
+| Path traversal (agent names) | âœ… `_safe_name()` sanitization |
+| Agent impersonation | âœ… Public key binding in identity document |
+| Unsupervised critical action | âœ… TrustGate ESCALATE / DENY (AISS-2) |
+| Anomalous behavioural drift | âœ… Vigil TSI / VRS / A2C continuous monitoring |
+| FORK_AFTER_FINALIZATION | âœ… Detected and escalated to TrustGate |
+| Quantum attack (2035+) | âœ… ML-DSA-65 hybrid (AISS-2) |
 
 | Attack | Outside AISS Scope |
 |--------|-------------------|
-| Incorrect input data to agent | ❌ |
-| Compromised sensors | ❌ |
-| Algorithmic bias or incorrect decisions | ❌ |
-| Full OS/network compromise | ❌ |
-| Social engineering of human operators | ❌ |
+| Incorrect input data to agent | âŒ |
+| Compromised sensors | âŒ |
+| Algorithmic bias or incorrect decisions | âŒ |
+| Full OS/network compromise | âŒ |
+| Social engineering of human operators | âŒ |
 
-### 21.3 Attack Scenarios — Detailed
+### 21.3 Attack Scenarios â€” Detailed
 
 **Modify past event:**
 ```
 Attacker changes Event 5 payload
-  → SHA-256(Event 5) changes
-  → Event 6.previous_hash mismatch
-  → verify_chain_linkage() raises InvalidChainError ✅
+  â†’ SHA-256(Event 5) changes
+  â†’ Event 6.previous_hash mismatch
+  â†’ verify_chain_linkage() raises InvalidChainError âœ…
 ```
 
 **Brute-force .key.enc passphrase:**
 ```
 Attacker tries 1,000,000 passphrases/second (GPU)
-  → scrypt N=2¹⁷ = ~400ms per attempt on modern hardware
-  → Effective rate: ~2.5 attempts/second
-  → 10⁸ common passphrases → ~4.6 years ✅
+  â†’ scrypt N=2Â¹â· = ~400ms per attempt on modern hardware
+  â†’ Effective rate: ~2.5 attempts/second
+  â†’ 10â¸ common passphrases â†’ ~4.6 years âœ…
 ```
 
 **Replay attack:**
 ```
 Attacker resends Event 3 with original signature
-  → detect_replay_attacks() finds duplicate nonce
-  → ReplayAttackError raised ✅
+  â†’ detect_replay_attacks() finds duplicate nonce
+  â†’ ReplayAttackError raised âœ…
 ```
 
 **Agent acts without human approval (ESCALATE timeout):**
 ```
 Agent proposes high-risk action
-  → VRS = 0.82 → TrustGate: ESCALATE
-  → Human does not respond within TTL (300s)
-  → TrustGate: DENY — signed event appended to chain ✅
+  â†’ VRS = 0.82 â†’ TrustGate: ESCALATE
+  â†’ Human does not respond within TTL (300s)
+  â†’ TrustGate: DENY â€” signed event appended to chain âœ…
 ```
 
 ---
 
 ### 21.4 Extended Threat Scenarios
 
-> *PCP context: The scenarios in § 21.3 cover the classical cryptographic attack surface — external adversaries attempting to modify, forge, or replay records. This section covers the five additional threat classes that arise specifically from PCP's architecture: insider threats, inter-layer injection, availability attacks, semantic evasion, and protocol downgrade. In each case, the described countermeasure exists in the current implementation but was not previously made explicit in this specification.*
+> *PCP context: The scenarios in Â§ 21.3 cover the classical cryptographic attack surface â€” external adversaries attempting to modify, forge, or replay records. This section covers the five additional threat classes that arise specifically from PCP's architecture: insider threats, inter-layer injection, availability attacks, semantic evasion, and protocol downgrade. In each case, the described countermeasure exists in the current implementation but was not previously made explicit in this specification.*
 
 ---
 
-#### 21.4.1 Insider Threat — Legitimate Key, Fraudulent Intent
+#### 21.4.1 Insider Threat â€” Legitimate Key, Fraudulent Intent
 
-**Threat:** A principal with legitimate access to the agent's private key (operator, compromised host process, malicious developer) signs fraudulent events. The events are cryptographically valid — indistinguishable from legitimate ones at the signature level.
+**Threat:** A principal with legitimate access to the agent's private key (operator, compromised host process, malicious developer) signs fraudulent events. The events are cryptographically valid â€” indistinguishable from legitimate ones at the signature level.
 
 **Why the classical model does not close this:**  
 Ed25519 and ML-DSA-65 guarantee *attribution to a key*, not *legitimacy of the signer's intent*. A valid signature from the correct key is, by design, indistinguishable from a fraudulent one signed by a colluder who holds that key.
 
-**PCP countermeasures — layered:**
+**PCP countermeasures â€” layered:**
 
-*Layer 1 — Key access hardening (§ 4.3):*  
-The `.key.enc` format (97 bytes: `PQKY` magic + scrypt N=2¹⁷ + AES-256-GCM) enforces ~400ms per decryption attempt, making opportunistic key extraction from a running process expensive. Private key bytes are zeroized via `_secure_erase()` immediately after each signing operation — the key does not persist in RAM between events.
+*Layer 1 â€” Key access hardening (Â§ 4.3):*  
+The `.key.enc` format (97 bytes: `PQKY` magic + scrypt N=2Â¹â· + AES-256-GCM) enforces ~400ms per decryption attempt, making opportunistic key extraction from a running process expensive. Private key bytes are zeroized via `_secure_erase()` immediately after each signing operation â€” the key does not persist in RAM between events.
 
-*Layer 2 — TSA anchoring as a temporal witness:*  
+*Layer 2 â€” TSA anchoring as a temporal witness:*  
 Each RFC 3161 anchor creates a `FINAL` event whose timestamp is established by an independent external authority. An insider who reconstructs a fraudulent history after the fact must contend with the finalization boundary: any branch forking after a `FINAL` event is classified `FORK_AFTER_FINALIZATION` and escalated immediately. The anchor is the witness the insider cannot control.
 
-*Layer 3 — Vigil behavioural baseline:*  
-Legitimate agent behaviour builds a TSI baseline over time. A fraudulent operator producing events that deviate from the established pattern — different event_type distribution, different interaction graph, different temporal rhythm — will shift the VRS. The deviation does not require cryptographic proof; it is a statistical signal.
+*Layer 3 â€” Vigil behavioural baseline:*  
+Legitimate agent behaviour builds a TSI baseline over time. A fraudulent operator producing events that deviate from the established pattern â€” different event_type distribution, different interaction graph, different temporal rhythm â€” will shift the VRS. The deviation does not require cryptographic proof; it is a statistical signal.
 
-*Layer 4 — TrustGate policy binding:*  
-Policy profiles (YAML, SHA-256 verified on every load per ANSSI R35) define the permitted action space per role. An insider who signs events outside the policy's `allowed_actions` for the agent's declared role receives a `BLOCK` decision (Priority 3 in the policy engine's explicit priority order). The block is a signed chain event — it cannot be removed without breaking chain integrity.
+*Layer 4 â€” TrustGate policy binding:*  
+Policy profiles (YAML, SHA-256 verified on every load per ANSSI R35) define the permitted action space per role. An insider who signs events outside the policy's `allowed_actions` for the agent's declared role receives a `BLOCK` decision (Priority 3 in the policy engine's explicit priority order). The block is a signed chain event â€” it cannot be removed without breaking chain integrity.
 
 ```
 Insider signs event: {"event_type": "data_exfil", "role": "reader"}
-  → TrustGate policy_engine: action 'data_exfil' not in role 'reader' allowed_actions
-  → Outcome: BLOCK [ANSSI R26/R30 — least privilege]
-  → Signed trustgate_block event appended to chain ✅
-  → Chain integrity: removing the BLOCK event breaks all subsequent hashes ✅
+  â†’ TrustGate policy_engine: action 'data_exfil' not in role 'reader' allowed_actions
+  â†’ Outcome: BLOCK [ANSSI R26/R30 â€” least privilege]
+  â†’ Signed trustgate_block event appended to chain âœ…
+  â†’ Chain integrity: removing the BLOCK event breaks all subsequent hashes âœ…
 ```
 
-**Residual risk (documented):** If the insider has *both* key access *and* the ability to modify the policy file before loading, they can create a policy that permits their action. Countermeasure: policy files are SHA-256 verified against the stored `content_hash` on every load (`policy_versioning.py` — ANSSI R35). Policy activation events are recorded in the TrustGate audit journal (itself hash-linked). A modified policy produces a different `content_hash` — verifiable by any auditor.
+**Residual risk (documented):** If the insider has *both* key access *and* the ability to modify the policy file before loading, they can create a policy that permits their action. Countermeasure: policy files are SHA-256 verified against the stored `content_hash` on every load (`policy_versioning.py` â€” ANSSI R35). Policy activation events are recorded in the TrustGate audit journal (itself hash-linked). A modified policy produces a different `content_hash` â€” verifiable by any auditor.
 
 ---
 
-#### 21.4.2 Inter-Layer Injection — Vigil Channel Integrity
+#### 21.4.2 Inter-Layer Injection â€” Vigil Channel Integrity
 
-**Threat:** An attacker with local process access injects synthetic events into the Vigil scoring pipeline — bypassing PiQrypt Core — to manipulate the VRS of a target agent, either inflating it (false positive causing a BLOCK) or suppressing it (false negative concealing a real anomaly).
+**Threat:** An attacker with local process access injects synthetic events into the Vigil scoring pipeline â€” bypassing PiQrypt Core â€” to manipulate the VRS of a target agent, either inflating it (false positive causing a BLOCK) or suppressing it (false negative concealing a real anomaly).
 
 **Why this surface exists:**  
 PCP is a four-layer stack. The interface between PiQrypt Core (Layer 2) and Vigil (Layer 3) is an internal event feed. An attacker who can write to this channel can affect behavioural scoring without touching the cryptographic chain.
 
 **PCP countermeasures:**
 
-*Source verification:* Vigil's `compute_vrs()` loads events directly from the agent's signed chain via `load_events(agent_id, agent_name)` — it does not accept events over an unauthenticated external channel. The VRS computation is derived from the verified chain, not from a separate event stream. An injected event that does not exist in the signed chain is invisible to VRS.
+*Source verification:* Vigil's `compute_vrs()` loads events directly from the agent's signed chain via `load_events(agent_id, agent_name)` â€” it does not accept events over an unauthenticated external channel. The VRS computation is derived from the verified chain, not from a separate event stream. An injected event that does not exist in the signed chain is invisible to VRS.
 
-*Chain anomaly component:* The VRS chain component (`w=0.15`) independently calls `verify_chain_linkage()`, `find_forks()`, and `detect_replay_attacks()` directly on the loaded chain. Vigil cannot be fed a "clean" synthetic chain while the real chain contains anomalies — both are read from the same source.
+*Chain anomaly component:* The VRS chain component (`w=0.15`) independently calls `verify_chain_linkage()`, `find_forks()`, and `detect_replay_attacks()` directly on the loaded chain. Vigil cannot be fed a "clean" synthetic chain while the real chain contains anomalies â€” both are read from the same source.
 
 *Vigil channel isolation (deployment requirement):* The Vigil HTTP server (`vigil_server.py`) MUST be bound to localhost only (`127.0.0.1:18421`) in production deployments. External network access to the Vigil scoring API constitutes a misconfiguration, not a protocol failure. Implementations MUST NOT expose Vigil endpoints on public network interfaces without authentication.
 
-*TSI hook authentication:* The `activate_tsi_hook()` function patches `tsi_engine._emit_sentinel_event` in-process at Vigil startup. The hook is an in-process function call, not a network channel — it cannot be injected from outside the process.
+*TSI hook authentication:* The `activate_tsi_hook()` function patches `tsi_engine._emit_sentinel_event` in-process at Vigil startup. The hook is an in-process function call, not a network channel â€” it cannot be injected from outside the process.
 
 ```
 Attacker attempts to inject synthetic SAFE events via Vigil API:
-  → compute_vrs() reads from load_events(agent_id) — signed chain only
-  → Synthetic events not in signed chain → not reflected in VRS ✅
-  → verify_chain_linkage() runs on actual chain regardless ✅
+  â†’ compute_vrs() reads from load_events(agent_id) â€” signed chain only
+  â†’ Synthetic events not in signed chain â†’ not reflected in VRS âœ…
+  â†’ verify_chain_linkage() runs on actual chain regardless âœ…
 ```
 
 **Residual risk (documented, v1.7.1):** The Vigil HTTP API (`/api/summary`, `/api/alerts`) uses a static `VIGIL_TOKEN` environment variable for authentication. Per-user authentication (OIDC/SSO) is planned for v1.8.4. Until then, Vigil endpoints MUST be treated as internal-only services.
 
 ---
 
-#### 21.4.3 Denial of Continuity — Availability Attacks
+#### 21.4.3 Denial of Continuity â€” Availability Attacks
 
-**Threat class:** Rather than forging a history, the attacker makes the continuity record unusable — through chain flooding, TSA unavailability, or Vigil saturation.
+**Threat class:** Rather than forging a history, the attacker makes the continuity record unusable â€” through chain flooding, TSA unavailability, or Vigil saturation.
 
-**21.4.3a — Chain Flooding**
+**21.4.3a â€” Chain Flooding**
 
 An agent under attacker control (or a buggy agent) generates events at extreme rates, producing a technically valid but practically unauditable chain.
 
-*Countermeasure:* PCP does not currently enforce an event rate limit at the protocol level — this is intentional, as legitimate high-frequency agents (trading systems, ROS2 robots) have valid reasons for high event rates. Rate anomalies are detected by the A2C `silence_break` detector (§ 19.4), which flags burst rates exceeding 10× the established baseline. TrustGate can be configured to BLOCK actions from an agent in VRS CRITICAL state, which an extreme event rate will eventually trigger via the chain anomaly component. Implementations MAY additionally configure application-level rate limits outside the PCP protocol.
+*Countermeasure:* PCP does not currently enforce an event rate limit at the protocol level â€” this is intentional, as legitimate high-frequency agents (trading systems, ROS2 robots) have valid reasons for high event rates. Rate anomalies are detected by the A2C `silence_break` detector (Â§ 19.4), which flags burst rates exceeding 10Ã— the established baseline. TrustGate can be configured to BLOCK actions from an agent in VRS CRITICAL state, which an extreme event rate will eventually trigger via the chain anomaly component. Implementations MAY additionally configure application-level rate limits outside the PCP protocol.
 
-**21.4.3b — TSA Unavailability**
+**21.4.3b â€” TSA Unavailability**
 
 The RFC 3161 TSA is an external dependency. If it is unavailable, AISS-2 event anchoring fails.
 
@@ -1510,89 +1510,89 @@ The RFC 3161 TSA is an external dependency. If it is unavailable, AISS-2 event a
 
 This is a graceful degradation to AISS-1 guarantees during TSA unavailability, not a silent failure.
 
-**21.4.3c — Vigil Saturation via External Peer Flooding**
+**21.4.3c â€” Vigil Saturation via External Peer Flooding**
 
-An attacker controlling an external system observed via § 15 (External Peer Observation) generates a high volume of interactions, flooding the `alerts.json` journal and masking real anomalies in noise.
+An attacker controlling an external system observed via Â§ 15 (External Peer Observation) generates a high volume of interactions, flooding the `alerts.json` journal and masking real anomalies in noise.
 
-*Countermeasure:* The alert journal applies FIFO rotation at `MAX_ALERTS_STORED = 200` entries per agent, with deduplication cooldowns (1h standard, 10min for CRITICAL). Alert deduplication is keyed on `agent_name:alert_type` — flooding with the same alert type does not produce more than one journal entry per cooldown window. CRITICAL alerts cannot be suppressed below the 10-minute cooldown and are always positioned at the head of the journal after sorting. An external peer generating anomalous interaction volume will itself trigger an A2C `silence_break` or `concentration` alert, making the flooding attempt self-reporting.
+*Countermeasure:* The alert journal applies FIFO rotation at `MAX_ALERTS_STORED = 200` entries per agent, with deduplication cooldowns (1h standard, 10min for CRITICAL). Alert deduplication is keyed on `agent_name:alert_type` â€” flooding with the same alert type does not produce more than one journal entry per cooldown window. CRITICAL alerts cannot be suppressed below the 10-minute cooldown and are always positioned at the head of the journal after sorting. An external peer generating anomalous interaction volume will itself trigger an A2C `silence_break` or `concentration` alert, making the flooding attempt self-reporting.
 
 ---
 
-#### 21.4.4 Semantic Evasion — Payload Manipulation
+#### 21.4.4 Semantic Evasion â€” Payload Manipulation
 
-**Threat:** An agent under partial attacker control signs events with technically valid payloads that misrepresent the action to TrustGate — using generic `event_type` values, fragmented micro-events, or misleading field names — to avoid BLOCK or REQUIRE_HUMAN decisions.
+**Threat:** An agent under partial attacker control signs events with technically valid payloads that misrepresent the action to TrustGate â€” using generic `event_type` values, fragmented micro-events, or misleading field names â€” to avoid BLOCK or REQUIRE_HUMAN decisions.
 
 **Sub-scenarios:**
 
 *Misclassified event_type:* Agent signs `{"event_type": "read_file"}` for an operation that is actually a privileged write.
 
-*Countermeasure:* TrustGate's `dangerous_patterns` list (ANSSI R25) applies regex matching against the full `payload_str` — not just `event_type`. A payload containing strings like `/etc/passwd`, `rm -rf`, `DROP TABLE`, or patterns defined in the active policy is matched regardless of the declared `event_type`. The matching is case-insensitive and covers the serialized payload string in its entirety.
+*Countermeasure:* TrustGate's `dangerous_patterns` list (ANSSI R25) applies regex matching against the full `payload_str` â€” not just `event_type`. A payload containing strings like `/etc/passwd`, `rm -rf`, `DROP TABLE`, or patterns defined in the active policy is matched regardless of the declared `event_type`. The matching is case-insensitive and covers the serialized payload string in its entirety.
 
 ```
 Agent signs: {"event_type": "read_file", "path": "/etc/shadow"}
-  → TrustGate dangerous_patterns: re.search("/etc/(passwd|shadow)", payload_str)
-  → Match found → Outcome: BLOCK [ANSSI R25] ✅
+  â†’ TrustGate dangerous_patterns: re.search("/etc/(passwd|shadow)", payload_str)
+  â†’ Match found â†’ Outcome: BLOCK [ANSSI R25] âœ…
 ```
 
 *VRS fragmentation:* An agent splits a high-risk action into multiple micro-events, each individually below the VRS BLOCK threshold.
 
-*Countermeasure:* The TSI component evaluates the *rate of change* of trust score over 24 hours — not the absolute value at any single point. A sequence of individually borderline events will accumulate as A2C concentration or entropy anomalies if they are directed at the same target, or as TSI drift if they represent a sustained pattern deviation. Additionally, TrustGate's escalation counter tracks the number of WATCH+ alerts within a rolling 1-hour window (`_count_recent_alerts()`): exceeding the `escalation_threshold` triggers a `RESTRICTED` outcome regardless of the individual VRS at the time of evaluation.
+*Countermeasure:* The TSI component evaluates the *rate of change* of trust score over 24 hours â€” not the absolute value at any single point. A sequence of individually borderline events will accumulate as A2C concentration or entropy anomalies if they are directed at the same target, or as TSI drift if they represent a sustained pattern deviation. Additionally, TrustGate's escalation counter tracks the number of WATCH+ alerts within a rolling 1-hour window (`_count_recent_alerts()`): exceeding the `escalation_threshold` triggers a `RESTRICTED` outcome regardless of the individual VRS at the time of evaluation.
 
 *Role escalation via semantic mislabelling:* Agent declares role `"analyst"` but signs actions that are semantically administrative.
 
 *Countermeasure:* Role-action binding in the policy profile is enforced at Priority 3 (higher than VRS threshold checks). The policy defines explicit `allowed_actions` per role. If the action string does not appear in `role_policy.can_use(ctx.action)`, the result is BLOCK regardless of VRS. Roles are assigned at agent registration, not self-declared at event time.
 
-**Residual risk (documented):** PCP cannot verify that the *real-world effect* of an action matches its declared payload. A payload `{"event_type": "read_file", "path": "/data/report.pdf"}` that actually triggers a system call performing a privileged write is indistinguishable at the PCP layer from a legitimate read. This is explicitly outside AISS scope (§ 21.2). Countermeasure at the deployment level: agents should be sandboxed such that the set of real-world actions they can perform is constrained to match their declared action space.
+**Residual risk (documented):** PCP cannot verify that the *real-world effect* of an action matches its declared payload. A payload `{"event_type": "read_file", "path": "/data/report.pdf"}` that actually triggers a system call performing a privileged write is indistinguishable at the PCP layer from a legitimate read. This is explicitly outside AISS scope (Â§ 21.2). Countermeasure at the deployment level: agents should be sandboxed such that the set of real-world actions they can perform is constrained to match their declared action space.
 
 ---
 
-#### 21.4.5 Protocol Downgrade — AISS-1 / AISS-2 Negotiation
+#### 21.4.5 Protocol Downgrade â€” AISS-1 / AISS-2 Negotiation
 
-**Threat:** An attacker intercepts or influences the profile negotiation between two agents, forcing them to use AISS-1 when both support AISS-2 — stripping post-quantum signatures, mandatory TSA anchoring, and HSM requirements from the session.
+**Threat:** An attacker intercepts or influences the profile negotiation between two agents, forcing them to use AISS-1 when both support AISS-2 â€” stripping post-quantum signatures, mandatory TSA anchoring, and HSM requirements from the session.
 
 **Sub-scenarios:**
 
 *A2A handshake downgrade:* Attacker modifies the `capabilities_agreed` field in the co-signed handshake to omit `"aiss-2"` from the agreed profile.
 
-*Countermeasure:* The co-signed handshake event (§ 16.2) is signed by *both* agents before being recorded in either chain. The `capabilities_agreed` field is part of the signed payload — modifying it post-signature invalidates both signatures simultaneously. An attacker cannot alter the agreed profile without forging both agents' signatures.
+*Countermeasure:* The co-signed handshake event (Â§ 16.2) is signed by *both* agents before being recorded in either chain. The `capabilities_agreed` field is part of the signed payload â€” modifying it post-signature invalidates both signatures simultaneously. An attacker cannot alter the agreed profile without forging both agents' signatures.
 
 *Version field mismatch:* An implementer declares `"version": "AISS-2.0"` in events but omits the `signatures.post_quantum` field or the `trusted_timestamp` object.
 
-*Countermeasure:* AISS-2 conformance verification (§ 26.1, Level 3) MUST validate:
-1. `version == "AISS-2.0"` → `signatures.post_quantum.algorithm == "ML-DSA-65"` REQUIRED
-2. `version == "AISS-2.0"` → `trusted_timestamp` object REQUIRED
-3. `trusted_timestamp.token` MUST be validated per § 8.3 (TSA token validation)
+*Countermeasure:* AISS-2 conformance verification (Â§ 26.1, Level 3) MUST validate:
+1. `version == "AISS-2.0"` â†’ `signatures.post_quantum.algorithm == "ML-DSA-65"` REQUIRED
+2. `version == "AISS-2.0"` â†’ `trusted_timestamp` object REQUIRED
+3. `trusted_timestamp.token` MUST be validated per Â§ 8.3 (TSA token validation)
 
-An event claiming AISS-2.0 that fails any of these checks MUST be rejected with `PROFILE_MISMATCH` — it does not fall back to AISS-1 validation. Partial profiles are not permitted.
+An event claiming AISS-2.0 that fails any of these checks MUST be rejected with `PROFILE_MISMATCH` â€” it does not fall back to AISS-1 validation. Partial profiles are not permitted.
 
 ```
 Verifier receives event: version="AISS-2.0", signatures.post_quantum = MISSING
-  → AISS-2 conformance check: ML-DSA-65 signature REQUIRED for AISS-2.0
-  → Result: PROFILE_MISMATCH — event REJECTED (not silently downgraded) ✅
+  â†’ AISS-2 conformance check: ML-DSA-65 signature REQUIRED for AISS-2.0
+  â†’ Result: PROFILE_MISMATCH â€” event REJECTED (not silently downgraded) âœ…
 ```
 
-*AISS-1 to AISS-2 migration window:* During a migration where some events are AISS-1 and subsequent events are AISS-2, the Canonical History Rule (§ 18) may need to compare branches of different profiles.
+*AISS-1 to AISS-2 migration window:* During a migration where some events are AISS-1 and subsequent events are AISS-2, the Canonical History Rule (Â§ 18) may need to compare branches of different profiles.
 
 *Resolution:* For canonical history resolution, AISS-2 branches (having TSA anchors) MUST be preferred over AISS-1 branches at Step 1 (Anchored Continuity). AISS-1 events in a chain that is actively migrating to AISS-2 MUST be marked `"migration_status": "pending_upgrade"` to distinguish them from deliberate AISS-1 deployments. The migration window MUST be completed within 30 days; after this period, mixed-profile chains in AISS-2 deployments are treated as a configuration failure.
 
 ---
 
-#### 21.4.6 Summary — Extended Threat Coverage
+#### 21.4.6 Summary â€” Extended Threat Coverage
 
 | Threat | Countermeasure | Location |
 |--------|---------------|----------|
-| Insider — fraudulent signing with valid key | Key zeroization · TSA finalization · VRS baseline · TrustGate role policy | §§ 4.3, 8.3, 19, 20 |
-| Policy tampering by insider | SHA-256 policy hash verification on every load · versioning audit trail | `policy_versioning.py` — ANSSI R35 |
-| Vigil channel injection | `compute_vrs()` reads signed chain only · in-process TSI hook | `anomaly_monitor.py` |
-| Chain flooding | A2C silence_break detector · VRS CRITICAL → TrustGate BLOCK | §§ 19.4, 20 |
-| TSA unavailability | `tsa_status: pending` graceful degradation · 24h retry · alert on failure | § 8.2 |
-| Vigil alert saturation | FIFO rotation · deduplication cooldown · CRITICAL non-suppressible | `anomaly_monitor.py` |
-| Semantic evasion — misclassified payload | `dangerous_patterns` regex on full `payload_str` [ANSSI R25] | `policy_engine.py` |
-| VRS fragmentation | TSI drift over 24h · A2C accumulation · escalation counter | §§ 16.5, 19.3 |
+| Insider â€” fraudulent signing with valid key | Key zeroization Â· TSA finalization Â· VRS baseline Â· TrustGate role policy | Â§Â§ 4.3, 8.3, 19, 20 |
+| Policy tampering by insider | SHA-256 policy hash verification on every load Â· versioning audit trail | `policy_versioning.py` â€” ANSSI R35 |
+| Vigil channel injection | `compute_vrs()` reads signed chain only Â· in-process TSI hook | `anomaly_monitor.py` |
+| Chain flooding | A2C silence_break detector Â· VRS CRITICAL â†’ TrustGate BLOCK | Â§Â§ 19.4, 20 |
+| TSA unavailability | `tsa_status: pending` graceful degradation Â· 24h retry Â· alert on failure | Â§ 8.2 |
+| Vigil alert saturation | FIFO rotation Â· deduplication cooldown Â· CRITICAL non-suppressible | `anomaly_monitor.py` |
+| Semantic evasion â€” misclassified payload | `dangerous_patterns` regex on full `payload_str` [ANSSI R25] | `policy_engine.py` |
+| VRS fragmentation | TSI drift over 24h Â· A2C accumulation Â· escalation counter | Â§Â§ 16.5, 19.3 |
 | Role mislabelling | Role-action binding Priority 3 (above VRS threshold) | `policy_engine.py` |
-| A2A handshake downgrade | Co-signed payload — modifying it invalidates both signatures | § 16.2 |
-| AISS-2 version field mismatch | Strict PROFILE_MISMATCH rejection — no silent downgrade | § 26.1 |
-| AISS-1/2 migration window | AISS-2 preferred in Canonical History Rule · 30-day migration limit | § 18.2 |
+| A2A handshake downgrade | Co-signed payload â€” modifying it invalidates both signatures | Â§ 16.2 |
+| AISS-2 version field mismatch | Strict PROFILE_MISMATCH rejection â€” no silent downgrade | Â§ 26.1 |
+| AISS-1/2 migration window | AISS-2 preferred in Canonical History Rule Â· 30-day migration limit | Â§ 18.2 |
 
 ---
 
@@ -1664,7 +1664,7 @@ AISS-2 additionally requires:
 - SOC2 / ISO 27001 / NIST CSF compliance documentation
 - Comprehensive incident response logging
 - Data retention compliance per applicable jurisdiction
-- TrustGate deployment (§ 20)
+- TrustGate deployment (Â§ 20)
 - Annual review of cryptographic algorithms and key lifecycle
 
 ---
@@ -1690,34 +1690,34 @@ Hash chains MAY conflict with GDPR "right to be forgotten" requirements.
 All AISS-compliant implementations MUST pass the normative test vectors:
 
 ```
-/test_vectors/canonical.json   — RFC 8785 canonicalization (14 vectors)
-/test_vectors/identity.json    — Agent ID derivation determinism (8 vectors)
-/test_vectors/events.json      — Event hashing and signatures (16 vectors)
-/test_vectors/chain.json       — Hash chain verification (10 vectors)
-/test_vectors/fork.json        — Fork detection and canonical resolution (6 vectors)
-/test_vectors/replay.json      — Anti-replay protection (5 vectors)
-/test_vectors/rotation.json    — Key rotation and continuity (4 vectors)
-/test_vectors/a2a.json         — A2A handshake verification (4 vectors)
-/test_vectors/external.json    — External peer observation (4 vectors)  [v2.0 NEW]
-/test_vectors/trustgate.json   — TrustGate decision chain (6 vectors)  [v2.0 NEW]
+/test_vectors/canonical.json   â€” RFC 8785 canonicalization (14 vectors)
+/test_vectors/identity.json    â€” Agent ID derivation determinism (8 vectors)
+/test_vectors/events.json      â€” Event hashing and signatures (16 vectors)
+/test_vectors/chain.json       â€” Hash chain verification (10 vectors)
+/test_vectors/fork.json        â€” Fork detection and canonical resolution (6 vectors)
+/test_vectors/replay.json      â€” Anti-replay protection (5 vectors)
+/test_vectors/rotation.json    â€” Key rotation and continuity (4 vectors)
+/test_vectors/a2a.json         â€” A2A handshake verification (4 vectors)
+/test_vectors/external.json    â€” External peer observation (4 vectors)  [v2.0 NEW]
+/test_vectors/trustgate.json   â€” TrustGate decision chain (6 vectors)  [v2.0 NEW]
 ```
 
 ### 25.1 Required Test Coverage
 
-- ✅ Canonical JSON serialization (RFC 8785)
-- ✅ Agent ID derivation determinism and uniqueness
-- ✅ Valid signature generation and verification
-- ✅ Invalid signature detection (bit flip, truncation)
-- ✅ Event hash computation
-- ✅ Genesis event structure
-- ✅ Hash chain linkage validation
-- ✅ Fork condition detection
-- ✅ Canonical history rule determinism
-- ✅ Replay attack detection
-- ✅ Key rotation attestation and continuity
-- ✅ A2A handshake verification
-- ✅ External peer interaction recording (v2.0)
-- ✅ TrustGate decision chain integrity (v2.0)
+- âœ… Canonical JSON serialization (RFC 8785)
+- âœ… Agent ID derivation determinism and uniqueness
+- âœ… Valid signature generation and verification
+- âœ… Invalid signature detection (bit flip, truncation)
+- âœ… Event hash computation
+- âœ… Genesis event structure
+- âœ… Hash chain linkage validation
+- âœ… Fork condition detection
+- âœ… Canonical history rule determinism
+- âœ… Replay attack detection
+- âœ… Key rotation attestation and continuity
+- âœ… A2A handshake verification
+- âœ… External peer interaction recording (v2.0)
+- âœ… TrustGate decision chain integrity (v2.0)
 
 ---
 
@@ -1727,11 +1727,11 @@ All AISS-compliant implementations MUST pass the normative test vectors:
 
 | Level | Requirements |
 |-------|-------------|
-| **Level 1 — Basic** | RFC 8785, Ed25519, all normative test vectors, fork detection |
-| **Level 2 — Production** | Level 1 + security audit, key encryption (scrypt+AES-GCM), key zeroization, key rotation, CLI |
-| **Level 3 — Regulated (AISS-2)** | Level 2 + HSM (FIPS 140-3), RFC 3161, ML-DSA-65, TrustGate, compliance documentation, annual review |
+| **Level 1 â€” Basic** | RFC 8785, Ed25519, all normative test vectors, fork detection |
+| **Level 2 â€” Production** | Level 1 + security audit, key encryption (scrypt+AES-GCM), key zeroization, key rotation, CLI |
+| **Level 3 â€” Regulated (AISS-2)** | Level 2 + HSM (FIPS 140-3), RFC 3161, ML-DSA-65, TrustGate, compliance documentation, annual review |
 
-### 26.2 Reference Implementation — PiQrypt
+### 26.2 Reference Implementation â€” PiQrypt
 
 **Repository:** https://github.com/piqrypt/piqrypt  
 **Install:** `pip install piqrypt`
@@ -1740,44 +1740,44 @@ All AISS-compliant implementations MUST pass the normative test vectors:
 |---------|-------------|-------|
 | v1.0.0 | Level 1 | 18/18 |
 | v1.5.0 | Level 2 | 69/69 |
-| v1.8.4 | Level 2 | 136/143 (7 skipped — external Ollama) |
+| v1.8.4 | Level 2 | 136/143 (7 skipped â€” external Ollama) |
 | **v1.7.1** | **Level 2** | **325 passed, 17 known infrastructure failures** |
 
 The 17 known failures in v1.7.1 are infrastructure-dependent (external cert authority, live server, Pro-tier features not activated in CI). They are not protocol failures.
 
 ---
 
-## Appendix A — Compliance Mapping
+## Appendix A â€” Compliance Mapping
 
 | Framework | Control | AISS Implementation |
 |-----------|---------|---------------------|
-| **EU AI Act** | Art. 12 — Inviolable logging | Hash-chained signed events |
-| **EU AI Act** | Art. 14 — Human oversight | TrustGate ESCALATE/DENY (§ 20) |
-| **EU AI Act** | Art. 9 — Risk management | VRS composite scoring (§ 19.3) |
-| **SOC2** | CC6.1 Identity verification | Deterministic agent ID (§ 5) |
+| **EU AI Act** | Art. 12 â€” Inviolable logging | Hash-chained signed events |
+| **EU AI Act** | Art. 14 â€” Human oversight | TrustGate ESCALATE/DENY (Â§ 20) |
+| **EU AI Act** | Art. 9 â€” Risk management | VRS composite scoring (Â§ 19.3) |
+| **SOC2** | CC6.1 Identity verification | Deterministic agent ID (Â§ 5) |
 | **SOC2** | CC6.2 Logical access | Signature verification |
 | **SOC2** | CC6.6 Audit trail | Hash chain + .pqz export |
 | **ISO 27001** | 5.16 Identity management | Ed25519 agent identity |
 | **ISO 27001** | 8.15 Logging | Tamper-evident event chain |
-| **NIST CSF** | ID.AM-2 Asset inventory | Agent registry (§ 5.4) |
+| **NIST CSF** | ID.AM-2 Asset inventory | Agent registry (Â§ 5.4) |
 | **NIST CSF** | PR.AC-7 Authentication | Cryptographic signature |
 | **NIST CSF** | DE.CM-7 Event monitoring | Fork/replay detection |
 | **NIST CSF** | RS.AN-1 Forensic analysis | Chain reconstruction |
 | **NIST AI RMF** | GOVERN 1.2 | TrustGate policy engine |
 | **NIST AI RMF** | MANAGE 2.2 | Vigil VRS monitoring |
 | **NIST AI RMF** | MEASURE 2.5 | A2C anomaly detection |
-| **HIPAA** | §164.312 Audit controls | Immutable event chain |
+| **HIPAA** | Â§164.312 Audit controls | Immutable event chain |
 | **GDPR** | Art. 5.1.f Integrity | Tamper-evident chains |
 | **GDPR** | Art. 22 Explanation | Signed decision payload |
 | **SEC** | Rule 17a-4 7-year retention | .pqz certified exports |
-| **SOX** | §404 Internal controls | Signed decision records |
-| **ANSSI 2024** | R25 Pattern filtering | A2C detector (§ 19.4) |
+| **SOX** | Â§404 Internal controls | Signed decision records |
+| **ANSSI 2024** | R25 Pattern filtering | A2C detector (Â§ 19.4) |
 | **ANSSI 2024** | R29 Audit trail | Hash chain + .pqz |
 | **ANSSI 2024** | R30 Clearance-based access | TrustGate ALLOW/DENY |
 
 ---
 
-## Appendix B — Test Vectors Index
+## Appendix B â€” Test Vectors Index
 
 Full normative test vectors are published in the AISS-spec repository:
 
@@ -1785,11 +1785,11 @@ Full normative test vectors are published in the AISS-spec repository:
 https://github.com/piqrypt/aiss-spec/test_vectors/
 ```
 
-The PiQrypt reference implementation includes `tests/test_vectors.py` — all normative vectors passing as of v1.7.1.
+The PiQrypt reference implementation includes `tests/test_vectors.py` â€” all normative vectors passing as of v1.7.1.
 
 ---
 
-## Appendix C — Implementation Guidance
+## Appendix C â€” Implementation Guidance
 
 ### Python (Reference)
 
@@ -1824,18 +1824,18 @@ detect_replay_attacks([genesis, event]) # raises ReplayAttackError on duplicate 
 
 ### Critical Pitfalls
 
-- ❌ Do NOT use `json.dumps(sort_keys=True)` — not RFC 8785 compliant
-- ❌ Do NOT truncate `agent_id` below 32 characters
-- ❌ Do NOT include the `signature` field when computing the event hash
-- ❌ Do NOT store private keys in plaintext — use scrypt + AES-256-GCM
-- ❌ Do NOT assume authority from integrity alone (§ 17.5)
-- ❌ Do NOT use Base58 for signatures — Base58 is for `agent_id` only; signatures use Base64
-- ❌ Do NOT bypass TrustGate for high-VRS events in AISS-2 deployments
-- ❌ Do NOT allow execution after `ESCALATE` without explicit human approval or TTL expiry
+- âŒ Do NOT use `json.dumps(sort_keys=True)` â€” not RFC 8785 compliant
+- âŒ Do NOT truncate `agent_id` below 32 characters
+- âŒ Do NOT include the `signature` field when computing the event hash
+- âŒ Do NOT store private keys in plaintext â€” use scrypt + AES-256-GCM
+- âŒ Do NOT assume authority from integrity alone (Â§ 17.5)
+- âŒ Do NOT use Base58 for signatures â€” Base58 is for `agent_id` only; signatures use Base64
+- âŒ Do NOT bypass TrustGate for high-VRS events in AISS-2 deployments
+- âŒ Do NOT allow execution after `ESCALATE` without explicit human approval or TTL expiry
 
 ---
 
-## Appendix D — Security Disclaimer
+## Appendix D â€” Security Disclaimer
 
 AISS provides cryptographic identity primitives and does NOT guarantee:
 
@@ -1849,21 +1849,21 @@ AISS provides cryptographic identity primitives and does NOT guarantee:
 
 ---
 
-## Appendix E — Framework Bridge Specifications
+## Appendix E â€” Framework Bridge Specifications
 
-PiQrypt implements AISS integration for 9 agent frameworks. Each bridge is a lightweight wrapper that stamps events at natural integration points without requiring application code changes.
+PiQrypt implements AISS integration for 10 agent frameworks. Each bridge is a lightweight wrapper that stamps events at natural integration points without requiring application code changes.
 
 ### E.1 Integration Principle
 
 ```
 Framework execution
-        ↓
+        â†“
 Bridge intercepts at integration point
-        ↓
+        â†“
 stamp_event(private_key, agent_id, {event_type, ...})
-        ↓
+        â†“
 Framework execution resumes
-        ↓
+        â†“
 Vigil receives event (<10ms overhead)
 ```
 
@@ -1880,6 +1880,7 @@ Vigil receives event (<10ms overhead)
 | `bridges/rpi/` | Raspberry Pi | `AuditedPiAgent` | `gpio_read`, `gpio_write`, `sensor_sample`, `actuator_command` |
 | `bridges/session/` | Session | Session manager | `session_start`, `a2a_handshake`, `session_end`, `state_transition` |
 | `bridges/openclaw/` | OpenClaw | Action stamper | `action_proposed`, `action_executed`, `action_result` |
+| `bridges/hermes/` | Hermes Agent | Plugin hooks (`pre/post_tool_call`, `pre_llm_call`) | `tool_intent`, `tool_result`, `session_start`, `session_end` |
 
 ### E.3 LangChain Example
 
@@ -1910,7 +1911,7 @@ class MyRobotNode(AuditedLifecycleNode):
 
 ---
 
-## Appendix F — Vigil API Reference
+## Appendix F â€” Vigil API Reference
 
 ### F.1 Endpoints
 
@@ -1958,7 +1959,7 @@ class MyRobotNode(AuditedLifecycleNode):
 
 ---
 
-## Appendix G — TrustGate Policy Schema
+## Appendix G â€” TrustGate Policy Schema
 
 Full YAML schema for TrustGate policy profiles:
 
@@ -1985,7 +1986,7 @@ rules:
 escalate:
   channel:   string             # "slack" | "email" | "webhook" | "sms"
   target:    string             # webhook URL, email address, or phone number
-  ttl_seconds: integer          # Default: 300 — timeout before auto-DENY
+  ttl_seconds: integer          # Default: 300 â€” timeout before auto-DENY
   default_on_timeout: string    # "DENY" (default) | "ALLOW"
 
 frameworks:
@@ -2000,9 +2001,9 @@ audit_all: bool                 # If true, EVERY action produces a trustgate_aud
 
 ---
 
-## Appendix H — Security Test Coverage
+## Appendix H â€” Security Test Coverage
 
-PiQrypt v1.8.10 includes 61 dedicated security tests:
+PiQrypt v1.9.0 includes 61 dedicated security tests:
 
 | Category | Tests | Coverage |
 |----------|-------|---------|
@@ -2012,7 +2013,7 @@ PiQrypt v1.8.10 includes 61 dedicated security tests:
 | Session Security | 7 | Lock/unlock, key erasure after use, context manager |
 | Migration | 4 | Idempotence, backup verification, corrupt source handling |
 | Memory | 4 | Flood, injection, unicode, cross-agent isolation |
-| **Total** | **61** | — |
+| **Total** | **61** | â€” |
 
 All 61 security tests pass on Windows (PowerShell) and Linux as of v1.7.1.
 
@@ -2022,21 +2023,21 @@ All 61 security tests pass on Windows (PowerShell) and Linux as of v1.7.1.
 
 ## Closing Note
 
-This document specifies how PCP's four primitives are cryptographically implemented. The narrative context blocks throughout this RFC describe *why* each technical decision was made — the gap it closes, the property it establishes, the threat it neutralises.
+This document specifies how PCP's four primitives are cryptographically implemented. The narrative context blocks throughout this RFC describe *why* each technical decision was made â€” the gap it closes, the property it establishes, the threat it neutralises.
 
 The relationship between the two levels is straightforward: the narrative motivates; the specification binds.
 
-An auditor, a regulator, or a court does not need to understand the narrative to verify a PCP record. They need only follow § 26 and the normative test vectors in § 25. The record either validates or it does not. That independence — verification without trust in the implementer, without access to the producing system, without any assumption beyond the public algorithms — is what "verifiable" means in Proof of Continuity Protocol.
+An auditor, a regulator, or a court does not need to understand the narrative to verify a PCP record. They need only follow Â§ 26 and the normative test vectors in Â§ 25. The record either validates or it does not. That independence â€” verification without trust in the implementer, without access to the producing system, without any assumption beyond the public algorithms â€” is what "verifiable" means in Proof of Continuity Protocol.
 
 ---
 
-*AISS RFC v2.0 — Standards Track*  
+*AISS RFC v2.0 â€” Standards Track*  
 *https://github.com/piqrypt/aiss-spec*  
 *Status: Public Review Draft*  
 *Date: March 2026*  
 *Supersedes: AISS RFC v1.1 (2026-03-02)*
 
-*© 2026 PiQrypt — e-Soleau DSO2026006483 (INPI France) + Addendum 2026*
+*Â© 2026 PiQrypt â€” e-Soleau DSO2026006483 (INPI France) + Addendum 2026*
 
 *AISS does not evaluate the correctness of decisions.*  
 *It establishes verifiable attribution and historical integrity.*
@@ -2048,8 +2049,8 @@ An auditor, a regulator, or a court does not need to understand the narrative to
 Core protocol concepts described in this document were deposited
 via e-Soleau with the French National Institute of Industrial Property (INPI):
 
-Primary deposit:  DSO2026006483 — 19 February 2026
-Addendum:         DSO2026009143 — 12 March 2026
+Primary deposit:  DSO2026006483 â€” 19 February 2026
+Addendum:         DSO2026009143 â€” 12 March 2026
 
 These deposits establish proof of authorship and prior art
 for the PCP protocol specification and PiQrypt reference implementation.
@@ -2058,4 +2059,4 @@ PCP (Proof of Continuity Protocol) is an open protocol specification.
 It may be implemented independently by any compliant system.
 PiQrypt is the reference implementation.
 
-© 2026 PiQrypt — contact@piqrypt.com
+Â© 2026 PiQrypt â€” contact@piqrypt.com

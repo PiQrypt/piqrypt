@@ -1,0 +1,16 @@
+name: piqrypt-audit
+version: "1.0.0"
+description: "Cryptographic audit trail for every Hermes tool call — Ed25519-signed, hash-chained, EU AI Act ready"
+
+requires:
+  - piqrypt>=1.8.3
+
+requires_env:
+  - name: PIQRYPT_IDENTITY_FILE
+    description: "Path to your PiQrypt identity file (e.g. ~/.piqrypt/agents/hermes/identity.json)"
+    url: "https://piqrypt.com/docs/identity"
+    secret: false
+    optional: true
+  - name: PIQRYPT_AGENT_NAME
+    description: "Name of your PiQrypt agent (alternative to PIQRYPT_IDENTITY_FILE)"
+    optional: true

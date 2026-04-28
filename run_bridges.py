@@ -31,6 +31,7 @@ BRIDGE_TESTS = [
     ("ollama",     "test_piqrypt_ollama.py"),
     ("ros",        "test_piqrypt_ros.py"),
     ("rpi",        "test_piqrypt_rpi.py"),
+    ("hermes",     "test_piqrypt_hermes.py"),
 ]
 
 results = {}
