@@ -1,0 +1,52 @@
+PCP PROTOCOL — BENCHMARK RESULTS
+============================================================
+Platform : Windows-11-10.0.26200-SP0
+Python   : 3.12.7
+PiQrypt  : 1.9.0
+N        : 1000 iterations per measurement
+
+TABLE 1 — Event Stamping
+------------------------------------------------------------
+Profile                         p5 (ms)  p50 (ms)  p95 (ms)
+------------------------------------------------------------
+AISS-1 (Ed25519)                   0.12      0.12      0.15
+AISS-2 (ML-DSA-65)                  N/A       N/A       N/A
+
+TABLE 2 — Chain Verification (AISS-1)
+------------------------------------------------------------
+Chain length           p50 (ms)   p5 (ms)  p95 (ms)
+------------------------------------------------------------
+100 events                 0.07      0.07      0.09
+1000 events                0.85      0.76      0.88
+10000 events               7.51      7.35      8.49
+
+TABLE 3 — VRS Computation
+------------------------------------------------------------
+Agents       Events in window   p50 (ms) Notes
+------------------------------------------------------------
+1 agent(s)               1000     145.47  full chain verify
+10 agent(s)               1000     146.59  full chain verify
+100 agent(s)              10000    1488.12  full chain verify
+
+EVENT SIZE (AISS-1): 325 bytes (minimal) / 479 bytes (typical)
+EVENT SIZE (AISS-2): N/A
+
+TABLE 4 — Full Agent Loop (stamp → store → eval → verify → search)
+------------------------------------------------------------
+Profile                         p5 (ms)  p50 (ms)  p95 (ms)  mean (ms)
+------------------------------------------------------------
+AISS-1 (Ed25519)                  57.41     59.36     70.03      60.85
+AISS-2 (ML-DSA-65)                  N/A       N/A       N/A        N/A
+
+TABLE 5 — Store & Search Latencies
+------------------------------------------------------------
+store_event() [SQLite]            37.97     39.22      46.0      40.08
+TrustGate policy eval               N/A       N/A       N/A        N/A
+
+search_events() by chain size   p5 (ms)  p50 (ms)  p95 (ms)
+------------------------------------------------------------
+10 stored events                    0.0       0.0       0.0
+100 stored events                   0.0       0.0       0.0
+1000 stored events                  0.0       0.0       0.0
+
+Copy these numbers into §11 of PCP_arXiv_v1.1.md

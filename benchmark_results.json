@@ -1,0 +1,97 @@
+{
+  "system": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.12.7",
+    "processor": "Intel64 Family 6 Model 126 Stepping 5, GenuineIntel",
+    "piqrypt_version": "1.9.0"
+  },
+  "stamp_aiss1": {
+    "p5": 0.12,
+    "p50": 0.12,
+    "p95": 0.15,
+    "mean": 0.12,
+    "n": 1000
+  },
+  "stamp_aiss2": null,
+  "verify_chain": {
+    "100": {
+      "p50": 0.07,
+      "p5": 0.07,
+      "p95": 0.09,
+      "n": 5
+    },
+    "1000": {
+      "p50": 0.85,
+      "p5": 0.76,
+      "p95": 0.88,
+      "n": 5
+    },
+    "10000": {
+      "p50": 7.51,
+      "p5": 7.35,
+      "p95": 8.49,
+      "n": 5
+    }
+  },
+  "vrs": {
+    "1": {
+      "total_events": 1000,
+      "p50": 145.47,
+      "n": 10,
+      "note": "full chain verify"
+    },
+    "10": {
+      "total_events": 1000,
+      "p50": 146.59,
+      "n": 10,
+      "note": "full chain verify"
+    },
+    "100": {
+      "total_events": 10000,
+      "p50": 1488.12,
+      "n": 10,
+      "note": "full chain verify"
+    }
+  },
+  "event_size": {
+    "small_bytes": 325,
+    "typical_bytes": 479
+  },
+  "store_event": {
+    "p5": 37.97,
+    "p50": 39.22,
+    "p95": 46.0,
+    "mean": 40.08,
+    "n": 100
+  },
+  "trustgate_eval": null,
+  "search_events": {
+    "10": {
+      "p5": 0.0,
+      "p50": 0.0,
+      "p95": 0.0,
+      "n": 10
+    },
+    "100": {
+      "p5": 0.0,
+      "p50": 0.0,
+      "p95": 0.0,
+      "n": 10
+    },
+    "1000": {
+      "p5": 0.0,
+      "p50": 0.0,
+      "p95": 0.0,
+      "n": 10
+    }
+  },
+  "full_loop_aiss1": {
+    "p5": 57.41,
+    "p50": 59.36,
+    "p95": 70.03,
+    "mean": 60.85,
+    "n": 100
+  },
+  "full_loop_aiss2": null,
+  "event_size_aiss2": null
+}
