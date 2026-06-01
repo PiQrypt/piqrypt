@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Telemetry opt-out notice in onboarding dashboard (static/onboarding/index.html)
 - "install" telemetry event sent on first CLI run
 
+### Fixed
+- cli/main.py: split `import json, os` into two lines (ruff E401)
+
 ### Docs
 - TELEMETRY.md updated to reflect opt-out model
 

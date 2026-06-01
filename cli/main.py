@@ -763,7 +763,8 @@ def cmd_telemetry_status(args):
 
 def _maybe_show_telemetry_notice():
     from pathlib import Path
-    import json, os
+    import json
+    import os
     from datetime import datetime
     home = Path(os.environ.get("HOME") or os.environ.get("USERPROFILE")
                 or Path.home())
