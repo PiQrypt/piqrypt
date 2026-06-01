@@ -166,6 +166,40 @@
   }
   .install-hint code { color: var(--accent); }
 
+  .telemetry-notice {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 16px;
+  }
+  .telemetry-notice-text {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    line-height: 1.5;
+  }
+  .telemetry-notice a { color: var(--accent); text-decoration: none; }
+  .telemetry-opt-out {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    transition: border-color .15s, color .15s;
+  }
+  .telemetry-opt-out:hover { border-color: var(--accent); color: var(--accent); }
+
   /* ── Section ── */
   section {
     max-width: 1060px;
@@ -546,6 +580,21 @@
     <div class="install-hint">
       Then run: <code>piqrypt demo</code> or <code>piqrypt init</code>
     </div>
+    <div class="telemetry-notice">
+      <div class="telemetry-notice-text">
+        <span>📊</span>
+        <span>
+          PiQrypt collects anonymous usage statistics to help improve
+          the project. No personal data, no agent IDs, no payloads.
+          <a href="https://piqrypt.com/telemetry" target="_blank">
+            Full details →
+          </a>
+        </span>
+      </div>
+      <button onclick="optOutTelemetry()" class="telemetry-opt-out">
+        Opt out
+      </button>
+    </div>
   </div>
 </div>
 
@@ -835,6 +884,11 @@ function copyInstall(btn) {
   const orig = btn.textContent;
   btn.textContent = 'Copied!';
   setTimeout(() => btn.textContent = orig, 1500);
+}
+
+function optOutTelemetry() {
+  copyText('piqrypt telemetry disable');
+  showToast('Command copied — paste it in your terminal to opt out');
 }
 
 

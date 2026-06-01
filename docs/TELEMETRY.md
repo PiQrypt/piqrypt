@@ -12,7 +12,8 @@ PiQrypt includes **optional, privacy-first telemetry** to help improve the produ
 
 ## Core Principles
 
-1. **Opt-in only** — Disabled by default
+1. **Transparent** — Enabled by default on fresh installs
+   with clear opt-out. Existing users unaffected.
 2. **Anonymous** — No personal data
 3. **Transparent** — See exactly what's sent
 4. **Minimal** — Only usage statistics
@@ -304,7 +305,11 @@ piqrypt/telemetry.py
 
 ## FAQ
 
-**Why is telemetry disabled by default?** Respect for privacy. We want explicit consent.
+**Is telemetry enabled by default?**
+Yes, on fresh installs. A notice is shown on first CLI run
+and in the onboarding dashboard with clear opt-out instructions.
+Existing users who have already configured telemetry are
+unaffected. Set PIQRYPT_TELEMETRY=0 to disable at any time.
 
 **Can telemetry identify me?** No. No IDs, IPs, or fingerprints.
 

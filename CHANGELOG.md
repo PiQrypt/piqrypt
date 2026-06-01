@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.9.0] - 2026-06-01
+
+### Changed
+- Telemetry is now enabled by default on fresh installs (opt-out model)
+  Existing users with a telemetry.json config are unaffected
+  PIQRYPT_TELEMETRY=0 env var still disables at any time
+
+### Added
+- First-run telemetry notice in CLI (printed once before any command)
+- Telemetry opt-out notice in onboarding dashboard (static/onboarding/index.html)
+- "install" telemetry event sent on first CLI run
+
+### Docs
+- TELEMETRY.md updated to reflect opt-out model
+
+---
+
 ## [1.7.1] - 2026-03-23
 
 ### ✅ TrustGate — Governance Engine (New Major Component)

@@ -86,7 +86,7 @@ class Telemetry:
                     return config.get("enabled", False)
             except Exception:
                 return False
-        return False
+        return True
 
     def _get_installation_id(self) -> str:
         """

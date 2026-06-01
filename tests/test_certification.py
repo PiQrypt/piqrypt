@@ -451,7 +451,7 @@ class TestTelemetry:
         importlib.reload(tel_mod)  # Restore after test
 
     def test_disabled_by_default(self):
-        assert not self.tel_mod.is_telemetry_enabled()
+        assert self.tel_mod.is_telemetry_enabled()
 
     def test_env_var_override_disables(self, monkeypatch):
         monkeypatch.setenv("PIQRYPT_TELEMETRY", "0")
@@ -474,9 +474,9 @@ class TestTelemetry:
         assert "enabled" in status
         assert "installation_id" in status
 
-    def test_status_enabled_false_by_default(self):
+    def test_status_enabled_true_by_default(self):
         status = self.tel_mod.get_telemetry_status()
-        assert status["enabled"] is False
+        assert status["enabled"] is True
 
     def test_status_after_enable(self):
         self.tel_mod.enable_telemetry()
@@ -487,7 +487,8 @@ class TestTelemetry:
         uuid.UUID(status["installation_id"])  # Raises if invalid
 
     def test_track_when_disabled_does_not_write(self, tmp_path):
-        """track() must be a no-op when disabled."""
+        """track() must be a no-op when explicitly disabled."""
+        self.tel_mod.disable_telemetry()
         self.tel_mod.track("test_event", foo="bar")
         log_file = tmp_path / ".piqrypt" / "telemetry.log"
         assert not log_file.exists()

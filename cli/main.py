@@ -761,6 +761,45 @@ def cmd_telemetry_status(args):
 # Parser
 # ─────────────────────────────────────────────
 
+def _maybe_show_telemetry_notice():
+    from pathlib import Path
+    import json, os
+    from datetime import datetime
+    home = Path(os.environ.get("HOME") or os.environ.get("USERPROFILE")
+                or Path.home())
+    config_file = home / ".piqrypt" / "telemetry.json"
+    if config_file.exists():
+        return  # existing user — respect their choice
+    # First run — write config and show notice
+    config_dir = home / ".piqrypt"
+    config_dir.mkdir(exist_ok=True)
+    config = {
+        "enabled":         True,
+        "enabled_at":      datetime.utcnow().isoformat() + "Z",
+        "version":         "1.0",
+    }
+    try:
+        with open(config_file, "w") as f:
+            json.dump(config, f, indent=2)
+    except Exception:
+        pass
+    print("\n" + "─" * 58)
+    print("  PiQrypt collects anonymous usage statistics to help")
+    print("  improve the project. No personal data, no agent IDs,")
+    print("  no payloads. Full details: piqrypt.com/telemetry")
+    print("")
+    print("  To opt out at any time:")
+    print("    piqrypt telemetry disable")
+    print("  Or set: PIQRYPT_TELEMETRY=0")
+    print("─" * 58 + "\n")
+    # Send install event
+    try:
+        from aiss.telemetry import track
+        track("install")
+    except Exception:
+        pass
+
+
 def main():
     # Force UTF-8 output on Windows (default cp1252 can't encode emojis)
     if hasattr(sys.stdout, 'reconfigure'):
@@ -775,6 +814,8 @@ def main():
             prompt_migration()
     except Exception:
         pass  # Migration non critique — ne bloque pas le démarrage
+
+    _maybe_show_telemetry_notice()
 
     parser = argparse.ArgumentParser(
         description=f"PiQrypt v{aiss.__version__} – AISS Command Line Interface",
