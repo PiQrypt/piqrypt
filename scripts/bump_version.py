@@ -201,6 +201,13 @@ FILES = [
             (r"PiQrypt v[\d.]+", "PiQrypt v{V}"),
         ],
     ),
+    # ── static/ ───────────────────────────────────────────────────────────────
+    (
+        "static/onboarding/index.html",
+        [
+            (r'id="nav-version">v[\d.]+<', 'id="nav-version">v{V}<'),
+        ],
+    ),
 ]
 
 

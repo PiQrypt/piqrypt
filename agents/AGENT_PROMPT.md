@@ -362,4 +362,4 @@ PiQrypt can coexist with all of them.
 ---
 
 *AISS v1.1 — Agent Identity & Signature Standard*
-*PiQrypt v1.9.0 — Reference Implementation*
+*PiQrypt v1.9.1 — Reference Implementation*

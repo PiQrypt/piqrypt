@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.9.0] - 2026-06-01
+## [1.9.1] - 2026-06-01
 
 ### Changed
 - Telemetry is now enabled by default on fresh installs (opt-out model)
