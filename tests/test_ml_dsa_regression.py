@@ -1,13 +1,15 @@
 """
-ML-DSA-65 known-answer tests (FIPS 204).
+ML-DSA-65 regression tests (FIPS 204) — self-generated vectors.
 
 These vectors are generated deterministically from dilithium-py >= 1.0.0
 using ML-DSA.KeyGen_internal (key_derive) and ML-DSA.Sign with rnd = 0^32
-(deterministic mode, Algorithm 2 FIPS 204 with explicit zero randomness).
+(Algorithm 2 FIPS 204 with explicit zero randomness).
 
-NIST ACVP vectors (keyGen / sigGen / sigVer official JSON) will be integrated
-in D.3 once the CI liboqs cross-backend job is operational and the ACVP
-submission package is available.
+PURPOSE: regression — detect accidental code changes that break the current
+implementation. They do NOT detect bugs in dilithium-py itself, because the
+expected values are produced by the same library.
+For independent reference verification, see tests/test_nist_acvp_ml_dsa.py
+which uses official NIST ACVP vectors from usnistgov/ACVP-Server.
 
 Source: dilithium-py ML_DSA_65, MIT license, https://github.com/GiacomoPope/dilithium-py
 """
