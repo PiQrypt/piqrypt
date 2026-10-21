@@ -716,6 +716,99 @@ class TestComputeEventHashTSA(unittest.TestCase):
 
 
 # ===========================================================================
+# D1 — verify_aiss2_hybrid dispatch AISS-2.0 / AISS-2.1 / inconnu
+# ===========================================================================
+
+@pytest.mark.skipif(_SKIP, reason=_SKIP_REASON)
+class TestVerifyDispatch(unittest.TestCase):
+    """verify_aiss2_hybrid dispatche selon event['version']."""
+
+    def setUp(self):
+        import aiss.license as lic_module
+        from aiss.crypto import dilithium
+        self._orig_lic = lic_module._license
+        lic_module._license = _make_license("pro")
+        dilithium.reset_demo_counter()
+
+    def tearDown(self):
+        import aiss.license as lic_module
+        lic_module._license = self._orig_lic
+
+    def _make_aiss20_event(self, priv_ed, priv_pq, pub_ed, agent_id):
+        """Crée un événement AISS-2.0 avec l'encodage 1.9.2 (canonical + base58 + base64)."""
+        import time
+        from aiss.canonical import canonicalize as _c
+        from aiss.crypto import ed25519 as _ed, dilithium as _dil
+        from aiss.stamp import generate_nonce
+
+        event = {
+            "version": "AISS-2.0",
+            "agent_id": agent_id,
+            "timestamp": int(time.time()),
+            "nonce": generate_nonce(),
+            "payload": {"action": "d1_test"},
+            "previous_hash": None,
+        }
+        canonical = _c(event)
+        sig_ed = _ed.sign(priv_ed, canonical)
+        sig_pq = _dil.sign(priv_pq, canonical)
+        event["signatures"] = {
+            "classical": {
+                "algorithm": "Ed25519",
+                "signature": _ed.encode_base58(sig_ed),
+            },
+            "post_quantum": {
+                "algorithm": "ML-DSA-65",
+                "signature": __import__("base64").b64encode(sig_pq).decode(),
+            },
+        }
+        event["trusted_timestamp"] = {"status": "pending", "rfc3161_token": None}
+        return event
+
+    def test_aiss20_path_verifies(self):
+        """Un événement AISS-2.0 valide est vérifié sur le chemin 1.9.2."""
+        from aiss.stamp_aiss2 import verify_aiss2_hybrid
+        priv_ed, pub_ed, priv_pq, pub_pq = _keys()
+        aid = _agent_id(pub_ed)
+        event = self._make_aiss20_event(priv_ed, priv_pq, pub_ed, aid)
+        self.assertTrue(verify_aiss2_hybrid(event, pub_ed, pub_pq))
+
+    def test_aiss21_path_verifies(self):
+        """Un événement AISS-2.1 valide est vérifié sur le nouveau chemin."""
+        from aiss.stamp_aiss2 import verify_aiss2_hybrid
+        priv_ed, pub_ed, priv_pq, pub_pq = _keys()
+        aid = _agent_id(pub_ed)
+        event = _stamp(priv_ed, priv_pq, aid)
+        self.assertEqual(event["version"], "AISS-2.1")
+        self.assertTrue(verify_aiss2_hybrid(event, pub_ed, pub_pq))
+
+    def test_unknown_version_raises(self):
+        """Une version inconnue lève InvalidSignatureError."""
+        import copy
+        from aiss.exceptions import InvalidSignatureError
+        from aiss.stamp_aiss2 import verify_aiss2_hybrid
+        priv_ed, pub_ed, priv_pq, pub_pq = _keys()
+        aid = _agent_id(pub_ed)
+        event = copy.deepcopy(_stamp(priv_ed, priv_pq, aid))
+        event["version"] = "AISS-3.0"
+        with self.assertRaises(InvalidSignatureError):
+            verify_aiss2_hybrid(event, pub_ed, pub_pq)
+
+    def test_aiss20_does_not_use_jcs(self):
+        """AISS-2.0 n'utilise pas JCS — falsifier version 2.0 avec sig 2.1 échoue."""
+        import copy
+        from aiss.exceptions import InvalidSignatureError
+        from aiss.stamp_aiss2 import verify_aiss2_hybrid
+        priv_ed, pub_ed, priv_pq, pub_pq = _keys()
+        aid = _agent_id(pub_ed)
+        # Créer un événement AISS-2.1, puis forcer la version à 2.0
+        event = copy.deepcopy(_stamp(priv_ed, priv_pq, aid))
+        event["version"] = "AISS-2.0"
+        with self.assertRaises(InvalidSignatureError):
+            verify_aiss2_hybrid(event, pub_ed, pub_pq)
+
+
+# ===========================================================================
 # Séparation de domaine AISS-2.1 — M' avec label d'algorithme
 # ===========================================================================
 

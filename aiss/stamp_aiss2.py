@@ -254,25 +254,84 @@ def stamp_genesis_event_aiss2_hybrid(
 
 def verify_aiss2_hybrid(event: Dict[str, Any], public_key_ed25519: bytes, public_key_dilithium: bytes) -> bool:
     """
-    Verify AISS-2.1 hybrid signatures.
+    Verify AISS-2.0 or AISS-2.1 hybrid signatures, dispatching on event["version"].
 
-    Reconstructs M' = _DOMAIN_PREFIX + 0x00 + RFC-8785-canonical-event
-    (signatures and trusted_timestamp excluded) and verifies both signatures.
+    - AISS-2.0: verifies using AISS-1 canonical.py (stdlib), Ed25519 base58,
+      ML-DSA-65 plain base64 — unchanged behaviour from 1.9.2.
+    - AISS-2.1: verifies using RFC 8785 JCS + domain-separated M'.
+    - Any other version: raises InvalidSignatureError.
 
     Args:
-        event: AISS-2.1 event
+        event: AISS-2.x event dict
         public_key_ed25519: Ed25519 public key
         public_key_dilithium: ML-DSA-65 public key
 
     Returns:
-        True if both signatures valid
+        True if both signatures are valid
 
     Raises:
-        InvalidSignatureError: If either signature invalid
+        InvalidSignatureError: If either signature invalid or version unsupported
     """
     from aiss.exceptions import InvalidSignatureError
 
-    # Extract signatures
+    version = event.get("version", "")
+    if version == "AISS-2.0":
+        return _verify_aiss2_0(event, public_key_ed25519, public_key_dilithium)
+    elif version == "AISS-2.1":
+        return _verify_aiss2_1(event, public_key_ed25519, public_key_dilithium)
+    else:
+        raise InvalidSignatureError(
+            f"Unsupported AISS version for hybrid verification: {version!r}. "
+            "Expected 'AISS-2.0' or 'AISS-2.1'."
+        )
+
+
+def _verify_aiss2_0(
+    event: Dict[str, Any],
+    public_key_ed25519: bytes,
+    public_key_dilithium: bytes,
+) -> bool:
+    """AISS-2.0 verification path (1.9.2 behaviour, never changed)."""
+    from aiss.exceptions import InvalidSignatureError
+    from aiss.canonical import canonicalize as _canonical_v1
+
+    signatures = event.get("signatures")
+    if not signatures:
+        raise InvalidSignatureError("AISS-2.0 event missing signatures field")
+
+    classical = signatures.get("classical")
+    post_quantum = signatures.get("post_quantum")
+    if not classical or not post_quantum:
+        raise InvalidSignatureError("AISS-2.0 event missing classical or post_quantum signature")
+
+    event_copy = {k: v for k, v in event.items() if k not in ("signatures", "trusted_timestamp")}
+    canonical = _canonical_v1(event_copy)
+
+    try:
+        sig_ed25519 = ed25519.decode_base58(classical["signature"])
+        ed25519.verify(public_key_ed25519, canonical, sig_ed25519)
+    except Exception as exc:
+        raise InvalidSignatureError(f"Ed25519 signature verification failed: {exc}")
+
+    try:
+        sig_dilithium = base64.b64decode(post_quantum["signature"])
+        if not dilithium.verify(public_key_dilithium, canonical, sig_dilithium):
+            raise InvalidSignatureError("ML-DSA-65 signature verification failed")
+    except Exception as exc:
+        raise InvalidSignatureError(f"ML-DSA-65 signature verification failed: {exc}")
+
+    log_debug("aiss2_verified", "AISS-2.0 hybrid signatures verified", {"ed25519": "valid", "ml_dsa_65": "valid"})
+    return True
+
+
+def _verify_aiss2_1(
+    event: Dict[str, Any],
+    public_key_ed25519: bytes,
+    public_key_dilithium: bytes,
+) -> bool:
+    """AISS-2.1 verification: RFC 8785 JCS + domain-separated M'."""
+    from aiss.exceptions import InvalidSignatureError
+
     signatures = event.get("signatures")
     if not signatures:
         raise InvalidSignatureError("AISS-2.1 event missing signatures field")
@@ -303,11 +362,7 @@ def verify_aiss2_hybrid(event: Dict[str, Any], public_key_ed25519: bytes, public
     except Exception as e:
         raise InvalidSignatureError(f"ML-DSA-65 signature verification failed: {e}")
 
-    log_debug("aiss2_verified", "Hybrid signatures verified", {
-        "ed25519": "valid",
-        "ml_dsa_65": "valid"
-    })
-
+    log_debug("aiss2_verified", "AISS-2.1 hybrid signatures verified", {"ed25519": "valid", "ml_dsa_65": "valid"})
     return True
 
 
