@@ -59,10 +59,26 @@ if not AVAILABLE:
     except ImportError:
         pass
 
-# Demo mode tracking
-DEMO_MODE = not os.getenv("AISS2_LICENSE_KEY")
+# Demo mode: evaluated lazily in _check_license to pick up all license sources
 EVENT_COUNT = 0
 DEMO_LIMIT = 1000
+
+
+def _has_valid_license() -> bool:
+    """Check whether any license source grants quantum access."""
+    if os.getenv("AISS2_LICENSE_KEY"):
+        return True
+    if os.getenv("PIQRYPT_LICENSE_KEY"):
+        return True
+    try:
+        # Lazy import to avoid circular dependencies at module load time
+        from aiss.license import get_active_license  # type: ignore
+        lic = get_active_license()
+        if lic and lic.get("features", {}).get("quantum"):
+            return True
+    except Exception:
+        pass
+    return False
 
 
 def _check_available():
@@ -78,22 +94,24 @@ def _check_available():
 
 
 def _check_license():
-    """Check license and demo limits"""
+    """Enforce demo limit; bypassed when any license source grants quantum access."""
     global EVENT_COUNT
 
-    if DEMO_MODE:
-        EVENT_COUNT += 1
-        if EVENT_COUNT > DEMO_LIMIT:
-            raise CryptoBackendError(
-                "ML-DSA-65",
-                f"Demo limit reached ({DEMO_LIMIT} events).\n"
-                f"Get free OSS license: https://piqrypt.com/oss\n"
-                f"Or set AISS2_LICENSE_KEY environment variable"
-            )
+    if _has_valid_license():
+        return
 
-        # Warning every 100 events
-        if EVENT_COUNT % 100 == 0:
-            print(f"⚠️  AISS-2 Demo Mode: {EVENT_COUNT}/{DEMO_LIMIT} events used")
+    EVENT_COUNT += 1
+    if EVENT_COUNT > DEMO_LIMIT:
+        raise CryptoBackendError(
+            "ML-DSA-65",
+            f"Demo limit reached ({DEMO_LIMIT} events).\n"
+            f"Get free OSS license: https://piqrypt.com/oss\n"
+            f"Or set AISS2_LICENSE_KEY or PIQRYPT_LICENSE_KEY environment variable"
+        )
+
+    # Warning every 100 events
+    if EVENT_COUNT % 100 == 0:
+        print(f"AISS-2 Demo Mode: {EVENT_COUNT}/{DEMO_LIMIT} events used")
 
 
 def generate_keypair() -> tuple[bytes, bytes]:
@@ -212,15 +230,16 @@ def get_backend_info() -> dict:
     Returns:
         Dict with backend details including which implementation is being used
     """
+    _licensed = _has_valid_license()
     info = {
         "backend": BACKEND_NAME,
         "available": AVAILABLE,
         "algorithm": "ML-DSA-65" if AVAILABLE else None,
         "fips": "FIPS 204" if AVAILABLE else None,
-        "demo_mode": DEMO_MODE,
-        "events_used": EVENT_COUNT if DEMO_MODE else None,
-        "events_limit": DEMO_LIMIT if DEMO_MODE else None,
-        "license_key_set": bool(os.getenv("AISS2_LICENSE_KEY"))
+        "demo_mode": not _licensed,
+        "events_used": EVENT_COUNT if not _licensed else None,
+        "events_limit": DEMO_LIMIT if not _licensed else None,
+        "license_key_set": _licensed,
     }
 
     if AVAILABLE:
@@ -235,7 +254,7 @@ def get_backend_info() -> dict:
 
 
 def reset_demo_counter():
-    """Reset demo event counter (for testing)"""
+    """Reset demo event counter (for testing only)."""
     global EVENT_COUNT
     EVENT_COUNT = 0
 
