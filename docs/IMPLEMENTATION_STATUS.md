@@ -1,7 +1,7 @@
-# PiQrypt v1.9.1 â€” AISS RFC v2.0 Implementation Status
+# PiQrypt v1.9.2 â€” AISS RFC v2.0 Implementation Status
 
-**Version:** 1.9.1  
-**Date:** 2026-06-01
+**Version:** 1.9.2  
+**Date:** 2026-10-21
 **AISS RFC:** v2.0  
 **Status:** Production Ready (Level 2)
 
@@ -305,7 +305,7 @@ piqrypt status
 
 ---
 
-*PiQrypt v1.9.1 â€” Reference Implementation of AISS v2.0*  
+*PiQrypt v1.9.2 â€” Reference Implementation of AISS v2.0*  
 *https://github.com/piqrypt/piqrypt*
 
 ---
