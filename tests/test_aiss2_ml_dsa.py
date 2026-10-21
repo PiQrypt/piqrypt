@@ -530,38 +530,51 @@ class TestPQDemoLimit(unittest.TestCase):
             lic_module._license = orig
 
     def test_valid_jwt_license_file_bypasses_limit(self):
-        """JWT pro valide dans license.jwt (via dev_keypair.json) → pas de plafond."""
+        """JWT pro valide dans un fichier temporaire -> pas de plafond PQ.
+
+        Clé ephemere generee avec PyNaCl; _get_active_public_key patche pour
+        la reconnaitre. Aucune dependance sur dev_keypair.json ou
+        generate_dev_licenses.
+        """
+        import base64
         import json
         import tempfile
         import time
         from pathlib import Path
+        from unittest.mock import patch as _patch
         from aiss.crypto import dilithium
         import aiss.license as lic_module
-        from generate_dev_licenses import _sign_jwt
+        from nacl.signing import SigningKey
 
-        # Charger la paire de dev embarquée dans le repo
-        dev_keypair_path = Path(__file__).resolve().parents[1] / "dev_keypair.json"
-        if not dev_keypair_path.exists():
-            self.skipTest("dev_keypair.json absent — skip JWT test")
+        # ---- cle ephemere Ed25519 ----
+        signing_key = SigningKey.generate()
+        verify_key = signing_key.verify_key
+        pub_b64 = base64.b64encode(bytes(verify_key)).decode()
 
-        dev_keys = json.loads(dev_keypair_path.read_text())
-        private_b64 = dev_keys["private"]
+        # ---- JWT pro signe avec la cle ephemere ----
+        def _b64url(b: bytes) -> str:
+            return base64.b64encode(b).decode().replace("+", "-").replace("/", "_").rstrip("=")
 
-        # Construire un payload pro valide
-        payload = {
+        header = _b64url(json.dumps({"alg": "EdDSA", "typ": "JWT"},
+                                    separators=(",", ":")).encode())
+        payload_data = {
             "tier": "pro",
             "agents_max": 50,
             "events_month": 500_000,
             "features": ["quantum", "tsa_rfc3161", "pqz_certified"],
             "issued_at": int(time.time()),
             "expires_at": int(time.time()) + 365 * 86400,
-            "license_id": "test-dev-pro-001",
-            "dev": True,
+            "license_id": "test-ephemeral-pro-001",
         }
-        jwt_token = _sign_jwt(payload, private_b64)
+        payload = _b64url(json.dumps(payload_data, separators=(",", ":")).encode())
+        message = f"{header}.{payload}".encode()
+        sig = _b64url(signing_key.sign(message).signature)
+        jwt_token = f"{header}.{payload}.{sig}"
 
-        # Écrire dans un fichier temporaire et pointer _LICENSE_FILE dessus
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".jwt", delete=False) as f:
+        # ---- fichier temporaire pour _LICENSE_FILE ----
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".jwt", delete=False
+        ) as f:
             f.write(jwt_token)
             tmp_path = Path(f.name)
 
@@ -571,16 +584,16 @@ class TestPQDemoLimit(unittest.TestCase):
         try:
             for k in ("AISS2_LICENSE_KEY", "PIQRYPT_LICENSE_KEY"):
                 os.environ.pop(k, None)
-            fresh_license = lic_module.License()
+            with _patch("aiss.license._get_active_public_key", return_value=pub_b64):
+                fresh_license = lic_module.License()
             lic_module._license = fresh_license
             self.assertTrue(
                 fresh_license.has_feature("quantum"),
-                "Pro JWT from dev_keypair should grant quantum feature",
+                "Pro JWT with ephemeral key should grant quantum feature",
             )
             dilithium.reset_demo_counter()
             priv, _ = dilithium.generate_keypair()
             dilithium.EVENT_COUNT = 5000
-            # Ne doit pas lever
             dilithium.sign(priv, b"pro_jwt_no_limit")
         finally:
             lic_module._license = orig_license
