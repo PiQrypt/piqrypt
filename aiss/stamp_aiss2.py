@@ -29,7 +29,7 @@ from aiss.crypto import ed25519, dilithium
 from aiss.canonical import canonicalize
 from aiss.stamp import generate_nonce
 from aiss.license import require_pro
-from aiss.logger import log_event_signed, log_debug
+from aiss.logger import log_event_signed_alias, log_debug
 from aiss.telemetry import track
 from aiss.exceptions import CryptoBackendError
 
@@ -156,7 +156,7 @@ def stamp_event_aiss2_hybrid(
             # Leave trusted_timestamp.status = "pending"
 
     # Logging
-    log_event_signed(agent_id, payload.get("event_type", "unknown"), nonce)
+    log_event_signed_alias(agent_id, payload.get("event_type", "unknown"), nonce)
     log_debug("aiss2_signed", "Hybrid signatures generated", {
         "ed25519_size": len(sig_ed25519),
         "dilithium_size": len(sig_dilithium),
