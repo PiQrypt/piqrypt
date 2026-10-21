@@ -157,7 +157,7 @@ class TestHybridRoundTrip(unittest.TestCase):
         aid = _agent_id(pub_ed)
         event = _stamp(priv_ed, priv_pq, aid)
 
-        self.assertEqual(event["version"], "AISS-2.0")
+        self.assertEqual(event["version"], "AISS-2.1")
         self.assertIn("signatures", event)
         self.assertIn("classical", event["signatures"])
         self.assertIn("post_quantum", event["signatures"])

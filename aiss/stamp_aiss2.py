@@ -6,10 +6,10 @@
 # Free to use, modify, and redistribute -- see root LICENSE for details.
 
 """
-AISS-2 Hybrid Signatures (RFC AISS-1.1 Section 11.3)
+AISS-2.1 Hybrid Signatures (RFC AISS-1.1 Section 11.3)
 
 Post-quantum + classical dual signatures for maximum security.
-Includes mandatory fields for AISS-2 compliance (RFC §11.3):
+Includes mandatory fields for AISS-2.1 compliance (RFC §11.3):
   - trusted_timestamp:  RFC 3161 TSA token (required, may be pending)
   - authority_chain:    Delegation chain from legal entity to agent
   - signatures:         Ed25519 + ML-DSA-65 dual signatures
@@ -17,6 +17,10 @@ Includes mandatory fields for AISS-2 compliance (RFC §11.3):
 Cryptographic algorithms:
   - Ed25519   (classical, backward compatible)
   - ML-DSA-65 (post-quantum, NIST FIPS 204)
+
+Both algorithms sign M' = "PiQrypt-AISS-2.1" || 0x00 || 0x00 || RFC-8785-canonical-event.
+Domain separation prevents cross-protocol replay (RFC AISS-1.1 §11.3).
+Canonicalization uses RFC 8785 JCS (rfc8785 package) — distinct from AISS-1 canonical.py.
 
 Recommended by NIST until 2030+ for transition period.
 """
@@ -26,11 +30,21 @@ import base64
 from typing import Dict, Any, Optional, List
 
 from aiss.crypto import ed25519, dilithium
-from aiss.canonical import canonicalize
+from aiss.canonical_aiss21 import canonicalize as _jcs_canonicalize
 from aiss.stamp import generate_nonce
 from aiss.logger import log_event_signed_alias, log_debug
 from aiss.telemetry import track
 from aiss.exceptions import CryptoBackendError
+
+# Domain-separation prefix for AISS-2.1 signed messages (RFC AISS-1.1 §11.3).
+# M' = _DOMAIN_PREFIX + context_length(0x00) + RFC-8785-canonical-bytes
+# Both Ed25519 and ML-DSA-65 sign the identical M'.
+_DOMAIN_PREFIX = b"PiQrypt-AISS-2.1\x00"
+
+
+def _build_signed_message(jcs_bytes: bytes) -> bytes:
+    """Return the domain-separated message M' that both signatures cover."""
+    return _DOMAIN_PREFIX + b"\x00" + jcs_bytes  # context_len=0, no context
 
 
 def _pro_only(feature_name: str):
@@ -62,7 +76,7 @@ def stamp_event_aiss2_hybrid(
     tsa_stamp_after: bool = True,
 ) -> Dict[str, Any]:
     """
-    Create AISS-2 event with hybrid signatures (Ed25519 + Dilithium3).
+    Create AISS-2.1 event with hybrid signatures (Ed25519 + ML-DSA-65).
 
     RFC §11.3 mandatory AISS-2 fields added:
       - authority_chain:   Delegation chain (optional but recommended)
@@ -80,7 +94,7 @@ def stamp_event_aiss2_hybrid(
         tsa_stamp_after:       Auto-request TSA timestamp after signing (default: True)
 
     Returns:
-        AISS-2.0 event with dual signatures, authority chain, and TSA token
+        AISS-2.1 event with dual signatures, authority chain, and TSA token
 
     Raises:
         AISSError:           If Pro license not active
@@ -93,7 +107,7 @@ def stamp_event_aiss2_hybrid(
         ...     authority_chain=[authority_stmt]
         ... )
         >>> event["version"]
-        'AISS-2.0'
+        'AISS-2.1'
         >>> "trusted_timestamp" in event
         True
     """
@@ -102,7 +116,7 @@ def stamp_event_aiss2_hybrid(
         raise CryptoBackendError(
             "ML-DSA-65",
             "AISS-2 requires ML-DSA-65 backend.\n"
-            "Install: pip install liboqs-python>=0.12.0"
+            "Install: pip install liboqs-python>=0.16"
         )
 
     # Generate nonce and timestamp if not provided
@@ -114,7 +128,7 @@ def stamp_event_aiss2_hybrid(
 
     # Build event structure (without signatures)
     event = {
-        "version": "AISS-2.0",
+        "version": "AISS-2.1",
         "agent_id": agent_id,
         "timestamp": timestamp,
         "nonce": nonce,
@@ -126,21 +140,22 @@ def stamp_event_aiss2_hybrid(
     if authority_chain:
         event["authority_chain"] = authority_chain
 
-    # Canonicalize for signing — trusted_timestamp is NOT included (it is a detached field
-    # added after signing so that the TSA token does not invalidate the signatures).
-    canonical = canonicalize(event)
+    # Canonicalize for signing via RFC 8785 JCS (AISS-2.1 path).
+    # trusted_timestamp is NOT included — detached field added after signing.
+    jcs_bytes = _jcs_canonicalize(event)
+    signed_msg = _build_signed_message(jcs_bytes)
 
     log_debug("aiss2_signing", "Generating hybrid signatures", {
         "payload_type": payload.get("event_type", "unknown"),
-        "canonical_size": len(canonical),
+        "jcs_size": len(jcs_bytes),
         "has_authority_chain": bool(authority_chain),
     })
 
-    # Sign with Ed25519 (classical)
-    sig_ed25519 = ed25519.sign(private_key_ed25519, canonical)
+    # Sign M' with Ed25519 (classical)
+    sig_ed25519 = ed25519.sign(private_key_ed25519, signed_msg)
 
-    # Sign with Dilithium3 (post-quantum)
-    sig_dilithium = dilithium.sign(private_key_dilithium, canonical)
+    # Sign M' with ML-DSA-65 (post-quantum) — same message as Ed25519
+    sig_dilithium = dilithium.sign(private_key_dilithium, signed_msg)
 
     # Add dual signatures
     event["signatures"] = {
@@ -181,7 +196,7 @@ def stamp_event_aiss2_hybrid(
 
     # Telemetry
     track("event_signed",
-          aiss_version="2.0",
+          aiss_version="2.1",
           hybrid=True,
           payload_type=payload.get("event_type"),
           has_tsa=event.get("trusted_timestamp", {}).get("status") == "verified")
@@ -198,17 +213,17 @@ def stamp_genesis_event_aiss2_hybrid(
     payload: Dict[str, Any]
 ) -> Dict[str, Any]:
     """
-    Create AISS-2 genesis event with hybrid signatures
+    Create AISS-2.1 genesis event with hybrid signatures.
 
     Args:
         private_key_ed25519: Ed25519 private key
-        private_key_dilithium: Dilithium3 private key
+        private_key_dilithium: ML-DSA-65 private key
         public_key_ed25519: Ed25519 public key (for genesis hash)
         agent_id: Agent ID
         payload: Genesis event data
 
     Returns:
-        AISS-2.0 genesis event
+        AISS-2.1 genesis event
     """
     from aiss.canonical import hash_bytes
 
@@ -227,12 +242,15 @@ def stamp_genesis_event_aiss2_hybrid(
 
 def verify_aiss2_hybrid(event: Dict[str, Any], public_key_ed25519: bytes, public_key_dilithium: bytes) -> bool:
     """
-    Verify AISS-2 hybrid signatures
+    Verify AISS-2.1 hybrid signatures.
+
+    Reconstructs M' = _DOMAIN_PREFIX + 0x00 + RFC-8785-canonical-event
+    (signatures and trusted_timestamp excluded) and verifies both signatures.
 
     Args:
-        event: AISS-2.0 event
+        event: AISS-2.1 event
         public_key_ed25519: Ed25519 public key
-        public_key_dilithium: Dilithium3 public key
+        public_key_dilithium: ML-DSA-65 public key
 
     Returns:
         True if both signatures valid
@@ -245,35 +263,33 @@ def verify_aiss2_hybrid(event: Dict[str, Any], public_key_ed25519: bytes, public
     # Extract signatures
     signatures = event.get("signatures")
     if not signatures:
-        raise InvalidSignatureError("AISS-2 event missing signatures field")
+        raise InvalidSignatureError("AISS-2.1 event missing signatures field")
 
     classical = signatures.get("classical")
     post_quantum = signatures.get("post_quantum")
 
     if not classical or not post_quantum:
-        raise InvalidSignatureError("AISS-2 event missing classical or post_quantum signature")
+        raise InvalidSignatureError("AISS-2.1 event missing classical or post_quantum signature")
 
-    # Reconstruct the signed content: remove signatures and trusted_timestamp
-    # (trusted_timestamp is a detached field — it was never covered by the signatures)
+    # Reconstruct M': strip detached fields, JCS-canonicalize, prepend domain prefix.
     event_copy = {k: v for k, v in event.items() if k not in ("signatures", "trusted_timestamp")}
-
-    # Canonicalize
-    canonical = canonicalize(event_copy)
+    jcs_bytes = _jcs_canonicalize(event_copy)
+    signed_msg = _build_signed_message(jcs_bytes)
 
     # Verify Ed25519
     try:
         sig_ed25519 = ed25519.decode_base58(classical["signature"])
-        ed25519.verify(public_key_ed25519, canonical, sig_ed25519)
+        ed25519.verify(public_key_ed25519, signed_msg, sig_ed25519)
     except Exception as e:
         raise InvalidSignatureError(f"Ed25519 signature verification failed: {e}")
 
-    # Verify Dilithium3
+    # Verify ML-DSA-65
     try:
         sig_dilithium = base64.b64decode(post_quantum["signature"])
-        if not dilithium.verify(public_key_dilithium, canonical, sig_dilithium):
-            raise InvalidSignatureError("Dilithium3 signature verification failed")
+        if not dilithium.verify(public_key_dilithium, signed_msg, sig_dilithium):
+            raise InvalidSignatureError("ML-DSA-65 signature verification failed")
     except Exception as e:
-        raise InvalidSignatureError(f"Dilithium3 signature verification failed: {e}")
+        raise InvalidSignatureError(f"ML-DSA-65 signature verification failed: {e}")
 
     log_debug("aiss2_verified", "Hybrid signatures verified", {
         "ed25519": "valid",
