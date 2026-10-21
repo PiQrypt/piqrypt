@@ -42,7 +42,7 @@ try:
     _enabled = oqs.get_enabled_sig_mechanisms() if hasattr(oqs, "get_enabled_sig_mechanisms") else []
     if "ML-DSA-65" in _enabled or not _enabled:
         test_signer = oqs.Signature("ML-DSA-65")
-        test_signer.__del__() if hasattr(test_signer, "__del__") else None
+        del test_signer
         AVAILABLE = True
         BACKEND_NAME = "liboqs-python"
         USE_LIBOQS = True
@@ -66,19 +66,15 @@ DEMO_LIMIT = 1000
 
 def _has_valid_license() -> bool:
     """Check whether any license source grants quantum access."""
+    # Legacy: any non-empty value bypassed the demo limit before v1.9.2
     if os.getenv("AISS2_LICENSE_KEY"):
-        return True
-    if os.getenv("PIQRYPT_LICENSE_KEY"):
         return True
     try:
         # Lazy import to avoid circular dependencies at module load time
-        from aiss.license import get_active_license  # type: ignore
-        lic = get_active_license()
-        if lic and lic.get("features", {}).get("quantum"):
-            return True
+        from aiss.license import get_license  # type: ignore
+        return get_license().has_feature("quantum")
     except Exception:
-        pass
-    return False
+        return False
 
 
 def _check_available():
