@@ -6,7 +6,7 @@ ML-DSA-65 Cryptographic Backend (AISS-2) - Hybrid Implementation
 
 NIST FIPS 204 compliant post-quantum signature scheme.
 Supports multiple backends with automatic fallback:
-  1. liboqs-python >= 0.10.0 (preferred, faster, C-based)
+  1. liboqs-python >= 0.12.0 (preferred, faster, C-based)
   2. dilithium-py >= 1.0.0   (fallback, pure Python)
 
 Key sizes (FIPS 204):
@@ -36,7 +36,7 @@ BACKEND_NAME = "unavailable"
 USE_LIBOQS = False
 USE_DILITHIUM_PY = False
 
-# Try liboqs first (preferred) - verify ML-DSA-65 is available (requires liboqs >= 0.10.0)
+# Try liboqs first (preferred) - verify ML-DSA-65 is available (requires liboqs >= 0.12.0)
 try:
     import oqs
     _enabled = oqs.get_enabled_sig_mechanisms() if hasattr(oqs, "get_enabled_sig_mechanisms") else []
@@ -84,7 +84,7 @@ def _check_available():
             "ML-DSA-65",
             "Post-quantum crypto not installed.\n"
             "Install one of:\n"
-            "  pip install liboqs-python>=0.10.0  (recommended)\n"
+            "  pip install liboqs-python>=0.12.0  (recommended)\n"
             "  pip install dilithium-py>=1.0.0    (pure Python)\n"
         )
 

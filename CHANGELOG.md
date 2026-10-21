@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`aiss/crypto/dilithium_liboqs.py`** — Replaced Dilithium3 (round 3, 3293-byte signatures)
   with ML-DSA-65 (NIST FIPS 204, 3309-byte signatures). Key sizes: public 1952 B, private 4032 B,
   signature 3309 B. The liboqs backend now requires `oqs.Signature("ML-DSA-65")`
-  (liboqs-python >= 0.10.0); the pure-Python fallback uses `dilithium_py.ml_dsa.ML_DSA_65`
+  (liboqs-python >= 0.12.0); the pure-Python fallback uses `dilithium_py.ml_dsa.ML_DSA_65`
   (dilithium-py >= 1.0.0). Signatures produced by either Dilithium3 variant are not verifiable
   with ML-DSA-65 and vice versa.
 
@@ -51,7 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- `pyproject.toml`: floor versions raised from `liboqs-python>=0.8.0` to `>=0.10.0` and from
+- `pyproject.toml`: floor versions raised from `liboqs-python>=0.8.0` to `>=0.12.0` and from
   `dilithium-py>=0.1.0` to `>=1.0.0` so that ML-DSA-65 is available.
 - CI workflow: `dilithium-py>=1.0.0` is now installed explicitly so post-quantum tests run in CI.
 - Labels `"ML-DSA-65 (Dilithium3)"` corrected to `"ML-DSA-65"` in `certification.py`,
