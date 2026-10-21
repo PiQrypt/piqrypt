@@ -962,6 +962,92 @@ class TestProOnlyDecorator(unittest.TestCase):
             m._require_pro = orig
 
 
+class TestSHA512ChainHash(unittest.TestCase):
+    """A.3 — compute_event_hash dispatches on version: SHA-512 for AISS-2.1, SHA-256 otherwise."""
+
+    def test_aiss21_hash_is_128_chars(self):
+        """AISS-2.1 event hash must be 128-char hex (SHA-512)."""
+        from aiss.chain import compute_event_hash
+        event = {
+            "version": "AISS-2.1",
+            "agent_id": "a1b2c3",
+            "timestamp": 1000000,
+            "nonce": "n1",
+            "payload": {"action": "test"},
+            "previous_hash": None,
+            "signatures": {},
+        }
+        h = compute_event_hash(event)
+        self.assertEqual(len(h), 128, f"AISS-2.1 hash length {len(h)} != 128")
+        self.assertRegex(h, r'^[0-9a-f]{128}$')
+
+    def test_aiss1_hash_is_64_chars(self):
+        """AISS-1 event hash must be 64-char hex (SHA-256)."""
+        from aiss.chain import compute_event_hash
+        event = {
+            "version": "AISS-1.0",
+            "agent_id": "a1b2c3",
+            "timestamp": 1000000,
+            "nonce": "n1",
+            "payload": {"action": "test"},
+            "previous_hash": "genesis",
+            "signature": "sig...",
+        }
+        h = compute_event_hash(event)
+        self.assertEqual(len(h), 64, f"AISS-1 hash length {len(h)} != 64")
+        self.assertRegex(h, r'^[0-9a-f]{64}$')
+
+    def test_aiss21_hash_excludes_signatures_field(self):
+        """Two AISS-2.1 events differing only in signatures[] must produce the same hash."""
+        from aiss.chain import compute_event_hash
+        base = {
+            "version": "AISS-2.1",
+            "agent_id": "a1b2c3",
+            "timestamp": 1000000,
+            "nonce": "n1",
+            "payload": {"action": "test"},
+            "previous_hash": None,
+        }
+        with_sigs = {**base, "signatures": {"classical": {"signature": "base64:abc"}}}
+        without_sigs = {**base}
+        self.assertEqual(compute_event_hash(with_sigs), compute_event_hash(without_sigs))
+
+    def test_aiss21_hash_excludes_trusted_timestamp(self):
+        """trusted_timestamp (detached) must not affect the AISS-2.1 hash."""
+        from aiss.chain import compute_event_hash
+        base = {
+            "version": "AISS-2.1",
+            "agent_id": "a1b2c3",
+            "timestamp": 1000000,
+            "nonce": "n1",
+            "payload": {"action": "test"},
+            "previous_hash": None,
+        }
+        with_tsa = {**base, "trusted_timestamp": {"status": "verified", "rfc3161_token": "xyz"}}
+        self.assertEqual(compute_event_hash(base), compute_event_hash(with_tsa))
+
+    def test_aiss21_chain_linkage_uses_sha512(self):
+        """verify_chain_linkage works for a two-event AISS-2.1 chain using SHA-512 hashes."""
+        if _SKIP:
+            self.skipTest(_SKIP_REASON)
+        from aiss.stamp_aiss2 import stamp_event_aiss2_hybrid
+        from aiss.chain import compute_event_hash, verify_chain_linkage
+
+        priv_ed, pub_ed, priv_pq, pub_pq = _keys()
+        aid = _agent_id(pub_ed)
+
+        e0 = stamp_event_aiss2_hybrid(
+            priv_ed, priv_pq, aid, {"seq": 0}, previous_hash=None, tsa_stamp_after=False
+        )
+        h0 = compute_event_hash(e0)
+        self.assertEqual(len(h0), 128)
+
+        e1 = stamp_event_aiss2_hybrid(
+            priv_ed, priv_pq, aid, {"seq": 1}, previous_hash=h0, tsa_stamp_after=False
+        )
+        self.assertTrue(verify_chain_linkage([e0, e1]))
+
+
 class TestBase64PrefixEncoding(unittest.TestCase):
     """A.2 — AISS-2.1 signatures use 'base64:<b64>' for both Ed25519 and ML-DSA-65."""
 

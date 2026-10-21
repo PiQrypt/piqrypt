@@ -22,16 +22,19 @@ from aiss.exceptions import InvalidChainError
 
 def compute_event_hash(event: Dict[str, Any]) -> str:
     """
-    Compute SHA-256 hash of event (RFC Section 9.1).
+    Compute the chain hash of an event (RFC Section 9.1).
 
-    Hash is computed over the canonical JSON of the event
-    EXCLUDING the signature field.
+    Dispatches on version:
+      - AISS-2.1: SHA-512 over RFC 8785 JCS canonical form (128-char hex).
+        Excludes 'signatures' and 'trusted_timestamp'.
+      - All others (AISS-1.x, AISS-2.0): SHA-256 over AISS-1 canonical form (64-char hex).
+        Excludes 'signature' and 'trusted_timestamp'.
 
     Args:
         event: Event dict
 
     Returns:
-        Hexadecimal SHA-256 hash
+        Hexadecimal hash (64 chars for AISS-1/2.0, 128 chars for AISS-2.1)
 
     Example:
         >>> event = {
@@ -47,14 +50,19 @@ def compute_event_hash(event: Dict[str, Any]) -> str:
         >>> len(event_hash)
         64
     """
-    # Exclude fields that are not part of the signed content:
-    # - 'signature'         : the signature itself (AISS-1)
-    # - 'trusted_timestamp' : detached field added after signing (AISS-1 and AISS-2)
+    version = event.get("version", "")
+
+    if version.startswith("AISS-2.1"):
+        # AISS-2.1: JCS + SHA-512. Exclude 'signatures' (plural) and 'trusted_timestamp'.
+        event_copy = {k: v for k, v in event.items() if k not in ("signatures", "trusted_timestamp")}
+        from aiss.canonical_aiss21 import hash_event as _hash21
+        return _hash21(event_copy)
+
+    # AISS-1.x and AISS-2.0: AISS-1 canonical + SHA-256.
+    # Exclude 'signature' (singular) and 'trusted_timestamp'.
     event_copy = event.copy()
     event_copy.pop('signature', None)
     event_copy.pop('trusted_timestamp', None)
-
-    # Canonicalize and hash
     canonical = canonicalize(event_copy)
     import hashlib
     return hashlib.sha256(canonical).hexdigest()
