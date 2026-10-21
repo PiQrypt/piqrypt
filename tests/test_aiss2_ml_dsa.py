@@ -716,6 +716,80 @@ class TestComputeEventHashTSA(unittest.TestCase):
 
 
 # ===========================================================================
+# Séparation de domaine AISS-2.1 — M' avec label d'algorithme
+# ===========================================================================
+
+@pytest.mark.skipif(_SKIP, reason=_SKIP_REASON)
+class TestDomainSeparation(unittest.TestCase):
+    """M' = DOMAIN_PREFIX || label_len || label || ctx_len || ctx || JCS."""
+
+    def setUp(self):
+        import aiss.license as lic_module
+        from aiss.crypto import dilithium
+        self._orig_lic = lic_module._license
+        lic_module._license = _make_license("pro")
+        dilithium.reset_demo_counter()
+
+    def tearDown(self):
+        import aiss.license as lic_module
+        lic_module._license = self._orig_lic
+
+    def _make_event_and_keys(self):
+        priv_ed, pub_ed, priv_pq, pub_pq = _keys()
+        aid = _agent_id(pub_ed)
+        event = _stamp(priv_ed, priv_pq, aid)
+        return event, pub_ed, pub_pq
+
+    def test_built_message_contains_label(self):
+        """_build_signed_message embeds the algorithm label in M'."""
+        from aiss.stamp_aiss2 import _build_signed_message, _ALGO_LABEL, _DOMAIN_PREFIX
+        msg = _build_signed_message(b"payload")
+        self.assertIn(_ALGO_LABEL, msg)
+        self.assertTrue(msg.startswith(_DOMAIN_PREFIX))
+        # label_len byte
+        prefix_len = len(_DOMAIN_PREFIX)
+        label_len_byte = msg[prefix_len]
+        self.assertEqual(label_len_byte, len(_ALGO_LABEL))
+
+    def test_changed_label_invalidates_both_signatures(self):
+        """Verifying with a different label in M' must fail both signatures."""
+        import copy
+        from aiss.exceptions import InvalidSignatureError
+        from aiss.stamp_aiss2 import verify_aiss2_hybrid, _ALGO_LABEL, _build_signed_message
+        import aiss.stamp_aiss2 as m
+
+        event, pub_ed, pub_pq = self._make_event_and_keys()
+
+        orig_label = m._ALGO_LABEL
+        try:
+            m._ALGO_LABEL = b"WrongLabel"  # tamper the label used in verify
+            with self.assertRaises(InvalidSignatureError):
+                verify_aiss2_hybrid(event, pub_ed, pub_pq)
+        finally:
+            m._ALGO_LABEL = orig_label
+
+    def test_nonempty_context_invalidates_both_signatures(self):
+        """Verifying with a non-empty context injected in M' must fail both signatures."""
+        from aiss.exceptions import InvalidSignatureError
+        import aiss.stamp_aiss2 as m
+
+        event, pub_ed, pub_pq = self._make_event_and_keys()
+
+        orig_fn = m._build_signed_message
+        def _with_context(jcs_bytes: bytes) -> bytes:
+            label = m._ALGO_LABEL
+            ctx = b"injected_context"
+            return m._DOMAIN_PREFIX + bytes([len(label)]) + label + bytes([len(ctx)]) + ctx + jcs_bytes
+        try:
+            m._build_signed_message = _with_context
+            with self.assertRaises(Exception):  # InvalidSignatureError or verify returns False
+                from aiss.stamp_aiss2 import verify_aiss2_hybrid
+                verify_aiss2_hybrid(event, pub_ed, pub_pq)
+        finally:
+            m._build_signed_message = orig_fn
+
+
+# ===========================================================================
 # _pro_only decorator — comportement du module-level import
 # ===========================================================================
 
