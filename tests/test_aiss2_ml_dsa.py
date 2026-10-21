@@ -13,7 +13,6 @@ Couvre :
   jeton bidon, absence de licence
 """
 import os
-import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -243,7 +242,6 @@ class TestTamperResistance(unittest.TestCase):
         """Un événement AISS-2 renommé AISS-1 ne passe pas verify_signature."""
         from aiss.exceptions import InvalidSignatureError
         from aiss.verify import verify_signature
-        from aiss.crypto import ed25519
         event, pub_ed, pub_pq = self._event_and_keys()
 
         # Retirer le champ signature (seul format attendu par verify_signature)
@@ -273,7 +271,6 @@ class TestTSAStamping(unittest.TestCase):
         """AISS-1 : TSA indisponible → l'événement reste vérifiable."""
         from aiss.rfc3161 import stamp_event_with_tsa, TSAUnavailableError
         from aiss.verify import verify_signature
-        from aiss.crypto import ed25519
 
         event, _, pub = self._aiss1_event()
 
@@ -316,7 +313,10 @@ class TestTSAStamping(unittest.TestCase):
         try:
             priv_ed, pub_ed, priv_pq, pub_pq = _keys()
             aid = _agent_id(pub_ed)
-            with patch("aiss.rfc3161.request_timestamp", side_effect=TSAUnavailableError("offline")):
+            with patch(
+                "aiss.rfc3161.request_timestamp",
+                side_effect=TSAUnavailableError("offline"),
+            ):
                 event = _stamp(priv_ed, priv_pq, aid, tsa=True)
             self.assertEqual(event["trusted_timestamp"]["status"], "pending")
             self.assertTrue(verify_aiss2_hybrid(event, pub_ed, pub_pq))
@@ -385,7 +385,8 @@ class TestVerifyChainAISS2(unittest.TestCase):
             )
             events.append(ev)
             prev_hash = compute_event_hash(ev)
-        identity = {"public_key": __import__("aiss.crypto.ed25519", fromlist=["encode_base64"]).encode_base64(pub_ed)}
+        from aiss.crypto.ed25519 import encode_base64
+        identity = {"public_key": encode_base64(pub_ed)}
         return events, identity, pub_ed, pub_pq
 
     def test_verify_chain_aiss2_with_pq_key(self):
@@ -404,7 +405,6 @@ class TestVerifyChainAISS2(unittest.TestCase):
 
     def test_verify_chain_mixed_aiss1_then_aiss2_raises_without_pq(self):
         """Une chaîne mixte AISS-1 + AISS-2 sans clé PQ lève InvalidChainError sur l'AISS-2."""
-        from aiss.crypto import ed25519
         from aiss.stamp import stamp_event
         from aiss.chain import compute_event_hash
         from aiss.verify import verify_chain
@@ -505,6 +505,91 @@ class TestPQDemoLimit(unittest.TestCase):
         finally:
             lic_module._license = orig
 
+    def test_bogus_piqrypt_license_key_does_not_bypass_limit(self):
+        """PIQRYPT_LICENSE_KEY avec valeur invalide → Free tier → plafond actif."""
+        from aiss.crypto import dilithium
+        from aiss.exceptions import CryptoBackendError
+        import aiss.license as lic_module
+
+        # Env var invalide (non-JWT, non-AISS2 legacy) — doit tomber en free
+        for k in ("AISS2_LICENSE_KEY",):
+            os.environ.pop(k, None)
+
+        orig = lic_module._license
+        # Force un fresh License qui voit la bogus env var
+        with patch.dict(os.environ, {"PIQRYPT_LICENSE_KEY": "bogus_not_a_jwt"}):
+            fake_license = lic_module.License()  # loads → invalid → free
+        lic_module._license = fake_license
+        try:
+            dilithium.reset_demo_counter()
+            priv, _ = dilithium.generate_keypair()
+            dilithium.EVENT_COUNT = 1000
+            with self.assertRaises(CryptoBackendError):
+                dilithium.sign(priv, b"bogus_key_limit")
+        finally:
+            lic_module._license = orig
+
+    def test_valid_jwt_license_file_bypasses_limit(self):
+        """JWT pro valide dans license.jwt (via dev_keypair.json) → pas de plafond."""
+        import json
+        import tempfile
+        import time
+        from pathlib import Path
+        from aiss.crypto import dilithium
+        import aiss.license as lic_module
+        from generate_dev_licenses import _sign_jwt
+
+        # Charger la paire de dev embarquée dans le repo
+        dev_keypair_path = Path(__file__).resolve().parents[1] / "dev_keypair.json"
+        if not dev_keypair_path.exists():
+            self.skipTest("dev_keypair.json absent — skip JWT test")
+
+        dev_keys = json.loads(dev_keypair_path.read_text())
+        private_b64 = dev_keys["private"]
+
+        # Construire un payload pro valide
+        payload = {
+            "tier": "pro",
+            "agents_max": 50,
+            "events_month": 500_000,
+            "features": ["quantum", "tsa_rfc3161", "pqz_certified"],
+            "issued_at": int(time.time()),
+            "expires_at": int(time.time()) + 365 * 86400,
+            "license_id": "test-dev-pro-001",
+            "dev": True,
+        }
+        jwt_token = _sign_jwt(payload, private_b64)
+
+        # Écrire dans un fichier temporaire et pointer _LICENSE_FILE dessus
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".jwt", delete=False) as f:
+            f.write(jwt_token)
+            tmp_path = Path(f.name)
+
+        orig_license = lic_module._license
+        orig_license_file = lic_module._LICENSE_FILE
+        lic_module._LICENSE_FILE = tmp_path
+        try:
+            for k in ("AISS2_LICENSE_KEY", "PIQRYPT_LICENSE_KEY"):
+                os.environ.pop(k, None)
+            fresh_license = lic_module.License()
+            lic_module._license = fresh_license
+            self.assertTrue(
+                fresh_license.has_feature("quantum"),
+                "Pro JWT from dev_keypair should grant quantum feature",
+            )
+            dilithium.reset_demo_counter()
+            priv, _ = dilithium.generate_keypair()
+            dilithium.EVENT_COUNT = 5000
+            # Ne doit pas lever
+            dilithium.sign(priv, b"pro_jwt_no_limit")
+        finally:
+            lic_module._license = orig_license
+            lic_module._LICENSE_FILE = orig_license_file
+            try:
+                tmp_path.unlink()
+            except OSError:
+                pass
+
     def test_free_tier_license_file_enforces_limit(self):
         """Fichier license.jwt avec tier free → plafond actif."""
         from aiss.crypto import dilithium
@@ -576,7 +661,6 @@ class TestComputeEventHashTSA(unittest.TestCase):
         # Simuler un TSA obtenu sur ev1 APRES le chaînage de ev2
         fake_tsa = {"status": "verified", "authority": "freetsa.org",
                     "rfc3161_token": "AAAA", "timestamp": 1234567890}
-        from aiss.rfc3161 import TSAUnavailableError
         with patch("aiss.rfc3161.request_timestamp", return_value=fake_tsa):
             from aiss.rfc3161 import stamp_event_with_tsa
             ev1_with_tsa = stamp_event_with_tsa(ev1)
