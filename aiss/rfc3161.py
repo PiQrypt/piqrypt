@@ -252,8 +252,14 @@ def stamp_event_with_tsa(
     """
     Add a trusted timestamp to an already-signed event.
 
-    The TSA signs the canonical form of the event (including its Ed25519
-    signature), providing independent proof that the event existed at time T.
+    The TSA signs the canonical form of the event *excluding* the
+    trusted_timestamp field (which is a detached field, not covered by
+    the event signatures).  This guarantees that adding the TSA token
+    does not invalidate the Ed25519 / ML-DSA-65 signatures.
+
+    What the TSA token commits to:
+      canonicalize({k: v for k, v in event.items()
+                    if k not in ("trusted_timestamp",)})
 
     Args:
         event: Already-signed AISS event
@@ -261,7 +267,7 @@ def stamp_event_with_tsa(
         fail_gracefully: If True, return event without TSA on network error
 
     Returns:
-        Event with 'trusted_timestamp' field added
+        Event with 'trusted_timestamp' field updated
 
     Example:
         >>> event = stamp_event(priv, agent_id, payload)
@@ -271,7 +277,9 @@ def stamp_event_with_tsa(
     """
     from aiss.canonical import canonicalize
 
-    canonical_bytes = canonicalize(event)
+    # Exclude trusted_timestamp — it must not be part of the TSA-committed content
+    event_for_tsa = {k: v for k, v in event.items() if k != "trusted_timestamp"}
+    canonical_bytes = canonicalize(event_for_tsa)
 
     try:
         tsa_token = request_timestamp(canonical_bytes, tsa_url=tsa_url)

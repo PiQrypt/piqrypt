@@ -61,9 +61,9 @@ def verify_signature(event: Dict[str, Any], public_key: bytes) -> bool:
     except Exception as e:
         raise InvalidSignatureError(f"Invalid signature encoding: {e}")
 
-    # Create event copy without signature
-    event_copy = event.copy()
-    event_copy.pop('signature')
+    # Reconstruct the signed content: remove signature and trusted_timestamp
+    # (trusted_timestamp is added after signing — it is not covered by the signature)
+    event_copy = {k: v for k, v in event.items() if k not in ("signature", "trusted_timestamp")}
 
     # Canonicalize
     canonical = canonicalize(event_copy)
