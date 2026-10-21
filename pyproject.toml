@@ -131,6 +131,7 @@ select = ["E", "F", "W"]
 "cli/main.py"         = ["E501"]
 "aiss/*.py"           = ["E501", "E722", "E402"]
 "aiss/rfc3161.py"     = ["F401"]
+"tests/test_canonical_aiss21.py" = ["E402"]
 "bridges/**/*.py"     = ["E501"]
 
 [tool.mypy]
