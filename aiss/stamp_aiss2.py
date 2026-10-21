@@ -18,8 +18,8 @@ Cryptographic algorithms:
   - Ed25519   (classical, backward compatible)
   - ML-DSA-65 (post-quantum, NIST FIPS 204)
 
-Both algorithms sign M' = "PiQrypt-AISS-2.1" || 0x00 || 0x00 || RFC-8785-canonical-event.
-Domain separation prevents cross-protocol replay (RFC AISS-1.1 §11.3).
+Both algorithms sign M' = "PiQrypt-AISS-2.1" || 0x00 || label_len || label || 0x00 || JCS-canonical-event,
+where label = "Ed25519+ML-DSA-65". Domain separation prevents cross-protocol replay (RFC AISS-1.1 §11.3).
 Canonicalization uses RFC 8785 JCS (rfc8785 package) — distinct from AISS-1 canonical.py.
 
 Recommended by NIST until 2030+ for transition period.
@@ -36,27 +36,39 @@ from aiss.logger import log_event_signed_alias, log_debug
 from aiss.telemetry import track
 from aiss.exceptions import CryptoBackendError
 
+# Pro-tier enforcement — imported at module level so ImportError from within
+# aiss.license (e.g. a missing dependency) is never silently swallowed.
+# Only the case where the module itself is absent (aiss-standard MIT build)
+# is tolerated: ModuleNotFoundError with e.name == "aiss.license".
+try:
+    from aiss.license import require_pro as _require_pro
+except ModuleNotFoundError as _e:
+    if _e.name == "aiss.license":
+        _require_pro = None  # type: ignore[assignment]
+    else:
+        raise
+
 # Domain-separation prefix for AISS-2.1 signed messages (RFC AISS-1.1 §11.3).
-# M' = _DOMAIN_PREFIX + context_length(0x00) + RFC-8785-canonical-bytes
+# M' = _DOMAIN_PREFIX + len(label) + label + len(ctx) + ctx + JCS-canonical
 # Both Ed25519 and ML-DSA-65 sign the identical M'.
 _DOMAIN_PREFIX = b"PiQrypt-AISS-2.1\x00"
+_ALGO_LABEL = b"Ed25519+ML-DSA-65"
 
 
 def _build_signed_message(jcs_bytes: bytes) -> bytes:
     """Return the domain-separated message M' that both signatures cover."""
-    return _DOMAIN_PREFIX + b"\x00" + jcs_bytes  # context_len=0, no context
+    label = _ALGO_LABEL
+    return _DOMAIN_PREFIX + bytes([len(label)]) + label + b"\x00" + jcs_bytes
 
 
 def _pro_only(feature_name: str):
     """Decorator: enforce Pro tier when running inside piqrypt (ELv2).
-    No-op in aiss-standard (MIT) where license.py is absent."""
+    No-op in aiss-standard (MIT) where aiss.license is absent."""
     def decorator(func):
         def wrapper(*args, **kwargs):
-            try:
-                from aiss.license import require_pro as _rp
-                return _rp(feature_name)(func)(*args, **kwargs)
-            except ImportError:
-                return func(*args, **kwargs)
+            if _require_pro is not None:
+                return _require_pro(feature_name)(func)(*args, **kwargs)
+            return func(*args, **kwargs)
         wrapper.__name__ = func.__name__
         wrapper.__doc__ = func.__doc__
         return wrapper

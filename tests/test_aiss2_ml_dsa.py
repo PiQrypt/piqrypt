@@ -715,5 +715,85 @@ class TestComputeEventHashTSA(unittest.TestCase):
                 )
 
 
+# ===========================================================================
+# _pro_only decorator — comportement du module-level import
+# ===========================================================================
+
+class TestProOnlyDecorator(unittest.TestCase):
+    """Vérifie les quatre comportements du décorateur _pro_only après refactor."""
+
+    def test_free_license_raises(self):
+        """@_pro_only lève une erreur quand la licence est Free."""
+        import aiss.license as lic_module
+        from aiss.crypto import dilithium
+        orig = lic_module._license
+        lic_module._license = _make_license("free")
+        if _SKIP:
+            self.skipTest(_SKIP_REASON)
+        dilithium.reset_demo_counter()
+        try:
+            from aiss.stamp_aiss2 import stamp_event_aiss2_hybrid
+            priv_ed, pub_ed, priv_pq, pub_pq = _keys()
+            aid = _agent_id(pub_ed)
+            with self.assertRaises(Exception):
+                stamp_event_aiss2_hybrid(priv_ed, priv_pq, aid, {"action": "test"})
+        finally:
+            lic_module._license = orig
+
+    def test_no_license_module_allows_call(self):
+        """Quand _require_pro est None (aiss.license absent), la fonction est appelée normalement."""
+        import aiss.stamp_aiss2 as m
+        from aiss.stamp_aiss2 import _pro_only
+        orig = m._require_pro
+        m._require_pro = None
+        called = []
+        try:
+            @_pro_only("test_feature")
+            def _dummy():
+                called.append(True)
+                return "ok"
+            result = _dummy()
+            self.assertEqual(result, "ok")
+            self.assertTrue(called)
+        finally:
+            m._require_pro = orig
+
+    def test_importerror_from_require_pro_propagates(self):
+        """Une ImportError levée par _require_pro (bug interne license.py) n'est pas avalée."""
+        import aiss.stamp_aiss2 as m
+        from aiss.stamp_aiss2 import _pro_only
+        orig = m._require_pro
+
+        def _broken(feature_name):
+            raise ImportError("broken internal dep in license.py")
+
+        m._require_pro = _broken
+        try:
+            @_pro_only("test_feature")
+            def _dummy():
+                return "ok"
+            with self.assertRaises(ImportError) as ctx:
+                _dummy()
+            self.assertIn("broken internal dep", str(ctx.exception))
+        finally:
+            m._require_pro = orig
+
+    def test_importerror_from_function_propagates(self):
+        """Une ImportError levée par la fonction décorée se propage sans être masquée."""
+        import aiss.stamp_aiss2 as m
+        from aiss.stamp_aiss2 import _pro_only
+        orig = m._require_pro
+        m._require_pro = None
+        try:
+            @_pro_only("test_feature")
+            def _raises():
+                raise ImportError("missing dep inside decorated function")
+            with self.assertRaises(ImportError) as ctx:
+                _raises()
+            self.assertIn("missing dep inside decorated function", str(ctx.exception))
+        finally:
+            m._require_pro = orig
+
+
 if __name__ == "__main__":
     unittest.main()
