@@ -12,6 +12,12 @@ Couvre :
 - Plafond PQ : licence par variable d'environnement, par license.jwt,
   jeton bidon, absence de licence
 """
+# tests/test_license.py installs a fake PyNaCl via sys.modules.setdefault at
+# collection time; the real import must happen before that substitution takes
+# effect, otherwise nacl.signing is replaced with a stub and JWT verification
+# fails at runtime.
+import nacl.signing  # noqa: F401
+
 import os
 import unittest
 from unittest.mock import patch
