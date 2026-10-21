@@ -35,6 +35,7 @@ AISS_CORE_FILES: List[Tuple[str, str]] = [
     ("aiss/verify.py",               "aiss/verify.py"),
     ("aiss/chain.py",                "aiss/chain.py"),
     ("aiss/canonical.py",            "aiss/canonical.py"),
+    ("aiss/canonical_aiss21.py",     "aiss/canonical_aiss21.py"),
     ("aiss/fork.py",                 "aiss/fork.py"),
     ("aiss/replay.py",               "aiss/replay.py"),
     ("aiss/exceptions.py",           "aiss/exceptions.py"),
