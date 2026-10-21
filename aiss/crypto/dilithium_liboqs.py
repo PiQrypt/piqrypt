@@ -2,12 +2,17 @@
 # Copyright (c) 2026 PiQrypt Inc.
 # e-Soleau: DSO2026006483 (19/02/2026) -- DSO2026009143 (12/03/2026)
 """
-Dilithium3 Cryptographic Backend (AISS-2) - Hybrid Implementation
+ML-DSA-65 Cryptographic Backend (AISS-2) - Hybrid Implementation
 
 NIST FIPS 204 compliant post-quantum signature scheme.
 Supports multiple backends with automatic fallback:
-  1. liboqs-python (preferred, faster, C-based)
-  2. dilithium-py (fallback, pure Python)
+  1. liboqs-python >= 0.10.0 (preferred, faster, C-based)
+  2. dilithium-py >= 1.0.0   (fallback, pure Python)
+
+Key sizes (FIPS 204):
+  public key  : 1952 bytes
+  private key : 4032 bytes
+  signature   : 3309 bytes
 
 Installation:
     pip install liboqs-python  # Preferred
@@ -31,22 +36,23 @@ BACKEND_NAME = "unavailable"
 USE_LIBOQS = False
 USE_DILITHIUM_PY = False
 
-# Try liboqs first (preferred) - but verify it actually works
+# Try liboqs first (preferred) - verify ML-DSA-65 is available (requires liboqs >= 0.10.0)
 try:
     import oqs
-    # Test that oqs can actually create a Dilithium3 instance
-    test_signer = oqs.Signature("Dilithium3")
-    AVAILABLE = True
-    BACKEND_NAME = "liboqs-python"
-    USE_LIBOQS = True
+    _enabled = oqs.get_enabled_sig_mechanisms() if hasattr(oqs, "get_enabled_sig_mechanisms") else []
+    if "ML-DSA-65" in _enabled or not _enabled:
+        test_signer = oqs.Signature("ML-DSA-65")
+        test_signer.__del__() if hasattr(test_signer, "__del__") else None
+        AVAILABLE = True
+        BACKEND_NAME = "liboqs-python"
+        USE_LIBOQS = True
 except (ImportError, RuntimeError, Exception):
-    # If oqs doesn't work (import fails, runtime error, or any other issue), skip it
     pass
 
-# Fall back to dilithium-py if liboqs not available
+# Fall back to dilithium-py if liboqs not available (requires dilithium-py >= 1.0.0)
 if not AVAILABLE:
     try:
-        from dilithium_py.dilithium import Dilithium3
+        from dilithium_py.ml_dsa import ML_DSA_65
         AVAILABLE = True
         BACKEND_NAME = "dilithium-py"
         USE_DILITHIUM_PY = True
@@ -60,14 +66,14 @@ DEMO_LIMIT = 1000
 
 
 def _check_available():
-    """Check if any Dilithium backend is available"""
+    """Check if any ML-DSA-65 backend is available"""
     if not AVAILABLE:
         raise CryptoBackendError(
-            "Dilithium3",
+            "ML-DSA-65",
             "Post-quantum crypto not installed.\n"
             "Install one of:\n"
-            "  pip install liboqs-python  (recommended)\n"
-            "  pip install dilithium-py   (pure Python)\n"
+            "  pip install liboqs-python>=0.10.0  (recommended)\n"
+            "  pip install dilithium-py>=1.0.0    (pure Python)\n"
         )
 
 
@@ -79,7 +85,7 @@ def _check_license():
         EVENT_COUNT += 1
         if EVENT_COUNT > DEMO_LIMIT:
             raise CryptoBackendError(
-                "Dilithium3",
+                "ML-DSA-65",
                 f"Demo limit reached ({DEMO_LIMIT} events).\n"
                 f"Get free OSS license: https://piqrypt.com/oss\n"
                 f"Or set AISS2_LICENSE_KEY environment variable"
@@ -106,21 +112,20 @@ def generate_keypair() -> tuple[bytes, bytes]:
     try:
         if USE_LIBOQS:
             # liboqs backend
-            signer = oqs.Signature("Dilithium3")
+            signer = oqs.Signature("ML-DSA-65")
             public_key = signer.generate_keypair()
             private_key = signer.export_secret_key()
             return private_key, public_key
 
         elif USE_DILITHIUM_PY:
-            # dilithium-py backend
-            # Note: returns (public, private), so we swap
-            public_key, private_key = Dilithium3.keygen()
+            # dilithium-py backend — returns (public, private), so we swap
+            public_key, private_key = ML_DSA_65.keygen()
             return private_key, public_key
         else:
-            raise CryptoBackendError("Dilithium3", "No backend available")
+            raise CryptoBackendError("ML-DSA-65", "No backend available")
 
     except Exception as e:
-        raise CryptoBackendError("Dilithium3", f"Key generation failed: {e}")
+        raise CryptoBackendError("ML-DSA-65", f"Key generation failed: {e}")
 
 
 def sign(private_key: bytes, message: bytes) -> bytes:
@@ -143,17 +148,17 @@ def sign(private_key: bytes, message: bytes) -> bytes:
     try:
         if USE_LIBOQS:
             # liboqs backend
-            signer = oqs.Signature("Dilithium3", private_key)
+            signer = oqs.Signature("ML-DSA-65", private_key)
             return signer.sign(message)
 
         elif USE_DILITHIUM_PY:
             # dilithium-py backend
-            return Dilithium3.sign(private_key, message)
+            return ML_DSA_65.sign(private_key, message)
         else:
-            raise CryptoBackendError("Dilithium3", "No backend available")
+            raise CryptoBackendError("ML-DSA-65", "No backend available")
 
     except Exception as e:
-        raise CryptoBackendError("Dilithium3", f"Signing failed: {e}")
+        raise CryptoBackendError("ML-DSA-65", f"Signing failed: {e}")
 
 
 def verify(public_key: bytes, message: bytes, signature: bytes) -> bool:
@@ -176,12 +181,12 @@ def verify(public_key: bytes, message: bytes, signature: bytes) -> bool:
     try:
         if USE_LIBOQS:
             # liboqs backend
-            verifier = oqs.Signature("Dilithium3")
+            verifier = oqs.Signature("ML-DSA-65")
             return verifier.verify(message, signature, public_key)
 
         elif USE_DILITHIUM_PY:
             # dilithium-py backend
-            return Dilithium3.verify(public_key, message, signature)
+            return ML_DSA_65.verify(public_key, message, signature)
         else:
             return False
 
@@ -210,7 +215,8 @@ def get_backend_info() -> dict:
     info = {
         "backend": BACKEND_NAME,
         "available": AVAILABLE,
-        "algorithm": "Dilithium3" if AVAILABLE else None,
+        "algorithm": "ML-DSA-65" if AVAILABLE else None,
+        "fips": "FIPS 204" if AVAILABLE else None,
         "demo_mode": DEMO_MODE,
         "events_used": EVENT_COUNT if DEMO_MODE else None,
         "events_limit": DEMO_LIMIT if DEMO_MODE else None,

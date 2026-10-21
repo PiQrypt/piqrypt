@@ -12,11 +12,11 @@ Post-quantum + classical dual signatures for maximum security.
 Includes mandatory fields for AISS-2 compliance (RFC §11.3):
   - trusted_timestamp:  RFC 3161 TSA token (required, may be pending)
   - authority_chain:    Delegation chain from legal entity to agent
-  - signatures:         Ed25519 + ML-DSA-65 (Dilithium3) dual signatures
+  - signatures:         Ed25519 + ML-DSA-65 dual signatures
 
 Cryptographic algorithms:
-  - Ed25519    (classical, backward compatible)
-  - Dilithium3 / ML-DSA-65 (post-quantum, NIST FIPS 204)
+  - Ed25519   (classical, backward compatible)
+  - ML-DSA-65 (post-quantum, NIST FIPS 204)
 
 Recommended by NIST until 2030+ for transition period.
 """

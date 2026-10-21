@@ -226,7 +226,7 @@ AGENT_METADATA: Dict[str, Any] = {
         "RFC 8785": "JSON Canonicalization Scheme (mandatory)",
         "RFC 3161": "Trusted Timestamping (Pro)",
         "RFC 4122": "UUID v4 for nonces",
-        "NIST FIPS 204": "ML-DSA-65 (Dilithium3)",
+        "NIST FIPS 204": "ML-DSA-65",
         "NIST FIPS 203": "ML-KEM-768 (Kyber)"
     },
 

@@ -14,7 +14,7 @@ RFC Compliance:
 - RFC 8032  (Ed25519 signatures)
 - RFC 3161  (Trusted Timestamps — Pro)
 - RFC 4122  (UUID v4 nonces)
-- NIST FIPS 204 (ML-DSA-65 / Dilithium3 — AISS-2)
+- NIST FIPS 204 (ML-DSA-65 — AISS-2)
 - AISS-1.0 (Free), AISS-2.0 (Pro/OSS)
 
 Quick Start — Free:

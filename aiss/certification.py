@@ -372,20 +372,20 @@ def certify_pq_bundle(
         pq_signature = dilithium.sign(pq_priv, cert_bytes)
         backend_info = dilithium.get_backend_info()
         certificate["post_quantum"] = {
-            "algorithm": "ML-DSA-65 (Dilithium3)",
+            "algorithm": "ML-DSA-65",
             "status": "signed",
             "backend": backend_info["backend"],
             "public_key": pq_pub.hex(),
             "signature": pq_signature.hex(),
         }
-        logger.info(f"🔐 Dilithium3 signature added (backend: {backend_info['backend']})")
+        logger.info(f"ML-DSA-65 signature added (backend: {backend_info['backend']})")
     else:
         certificate["post_quantum"] = {
-            "algorithm": "ML-DSA-65 (Dilithium3)",
+            "algorithm": "ML-DSA-65",
             "status": "unavailable",
-            "note": "Install liboqs-python or dilithium-py for PQ signatures",
+            "note": "Install liboqs-python>=0.10.0 or dilithium-py>=1.0.0 for PQ signatures",
         }
-        logger.piqrypt_warn("⚠️ Dilithium3 backend not available — PQ signature skipped")
+        logger.piqrypt_warn("ML-DSA-65 backend not available — PQ signature skipped")
 
     # 9. Create .pqz archive (standard zip for now)
 

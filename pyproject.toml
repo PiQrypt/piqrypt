@@ -64,8 +64,8 @@ all-bridges = [
     "RPi.GPIO>=0.7.0; sys_platform == 'linux'",
 ]
 
-post-quantum    = ["liboqs-python>=0.8.0"]
-post-quantum-py = ["dilithium-py>=0.1.0"]
+post-quantum    = ["liboqs-python>=0.10.0"]
+post-quantum-py = ["dilithium-py>=1.0.0"]
 
 dev = [
     "pytest>=7.0.0,<9.0.0",
