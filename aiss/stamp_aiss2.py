@@ -28,13 +28,28 @@ from typing import Dict, Any, Optional, List
 from aiss.crypto import ed25519, dilithium
 from aiss.canonical import canonicalize
 from aiss.stamp import generate_nonce
-from aiss.license import require_pro
 from aiss.logger import log_event_signed_alias, log_debug
 from aiss.telemetry import track
 from aiss.exceptions import CryptoBackendError
 
 
-@require_pro("AISS-2 hybrid signatures")
+def _pro_only(feature_name: str):
+    """Decorator: enforce Pro tier when running inside piqrypt (ELv2).
+    No-op in aiss-standard (MIT) where license.py is absent."""
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            try:
+                from aiss.license import require_pro as _rp
+                return _rp(feature_name)(func)(*args, **kwargs)
+            except ImportError:
+                return func(*args, **kwargs)
+        wrapper.__name__ = func.__name__
+        wrapper.__doc__ = func.__doc__
+        return wrapper
+    return decorator
+
+
+@_pro_only("AISS-2 hybrid signatures")
 def stamp_event_aiss2_hybrid(
     private_key_ed25519: bytes,
     private_key_dilithium: bytes,
@@ -174,7 +189,7 @@ def stamp_event_aiss2_hybrid(
     return event
 
 
-@require_pro("AISS-2 genesis events")
+@_pro_only("AISS-2 genesis events")
 def stamp_genesis_event_aiss2_hybrid(
     private_key_ed25519: bytes,
     private_key_dilithium: bytes,
