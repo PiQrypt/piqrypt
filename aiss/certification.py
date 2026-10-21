@@ -334,9 +334,10 @@ def certify_pq_bundle(
     Post-Quantum Bundle Certification (€99 tier).
 
     Includes:
-    - Everything from Timestamp
-    - Dilithium3 signature
-    - Encrypted .pqz archive
+    - Everything from Timestamp certification
+    - ML-DSA-65 signature over the certificate (ephemeral key pair — not yet anchored
+      to a persistent CA; full PQ CA chain is planned for v1.10.0)
+    - .pqz archive (standard zip format — not encrypted in this tier)
 
     Args:
         audit_path: Path to audit.json
@@ -357,10 +358,10 @@ def certify_pq_bundle(
         output_dir
     )
 
-    # 8. Add Dilithium3 signature
-    # Uses aiss.crypto.dilithium with automatic fallback:
-    #   1. liboqs-python (C backend, preferred)
-    #   2. dilithium-py (pure Python fallback)
+    # 8. Add ML-DSA-65 signature over the certificate
+    # NOTE: uses an ephemeral key pair — the public key is included in the certificate
+    # so the signature is self-contained, but it is not anchored to a persistent CA.
+    # A persistent CA with a published ML-DSA-65 key is planned for v1.10.0.
     from aiss.crypto import dilithium
 
     certificate = result["certificate"]
@@ -374,6 +375,7 @@ def certify_pq_bundle(
         certificate["post_quantum"] = {
             "algorithm": "ML-DSA-65",
             "status": "signed",
+            "note": "ephemeral key — not anchored to a persistent CA (v1.10.0)",
             "backend": backend_info["backend"],
             "public_key": pq_pub.hex(),
             "signature": pq_signature.hex(),
