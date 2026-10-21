@@ -11,40 +11,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **`aiss/crypto/dilithium_liboqs.py`** — Replaced Dilithium3 (round 3, 3293-byte signatures)
+- **`aiss/crypto/dilithium_liboqs.py`**: Replaced Dilithium3 (round 3, 3293-byte signatures)
   with ML-DSA-65 (NIST FIPS 204, 3309-byte signatures). Key sizes: public 1952 B, private 4032 B,
   signature 3309 B. The liboqs backend now requires `oqs.Signature("ML-DSA-65")`
   (liboqs-python >= 0.12.0); the pure-Python fallback uses `dilithium_py.ml_dsa.ML_DSA_65`
   (dilithium-py >= 1.0.0). Signatures produced by either Dilithium3 variant are not verifiable
   with ML-DSA-65 and vice versa.
 
-- **`aiss/stamp_aiss2.py`** — `stamp_event_aiss2_hybrid` raised a `TypeError` on every call:
+- **`aiss/stamp_aiss2.py`**: `stamp_event_aiss2_hybrid` raised a `TypeError` on every call:
   `log_event_signed(agent_id, event_type, nonce)` passed 3 arguments to a 2-argument function.
   Replaced with `log_event_signed_alias`, the existing 3-argument alias in `logger.py`.
 
-- **`aiss/stamp_aiss2.py`, `aiss/verify.py`, `aiss/rfc3161.py`** — `trusted_timestamp` is now
+- **`aiss/stamp_aiss2.py`, `aiss/verify.py`, `aiss/rfc3161.py`**: `trusted_timestamp` is now
   a detached field, excluded from signed content. `stamp_event_aiss2_hybrid` inserts the
   `{"status": "pending"}` placeholder after signatures, not before. `verify_aiss2_hybrid` and
   `verify_signature` strip `trusted_timestamp` before canonicalization. `stamp_event_with_tsa`
   canonicalizes without `trusted_timestamp`. Adding or updating a TSA token no longer invalidates
   Ed25519 or ML-DSA-65 signatures.
 
-- **`aiss/chain.py`** — `compute_event_hash` now excludes `trusted_timestamp` in addition to
+- **`aiss/chain.py`**: `compute_event_hash` now excludes `trusted_timestamp` in addition to
   `signature`. A TSA token obtained after an event is already linked into a chain no longer breaks
   chain verification.
 
-- **`aiss/crypto/dilithium_liboqs.py`** — The PQ demo limit of 1000 operations previously only
+- **`aiss/crypto/dilithium_liboqs.py`**: The PQ demo limit of 1000 operations previously only
   checked `AISS2_LICENSE_KEY`. The check is now lazy and accepts any Pro+ license recognized by
   `aiss.license.get_license().has_feature("quantum")` (covers `AISS2_LICENSE_KEY`, a verified JWT
   in `PIQRYPT_LICENSE_KEY`, and `license.jwt`). A non-empty but invalid `PIQRYPT_LICENSE_KEY`
   falls back to Free tier and keeps the limit active.
 
-- **`aiss/verify.py`** — `verify_chain` silently ignored AISS-2 events (missing `signature`
+- **`aiss/verify.py`**: `verify_chain` silently ignored AISS-2 events (missing `signature`
   field). Events whose version starts with `AISS-2` are now dispatched to `verify_aiss2_hybrid`.
   Without `public_key_pq`, an `InvalidChainError` is raised; there is no silent fallback to
   Ed25519-only verification.
 
-- **`aiss/certification.py`** — `certify_pq_bundle` generates an ephemeral ML-DSA-65 key pair
+- **`aiss/certification.py`**: `certify_pq_bundle` generates an ephemeral ML-DSA-65 key pair
   on each call with no anchor to a persistent CA. The `post_quantum` certificate field and
   docstring now reflect this limitation. The `.pqz` archive is documented as a standard ZIP
   (unencrypted at this tier). A persistent ML-DSA CA is planned for v1.10.0.
@@ -59,7 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Tests
 
-- New file `tests/test_aiss2_ml_dsa.py` (40 tests): FIPS 204 sizes, hybrid round-trip,
+- New file `tests/test_aiss2_ml_dsa.py` (28 tests): FIPS 204 sizes, hybrid round-trip,
   `trusted_timestamp` excluded from signed content and from chain hash, tamper detection on
   payload and signatures, PQ signature removal, TSA unavailable/success for AISS-1 and AISS-2,
   `verify_chain` with and without PQ key, mixed AISS-1 + AISS-2 chain, version downgrade,
@@ -68,8 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Notes
 
-- AISS-2 signatures produced before this version (Dilithium3 round 3) are not verifiable
-  with ML-DSA-65. Migrate existing chains by re-stamping events with a 1.9.2+ build.
+- ML-DSA-65 signatures are not compatible with the former Dilithium3 round 3 signatures.
 
 ---
 
