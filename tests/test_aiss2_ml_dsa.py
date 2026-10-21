@@ -529,5 +529,88 @@ class TestPQDemoLimit(unittest.TestCase):
             lic_module._license = orig
 
 
+# ===========================================================================
+# compute_event_hash — exclusion de trusted_timestamp
+# ===========================================================================
+
+class TestComputeEventHashTSA(unittest.TestCase):
+    """compute_event_hash doit exclure trusted_timestamp (comme signature)."""
+
+    def _aiss1_event(self):
+        from aiss.crypto import ed25519
+        from aiss.stamp import stamp_event
+        from aiss.identity import derive_agent_id
+        priv, pub = ed25519.generate_keypair()
+        aid = derive_agent_id(pub)
+        return stamp_event(priv, aid, {"action": "chain_test"}), priv, pub
+
+    def test_hash_unchanged_without_trusted_timestamp(self):
+        """Un événement sans trusted_timestamp a le même hash avant et après l'ajout."""
+        from aiss.chain import compute_event_hash
+        event, _, _ = self._aiss1_event()
+        self.assertNotIn("trusted_timestamp", event)
+        h1 = compute_event_hash(event)
+        # Ajouter trusted_timestamp ne doit pas changer le hash
+        event2 = dict(event)
+        event2["trusted_timestamp"] = {"status": "pending", "rfc3161_token": None}
+        h2 = compute_event_hash(event2)
+        self.assertEqual(h1, h2)
+
+    def test_tsa_obtained_after_chaining_verify_chain_passes(self):
+        """Chaîne AISS-1 : TSA obtenu après chaînage, verify_chain doit passer."""
+        from aiss.crypto import ed25519
+        from aiss.stamp import stamp_event
+        from aiss.chain import compute_event_hash
+        from aiss.verify import verify_chain
+        from aiss.identity import derive_agent_id
+        from aiss.crypto.ed25519 import encode_base64
+        from unittest.mock import patch
+
+        priv, pub = ed25519.generate_keypair()
+        aid = derive_agent_id(pub)
+
+        ev1 = stamp_event(priv, aid, {"action": "genesis"})
+        h1 = compute_event_hash(ev1)
+        ev2 = stamp_event(priv, aid, {"action": "step2"}, previous_hash=h1)
+
+        # Simuler un TSA obtenu sur ev1 APRES le chaînage de ev2
+        fake_tsa = {"status": "verified", "authority": "freetsa.org",
+                    "rfc3161_token": "AAAA", "timestamp": 1234567890}
+        from aiss.rfc3161 import TSAUnavailableError
+        with patch("aiss.rfc3161.request_timestamp", return_value=fake_tsa):
+            from aiss.rfc3161 import stamp_event_with_tsa
+            ev1_with_tsa = stamp_event_with_tsa(ev1)
+
+        # Maintenant la chaîne [ev1_with_tsa, ev2] doit se vérifier
+        identity = {"public_key": encode_base64(pub)}
+        self.assertTrue(
+            verify_chain([ev1_with_tsa, ev2], identity,
+                         check_forks=False, check_replay=False)
+        )
+
+    def test_test_vectors_hash_unchanged(self):
+        """Les vecteurs canoniques existants n'ont pas de trusted_timestamp — hashes inchangés."""
+        import json
+        from pathlib import Path
+        from aiss.chain import compute_event_hash
+
+        vectors_path = Path(__file__).parents[1] / "test_vectors" / "events.json"
+        if not vectors_path.exists():
+            self.skipTest("test_vectors/events.json not found")
+
+        data = json.loads(vectors_path.read_text())
+        events = data if isinstance(data, list) else data.get("events", [])
+        for ev in events:
+            if "trusted_timestamp" not in ev and ("signature" in ev or "signatures" in ev):
+                # Ajouter un trusted_timestamp bidon ne change pas le hash
+                ev_with_tsa = dict(ev)
+                ev_with_tsa["trusted_timestamp"] = {"status": "fake"}
+                self.assertEqual(
+                    compute_event_hash(ev),
+                    compute_event_hash(ev_with_tsa),
+                    "Hash changed when trusted_timestamp added — test_vectors at risk",
+                )
+
+
 if __name__ == "__main__":
     unittest.main()

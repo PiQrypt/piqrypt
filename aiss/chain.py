@@ -47,9 +47,12 @@ def compute_event_hash(event: Dict[str, Any]) -> str:
         >>> len(event_hash)
         64
     """
-    # Create copy without signature
+    # Exclude fields that are not part of the signed content:
+    # - 'signature'         : the signature itself (AISS-1)
+    # - 'trusted_timestamp' : detached field added after signing (AISS-1 and AISS-2)
     event_copy = event.copy()
     event_copy.pop('signature', None)
+    event_copy.pop('trusted_timestamp', None)
 
     # Canonicalize and hash
     canonical = canonicalize(event_copy)
