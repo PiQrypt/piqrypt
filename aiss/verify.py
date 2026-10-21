@@ -129,7 +129,8 @@ def verify_chain(
     identity: Dict[str, Any],
     check_forks: bool = True,
     check_replay: bool = True,
-    check_timestamps: bool = True
+    check_timestamps: bool = True,
+    public_key_pq: Optional[bytes] = None,
 ) -> bool:
     """
     Verify complete event chain integrity (RFC Section 15.1).
@@ -147,6 +148,8 @@ def verify_chain(
         check_forks: Enable fork detection (default: True)
         check_replay: Enable replay detection (default: True)
         check_timestamps: Enable timestamp validation (default: True)
+        public_key_pq: ML-DSA-65 public key bytes — required for AISS-2 events;
+            if the chain contains AISS-2 events and this is None, raises InvalidChainError
 
     Returns:
         True if chain is valid
@@ -176,10 +179,26 @@ def verify_chain(
 
     # Verify all signatures
     for i, event in enumerate(events):
-        try:
-            verify_signature(event, public_key)
-        except InvalidSignatureError as e:
-            raise InvalidChainError(f"Signature verification failed at event {i}: {e}", i)
+        version = event.get("version", "")
+        if version.startswith("AISS-2"):
+            if public_key_pq is None:
+                raise InvalidChainError(
+                    f"Event {i} is AISS-2 but no public_key_pq provided — "
+                    "pass the ML-DSA-65 public key to verify_chain()",
+                    i,
+                )
+            try:
+                from aiss.stamp_aiss2 import verify_aiss2_hybrid
+                verify_aiss2_hybrid(event, public_key, public_key_pq)
+            except Exception as e:
+                raise InvalidChainError(
+                    f"AISS-2 signature verification failed at event {i}: {e}", i
+                )
+        else:
+            try:
+                verify_signature(event, public_key)
+            except InvalidSignatureError as e:
+                raise InvalidChainError(f"Signature verification failed at event {i}: {e}", i)
 
     # Verify chain linkage
     verify_chain_linkage(events)
