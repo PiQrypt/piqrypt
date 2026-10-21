@@ -962,6 +962,85 @@ class TestProOnlyDecorator(unittest.TestCase):
             m._require_pro = orig
 
 
+class TestVerifyChainAISS21(unittest.TestCase):
+    """A.4 — verify_chain handles AISS-2.1 events with SHA-512 linkage."""
+
+    def setUp(self):
+        import aiss.license as lic_module
+        from aiss.crypto import dilithium
+        self._orig_lic = lic_module._license
+        lic_module._license = _make_license("pro")
+        dilithium.reset_demo_counter()
+
+    def tearDown(self):
+        import aiss.license as lic_module
+        lic_module._license = self._orig_lic
+
+    def _chain(self, n=2):
+        from aiss.stamp_aiss2 import stamp_event_aiss2_hybrid
+        from aiss.chain import compute_event_hash
+        from aiss.crypto.ed25519 import encode_base64
+
+        priv_ed, pub_ed, priv_pq, pub_pq = _keys()
+        aid = _agent_id(pub_ed)
+        events = []
+        prev_hash = None
+        for i in range(n):
+            ev = stamp_event_aiss2_hybrid(
+                priv_ed, priv_pq, aid, {"seq": i},
+                previous_hash=prev_hash, tsa_stamp_after=False,
+            )
+            events.append(ev)
+            prev_hash = compute_event_hash(ev)
+        identity = {"public_key": encode_base64(pub_ed)}
+        return events, identity, pub_ed, pub_pq
+
+    def test_version_is_aiss21(self):
+        """stamp_event_aiss2_hybrid must produce version AISS-2.1."""
+        events, _, _, _ = self._chain(1)
+        self.assertEqual(events[0]["version"], "AISS-2.1")
+
+    def test_previous_hash_is_128_chars(self):
+        """previous_hash in AISS-2.1 event 1 must be 128-char SHA-512 hex."""
+        events, _, _, _ = self._chain(2)
+        h = events[1]["previous_hash"]
+        self.assertEqual(len(h), 128, f"previous_hash length {len(h)} != 128")
+        self.assertRegex(h, r'^[0-9a-f]{128}$')
+
+    def test_verify_chain_passes(self):
+        """verify_chain succeeds for a valid AISS-2.1 chain."""
+        from aiss.verify import verify_chain
+        events, identity, _, pub_pq = self._chain(3)
+        self.assertTrue(
+            verify_chain(events, identity, public_key_pq=pub_pq,
+                         check_forks=False, check_replay=False)
+        )
+
+    def test_tampered_payload_fails(self):
+        """Modifying payload must cause verify_chain to raise."""
+        import copy
+        from aiss.verify import verify_chain
+        from aiss.exceptions import InvalidChainError, InvalidSignatureError
+        events, identity, _, pub_pq = self._chain(2)
+        tampered = copy.deepcopy(events)
+        tampered[0]["payload"]["seq"] = 999
+        with self.assertRaises((InvalidChainError, InvalidSignatureError)):
+            verify_chain(tampered, identity, public_key_pq=pub_pq,
+                         check_forks=False, check_replay=False)
+
+    def test_broken_chain_link_fails(self):
+        """Changing previous_hash must cause verify_chain to raise."""
+        import copy
+        from aiss.verify import verify_chain
+        from aiss.exceptions import InvalidChainError
+        events, identity, _, pub_pq = self._chain(2)
+        tampered = copy.deepcopy(events)
+        tampered[1]["previous_hash"] = "a" * 128
+        with self.assertRaises(InvalidChainError):
+            verify_chain(tampered, identity, public_key_pq=pub_pq,
+                         check_forks=False, check_replay=False)
+
+
 class TestSHA512ChainHash(unittest.TestCase):
     """A.3 — compute_event_hash dispatches on version: SHA-512 for AISS-2.1, SHA-256 otherwise."""
 
