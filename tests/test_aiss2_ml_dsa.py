@@ -846,9 +846,8 @@ class TestDomainSeparation(unittest.TestCase):
 
     def test_changed_label_invalidates_both_signatures(self):
         """Verifying with a different label in M' must fail both signatures."""
-        import copy
         from aiss.exceptions import InvalidSignatureError
-        from aiss.stamp_aiss2 import verify_aiss2_hybrid, _ALGO_LABEL, _build_signed_message
+        from aiss.stamp_aiss2 import verify_aiss2_hybrid
         import aiss.stamp_aiss2 as m
 
         event, pub_ed, pub_pq = self._make_event_and_keys()
@@ -863,7 +862,6 @@ class TestDomainSeparation(unittest.TestCase):
 
     def test_nonempty_context_invalidates_both_signatures(self):
         """Verifying with a non-empty context injected in M' must fail both signatures."""
-        from aiss.exceptions import InvalidSignatureError
         import aiss.stamp_aiss2 as m
 
         event, pub_ed, pub_pq = self._make_event_and_keys()
@@ -872,7 +870,9 @@ class TestDomainSeparation(unittest.TestCase):
         def _with_context(jcs_bytes: bytes) -> bytes:
             label = m._ALGO_LABEL
             ctx = b"injected_context"
-            return m._DOMAIN_PREFIX + bytes([len(label)]) + label + bytes([len(ctx)]) + ctx + jcs_bytes
+            return (
+                m._DOMAIN_PREFIX + bytes([len(label)]) + label + bytes([len(ctx)]) + ctx + jcs_bytes
+            )
         try:
             m._build_signed_message = _with_context
             with self.assertRaises(Exception):  # InvalidSignatureError or verify returns False
@@ -908,7 +908,7 @@ class TestProOnlyDecorator(unittest.TestCase):
             lic_module._license = orig
 
     def test_no_license_module_allows_call(self):
-        """Quand _require_pro est None (aiss.license absent), la fonction est appelée normalement."""
+        """Quand _require_pro est None (aiss.license absent), la fonction est appelée."""
         import aiss.stamp_aiss2 as m
         from aiss.stamp_aiss2 import _pro_only
         orig = m._require_pro
@@ -960,6 +960,56 @@ class TestProOnlyDecorator(unittest.TestCase):
             self.assertIn("missing dep inside decorated function", str(ctx.exception))
         finally:
             m._require_pro = orig
+
+
+class TestBase64PrefixEncoding(unittest.TestCase):
+    """A.2 — AISS-2.1 signatures use 'base64:<b64>' for both Ed25519 and ML-DSA-65."""
+
+    def _make_event(self):
+        if _SKIP:
+            self.skipTest(_SKIP_REASON)
+        from aiss.stamp_aiss2 import stamp_event_aiss2_hybrid
+        priv_ed, pub_ed, priv_pq, pub_pq = _keys()
+        aid = _agent_id(pub_ed)
+        return stamp_event_aiss2_hybrid(
+            priv_ed, priv_pq, aid, {"action": "a2_test"}, tsa_stamp_after=False
+        ), pub_ed, pub_pq
+
+    def test_ed25519_signature_has_base64_prefix(self):
+        """AISS-2.1 Ed25519 signature must start with 'base64:'."""
+        event, _, _ = self._make_event()
+        sig = event["signatures"]["classical"]["signature"]
+        self.assertTrue(
+            sig.startswith("base64:"),
+            f"Ed25519 signature missing base64: prefix: {sig[:30]}",
+        )
+
+    def test_ml_dsa_signature_has_base64_prefix(self):
+        """AISS-2.1 ML-DSA-65 signature must start with 'base64:'."""
+        event, _, _ = self._make_event()
+        sig = event["signatures"]["post_quantum"]["signature"]
+        self.assertTrue(
+            sig.startswith("base64:"),
+            f"ML-DSA-65 signature missing base64: prefix: {sig[:30]}",
+        )
+
+    def test_round_trip_verifies(self):
+        """stamp + verify_aiss2_hybrid round-trip succeeds with base64: encoding."""
+        from aiss.stamp_aiss2 import verify_aiss2_hybrid
+        event, pub_ed, pub_pq = self._make_event()
+        self.assertTrue(verify_aiss2_hybrid(event, pub_ed, pub_pq))
+
+    def test_missing_prefix_rejected(self):
+        """Verification fails if Ed25519 signature lacks 'base64:' prefix."""
+        import copy
+        from aiss.stamp_aiss2 import verify_aiss2_hybrid
+        from aiss.exceptions import InvalidSignatureError
+        event, pub_ed, pub_pq = self._make_event()
+        bad = copy.deepcopy(event)
+        raw = bad["signatures"]["classical"]["signature"]
+        bad["signatures"]["classical"]["signature"] = raw[7:]  # strip "base64:"
+        with self.assertRaises(InvalidSignatureError):
+            verify_aiss2_hybrid(bad, pub_ed, pub_pq)
 
 
 if __name__ == "__main__":

@@ -169,15 +169,16 @@ def stamp_event_aiss2_hybrid(
     # Sign M' with ML-DSA-65 (post-quantum) — same message as Ed25519
     sig_dilithium = dilithium.sign(private_key_dilithium, signed_msg)
 
-    # Add dual signatures
+    # Add dual signatures — AISS-2.1 uses "base64:<b64>" for both algorithms.
+    # AISS-2.0 kept base58 (Ed25519) and plain base64 (ML-DSA); this is the new format.
     event["signatures"] = {
         "classical": {
             "algorithm": "Ed25519",
-            "signature": ed25519.encode_base58(sig_ed25519)
+            "signature": "base64:" + base64.b64encode(sig_ed25519).decode('utf-8')
         },
         "post_quantum": {
             "algorithm": "ML-DSA-65",
-            "signature": base64.b64encode(sig_dilithium).decode('utf-8')
+            "signature": "base64:" + base64.b64encode(sig_dilithium).decode('utf-8')
         }
     }
 
@@ -347,18 +348,28 @@ def _verify_aiss2_1(
     jcs_bytes = _jcs_canonicalize(event_copy)
     signed_msg = _build_signed_message(jcs_bytes)
 
-    # Verify Ed25519
+    # Verify Ed25519 — AISS-2.1 uses "base64:<b64>" encoding.
     try:
-        sig_ed25519 = ed25519.decode_base58(classical["signature"])
+        raw_ed = classical["signature"]
+        if not raw_ed.startswith("base64:"):
+            raise InvalidSignatureError("Ed25519 signature must use 'base64:' prefix in AISS-2.1")
+        sig_ed25519 = base64.b64decode(raw_ed[7:])
         ed25519.verify(public_key_ed25519, signed_msg, sig_ed25519)
+    except InvalidSignatureError:
+        raise
     except Exception as e:
         raise InvalidSignatureError(f"Ed25519 signature verification failed: {e}")
 
-    # Verify ML-DSA-65
+    # Verify ML-DSA-65 — AISS-2.1 uses "base64:<b64>" encoding.
     try:
-        sig_dilithium = base64.b64decode(post_quantum["signature"])
+        raw_pq = post_quantum["signature"]
+        if not raw_pq.startswith("base64:"):
+            raise InvalidSignatureError("ML-DSA-65 signature must use 'base64:' prefix in AISS-2.1")
+        sig_dilithium = base64.b64decode(raw_pq[7:])
         if not dilithium.verify(public_key_dilithium, signed_msg, sig_dilithium):
             raise InvalidSignatureError("ML-DSA-65 signature verification failed")
+    except InvalidSignatureError:
+        raise
     except Exception as e:
         raise InvalidSignatureError(f"ML-DSA-65 signature verification failed: {e}")
 
