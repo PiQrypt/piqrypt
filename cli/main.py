@@ -325,10 +325,21 @@ def _refuse_native_hybrid(doc) -> None:
         sys.exit(1)
 
 
+def _refuse_hybrid_rotate():
+    print("Error: cette identité porte une clé ML-DSA-65 (public_key_pq). "
+          "'piqrypt identity rotate' produirait une rotation AISS-1 en Ed25519 seul et "
+          "perdrait la clé post-quantique. Utilisez l'API hybride : "
+          "aiss.create_rotation_event_aiss21 (ou create_rotation_attestation_hybrid) "
+          "et aiss.verify_rotation_chain.", file=sys.stderr)
+    sys.exit(1)
+
+
 def cmd_identity_rotate(args):
     print("Loading old identity...")
     old_data = load_json(args.old_key)
     _refuse_native_hybrid(old_data)
+    if _identity_has_pq_key(old_data):
+        _refuse_hybrid_rotate()
     old_private = aiss.crypto.ed25519.decode_base64(old_data['private_key'])
     old_public  = aiss.crypto.ed25519.decode_base64(old_data['identity']['public_key'])
 
