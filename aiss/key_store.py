@@ -519,7 +519,11 @@ def _v2_derive_key(passphrase: str, salt: bytes, n_log2: int, r: int, p: int) ->
     import unicodedata
     passphrase = unicodedata.normalize("NFKC", passphrase)
     kdf = Scrypt(salt=salt, length=KEY_SIZE, n=N, r=r, p=p)
-    return kdf.derive(passphrase.encode("utf-8"))
+    pass_bytes = bytearray(passphrase.encode("utf-8"))
+    try:
+        return kdf.derive(pass_bytes)
+    finally:
+        _secure_erase(pass_bytes)  # la str d'origine, immuable, n'est pas effaçable
 
 
 def encrypt_pq_private_key(
@@ -543,6 +547,13 @@ def encrypt_pq_private_key(
 
     Raises:
         ValueError: Si passphrase invalide ou taille de clé incorrecte
+
+    Zéroïsation au mieux : la clé AES dérivée et les octets de la passphrase sont
+    effacés après usage. La clé privée reçue appartient à l'appelant (un bytearray
+    est accepté et reste effaçable par lui). Les bytes Python sont immuables et
+    copiables par l'interpréteur, les bibliothèques gardent leurs copies internes,
+    pas de mlock, swap non contrôlé : l'effacement réduit la fenêtre d'exposition,
+    il ne la supprime pas.
     """
     _v2_validate_passphrase(passphrase)
     if len(private_key_bytes) != 4032:
@@ -585,6 +596,12 @@ def decrypt_pq_private_key(encrypted_data: bytes, passphrase: str) -> bytes:
         ValueError:              Passphrase invalide (non-str, vide, espaces)
         KeyFileCorruptedError:   Format or bounds invalid
         InvalidPassphraseError:  Wrong passphrase (GCM tag mismatch)
+
+    Limites : la clé déchiffrée est renvoyée en bytes (type public inchangé), donc
+    immuable et hors de portée de l'effacement ; l'appelant peut la copier dans un
+    bytearray et l'effacer avec _secure_erase, ce qui réduit la fenêtre d'exposition
+    sans la supprimer (copies de l'interpréteur et des bibliothèques de chiffrement,
+    pas de mlock, swap non contrôlé). La clé AES dérivée est effacée ici.
     """
     _v2_validate_passphrase(passphrase)
     if len(encrypted_data) < _V2_HEADER_SIZE:

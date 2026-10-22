@@ -600,6 +600,12 @@ def _missing_dirs(paths) -> set:
     return missing
 
 
+def _erase_all(buffers) -> None:
+    from aiss.key_store import _secure_erase
+    for buf in buffers:
+        _secure_erase(buf)
+
+
 def _create_hybrid_agent_identity(
     agent_name: str,
     passphrase: Optional[str],
@@ -608,6 +614,29 @@ def _create_hybrid_agent_identity(
     base_dir: Optional[str],
 ) -> Dict[str, Any]:
     """Création d'une identité hybride AISS-2.1 (voir create_agent_identity(hybrid=True)).
+
+    Zéroïsation au mieux : les clés privées générées sont tenues dans des bytearray
+    effacés dans un bloc finally. Cela réduit la fenêtre d'exposition sans la supprimer :
+    bytes Python immuables et copiables par l'interpréteur, copies internes des
+    bibliothèques de chiffrement, pas de mlock, swap non contrôlé.
+    """
+    buffers: list = []
+    try:
+        return _create_hybrid_agent_identity_impl(
+            agent_name, passphrase, metadata, tier, base_dir, buffers)
+    finally:
+        _erase_all(buffers)
+
+
+def _create_hybrid_agent_identity_impl(
+    agent_name: str,
+    passphrase: Optional[str],
+    metadata: Optional[Dict[str, Any]],
+    tier: str,
+    base_dir: Optional[str],
+    _buffers: list,
+) -> Dict[str, Any]:
+    """Corps de _create_hybrid_agent_identity ; _buffers recueille les clés à effacer.
 
     Ordre d'écriture : private.key.enc, private_pq.key.enc, identity.json (atomique),
     puis enregistrement au registre. Un identity.json présent signifie donc que les
@@ -660,7 +689,11 @@ def _create_hybrid_agent_identity(
             )
 
     private_key, public_key = generate_keypair()
+    private_key = bytearray(private_key)
+    _buffers.append(private_key)
     private_key_pq, public_key_pq = dilithium.generate_keypair()
+    private_key_pq = bytearray(private_key_pq)
+    _buffers.append(private_key_pq)
     agent_id = derive_agent_id_aiss21(public_key, public_key_pq)
     identity = export_identity_aiss21(agent_id, public_key, public_key_pq)
 
@@ -985,7 +1018,29 @@ def upgrade_agent_identity(
             incohérent (clé PQ orpheline, sauvegarde existante, clé ≠ public_key)
         ValueError: Passphrase invalide, ou clé Ed25519 chiffrée sans old_passphrase
         FileNotFoundError: Identité ou clé introuvable
+
+    Zéroïsation au mieux : la clé Ed25519 chargée et la clé ML-DSA-65 générée sont
+    tenues dans des bytearray effacés dans un bloc finally. Cela réduit la fenêtre
+    d'exposition sans la supprimer : bytes Python immuables et copiables par
+    l'interpréteur, copies internes des bibliothèques de chiffrement, pas de mlock,
+    swap non contrôlé.
     """
+    buffers: list = []
+    try:
+        return _upgrade_agent_identity_impl(
+            agent_name, passphrase, old_passphrase, base_dir, buffers)
+    finally:
+        _erase_all(buffers)
+
+
+def _upgrade_agent_identity_impl(
+    agent_name: str,
+    passphrase: str,
+    old_passphrase: Optional[str],
+    base_dir: Optional[str],
+    _buffers: list,
+) -> Dict[str, Any]:
+    """Corps de upgrade_agent_identity ; _buffers recueille les clés à effacer."""
     import os
     from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
     from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
@@ -1048,8 +1103,10 @@ def upgrade_agent_identity(
         private_key = load_encrypted_key(key_path, old_passphrase)
     else:
         private_key = load_plaintext_key(key_path)
+    private_key = bytearray(private_key)
+    _buffers.append(private_key)
 
-    public_key = Ed25519PrivateKey.from_private_bytes(bytes(private_key)).public_key() \
+    public_key = Ed25519PrivateKey.from_private_bytes(private_key).public_key() \
         .public_bytes(Encoding.Raw, PublicFormat.Raw)
     agent_id = identity.get("agent_id")
     if (
@@ -1061,6 +1118,8 @@ def upgrade_agent_identity(
         )
 
     private_key_pq, public_key_pq = dilithium.generate_keypair()
+    private_key_pq = bytearray(private_key_pq)
+    _buffers.append(private_key_pq)
     binding = _create_identity_binding(
         agent_id, private_key, public_key, private_key_pq, public_key_pq)
     upgraded = dict(identity)
@@ -1159,8 +1218,11 @@ def create_rotation_attestation_hybrid(
     L'ancienne identité peut être hybride native ou mise à niveau ; ses clés sont celles
     de `previous_identity`, validée par identity_binding_assurance.
 
-    Limite (zéroïsation) : les clés privées reçues sont des bytes de l'appelant ;
-    cette fonction ne les copie pas et ne peut pas les effacer. Voir _secure_erase.
+    Zéroïsation : les clés privées reçues appartiennent à l'appelant ; cette fonction n'en
+    crée aucune copie et ne les efface pas. Pour réduire la fenêtre d'exposition,
+    l'appelant peut les passer en bytearray (acceptés) et les effacer avec _secure_erase
+    ensuite. Limites de Python : bytes immuables et copiables par l'interpréteur, copies
+    internes des bibliothèques de chiffrement, pas de mlock, swap non contrôlé.
 
     Raises:
         IdentityBindingError: ancienne identité invalide
@@ -1325,7 +1387,28 @@ def secure_agent_key(
 
     Returns:
         True si succès
+
+    Zéroïsation au mieux : les clés déchiffrées sont tenues dans des bytearray effacés
+    dans un bloc finally. Cela réduit la fenêtre d'exposition sans la supprimer : bytes
+    Python immuables et copiables par l'interpréteur, copies internes des bibliothèques
+    de chiffrement, pas de mlock, swap non contrôlé.
     """
+    buffers: list = []
+    try:
+        return _secure_agent_key_impl(
+            agent_name, new_passphrase, old_passphrase, base_dir, buffers)
+    finally:
+        _erase_all(buffers)
+
+
+def _secure_agent_key_impl(
+    agent_name: str,
+    new_passphrase: str,
+    old_passphrase: Optional[str],
+    base_dir: Optional[str],
+    _buffers: list,
+) -> bool:
+    """Corps de secure_agent_key ; _buffers recueille les clés à effacer."""
     import os
     from aiss.agent_registry import get_agent_dir
     from aiss.key_store import (
@@ -1360,6 +1443,8 @@ def secure_agent_key(
         raw_key = load_encrypted_key(key_path, old_passphrase)
     else:
         raw_key = load_plaintext_key(key_path)
+    raw_key = bytearray(raw_key)
+    _buffers.append(raw_key)
     pq_blob = None
     if hybrid:
         original_pq = pq_path.read_bytes()
@@ -1370,6 +1455,8 @@ def secure_agent_key(
                 f"Clé ML-DSA-65 de '{agent_name}' illisible avec l'ancienne passphrase "
                 f"(les deux clés doivent partager la même) : {exc}"
             ) from exc
+        raw_pq = bytearray(raw_pq)
+        _buffers.append(raw_pq)
         pq_blob = encrypt_pq_private_key(raw_pq, new_passphrase)
     ed_blob = encrypt_private_key(raw_key, new_passphrase)
 
