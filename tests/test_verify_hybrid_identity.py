@@ -324,7 +324,7 @@ class TestVerificationReport(_Base):
         rep = get_verification_report([a], ident)
         self.assertTrue(rep["valid"])
         self.assertIsNone(rep["binding_assurance"])
-        self.assertEqual(set(rep) - {"binding_assurance"}, self.CLASSICAL_KEYS)
+        self.assertEqual(set(rep) - {"binding_assurance", "tsa"}, self.CLASSICAL_KEYS)
 
     def test_upgraded(self):
         from aiss.verify import get_verification_report

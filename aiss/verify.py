@@ -313,9 +313,71 @@ def verify_chain(
     return True
 
 
+TSA_STATUSES = ("verified", "structure_only", "pending", "invalid", "absent")
+
+
+def _tsa_report(events: List[Dict[str, Any]], trust_roots=None) -> Dict[str, Any]:
+    """
+    Count the events by TSA status. Informational: it never changes the validity verdict.
+
+    verified / structure_only / pending / invalid come from aiss.rfc3161.verify_tsa_token;
+    "absent" means the event carries no trusted_timestamp field at all. A pending event is
+    never counted as anchored, and neither is a structure_only one. Without aiss.rfc3161
+    (MIT-only build) tokens cannot be checked: those present are counted structure_only
+    (structural presence only) and "verification_available" is False.
+    """
+    counts = {status: 0 for status in TSA_STATUSES}
+    details: List[Dict[str, Any]] = []
+    try:
+        from aiss.rfc3161 import load_trust_roots, verify_tsa_token
+        available = True
+        roots = load_trust_roots(trust_roots)
+    except ImportError:
+        from aiss.tsa_token import has_tsa_token
+        available = False
+        roots = []
+    except Exception as exc:
+        from aiss.rfc3161 import verify_tsa_token
+        available, roots = True, []
+        details.append({"index": None, "status": "invalid", "reason": f"trust roots unreadable: {exc}"})
+
+    for index, event in enumerate(events):
+        if not isinstance(event, dict):
+            counts["invalid"] += 1
+            details.append({"index": index, "status": "invalid", "reason": "event is not an object"})
+            continue
+        if "trusted_timestamp" not in event:
+            counts["absent"] += 1
+            continue
+        if not available:
+            status = "structure_only" if has_tsa_token(event) else (
+                "pending" if (event.get("trusted_timestamp") or {}).get("status") == "pending"
+                else "invalid")
+            counts[status] += 1
+            continue
+        try:
+            result = verify_tsa_token(event, roots)
+        except Exception as exc:
+            result = {"status": "invalid", "reason": f"verification error: {exc}", "gen_time": None}
+        counts[result["status"]] += 1
+        if result["status"] != "verified":
+            details.append({"index": index, "status": result["status"], "reason": result["reason"]})
+
+    section = dict(counts)
+    section.update({
+        "total": len(events),
+        "verification_available": available,
+        "trust_roots": len(roots),
+        "revocation": "not_checked",
+        "details": details,
+    })
+    return section
+
+
 def get_verification_report(
     events: List[Dict[str, Any]],
-    identity: Dict[str, Any]
+    identity: Dict[str, Any],
+    trust_roots=None,
 ) -> Dict[str, Any]:
     """
     Generate detailed verification report.
@@ -325,6 +387,7 @@ def get_verification_report(
     Args:
         events: List of events
         identity: Agent identity
+        trust_roots: Optional TSA trust store for the "tsa" section (see aiss.rfc3161.load_trust_roots)
 
     Returns:
         Verification report dict with:
@@ -334,6 +397,9 @@ def get_verification_report(
         - forks_detected: List of fork hashes
         - replay_attacks: List of replay attack nonces
         - errors: List of error messages
+        - binding_assurance: "hybrid", "classical_only" or None
+        - tsa: event counts per TSA status (verified, structure_only, pending, invalid,
+          absent), informational and never silent; it does not change "valid"
     """
     report = {
         "valid": True,
@@ -344,7 +410,11 @@ def get_verification_report(
         "replay_attacks": [],
         "errors": [],
         "binding_assurance": None,  # "hybrid", "classical_only" or None (classical identity)
+        "tsa": None,
     }
+
+    report["tsa"] = _tsa_report(
+        events if isinstance(events, (list, tuple)) else [], trust_roots)
 
     if not events:
         return report

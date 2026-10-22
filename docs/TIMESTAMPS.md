@@ -121,6 +121,14 @@ chain length, then the hash. Step 2 uses the genTime of the token, never `truste
 The result is deterministic for the same input **and the same trust store**: two verifiers with
 different roots can disagree on which events are anchored.
 
+## Verification reports
+
+`aiss.verify.get_verification_report(events, identity, trust_roots=None)` adds a `tsa` section that
+counts the events per status: `verified`, `structure_only`, `pending`, `invalid` and `absent` (no
+`trusted_timestamp` field at all), with a `details` list for every event that is not verified and
+the number of trust roots used. A pending or structure-only event is never counted as anchored. The
+section is informational: it never changes `valid`, and `verify_chain` does not look at timestamps.
+
 ## What is not verified
 
 * **Revocation.** No OCSP or CRL check is made in 1.10. A token whose TSA certificate was revoked
