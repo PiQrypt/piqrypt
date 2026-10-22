@@ -139,7 +139,7 @@ C = Agent("C")                 # cible de rotation
 D = Agent("D")                 # étranger (négatifs)
 E = Agent("E")                 # seconde cible de rotation (rotations concurrentes)
 
-PENDING_TS = {"status": "pending", "rfc3161_token": None, "tsa_id": None, "timestamp": None}
+PENDING_TS = {"status": "pending"}
 
 
 # ─── événements ──────────────────────────────────────────────────────────────
@@ -355,8 +355,9 @@ def hash_vectors():
     e5 = body({"action": "detached fields are ignored"}, genesis_hash(A.agent_id), 5, "h5")
     e5["signatures"] = {"classical": {"algorithm": "Ed25519", "signature": "base64:PLACEHOLDER"},
                         "post_quantum": {"algorithm": "ML-DSA-65", "signature": "base64:PLACEHOLDER"}}
-    e5["trusted_timestamp"] = {"status": "verified", "rfc3161_token": "AAAA", "tsa_id": "tsa.example",
-                               "timestamp": BASE_TS + 6}
+    e5["trusted_timestamp"] = {"status": "granted", "token": "base64:AAAA", "hash_algorithm": "sha512",
+                               "imprint": "00" * 64, "nonce": "1", "authority": "tsa.example",
+                               "url": "https://tsa.example/tsr"}
     cases.append(("detached_fields_excluded",
                   "signatures et trusted_timestamp sont exclus du JCS, du message et du hash", e5))
     vectors = []

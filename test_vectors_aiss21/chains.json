@@ -25,10 +25,7 @@
      },
      "timestamp": 1800000000,
      "trusted_timestamp": {
-      "rfc3161_token": null,
-      "status": "pending",
-      "timestamp": null,
-      "tsa_id": null
+      "status": "pending"
      },
      "version": "AISS-2.1"
     },
@@ -52,10 +49,7 @@
      },
      "timestamp": 1800000010,
      "trusted_timestamp": {
-      "rfc3161_token": null,
-      "status": "pending",
-      "timestamp": null,
-      "tsa_id": null
+      "status": "pending"
      },
      "version": "AISS-2.1"
     },
@@ -79,10 +73,7 @@
      },
      "timestamp": 1800000020,
      "trusted_timestamp": {
-      "rfc3161_token": null,
-      "status": "pending",
-      "timestamp": null,
-      "tsa_id": null
+      "status": "pending"
      },
      "version": "AISS-2.1"
     },
@@ -106,10 +97,7 @@
      },
      "timestamp": 1800000030,
      "trusted_timestamp": {
-      "rfc3161_token": null,
-      "status": "pending",
-      "timestamp": null,
-      "tsa_id": null
+      "status": "pending"
      },
      "version": "AISS-2.1"
     }
@@ -172,10 +160,7 @@
      },
      "timestamp": 1800000020,
      "trusted_timestamp": {
-      "rfc3161_token": null,
-      "status": "pending",
-      "timestamp": null,
-      "tsa_id": null
+      "status": "pending"
      },
      "version": "AISS-2.1"
     },
@@ -198,10 +183,7 @@
      },
      "timestamp": 1800000030,
      "trusted_timestamp": {
-      "rfc3161_token": null,
-      "status": "pending",
-      "timestamp": null,
-      "tsa_id": null
+      "status": "pending"
      },
      "version": "AISS-2.1"
     }
@@ -336,10 +318,7 @@
      },
      "timestamp": 1800000020,
      "trusted_timestamp": {
-      "rfc3161_token": null,
-      "status": "pending",
-      "timestamp": null,
-      "tsa_id": null
+      "status": "pending"
      },
      "version": "AISS-2.1"
     },
@@ -362,10 +341,7 @@
      },
      "timestamp": 1800000030,
      "trusted_timestamp": {
-      "rfc3161_token": null,
-      "status": "pending",
-      "timestamp": null,
-      "tsa_id": null
+      "status": "pending"
      },
      "version": "AISS-2.1"
     },
@@ -435,10 +411,7 @@
      },
      "timestamp": 1800000000,
      "trusted_timestamp": {
-      "rfc3161_token": null,
-      "status": "pending",
-      "timestamp": null,
-      "tsa_id": null
+      "status": "pending"
      },
      "version": "AISS-2.1"
     },
@@ -462,10 +435,7 @@
      },
      "timestamp": 1800000010,
      "trusted_timestamp": {
-      "rfc3161_token": null,
-      "status": "pending",
-      "timestamp": null,
-      "tsa_id": null
+      "status": "pending"
      },
      "version": "AISS-2.1"
     },
@@ -519,10 +489,7 @@
      },
      "timestamp": 1800000000,
      "trusted_timestamp": {
-      "rfc3161_token": null,
-      "status": "pending",
-      "timestamp": null,
-      "tsa_id": null
+      "status": "pending"
      },
      "version": "AISS-2.1"
     },
@@ -546,10 +513,7 @@
      },
      "timestamp": 1800000010,
      "trusted_timestamp": {
-      "rfc3161_token": null,
-      "status": "pending",
-      "timestamp": null,
-      "tsa_id": null
+      "status": "pending"
      },
      "version": "AISS-2.1"
     },
@@ -573,10 +537,7 @@
      },
      "timestamp": 1800000020,
      "trusted_timestamp": {
-      "rfc3161_token": null,
-      "status": "pending",
-      "timestamp": null,
-      "tsa_id": null
+      "status": "pending"
      },
      "version": "AISS-2.1"
     }
@@ -619,10 +580,7 @@
      },
      "timestamp": 1800000000,
      "trusted_timestamp": {
-      "rfc3161_token": null,
-      "status": "pending",
-      "timestamp": null,
-      "tsa_id": null
+      "status": "pending"
      },
      "version": "AISS-2.1"
     },
@@ -646,10 +604,7 @@
      },
      "timestamp": 1800000020,
      "trusted_timestamp": {
-      "rfc3161_token": null,
-      "status": "pending",
-      "timestamp": null,
-      "tsa_id": null
+      "status": "pending"
      },
      "version": "AISS-2.1"
     },
@@ -673,10 +628,7 @@
      },
      "timestamp": 1800000030,
      "trusted_timestamp": {
-      "rfc3161_token": null,
-      "status": "pending",
-      "timestamp": null,
-      "tsa_id": null
+      "status": "pending"
      },
      "version": "AISS-2.1"
     }
@@ -719,10 +671,7 @@
      },
      "timestamp": 1800000000,
      "trusted_timestamp": {
-      "rfc3161_token": null,
-      "status": "pending",
-      "timestamp": null,
-      "tsa_id": null
+      "status": "pending"
      },
      "version": "AISS-2.1"
     },
@@ -746,10 +695,7 @@
      },
      "timestamp": 1800000010,
      "trusted_timestamp": {
-      "rfc3161_token": null,
-      "status": "pending",
-      "timestamp": null,
-      "tsa_id": null
+      "status": "pending"
      },
      "version": "AISS-2.1"
     },
@@ -801,10 +747,7 @@
      },
      "timestamp": 1800000020,
      "trusted_timestamp": {
-      "rfc3161_token": null,
-      "status": "pending",
-      "timestamp": null,
-      "tsa_id": null
+      "status": "pending"
      },
      "version": "AISS-2.1"
     },
@@ -856,10 +799,7 @@
      },
      "timestamp": 1800000021,
      "trusted_timestamp": {
-      "rfc3161_token": null,
-      "status": "pending",
-      "timestamp": null,
-      "tsa_id": null
+      "status": "pending"
      },
      "version": "AISS-2.1"
     }

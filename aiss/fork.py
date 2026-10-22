@@ -26,7 +26,8 @@ Selection order (RFC §6.3):
   Step 4 — Lexicographically lowest final event hash (tie-breaker)
 
 An event counts as anchored ONLY when a verifier supplied by the caller declares it verified
-and returns the genTime of its token (tsa_verifier: event -> int genTime, or None). The
+and returns the genTime of its token (tsa_verifier: a callable taking an event and returning an
+integer genTime, or None). The
 trusted_timestamp field is detached and unsigned, so its presence, its self-declared status
 and its local timestamp prove nothing. Without a verifier no event is anchored: steps 1 and 2
 are neutral and the selection falls to the length, then the hash. The result is deterministic
@@ -269,8 +270,9 @@ def select_canonical_chain(
 
     Args:
         branches:     List of event chains (each chain is a list of events)
-        tsa_verifier: Optional callable event -> genTime (int) if the event's TSA token is
-                      verified, else None (e.g. aiss.rfc3161.make_tsa_verifier(trust_roots))
+        tsa_verifier: Optional callable taking an event and returning its genTime (int) if the
+                      event's TSA token is verified, else None
+                      (e.g. aiss.rfc3161.make_tsa_verifier(trust_roots))
 
     Returns:
         Tuple of (canonical_chain, non_canonical_branch_ids)
@@ -322,7 +324,7 @@ def detect_fork_after_finalization(
     Args:
         canonical_chain:     The selected canonical chain
         non_canonical_chains: Non-selected branches
-        tsa_verifier:        Optional callable event -> genTime (int) or None
+        tsa_verifier:        Optional callable taking an event, returning its genTime (int) or None
 
     Returns:
         True if fork occurred after a finalized (TSA-anchored) event
@@ -394,7 +396,8 @@ def resolve_fork_canonical(
     Args:
         branches:                   List of event chains (branches)
         raise_on_security_incident: Raise exception on FORK_AFTER_FINALIZATION
-        tsa_verifier:               Optional callable event -> genTime (int) or None; without
+        tsa_verifier:               Optional callable taking an event, returning its genTime (int)
+                                    or None; without
                                     it no event is anchored (see select_canonical_chain)
 
     Returns:

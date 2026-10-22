@@ -142,10 +142,13 @@
     },
     "timestamp": 1800000005,
     "trusted_timestamp": {
-     "rfc3161_token": "AAAA",
-     "status": "verified",
-     "timestamp": 1800000006,
-     "tsa_id": "tsa.example"
+     "authority": "tsa.example",
+     "hash_algorithm": "sha512",
+     "imprint": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+     "nonce": "1",
+     "status": "granted",
+     "token": "base64:AAAA",
+     "url": "https://tsa.example/tsr"
     },
     "version": "AISS-2.1"
    },

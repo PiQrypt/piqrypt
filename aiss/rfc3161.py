@@ -8,31 +8,50 @@
 # Commercial license: contact@piqrypt.com
 
 """
-RFC 3161 Trusted Timestamp Authority (TSA) Integration (RFC Section 7.1 / 8.2)
+RFC 3161 trusted timestamps (TSA tokens).
 
-Provides legally admissible timestamps from independent third-party TSAs.
-PRO feature — required for AISS-2 compliance.
+A TSA token proves that a given digest existed at the time (genTime) read from a token signed
+by a Time-Stamp Authority. Requesting a token needs no extra dependency. VERIFYING one needs
+the optional extra:  pip install "piqrypt[timestamp]"  (rfc3161-client).
 
-Supported TSAs (free):
-  - freetsa.org    (1000 req/day)
-  - timestamp.digicert.com
-  - tsa.entrust.net
+What is timestamped:
+  - AISS-2.1 events: the chain hash of the event (compute_event_hash, SHA-512, 64 bytes),
+    hashAlgorithm sha512. The imprint is recomputed from the event at verification time.
+  - AISS-1 and AISS-2.0 events: SHA-256 of the AISS-1 canonical form of the event without
+    trusted_timestamp (unchanged behaviour).
 
-Graceful degradation: if TSA unreachable, event is stored with local
-timestamp and a note that trusted timestamp is pending.
+The trusted_timestamp field is DETACHED: no signature covers it, so its presence, its
+self-declared "status" and any local time prove nothing. Only verify_tsa_token(...)
+["status"] == "verified" does, and only relative to the trust roots the caller configured.
+No root certificate is shipped with the package. Certificate revocation (OCSP, CRL) is not
+checked. A token from a free public TSA such as freetsa.org is not a qualified electronic time
+stamp (eIDAS) and this module makes no claim about legal value.
+
+Graceful degradation: if the TSA is unreachable the event is stored with a "pending"
+trusted_timestamp that retry_pending_timestamps can complete later.
+
+Compatibility note: with rfc3161-client 1.0.9, responses from DigiCert and Entrust (observed
+2026-10-22) cannot be parsed (non-canonical DER SET ordering in the embedded certificates), so
+their tokens verify as "invalid" (fail closed). freetsa.org tokens verify.
 """
 
-import hashlib
 import base64
+import binascii
+import hashlib
+import os
+import secrets
 import time
-import urllib.request
 import urllib.error
-from typing import Dict, Any, Optional
+import urllib.request
+from pathlib import Path
+from typing import Any, Callable, Dict, Iterable, List, Optional, Union
 
 from aiss.exceptions import PiQryptError
 from aiss.logger import get_logger
+from aiss.tsa_token import tsa_token_value
 
 logger = get_logger(__name__)
+
 
 # ─── Exceptions ───────────────────────────────────────────────────────────────
 class TSAError(PiQryptError):
@@ -41,7 +60,7 @@ class TSAError(PiQryptError):
 
 
 class TSAUnavailableError(TSAError):
-    """TSA server not reachable — graceful degradation applies."""
+    """TSA server not reachable, graceful degradation applies."""
     pass
 
 
@@ -67,135 +86,190 @@ DEFAULT_TSA_SERVERS = [
 ]
 
 DEFAULT_TIMEOUT = 10  # seconds
+TRUST_ROOTS_ENV = "PIQRYPT_TSA_TRUST_ROOTS"
+
+_OID_TLV = {
+    "sha256": bytes.fromhex("0609608648016503040201"),
+    "sha384": bytes.fromhex("0609608648016503040202"),
+    "sha512": bytes.fromhex("0609608648016503040203"),
+}
+_OID_DOTTED = {
+    "sha256": "2.16.840.1.101.3.4.2.1",
+    "sha384": "2.16.840.1.101.3.4.2.2",
+    "sha512": "2.16.840.1.101.3.4.2.3",
+}
+_DIGEST_SIZE = {"sha256": 32, "sha384": 48, "sha512": 64}
 
 
-# ─── RFC 3161 Request building ────────────────────────────────────────────────
-def _build_tsr_request(data_hash: bytes, hash_algorithm: str = "sha256") -> bytes:
+# ─── DER helpers and request building ────────────────────────────────────────
+def _der_length(n: int) -> bytes:
+    if n < 0x80:
+        return bytes([n])
+    raw = n.to_bytes((n.bit_length() + 7) // 8, "big")
+    return bytes([0x80 | len(raw)]) + raw
+
+
+def _der(tag: int, content: bytes) -> bytes:
+    return bytes([tag]) + _der_length(len(content)) + content
+
+
+def _der_integer(n: int) -> bytes:
+    return _der(0x02, n.to_bytes(n.bit_length() // 8 + 1, "big"))
+
+
+def _build_tsr_request(
+    data_hash: bytes,
+    hash_algorithm: str = "sha256",
+    nonce: Optional[int] = None,
+    cert_req: bool = True,
+) -> bytes:
     """
-    Build a minimal RFC 3161 TimeStampReq (DER encoded).
+    Build an RFC 3161 TimeStampReq (DER).
 
-    Structure (simplified):
-        TimeStampReq ::= SEQUENCE {
-            version     INTEGER { v1(1) },
-            messageImprint MessageImprint,
-            certReq     BOOLEAN DEFAULT FALSE
-        }
-        MessageImprint ::= SEQUENCE {
-            hashAlgorithm AlgorithmIdentifier,
-            hashedMessage OCTET STRING
-        }
+        TimeStampReq ::= SEQUENCE { version INTEGER {v1(1)}, messageImprint, nonce INTEGER
+                                    OPTIONAL, certReq BOOLEAN DEFAULT FALSE }
 
-    This is a minimal implementation using raw DER encoding.
-    For production, use python-pkcs11 or cryptography.x509.
+    `data_hash` is the digest to timestamp; its size must match `hash_algorithm`
+    (sha256, sha384 or sha512). certReq asks the TSA to embed its certificates, which
+    verification needs.
     """
-    # SHA-256 OID: 2.16.840.1.101.3.4.2.1
-    sha256_oid = bytes([
-        0x30, 0x0d,          # SEQUENCE (13 bytes)
-        0x06, 0x09,          # OID (9 bytes)
-        0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x01,  # SHA-256 OID
-        0x05, 0x00,          # NULL
-    ])
+    if hash_algorithm not in _OID_TLV:
+        raise ValueError(f"unsupported hash algorithm {hash_algorithm!r}")
+    if len(data_hash) != _DIGEST_SIZE[hash_algorithm]:
+        raise ValueError(f"{hash_algorithm} digest must be {_DIGEST_SIZE[hash_algorithm]} bytes")
+    if nonce is not None and nonce < 0:
+        raise ValueError("nonce must not be negative")
+    algorithm_identifier = _der(0x30, _OID_TLV[hash_algorithm] + b"\x05\x00")
+    message_imprint = _der(0x30, algorithm_identifier + _der(0x04, data_hash))
+    body = _der(0x02, b"\x01") + message_imprint
+    if nonce is not None:
+        body += _der_integer(nonce)
+    if cert_req:
+        body += _der(0x01, b"\xff")
+    return _der(0x30, body)
 
-    # MessageImprint
-    hash_octet = bytes([0x04, len(data_hash)]) + data_hash
-    msg_imprint = bytes([0x30, len(sha256_oid) + len(hash_octet)]) + sha256_oid + hash_octet
 
-    # Version INTEGER 1
-    version = bytes([0x02, 0x01, 0x01])
+def _read_tlv(data: bytes, offset: int):
+    tag = data[offset]
+    length = data[offset + 1]
+    start = offset + 2
+    if length & 0x80:
+        count = length & 0x7F
+        length = int.from_bytes(data[start:start + count], "big")
+        start += count
+    return tag, length, start
 
-    # certReq BOOLEAN TRUE (we want the cert)
-    cert_req = bytes([0x01, 0x01, 0xff])
 
-    # TimeStampReq SEQUENCE
-    inner = version + msg_imprint + cert_req
-    tsr = bytes([0x30, len(inner)]) + inner
-
-    return tsr
+def _pki_status(response: bytes) -> Optional[int]:
+    """PKIStatus INTEGER of a TimeStampResp (0 granted, 1 grantedWithMods, 2+ refused)."""
+    try:
+        tag, _, body = _read_tlv(response, 0)
+        if tag != 0x30:
+            return None
+        tag, _, info = _read_tlv(response, body)
+        if tag != 0x30:
+            return None
+        tag, length, value = _read_tlv(response, info)
+        if tag != 0x02:
+            return None
+        return int.from_bytes(response[value:value + length], "big")
+    except IndexError:
+        return None
 
 
 def _parse_tsr_response(response_bytes: bytes) -> Dict[str, Any]:
-    """
-    Parse RFC 3161 TimeStampResp minimally.
-
-    Returns basic status and token info.
-    Full DER parsing would require pyasn1 or cryptography library.
-    """
-    # Minimal check: first bytes should be SEQUENCE (0x30)
+    """Minimal parse of a TimeStampResp: DER SEQUENCE and PKIStatus (no signature check)."""
     if not response_bytes or response_bytes[0] != 0x30:
-        raise TSAVerificationError("Invalid TSR response — not a DER SEQUENCE")
-
-    # PKIStatusInfo is first element — status 0x00 = granted
-    # This is a simplified check; proper implementation needs full ASN.1 parser
-    status_granted = b'\x02\x01\x00'  # INTEGER 0 (granted)
-    status_granted_with_mods = b'\x02\x01\x01'  # INTEGER 1 (grantedWithMods)
-
-    response_b64 = base64.b64encode(response_bytes).decode("ascii")
-
-    # Minimal status extraction
-    is_granted = (
-        status_granted in response_bytes[:50] or
-        status_granted_with_mods in response_bytes[:50]
-    )
-
+        raise TSAVerificationError("Invalid TSR response, not a DER SEQUENCE")
+    status = _pki_status(response_bytes)
     return {
-        "status": "granted" if is_granted else "unknown",
-        "token_b64": response_b64,
+        "status": "granted" if status in (0, 1) else "unknown",
+        "pki_status": status,
+        "token_b64": base64.b64encode(response_bytes).decode("ascii"),
         "token_size_bytes": len(response_bytes),
     }
+
+
+def _check_response_matches_request(
+    response: bytes, hash_algorithm: str, digest: bytes, nonce: int
+) -> None:
+    """The response must be granted and echo the request's digest, algorithm and nonce.
+
+    With rfc3161-client the response is decoded and compared field by field. Without it (or
+    if it cannot parse this TSA's response) a byte-level check looks for the digest and the DER
+    nonce in the response. Neither verifies the TSA signature: that is verify_tsa_token's job."""
+    status = _pki_status(response)
+    if status not in (0, 1):
+        raise TSAError(f"TSA did not grant the timestamp (PKIStatus {status})")
+    try:
+        import rfc3161_client
+        decoded = rfc3161_client.decode_timestamp_response(response)
+        info = decoded.tst_info
+    except ImportError:
+        decoded = None
+    except Exception as exc:
+        logger.warning(f"TSA response not parsable by rfc3161-client ({exc}); byte-level checks only")
+        decoded = None
+    if decoded is not None:
+        if info.message_imprint.hash_algorithm.dotted_string != _OID_DOTTED[hash_algorithm]:
+            raise TSAError("TSA response uses another hash algorithm than the request")
+        if info.message_imprint.message != digest:
+            raise TSAError("TSA response imprint differs from the request")
+        if info.nonce != nonce:
+            raise TSAError("TSA response nonce differs from the request")
+        return
+    if digest not in response:
+        raise TSAError("TSA response does not contain the requested imprint")
+    if _der_integer(nonce) not in response:
+        raise TSAError("TSA response does not echo the request nonce")
 
 
 # ─── TSA request ──────────────────────────────────────────────────────────────
 def request_timestamp(
     data: bytes,
     tsa_url: Optional[str] = None,
-    timeout: int = DEFAULT_TIMEOUT
+    timeout: int = DEFAULT_TIMEOUT,
+    *,
+    hash_algorithm: str = "sha256",
+    digest: Optional[bytes] = None,
+    schema: str = "legacy",
 ) -> Dict[str, Any]:
     """
     Request a trusted timestamp from a TSA (RFC 3161).
 
-    PRO feature. Gracefully degrades if TSA unreachable.
-
     Args:
-        data: Bytes to timestamp (typically canonical event JSON)
-        tsa_url: TSA URL (defaults to freetsa.org)
-        timeout: Request timeout in seconds
+        data:           Bytes to timestamp (hashed with `hash_algorithm`), ignored if `digest`
+        tsa_url:        TSA URL (defaults to freetsa.org); http or https only
+        timeout:        Request timeout in seconds
+        hash_algorithm: "sha256" (default), "sha384" or "sha512"
+        digest:         Precomputed digest to timestamp (size must match hash_algorithm)
+        schema:         "legacy" (AISS-1 and AISS-2.0 events) or "aiss21"
 
     Returns:
-        TSA token dict:
-        {
-            "authority": "freetsa.org",
-            "timestamp": 1739382403,
-            "token": "base64:...",
-            "hash_algorithm": "sha256",
-            "data_hash": "hex...",
-            "status": "granted"
-        }
+        "aiss21": {"status": "granted", "token": "base64:...", "hash_algorithm", "imprint" (hex),
+                   "nonce" (hex), "authority", "url"}
+        "legacy": the previous fields (authority, url, timestamp, token, hash_algorithm,
+                  data_hash, status, token_size_bytes) plus "nonce" (hex). The local
+                  "timestamp" is the request time and is NOT a proof.
+
+    The request carries a random nonce and the response must echo it, along with the digest.
 
     Raises:
-        TSAUnavailableError: If TSA unreachable (caller should handle gracefully)
-        TSAError: If TSA returns error status
-
-    Example:
-        >>> from aiss.rfc3161 import request_timestamp
-        >>> from aiss.canonical import canonicalize
-        >>> token = request_timestamp(canonicalize(event))
-        >>> event["trusted_timestamp"] = token
+        TSAUnavailableError: TSA unreachable (callers handle it gracefully)
+        TSAError: refused request, or a response that does not match the request
     """
-    from aiss.license import require_pro
-    require_pro("trusted_timestamps")
-
     url = tsa_url or DEFAULT_TSA_SERVERS[0]["url"]
-    tsa_name = next(
-        (s["name"] for s in DEFAULT_TSA_SERVERS if s["url"] == url),
-        url
-    )
+    if not url.lower().startswith(("http://", "https://")):
+        raise TSAError("TSA URL must be http or https")
+    tsa_name = next((s["name"] for s in DEFAULT_TSA_SERVERS if s["url"] == url), url)
 
-    # Hash the data
-    data_hash = hashlib.sha256(data).digest()
-    data_hash_hex = data_hash.hex()
-
-    # Build request
-    tsr_request = _build_tsr_request(data_hash)
+    if digest is None:
+        digest = hashlib.new(hash_algorithm, data).digest()
+    nonce = secrets.randbits(63) | (1 << 62)
+    try:
+        tsr_request = _build_tsr_request(digest, hash_algorithm, nonce=nonce)
+    except ValueError as exc:
+        raise TSAError(str(exc))
 
     logger.info(f"Requesting trusted timestamp from {tsa_name}")
 
@@ -216,32 +290,63 @@ def request_timestamp(
             response_bytes = resp.read()
 
         parsed = _parse_tsr_response(response_bytes)
+        if parsed["status"] != "granted":
+            raise TSAError(f"TSA did not grant the timestamp (PKIStatus {parsed['pki_status']})")
+        _check_response_matches_request(response_bytes, hash_algorithm, digest, nonce)
 
-        result = {
-            "authority": tsa_name,
-            "url": url,
-            "timestamp": int(time.time()),  # approx — real time in token
-            "token": f"base64:{parsed['token_b64']}",
-            "hash_algorithm": "sha256",
-            "data_hash": data_hash_hex,
-            "status": parsed["status"],
-            "token_size_bytes": parsed["token_size_bytes"],
-        }
+        token = f"base64:{parsed['token_b64']}"
+        if schema == "aiss21":
+            result = {
+                "status": "granted",
+                "token": token,
+                "hash_algorithm": hash_algorithm,
+                "imprint": digest.hex(),
+                "nonce": format(nonce, "x"),
+                "authority": tsa_name,
+                "url": url,
+            }
+        else:
+            result = {
+                "authority": tsa_name,
+                "url": url,
+                "timestamp": int(time.time()),  # local request time, NOT a proof
+                "token": token,
+                "hash_algorithm": hash_algorithm,
+                "data_hash": digest.hex(),
+                "nonce": format(nonce, "x"),
+                "status": parsed["status"],
+                "token_size_bytes": parsed["token_size_bytes"],
+            }
 
         logger.info("Trusted timestamp received")
-
         return result
 
     except urllib.error.URLError as e:
         raise TSAUnavailableError(
             f"TSA '{tsa_name}' unreachable: {e}\n"
-            "Event will be stored with local timestamp only.\n"
+            "Event will be stored with a pending trusted timestamp.\n"
             "Run 'piqrypt timestamp --retry' later to add trusted timestamp."
         )
     except TSAError:
         raise
     except Exception as e:
         raise TSAError(f"TSA request failed: {e}")
+
+
+def _imprint_for_event(event: Dict[str, Any]):
+    """(hash_algorithm, digest, schema) of what a TSA token commits to for this event."""
+    if event.get("version") == "AISS-2.1":
+        from aiss.chain import compute_event_hash
+        return "sha512", bytes.fromhex(compute_event_hash(event)), "aiss21"
+    from aiss.canonical import canonicalize
+    event_for_tsa = {k: v for k, v in event.items() if k != "trusted_timestamp"}
+    return "sha256", hashlib.sha256(canonicalize(event_for_tsa)).digest(), "legacy"
+
+
+def _pending_placeholder(event: Dict[str, Any], note: str) -> Dict[str, Any]:
+    if event.get("version") == "AISS-2.1":
+        return {"status": "pending", "note": note}
+    return {"status": "pending", "note": note, "local_fallback_at": int(time.time())}
 
 
 def stamp_event_with_tsa(
@@ -252,22 +357,22 @@ def stamp_event_with_tsa(
     """
     Add a trusted timestamp to an already-signed event.
 
-    The TSA signs the canonical form of the event *excluding* the
-    trusted_timestamp field (which is a detached field, not covered by
-    the event signatures).  This guarantees that adding the TSA token
-    does not invalidate the Ed25519 / ML-DSA-65 signatures.
+    The trusted_timestamp field is detached: it is not covered by the event signatures, so
+    adding the token does not invalidate them.
 
     What the TSA token commits to:
-      canonicalize({k: v for k, v in event.items()
-                    if k not in ("trusted_timestamp",)})
+      - AISS-2.1: the chain hash of the event (SHA-512 of the JCS form without signatures and
+        trusted_timestamp), hashAlgorithm sha512;
+      - AISS-1 / AISS-2.0: SHA-256 of canonicalize(event without trusted_timestamp).
 
     Args:
         event: Already-signed AISS event
         tsa_url: TSA URL (defaults to freetsa.org)
-        fail_gracefully: If True, return event without TSA on network error
+        fail_gracefully: If True, return the event with a pending trusted_timestamp when the
+            TSA is unreachable
 
     Returns:
-        Event with 'trusted_timestamp' field updated
+        Event with the 'trusted_timestamp' field set
 
     Example:
         >>> event = stamp_event(priv, agent_id, payload)
@@ -275,14 +380,11 @@ def stamp_event_with_tsa(
         >>> event["trusted_timestamp"]["authority"]
         'freetsa.org'
     """
-    from aiss.canonical import canonicalize
-
-    # Exclude trusted_timestamp — it must not be part of the TSA-committed content
-    event_for_tsa = {k: v for k, v in event.items() if k != "trusted_timestamp"}
-    canonical_bytes = canonicalize(event_for_tsa)
+    hash_algorithm, digest, schema = _imprint_for_event(event)
 
     try:
-        tsa_token = request_timestamp(canonical_bytes, tsa_url=tsa_url)
+        tsa_token = request_timestamp(
+            b"", tsa_url=tsa_url, hash_algorithm=hash_algorithm, digest=digest, schema=schema)
         event = dict(event)
         event["trusted_timestamp"] = tsa_token
 
@@ -291,114 +393,249 @@ def stamp_event_with_tsa(
     except TSAUnavailableError as e:
         if fail_gracefully:
             logger.warning(
-                f"TSA unavailable — stored with local timestamp only: {e}"
+                f"TSA unavailable, stored with a pending trusted timestamp: {e}"
             )
             event = dict(event)
-            event["trusted_timestamp"] = {
-                "status": "pending",
-                "note": "TSA unavailable at stamp time. Retry with: piqrypt timestamp --retry",
-                "local_fallback_at": int(time.time()),
-            }
+            event["trusted_timestamp"] = _pending_placeholder(
+                event, "TSA unavailable at stamp time. Retry with: piqrypt timestamp --retry")
         else:
             raise
 
     return event
 
 
-def verify_tsa_token(
-    event: Dict[str, Any],
-    expected_data: Optional[bytes] = None
-) -> Dict[str, Any]:
-    """
-    Verify a TSA token embedded in an event.
+# ─── Trust roots ──────────────────────────────────────────────────────────────
+TrustRoots = Union[None, str, os.PathLike, Iterable[Any]]
 
-    For full verification of the token's TSA signature, the cryptography
-    library with x509 support is needed. This function performs available checks.
 
-    Args:
-        event: Event containing trusted_timestamp field
-        expected_data: Optional original data to verify hash against
-
-    Returns:
-        Verification result dict
-    """
-    tsa = event.get("trusted_timestamp")
-
-    if not tsa:
-        return {
-            "verified": False,
-            "status": "NO_TSA_TOKEN",
-            "message": "No trusted_timestamp field in event"
-        }
-
-    if tsa.get("status") == "pending":
-        return {
-            "verified": False,
-            "status": "TSA_PENDING",
-            "message": "Trusted timestamp was not obtained at stamp time"
-        }
-
-    # Verify hash if data provided
-    if expected_data:
-        data_hash = hashlib.sha256(expected_data).hexdigest()
-        if data_hash != tsa.get("data_hash"):
-            return {
-                "verified": False,
-                "status": "HASH_MISMATCH",
-                "message": "TSA token data hash does not match event"
-            }
-
-    token_b64 = tsa.get("token", "").replace("base64:", "")
-
-    if not token_b64:
-        return {
-            "verified": False,
-            "status": "INVALID_TOKEN",
-            "message": "TSA token is empty"
-        }
-
+def _certificates_from_bytes(raw: bytes) -> List[Any]:
+    from cryptography import x509
     try:
-        token_bytes = base64.b64decode(token_b64)
+        return list(x509.load_pem_x509_certificates(raw))
+    except ValueError:
+        return [x509.load_der_x509_certificate(raw)]
+
+
+def _certificates_from_path(path: Path) -> List[Any]:
+    certificates: List[Any] = []
+    files = sorted(p for p in path.iterdir() if p.suffix.lower() in (".pem", ".crt", ".cer")) \
+        if path.is_dir() else [path]
+    for file in files:
+        try:
+            certificates.extend(_certificates_from_bytes(file.read_bytes()))
+        except Exception as exc:
+            logger.warning(f"TSA trust root {file} ignored: {exc}")
+    return certificates
+
+
+def load_trust_roots(trust_roots: TrustRoots = None) -> List[Any]:
+    """
+    Resolve the TSA trust store into a list of x509 certificates.
+
+    Order: the `trust_roots` argument (a path to a PEM file or a directory, or an iterable of
+    PEM text, PEM/DER bytes, paths or certificates); else the PIQRYPT_TSA_TRUST_ROOTS
+    environment variable (paths separated by os.pathsep); else the directory
+    ~/.piqrypt/tsa_roots/ (under PIQRYPT_HOME when set). No root is shipped with the package:
+    an empty result means no chain can be validated.
+    """
+    from cryptography import x509
+    certificates: List[Any] = []
+
+    def add_item(item: Any) -> None:
+        if isinstance(item, x509.Certificate):
+            certificates.append(item)
+        elif isinstance(item, (str, os.PathLike)) and not (
+                isinstance(item, str) and "BEGIN CERTIFICATE" in item):
+            certificates.extend(_certificates_from_path(Path(item)))
+        elif isinstance(item, str):
+            certificates.extend(_certificates_from_bytes(item.encode("ascii")))
+        elif isinstance(item, (bytes, bytearray)):
+            certificates.extend(_certificates_from_bytes(bytes(item)))
+        else:
+            raise TypeError(f"unsupported trust root {type(item).__name__}")
+
+    if trust_roots is not None:
+        if isinstance(trust_roots, (str, os.PathLike, bytes, bytearray, x509.Certificate)):
+            add_item(trust_roots)
+        else:
+            for item in trust_roots:
+                add_item(item)
+        return certificates
+    env = os.environ.get(TRUST_ROOTS_ENV)
+    if env:
+        for part in env.split(os.pathsep):
+            if part.strip():
+                certificates.extend(_certificates_from_path(Path(part.strip())))
+        return certificates
+    home = Path(os.environ.get("PIQRYPT_HOME", str(Path.home() / ".piqrypt")))
+    default_dir = home / "tsa_roots"
+    if default_dir.is_dir():
+        certificates.extend(_certificates_from_path(default_dir))
+    return certificates
+
+
+# ─── Verification ─────────────────────────────────────────────────────────────
+def _result(status: str, reason: str, **extra: Any) -> Dict[str, Any]:
+    result = {
+        "status": status,
+        "verified": status == "verified",
+        "reason": reason,
+        "gen_time": None,
+        "tsa": None,
+        "chain": "not_validated",
+        "revocation": "not_checked",
+    }
+    result.update(extra)
+    return result
+
+
+def _decode_token(value: str) -> bytes:
+    raw = value[7:] if value.startswith("base64:") else value
+    return base64.b64decode(raw, validate=True)
+
+
+def _tsa_subject(decoded: Any) -> Optional[str]:
+    try:
+        from cryptography import x509
+        signers = list(decoded.signed_data.signer_infos)
+        if len(signers) != 1:
+            return None
+        signer = signers[0]
+        for der in decoded.signed_data.certificates:
+            certificate = x509.load_der_x509_certificate(der)
+            if certificate.issuer == signer.issuer and certificate.serial_number == signer.serial_number:
+                return certificate.subject.rfc4514_string()
     except Exception:
-        return {
-            "verified": False,
-            "status": "INVALID_TOKEN",
-            "message": "TSA token is not valid base64"
-        }
+        return None
+    return None
 
-    # Try cryptography library for full verification
+
+def verify_tsa_token(event: Dict[str, Any], trust_roots: TrustRoots = None) -> Dict[str, Any]:
+    """
+    Verify the TSA token carried by an event.
+
+    The expected hash algorithm and digest are RECOMPUTED from the event; nothing is read from
+    the token or from the event's own data_hash/imprint fields for that purpose. Checked: the
+    token is a granted TimeStampResp, its message imprint (algorithm and bytes) equals the
+    recomputed one, the nonce kept in trusted_timestamp equals the token's, and, when trust
+    roots are configured, the CMS signature, the TSA certificate (critical extendedKeyUsage
+    timeStamping), the chain to a configured root, and the certificate validity at genTime.
+
+    Returns a dict:
+        status:     "verified" | "structure_only" | "pending" | "invalid"
+        verified:   True only when status == "verified"
+        reason:     human explanation
+        gen_time:   genTime read from the token (UTC epoch seconds), None if unreadable;
+                    unauthenticated unless status == "verified"
+        tsa:        subject of the TSA certificate, when found
+        chain:      "validated" or "not_validated"
+        revocation: always "not_checked" (no OCSP or CRL in 1.10)
+
+    "structure_only" means a well-formed token whose chain was NOT validated (no trust root
+    configured, or rfc3161-client absent). It is never "verified".
+    """
+    trusted = event.get("trusted_timestamp") if isinstance(event, dict) else None
+    value = tsa_token_value(event)
+    if value is None:
+        if isinstance(trusted, dict) and trusted.get("status") == "pending":
+            return _result("pending", "no TSA token was obtained yet")
+        return _result("invalid", "the event carries no TSA token")
+
     try:
-        from cryptography.hazmat.primitives import hashes, serialization
-        from cryptography.x509 import load_der_x509_certificate
-        # Full TSA token verification would require pkcs7/cms parsing
-        # For now: basic structure check
-        is_valid_der = token_bytes[0] == 0x30
+        token_bytes = _decode_token(value)
+    except (binascii.Error, ValueError):
+        return _result("invalid", "the TSA token is not valid base64")
+    if not token_bytes:
+        return _result("invalid", "the TSA token is empty")
 
-        return {
-            "verified": is_valid_der,
-            "status": "STRUCTURE_VALID" if is_valid_der else "INVALID_STRUCTURE",
-            "authority": tsa.get("authority"),
-            "token_timestamp": tsa.get("timestamp"),
-            "message": (
-                "Token structure valid. Full TSA signature verification "
-                "requires: pip install cryptography"
-                if is_valid_der
-                else "Invalid DER structure in TSA token"
-            )
-        }
+    try:
+        hash_algorithm, digest, schema = _imprint_for_event(event)
+    except Exception as exc:
+        return _result("invalid", f"the event imprint cannot be recomputed: {exc}")
+
+    stored_nonce = trusted.get("nonce")
+    nonce_value: Optional[int] = None
+    if stored_nonce is not None:
+        try:
+            nonce_value = int(stored_nonce, 16) if isinstance(stored_nonce, str) else None
+        except ValueError:
+            nonce_value = None
+        if nonce_value is None:
+            return _result("invalid", "the stored nonce is not a hexadecimal string")
+    elif schema == "aiss21":
+        return _result("invalid", "the stored nonce is missing")
+
+    try:
+        import rfc3161_client
     except ImportError:
-        # Basic check only
-        is_valid_der = len(token_bytes) > 10 and token_bytes[0] == 0x30
-        return {
-            "verified": is_valid_der,
-            "status": "BASIC_CHECK_ONLY",
-            "authority": tsa.get("authority"),
-            "token_timestamp": tsa.get("timestamp"),
-            "message": (
-                "Basic structure check passed. "
-                "Install cryptography for full verification: pip install cryptography"
-            )
-        }
+        rfc3161_client = None
+
+    if rfc3161_client is None:
+        if _pki_status(token_bytes) not in (0, 1):
+            return _result("invalid", "the token is not a granted TimeStampResp")
+        if digest not in token_bytes:
+            return _result("invalid", "the token does not contain the recomputed imprint")
+        if nonce_value is not None and _der_integer(nonce_value) not in token_bytes:
+            return _result("invalid", "the token does not contain the stored nonce")
+        return _result(
+            "structure_only",
+            "rfc3161-client is not installed: structure checked, chain not validated "
+            "(pip install \"piqrypt[timestamp]\")")
+
+    try:
+        decoded = rfc3161_client.decode_timestamp_response(token_bytes)
+        info = decoded.tst_info
+    except Exception as exc:
+        return _result("invalid", f"the token cannot be parsed by rfc3161-client: {exc}")
+
+    gen_time = int(info.gen_time.timestamp())
+    subject = _tsa_subject(decoded)
+    common = {"gen_time": gen_time, "tsa": subject}
+    if int(decoded.status) != 0:
+        return _result("invalid", f"PKIStatus {int(decoded.status)} is not granted", **common)
+    if info.message_imprint.hash_algorithm.dotted_string != _OID_DOTTED[hash_algorithm]:
+        return _result("invalid", f"the token does not use {hash_algorithm}", **common)
+    if info.message_imprint.message != digest:
+        return _result("invalid", "the token imprint differs from the event imprint", **common)
+    if nonce_value is not None and info.nonce != nonce_value:
+        return _result("invalid", "the token nonce differs from the stored nonce", **common)
+
+    try:
+        roots = load_trust_roots(trust_roots)
+    except Exception as exc:
+        return _result("invalid", f"trust roots unreadable: {exc}", **common)
+    if not roots:
+        return _result(
+            "structure_only",
+            "no TSA trust root configured: imprint and nonce match, chain not validated", **common)
+
+    try:
+        builder = rfc3161_client.VerifierBuilder(roots=roots)
+        if nonce_value is not None:
+            builder = builder.nonce(nonce_value)
+        builder.build().verify(decoded, digest)
+    except Exception as exc:
+        return _result("invalid", f"verification failed: {exc}", **common)
+    return _result(
+        "verified", "signature, certificate, chain, imprint and nonce verified",
+        chain="validated", **common)
+
+
+def make_tsa_verifier(trust_roots: TrustRoots = None) -> Callable[[Dict[str, Any]], Optional[int]]:
+    """
+    Verifier for aiss.fork: returns genTime (int) for an event whose token is VERIFIED against
+    the trust roots, None otherwise (structure_only, pending, invalid, absent).
+
+    The trust roots are loaded once. The canonical-chain selection is deterministic for the same
+    input and the same trust store.
+    """
+    roots = load_trust_roots(trust_roots)
+
+    def verifier(event: Dict[str, Any]) -> Optional[int]:
+        result = verify_tsa_token(event, roots)
+        return result["gen_time"] if result["status"] == "verified" else None
+
+    return verifier
 
 
 # ─── Retry pending timestamps ─────────────────────────────────────────────────
@@ -409,7 +646,8 @@ def retry_pending_timestamps(
     """
     Retry TSA timestamp for events where it failed at stamp time.
 
-    Called by: piqrypt timestamp --retry
+    The imprint follows the event version (see stamp_event_with_tsa). Called by:
+    piqrypt timestamp --retry
 
     Args:
         agent_id: Agent whose events to retry
@@ -419,7 +657,6 @@ def retry_pending_timestamps(
         {"retried": N, "succeeded": M, "failed": K}
     """
     from aiss.memory import load_events, store_event
-    from aiss.canonical import canonicalize
 
     events = load_events(agent_id=agent_id)
     pending = [
@@ -434,8 +671,9 @@ def retry_pending_timestamps(
     for event in pending:
         retried += 1
         try:
-            canonical_bytes = canonicalize(event)
-            token = request_timestamp(canonical_bytes, tsa_url=tsa_url)
+            hash_algorithm, digest, schema = _imprint_for_event(event)
+            token = request_timestamp(
+                b"", tsa_url=tsa_url, hash_algorithm=hash_algorithm, digest=digest, schema=schema)
             event["trusted_timestamp"] = token
             store_event(event)
             succeeded += 1
@@ -452,8 +690,11 @@ __all__ = [
     "request_timestamp",
     "stamp_event_with_tsa",
     "verify_tsa_token",
+    "make_tsa_verifier",
+    "load_trust_roots",
     "retry_pending_timestamps",
     "DEFAULT_TSA_SERVERS",
+    "TRUST_ROOTS_ENV",
     "TSAError",
     "TSAUnavailableError",
     "TSAVerificationError",

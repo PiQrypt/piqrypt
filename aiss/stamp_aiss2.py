@@ -10,7 +10,7 @@ AISS-2.1 Hybrid Signatures (RFC AISS-1.1 Section 11.3)
 
 Post-quantum + classical dual signatures for maximum security.
 Includes mandatory fields for AISS-2.1 compliance (RFC §11.3):
-  - trusted_timestamp:  RFC 3161 TSA token (required, may be pending)
+  - trusted_timestamp:  detached RFC 3161 TSA token field (granted, or pending until obtained)
   - authority_chain:    Delegation chain from legal entity to agent
   - signatures:         Ed25519 + ML-DSA-65 dual signatures
 
@@ -201,13 +201,9 @@ def stamp_event_aiss2_hybrid(
         }
     }
 
-    # Add trusted_timestamp placeholder AFTER signing (detached — not covered by signatures)
-    event["trusted_timestamp"] = {
-        "status": "pending",
-        "rfc3161_token": None,
-        "tsa_id": None,
-        "timestamp": None,
-    }
+    # Add trusted_timestamp placeholder AFTER signing (detached, not covered by signatures).
+    # It proves nothing: only a verified TSA token does (aiss.rfc3161.verify_tsa_token).
+    event["trusted_timestamp"] = {"status": "pending"}
 
     # Request TSA timestamp (Pro feature — graceful degradation if offline)
     if tsa_stamp_after:

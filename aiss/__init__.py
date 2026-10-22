@@ -133,6 +133,7 @@ from aiss.rfc3161 import (
     request_timestamp,
     stamp_event_with_tsa,
     verify_tsa_token,
+    make_tsa_verifier,
     retry_pending_timestamps,
     TSAError, TSAUnavailableError,
 )
