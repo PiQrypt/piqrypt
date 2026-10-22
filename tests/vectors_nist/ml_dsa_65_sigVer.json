@@ -6,7 +6,7 @@
   "revision": "FIPS204",
   "parameterSet": "ML-DSA-65",
   "vsId": 42,
-  "note": "tgId 3 (external/pure) tcId 31-45, tgId 9 (internal) tcId 121-135",
+  "note": "tgId 3 (external/pure) tcId 31-45, tgId 10 (internal, externalMu=False) tcId 136-150",
   "tests": [
     {
       "tcId": 31,
