@@ -194,7 +194,7 @@ def check_binding(identity):
 
 
 def resolve_identity(identity):
-    """-> (form, ed_pub, pq_pub, assurance); raises Reject on any invalid identity."""
+    """Returns (form, ed_pub, pq_pub, assurance); raises Reject on any invalid identity."""
     form = identity_form(identity)
     if form == "native":
         ed_pub = strict_b64(identity.get("public_key_classical"), "public_key_classical", ED_SIZE)

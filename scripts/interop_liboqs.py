@@ -7,8 +7,8 @@ Interopérabilité ML-DSA-65 : liboqs (module `oqs`) contre dilithium-py, sur le
 AISS-2.1 (test_vectors_aiss21/). Lancé par .github/workflows/interop-liboqs.yml.
 
 Contrôles :
-  1. liboqs signe les messages M' de hash_and_message.json -> dilithium-py ET liboqs vérifient ;
-  2. dilithium-py signe les mêmes M' (déterministe, contexte vide) -> liboqs vérifie ;
+  1. liboqs signe les messages M' de hash_and_message.json, puis dilithium-py ET liboqs vérifient ;
+  2. dilithium-py signe les mêmes M' (déterministe, contexte vide), puis liboqs vérifie ;
   3. un message altéré est rejeté par les deux ;
   4. toutes les vérifications des vecteurs sont rejouées avec liboqs comme vérificateur
      ML-DSA-65 (verify_standalone.py, dont le vérificateur PQ est remplacé par liboqs) :
