@@ -451,7 +451,7 @@ _V2_HEADER_SIZE  = 4 + 1 + 1 + 1 + 3 + 16 + 12 + 4  # = 42 bytes
 
 # Scrypt parameter bounds (DoS prevention)
 _V2_N_LOG2_MIN = 10   # 2^10 = 1 024  (tests only)
-_V2_N_LOG2_MAX = 20   # 2^20 = 1 048 576 (~1 GB RAM)
+_V2_N_LOG2_MAX = 20   # borne per-param ; mémoire réelle contrôlée par 128*N*r ≤ 1 GiB
 _V2_R_MIN, _V2_R_MAX = 1, 64
 _V2_P_MIN, _V2_P_MAX = 1, 64
 
@@ -476,8 +476,23 @@ def _v2_build_header(
     )
 
 
+def _v2_validate_passphrase(passphrase: object) -> None:
+    """Valide la passphrase : doit être une str non vide et non uniquement des espaces."""
+    if not isinstance(passphrase, str):
+        raise ValueError(
+            f"La passphrase doit être une str, reçu {type(passphrase).__name__}"
+        )
+    if not passphrase.strip():
+        raise ValueError("La passphrase ne peut pas être vide ou uniquement des espaces")
+
+
 def _v2_derive_key(passphrase: str, salt: bytes, n_log2: int, r: int, p: int) -> bytes:
-    """Derive AES-256 key from passphrase using scrypt with validated parameters."""
+    """Derive AES-256 key from passphrase using scrypt with validated parameters.
+
+    La passphrase est normalisée NFKC avant encodage UTF-8 (v2 uniquement) afin
+    que des représentations Unicode équivalentes (NFC, NFD, NFKD) produisent
+    toujours la même clé.
+    """
     if not (_V2_N_LOG2_MIN <= n_log2 <= _V2_N_LOG2_MAX):
         raise KeyFileCorruptedError(
             f"v2: n_log2={n_log2} hors bornes [{_V2_N_LOG2_MIN}, {_V2_N_LOG2_MAX}]"
@@ -490,7 +505,20 @@ def _v2_derive_key(passphrase: str, salt: bytes, n_log2: int, r: int, p: int) ->
         raise KeyFileCorruptedError(
             f"v2: p={p} hors bornes [{_V2_P_MIN}, {_V2_P_MAX}]"
         )
-    kdf = Scrypt(salt=salt, length=KEY_SIZE, n=2 ** n_log2, r=r, p=p)
+    # Borne mémoire combinée : 128 * N * r <= 1 GiB (prévention DoS)
+    N = 1 << n_log2
+    if 128 * N * r > (1 << 30):
+        raise KeyFileCorruptedError(
+            f"v2: 128*N*r={128 * N * r} dépasse 1 GiB (limite mémoire)"
+        )
+    # Borne coût combinée : N * r * p <= 2^24 (prévention DoS)
+    if N * r * p > (1 << 24):
+        raise KeyFileCorruptedError(
+            f"v2: N*r*p={N * r * p} dépasse 2^24 (limite coût)"
+        )
+    import unicodedata
+    passphrase = unicodedata.normalize("NFKC", passphrase)
+    kdf = Scrypt(salt=salt, length=KEY_SIZE, n=N, r=r, p=p)
     return kdf.derive(passphrase.encode("utf-8"))
 
 
@@ -505,14 +533,22 @@ def encrypt_pq_private_key(
     Encrypt an ML-DSA-65 private key (4032 bytes) with format v2.
 
     Args:
-        private_key_bytes: ML-DSA-65 secret key (4032 bytes)
-        passphrase:        Passphrase (mandatory)
-        n_log2:            log2(N) for scrypt (default: log2(_SCRYPT_N))
-        r, p:              scrypt parameters
+        private_key_bytes: ML-DSA-65 secret key (4032 bytes exactement)
+        passphrase:        Passphrase (str non vide, normalisée NFKC)
+        n_log2:            log2(N) pour scrypt (défaut : log2(_SCRYPT_N))
+        r, p:              paramètres scrypt
 
     Returns:
-        v2-encrypted blob (_V2_HEADER_SIZE + len(key) + 16 bytes)
+        Blob chiffré v2 (_V2_HEADER_SIZE + len(key) + 16 bytes)
+
+    Raises:
+        ValueError: Si passphrase invalide ou taille de clé incorrecte
     """
+    _v2_validate_passphrase(passphrase)
+    if len(private_key_bytes) != 4032:
+        raise ValueError(
+            f"ML-DSA-65 secret key doit faire 4032 bytes, reçu {len(private_key_bytes)}"
+        )
     import math
     if n_log2 is None:
         n_log2 = int(math.log2(_SCRYPT_N))
@@ -546,9 +582,11 @@ def decrypt_pq_private_key(encrypted_data: bytes, passphrase: str) -> bytes:
         ML-DSA-65 secret key bytes
 
     Raises:
+        ValueError:              Passphrase invalide (non-str, vide, espaces)
         KeyFileCorruptedError:   Format or bounds invalid
         InvalidPassphraseError:  Wrong passphrase (GCM tag mismatch)
     """
+    _v2_validate_passphrase(passphrase)
     if len(encrypted_data) < _V2_HEADER_SIZE:
         raise KeyFileCorruptedError(
             f"v2: données trop courtes ({len(encrypted_data)} bytes, "
@@ -597,6 +635,10 @@ def decrypt_pq_private_key(encrypted_data: bytes, passphrase: str) -> bytes:
     finally:
         _secure_erase(aes_key)
 
+    if len(plaintext) != 4032:
+        raise KeyFileCorruptedError(
+            f"v2: clé déchiffrée {len(plaintext)} bytes (attendu 4032 pour ML-DSA-65)"
+        )
     return plaintext
 
 
@@ -623,20 +665,29 @@ def save_encrypted_pq_key(
 
     encrypted = encrypt_pq_private_key(private_key_bytes, passphrase, n_log2=n_log2)
 
-    tmp = path.with_suffix(".key.enc.tmp")
+    # Nom du temporaire : même dossier, suffixe .tmp (évite la double extension)
+    tmp = path.parent / (path.name + ".tmp")
+    import platform as _platform
     try:
-        tmp.write_bytes(encrypted)
-        import platform as _platform
         if _platform.system() != "Windows":
-            tmp.chmod(0o600)
+            # O_CREAT|O_EXCL : pas d'écrasement ; 0o600 positionné à la création.
+            fd = os.open(str(tmp), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+            try:
+                os.write(fd, encrypted)
+                os.fsync(fd)
+            finally:
+                os.close(fd)
         else:
-            # Windows does not support POSIX permission bits; the file is
-            # protected by the user's ACL inherited from the parent directory.
+            # Windows : les bits POSIX ne sont pas supportés ; l'ACL héritée
+            # du répertoire parent protège le fichier.
+            tmp.write_bytes(encrypted)
             logger.debug("[KeyStore v2] 0o600 non appliqué (Windows)")
-        os.replace(tmp, path)
+        os.replace(str(tmp), str(path))
     except Exception:
-        if tmp.exists():
-            tmp.unlink(missing_ok=True)
+        try:
+            os.unlink(str(tmp))
+        except OSError:
+            pass
         raise
 
     logger.info(f"[KeyStore v2] Clé PQ chiffrée sauvegardée : {path}")

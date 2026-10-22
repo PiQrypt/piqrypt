@@ -162,7 +162,7 @@ class TestKeyStoreV2RoundTrip(unittest.TestCase):
         key = _make_pq_key(4032)
         path = Path(self.tmpdir) / "private_pq.key.enc"
         save_fn(key, "pw", path, n_log2=10)
-        tmp = path.with_suffix(".key.enc.tmp")
+        tmp = path.parent / (path.name + ".tmp")
         self.assertFalse(tmp.exists(), f".tmp file left behind: {tmp}")
 
     def test_v1_loader_rejects_v2_file(self):
@@ -242,6 +242,164 @@ class TestKeyStoreV2Header(unittest.TestCase):
         blob[_V2_HEADER_SIZE + 4] ^= 0x01
         with self.assertRaises(InvalidPassphraseError):
             decrypt_pq_private_key(bytes(blob), "pw")
+
+
+class TestKeyStoreV2Corrections(unittest.TestCase):
+    """B.2 corrections — bornes combinées, passphrase, taille clé, fsync, NFKC."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+
+    def _ks(self):
+        from aiss.key_store import (
+            encrypt_pq_private_key, decrypt_pq_private_key,
+            save_encrypted_pq_key, load_encrypted_pq_key,
+        )
+        return encrypt_pq_private_key, decrypt_pq_private_key, save_encrypted_pq_key, load_encrypted_pq_key
+
+    # ── Passphrase validation ──────────────────────────────────────────────────
+
+    def test_passphrase_none_raises(self):
+        enc_fn, _, _, _ = self._ks()
+        with self.assertRaises((ValueError, TypeError)):
+            enc_fn(_make_pq_key(4032), None, n_log2=10)
+
+    def test_passphrase_empty_raises(self):
+        enc_fn, _, _, _ = self._ks()
+        with self.assertRaises(ValueError):
+            enc_fn(_make_pq_key(4032), "", n_log2=10)
+
+    def test_passphrase_whitespace_raises(self):
+        enc_fn, _, _, _ = self._ks()
+        with self.assertRaises(ValueError):
+            enc_fn(_make_pq_key(4032), "   ", n_log2=10)
+
+    def test_passphrase_int_raises(self):
+        enc_fn, _, _, _ = self._ks()
+        with self.assertRaises((ValueError, TypeError)):
+            enc_fn(_make_pq_key(4032), 12345, n_log2=10)
+
+    def test_decrypt_passphrase_none_raises(self):
+        enc_fn, dec_fn, _, _ = self._ks()
+        blob = enc_fn(_make_pq_key(4032), "valid", n_log2=10)
+        with self.assertRaises((ValueError, TypeError)):
+            dec_fn(blob, None)
+
+    def test_decrypt_passphrase_empty_raises(self):
+        enc_fn, dec_fn, _, _ = self._ks()
+        blob = enc_fn(_make_pq_key(4032), "valid", n_log2=10)
+        with self.assertRaises(ValueError):
+            dec_fn(blob, "")
+
+    # ── Taille de clé ─────────────────────────────────────────────────────────
+
+    def test_wrong_key_size_at_write_raises(self):
+        enc_fn, _, _, _ = self._ks()
+        with self.assertRaises(ValueError):
+            enc_fn(_make_pq_key(32), "valid", n_log2=10)
+
+    def test_wrong_key_size_4031_raises(self):
+        enc_fn, _, _, _ = self._ks()
+        with self.assertRaises(ValueError):
+            enc_fn(_make_pq_key(4031), "valid", n_log2=10)
+
+    def test_wrong_key_size_4033_raises(self):
+        enc_fn, _, _, _ = self._ks()
+        with self.assertRaises(ValueError):
+            enc_fn(_make_pq_key(4033), "valid", n_log2=10)
+
+    # ── Bornes scrypt ─────────────────────────────────────────────────────────
+
+    def test_r_above_max_raises(self):
+        enc_fn, _, _, _ = self._ks()
+        with self.assertRaises(Exception):
+            enc_fn(_make_pq_key(4032), "valid", n_log2=10, r=65)
+
+    def test_p_above_max_raises(self):
+        enc_fn, _, _, _ = self._ks()
+        with self.assertRaises(Exception):
+            enc_fn(_make_pq_key(4032), "valid", n_log2=10, p=65)
+
+    def test_memory_bound_exceeded_raises(self):
+        """128 * N * r > 1 GiB must be refused (e.g. n_log2=20, r=9 → 128*1M*9=1152MB)."""
+        from aiss.key_store import decrypt_pq_private_key, KeyFileCorruptedError, _v2_build_header, V2_ALGO_MLDSA65_SK, V2_KDF_SCRYPT, _V2_HEADER_SIZE
+        # Build a crafted header with n_log2=20, r=9, p=1 → 128*1048576*9 > 1 GiB
+        salt = secrets.token_bytes(16)
+        nonce = secrets.token_bytes(12)
+        hdr = _v2_build_header(V2_ALGO_MLDSA65_SK, V2_KDF_SCRYPT, 20, 9, 1, salt, nonce, 4048)
+        # Append dummy ciphertext of matching length
+        blob = hdr + bytes(4048)
+        with self.assertRaises(KeyFileCorruptedError):
+            decrypt_pq_private_key(blob, "valid")
+
+    def test_cost_bound_exceeded_raises(self):
+        """N * r * p > 2^24 must be refused (n_log2=14, r=64, p=64 → 16384*64*64=67M > 2^24=16M)."""
+        from aiss.key_store import decrypt_pq_private_key, KeyFileCorruptedError, _v2_build_header, V2_ALGO_MLDSA65_SK, V2_KDF_SCRYPT
+        salt = secrets.token_bytes(16)
+        nonce = secrets.token_bytes(12)
+        # n_log2=14, r=64, p=64 → memory=128MB<1GiB (OK), cost=67M>2^24 (FAILS)
+        hdr = _v2_build_header(V2_ALGO_MLDSA65_SK, V2_KDF_SCRYPT, 14, 64, 64, salt, nonce, 4048)
+        blob = hdr + bytes(4048)
+        with self.assertRaises(KeyFileCorruptedError):
+            decrypt_pq_private_key(blob, "valid")
+
+    # ── Sweep des 42 octets d'en-tête ─────────────────────────────────────────
+
+    def test_header_byte_sweep(self):
+        """Flip each of the 42 header bytes with masks 0x01, 0x80, 0xFF — must all raise."""
+        from aiss.key_store import (
+            encrypt_pq_private_key, decrypt_pq_private_key,
+            KeyFileCorruptedError, InvalidPassphraseError, _V2_HEADER_SIZE,
+        )
+        blob = encrypt_pq_private_key(_make_pq_key(4032), "valid", n_log2=10)
+        errors = []
+        for byte_idx in range(_V2_HEADER_SIZE):
+            for mask in (0x01, 0x80, 0xFF):
+                ba = bytearray(blob)
+                ba[byte_idx] ^= mask
+                if ba == bytearray(blob):
+                    continue  # XOR was a no-op (e.g. 0x00 ^ 0x00)
+                try:
+                    decrypt_pq_private_key(bytes(ba), "valid")
+                    errors.append(f"byte {byte_idx} mask {mask:#x}: no exception raised")
+                except (KeyFileCorruptedError, InvalidPassphraseError):
+                    pass
+                except Exception as exc:
+                    pass  # Other exceptions also acceptable
+        self.assertFalse(errors, "\n".join(errors))
+
+    # ── Fichier temporaire 0o600 (POSIX uniquement) ────────────────────────────
+
+    @unittest.skipIf(platform.system() == "Windows", "0o600 N/A on Windows")
+    def test_tmp_file_0o600_posix(self):
+        """Temp file must be created with 0o600 on POSIX (checked via inaccessible test)."""
+        import stat
+        _, _, save_fn, _ = self._ks()
+        key = _make_pq_key(4032)
+        path = Path(self.tmpdir) / "private_pq.key.enc"
+        # After successful save, only the final file remains — verify 0o600
+        save_fn(key, "pw", path, n_log2=10)
+        mode = path.stat().st_mode & 0o777
+        self.assertEqual(mode, 0o600, f"Expected 0o600, got {oct(mode)}")
+
+    # ── Normalisation NFKC ────────────────────────────────────────────────────
+
+    def test_nfkc_normalization_round_trip(self):
+        """NFC and NFD forms of the same passphrase must give identical round-trip."""
+        import unicodedata
+        enc_fn, dec_fn, _, _ = self._ks()
+        key = _make_pq_key(4032)
+        # Use a passphrase with characters that differ between NFC/NFD/NFKC
+        base_pw = "café"  # NFC: café (precomposed é)
+        nfc_pw = unicodedata.normalize("NFC", base_pw)
+        nfd_pw = unicodedata.normalize("NFD", base_pw)
+        # Both forms must encrypt + decrypt successfully with each other
+        blob_nfc = enc_fn(key, nfc_pw, n_log2=10)
+        recovered = dec_fn(blob_nfc, nfd_pw)
+        self.assertEqual(key, recovered, "NFD passphrase must decrypt a blob encrypted with NFC")
+        blob_nfd = enc_fn(key, nfd_pw, n_log2=10)
+        recovered2 = dec_fn(blob_nfd, nfc_pw)
+        self.assertEqual(key, recovered2, "NFC passphrase must decrypt a blob encrypted with NFD")
 
 
 if __name__ == "__main__":
