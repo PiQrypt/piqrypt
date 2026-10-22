@@ -36,7 +36,8 @@ and must never be used anywhere else.
   lengths as 4-byte big-endian integers; `pk_ed` is 32 bytes, `pk_pq` is 1952 bytes.
 * **Signed message**: `M' = domain_prefix || len(label) || label || 0x00 || JCS(document)`,
   `label = b"Ed25519+ML-DSA-65"` (one length byte), empty context (the `0x00`).
-  The document excludes `signatures` and `trusted_timestamp`.
+  For events the document excludes `signatures` and `trusted_timestamp`; for bindings and
+  rotation attestations it excludes `signatures` only.
   Domain prefixes: events `b"PiQrypt-AISS-2.1\x00"`, binding `b"PiQrypt-AISS-2.1-binding\x00"`,
   rotation `b"PiQrypt-AISS-2.1-rotation\x00"`.
 * **Signatures**: `"base64:" + base64` (strict alphabet, no whitespace), Ed25519 and
@@ -78,11 +79,21 @@ never equal one of these byte for byte. Verification is identical.
   library's verdict on every vector.
 * With the independent verifier: `python test_vectors_aiss21/verify_standalone.py`
   prints one verdict per vector and exits non-zero on any mismatch with `"valid"`.
+  `pytest tests/test_verify_standalone.py` also checks that its verdicts equal the
+  library's on every vector.
 * In your own implementation: load each file, apply the rules above to each vector and
   compare your verdict with `"valid"`. Vector shapes: see the `description` of each file.
 
 When comparing files byte for byte, normalize line endings: a checkout with
 `core.autocrlf=true` converts the LF files to CRLF.
+
+## Independent verifier
+
+`verify_standalone.py` imports nothing from `aiss` or `piqrypt` and re-implements the rules
+above from this document. It guards against the implementation defining the specification:
+any difference between its verdicts and the library's on a vector is a defect to be
+investigated, not smoothed over. Its independence is in the code, not in the authorship: it
+was written in the same project as the library and the generator.
 
 ## Limits
 
