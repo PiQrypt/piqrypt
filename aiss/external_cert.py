@@ -270,10 +270,14 @@ def validate_and_certify(
             "events_count": len(audit_data.get("events", [])),
         },
         "legal_statement": (
-            "PiQrypt Inc. has independently verified that this audit export "
-            "was cryptographically signed by the agent and that the event chain "
-            "maintains integrity. This certification provides third-party attestation "
-            "for legal and compliance purposes."
+            "Checked by PiQrypt Inc. when this attestation was issued: the SHA-256 hash of "
+            "the export file equals the export_hash declared in the agent's certificate, the "
+            "chain integrity hash recomputed from the events equals the one declared in the "
+            "export, and the events count matches when it is declared. The agent signature "
+            "was checked for presence only, because the agent's public key was not part of "
+            "the request. Revocation was not checked. This attestation is signed with the "
+            "PiQrypt CA key. It is neither an independent audit nor a legal or regulatory "
+            "statement."
         ),
     }
 

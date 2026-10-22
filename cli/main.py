@@ -647,33 +647,40 @@ def cmd_certify_verify(args):
     """Verify PiQrypt-certified export (piqrypt certify-verify AUDIT.piqrypt-certified)"""
     from aiss.external_cert import verify_piqrypt_certification, CertificationError
 
-    print("Verifying PiQrypt certification...")
+    print("Verifying PiQrypt attestation...")
     print(f"  File: {args.certified_file}")
     print()
 
     try:
         result = verify_piqrypt_certification(args.certified_file)
 
-        print("✅ PiQrypt Certification VALID")
+        print("✅ Attestation signature verified locally")
         print("=" * 60)
-        print(f"  Certificate ID : {result['certificate_id']}")
-        print(f"  Certified At   : {result['certified_at']}")
-        print(f"  Certified By   : {result['certified_by']}")
-        print(f"  CA ID          : {result['ca_id'][:16]}...")
+        print(f"  Attestation ID : {result['certificate_id']}")
+        print(f"  Issued At      : {result['certified_at']}")
+        print(f"  Issued By      : {result['certified_by']}")
+        print(f"  CA key ID      : {result['ca_id'][:16]}...")
         print()
-        print("  Verification Results:")
+        print("  Checked locally by this command:")
+        print("    - the file format version")
+        print("    - the signature of the attestation, with the CA public key shipped with this package")
+        print()
+        print("  Not checked by this command:")
+        print("    - the audit data in the file: event signatures and hash chain")
+        print("    - timestamp tokens (see the tsa section of get_verification_report)")
+        print("    - revocation of any key or certificate")
+        print()
+        print("  Values recorded in the attestation by its issuer (not re-checked here):")
         for check, status in result['verification_results'].items():
             print(f"    {check:20s}: {status}")
         print()
-        print("📜 Legal Statement:")
-        print(f"   {result['legal_statement']}")
-        print()
-        print("✅ This export has been independently certified by PiQrypt Inc.")
-        print("   Valid for legal and compliance purposes.")
+        print("  The file also holds a free-text statement from the issuer; this command")
+        print("  neither displays nor endorses it.")
+        print("  This output is neither an independent audit nor a legal or regulatory statement.")
         print()
 
     except CertificationError as e:
-        print("❌ Certification verification FAILED")
+        print("❌ Attestation verification FAILED")
         print(f"   Reason: {e}")
         sys.exit(1)
 
