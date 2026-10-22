@@ -28,7 +28,7 @@ Recommended by NIST until 2030+ for transition period.
 import time
 import base64
 import binascii
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, TYPE_CHECKING
 
 from aiss.crypto import ed25519, dilithium
 from aiss.canonical_aiss21 import canonicalize as _jcs_canonicalize
@@ -36,6 +36,9 @@ from aiss.stamp import generate_nonce
 from aiss.logger import log_event_signed_alias, log_debug
 from aiss.telemetry import track
 from aiss.exceptions import CryptoBackendError
+
+if TYPE_CHECKING:  # pragma: no cover
+    from aiss.signer import HybridSigner
 
 # Pro-tier enforcement — imported at module level so ImportError from within
 # aiss.license (e.g. a missing dependency) is never silently swallowed.
@@ -78,8 +81,8 @@ def _pro_only(feature_name: str):
 
 @_pro_only("AISS-2 hybrid signatures")
 def stamp_event_aiss2_hybrid(
-    private_key_ed25519: bytes,
-    private_key_dilithium: bytes,
+    private_key_ed25519: Optional[bytes],
+    private_key_dilithium: Optional[bytes],
     agent_id: str,
     payload: Dict[str, Any],
     previous_hash: Optional[str] = None,
@@ -87,6 +90,7 @@ def stamp_event_aiss2_hybrid(
     timestamp: Optional[int] = None,
     authority_chain: Optional[List[Dict[str, Any]]] = None,
     tsa_stamp_after: bool = True,
+    signer: Optional["HybridSigner"] = None,
 ) -> Dict[str, Any]:
     """
     Create AISS-2.1 event with hybrid signatures (Ed25519 + ML-DSA-65).
@@ -105,6 +109,10 @@ def stamp_event_aiss2_hybrid(
         timestamp:             Optional Unix timestamp (auto-generated if None)
         authority_chain:       Optional list of authority statements (RFC §5)
         tsa_stamp_after:       Auto-request TSA timestamp after signing (default: True)
+        signer:                Optional aiss.signer.HybridSigner. When given, the two
+            signatures come from it (the private-key parameters must then be None) and the
+            event is only emitted if BOTH signatures are returned and verify: a SignerError
+            is raised otherwise. Without it, behaviour is unchanged.
 
     Returns:
         AISS-2.1 event with dual signatures, authority chain, and TSA token
@@ -124,6 +132,11 @@ def stamp_event_aiss2_hybrid(
         >>> "trusted_timestamp" in event
         True
     """
+    if signer is not None and (private_key_ed25519 is not None or private_key_dilithium is not None):
+        raise ValueError("Pass either private keys or a signer, not both")
+    if signer is None and (private_key_ed25519 is None or private_key_dilithium is None):
+        raise ValueError("Both private keys are required when no signer is given")
+
     # Check Dilithium backend availability
     if not dilithium or not dilithium.is_available():
         raise CryptoBackendError(
@@ -164,11 +177,16 @@ def stamp_event_aiss2_hybrid(
         "has_authority_chain": bool(authority_chain),
     })
 
-    # Sign M' with Ed25519 (classical)
-    sig_ed25519 = ed25519.sign(private_key_ed25519, signed_msg)
+    if signer is not None:
+        # Both signatures or a SignerError: nothing is emitted on failure.
+        hybrid_signature = signer.sign(signed_msg)
+        sig_ed25519, sig_dilithium = hybrid_signature.classical, hybrid_signature.post_quantum
+    else:
+        # Sign M' with Ed25519 (classical)
+        sig_ed25519 = ed25519.sign(private_key_ed25519, signed_msg)
 
-    # Sign M' with ML-DSA-65 (post-quantum) — same message as Ed25519
-    sig_dilithium = dilithium.sign(private_key_dilithium, signed_msg)
+        # Sign M' with ML-DSA-65 (post-quantum) — same message as Ed25519
+        sig_dilithium = dilithium.sign(private_key_dilithium, signed_msg)
 
     # Add dual signatures — AISS-2.1 uses "base64:<b64>" for both algorithms.
     # AISS-2.0 kept base58 (Ed25519) and plain base64 (ML-DSA); this is the new format.
@@ -228,9 +246,15 @@ def stamp_genesis_event_aiss2_hybrid(
     public_key_pq: Optional[bytes] = None,
     tsa_stamp_after: bool = True,
     rotation_previous_hash: Optional[str] = None,
+    signer: Optional["HybridSigner"] = None,
 ) -> Dict[str, Any]:
     """
     Crée l'événement genèse AISS-2.1 avec signatures hybrides.
+
+    signer : HybridSigner optionnel (aiss.signer). Quand il est fourni, private_key_ed25519
+    et private_key_dilithium doivent être None, ses clés publiques doivent correspondre à
+    public_key_ed25519 (et public_key_pq s'il est fourni), et les deux signatures viennent de
+    lui (SignerError sinon, aucun événement émis). Sans lui, comportement inchangé.
 
     rotation_previous_hash : pour une genèse issue d'une rotation de clés, hash
     (128 caractères hexadécimaux minuscules) de l'événement de rotation qui termine
@@ -268,6 +292,12 @@ def stamp_genesis_event_aiss2_hybrid(
     from aiss.canonical import hash_bytes
     from aiss.identity import derive_agent_id_aiss21
 
+    if signer is not None:
+        signer_ed, signer_pq = signer.public_keys()
+        if signer_ed != bytes(public_key_ed25519) or (
+                public_key_pq is not None and signer_pq != bytes(public_key_pq)):
+            raise ValueError("The signer's public keys differ from the public keys given")
+
     if rotation_previous_hash is not None and not (
         isinstance(rotation_previous_hash, str)
         and _re.fullmatch(r"[0-9a-f]{128}", rotation_previous_hash)
@@ -300,6 +330,7 @@ def stamp_genesis_event_aiss2_hybrid(
         payload,
         previous_hash=genesis_hash,
         tsa_stamp_after=tsa_stamp_after,
+        signer=signer,
     )
 
 
