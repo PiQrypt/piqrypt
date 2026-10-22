@@ -763,16 +763,20 @@ _ED25519_PK_SIZE = 32
 _MLDSA65_PK_SIZE = 1952
 
 
-def _binding_signed_message(unsigned_binding: Dict[str, Any]) -> bytes:
-    """Message M' signé par les deux clés : même construction que les événements
-    AISS-2.1 (étiquette d'algorithmes, contexte vide, JCS du document sans
-    signatures), avec le préfixe de domaine de la liaison."""
+def _domain_signed_message(domain_prefix: bytes, unsigned_doc: Dict[str, Any]) -> bytes:
+    """Message M' : préfixe de domaine, étiquette d'algorithmes, contexte vide, puis JCS
+    du document sans signatures (même construction que les événements AISS-2.1)."""
     from aiss.canonical_aiss21 import canonicalize
     from aiss.stamp_aiss2 import _ALGO_LABEL
     return (
-        _BINDING_DOMAIN_PREFIX + bytes([len(_ALGO_LABEL)]) + _ALGO_LABEL + b"\x00"
-        + canonicalize(unsigned_binding)
+        domain_prefix + bytes([len(_ALGO_LABEL)]) + _ALGO_LABEL + b"\x00"
+        + canonicalize(unsigned_doc)
     )
+
+
+def _binding_signed_message(unsigned_binding: Dict[str, Any]) -> bytes:
+    """Message M' signé par les deux clés pour une liaison d'identité."""
+    return _domain_signed_message(_BINDING_DOMAIN_PREFIX, unsigned_binding)
 
 
 def _b64_prefixed(raw: bytes) -> str:
@@ -1095,6 +1099,187 @@ def upgrade_agent_identity(
         "backup_path":       str(backup_path),
         "binding_assurance": "classical_only",
     }
+
+
+# ─── AISS-2.1 : rotation de clés hybride (quatre signatures) ──────────────────
+
+# Préfixe de domaine propre à la rotation (distinct des événements et de la liaison).
+_ROTATION_DOMAIN_PREFIX = b"PiQrypt-AISS-2.1-rotation\x00"
+_ROTATION_SIGNATURES = (
+    ("previous_classical", "Ed25519"),
+    ("previous_post_quantum", "ML-DSA-65"),
+    ("new_classical", "Ed25519"),
+    ("new_post_quantum", "ML-DSA-65"),
+)
+
+
+def _aiss21_identity_keys(identity: Any):
+    """Valide une identité AISS-2.1 via identity_binding_assurance et renvoie
+    (agent_id, clé Ed25519, clé ML-DSA-65) — hybride native ou mise à niveau.
+
+    Raises:
+        IdentityBindingError: identité invalide, ambiguë ou AISS-1 pure
+    """
+    if not isinstance(identity, dict):
+        raise IdentityBindingError("identité absente ou invalide")
+    if "public_key_classical" in identity and ("binding" in identity or "public_key" in identity):
+        raise IdentityBindingError("identité ambiguë")
+    identity_binding_assurance(identity)  # lève si invalide
+    source = identity if "public_key_classical" in identity else identity["binding"]
+    return (
+        identity["agent_id"],
+        _decode_b64_prefixed(source["public_key_classical"], "public_key_classical",
+                             _ED25519_PK_SIZE),
+        _decode_b64_prefixed(source["public_key_pq"], "public_key_pq", _MLDSA65_PK_SIZE),
+    )
+
+
+def create_rotation_attestation_hybrid(
+    previous_identity: Dict[str, Any],
+    previous_private_key_ed: bytes,
+    previous_private_key_pq: bytes,
+    new_private_key_ed: bytes,
+    new_public_key_ed: bytes,
+    new_private_key_pq: bytes,
+    new_public_key_pq: bytes,
+    rotation_timestamp: Optional[int] = None,
+) -> Dict[str, Any]:
+    """
+    Attestation de rotation hybride AISS-2.1 : l'ancienne identité désigne la nouvelle,
+    et les DEUX paires de clés (ancienne et nouvelle) signent le même message.
+
+    Document : version "AISS-2.1", type "key_rotation", previous_agent_id,
+    previous_public_key_classical / previous_public_key_pq, new_agent_id (dérivé des
+    deux nouvelles clés), new_public_key_classical / new_public_key_pq (préfixe
+    "base64:"), rotation_timestamp. Quatre signatures (previous_classical,
+    previous_post_quantum, new_classical, new_post_quantum) sur un message à préfixe de
+    domaine b"PiQrypt-AISS-2.1-rotation\\x00" (étiquette d'algorithmes, contexte vide,
+    JCS du document sans signatures).
+
+    L'ancienne identité peut être hybride native ou mise à niveau ; ses clés sont celles
+    de `previous_identity`, validée par identity_binding_assurance.
+
+    Limite (zéroïsation) : les clés privées reçues sont des bytes de l'appelant ;
+    cette fonction ne les copie pas et ne peut pas les effacer. Voir _secure_erase.
+
+    Raises:
+        IdentityBindingError: ancienne identité invalide
+        ValueError: tailles de clés incorrectes, ou clés privées ne correspondant pas
+            aux clés publiques (auto-contrôle de l'attestation produite)
+    """
+    from aiss.crypto import dilithium
+
+    previous_id, previous_pk_ed, previous_pk_pq = _aiss21_identity_keys(previous_identity)
+    new_agent_id = derive_agent_id_aiss21(new_public_key_ed, new_public_key_pq)
+
+    unsigned = {
+        "version": "AISS-2.1",
+        "type": "key_rotation",
+        "previous_agent_id": previous_id,
+        "previous_public_key_classical": _b64_prefixed(previous_pk_ed),
+        "previous_public_key_pq": _b64_prefixed(previous_pk_pq),
+        "new_agent_id": new_agent_id,
+        "new_public_key_classical": _b64_prefixed(new_public_key_ed),
+        "new_public_key_pq": _b64_prefixed(new_public_key_pq),
+        "rotation_timestamp": int(time.time()) if rotation_timestamp is None
+        else int(rotation_timestamp),
+    }
+    message = _domain_signed_message(_ROTATION_DOMAIN_PREFIX, unsigned)
+    signers = {
+        "previous_classical": lambda: ed25519.sign(previous_private_key_ed, message),
+        "previous_post_quantum": lambda: dilithium.sign(previous_private_key_pq, message),
+        "new_classical": lambda: ed25519.sign(new_private_key_ed, message),
+        "new_post_quantum": lambda: dilithium.sign(new_private_key_pq, message),
+    }
+    attestation = dict(unsigned)
+    attestation["signatures"] = {
+        name: {"algorithm": algorithm, "signature": _b64_prefixed(signers[name]())}
+        for name, algorithm in _ROTATION_SIGNATURES
+    }
+    if not verify_rotation_attestation_hybrid(attestation, previous_identity):
+        raise ValueError(
+            "Attestation de rotation invalide : les clés privées ne correspondent pas "
+            "aux clés publiques"
+        )
+    return attestation
+
+
+def _check_rotation_attestation(attestation: Any, previous_identity: Any) -> None:
+    from aiss.crypto import dilithium
+    from aiss.exceptions import InvalidSignatureError
+
+    if not isinstance(attestation, dict):
+        raise IdentityBindingError("attestation absente ou invalide")
+    if attestation.get("version") != "AISS-2.1" or attestation.get("type") != "key_rotation":
+        raise IdentityBindingError("version ou type d'attestation inattendu")
+    if not isinstance(attestation.get("rotation_timestamp"), int) \
+            or isinstance(attestation.get("rotation_timestamp"), bool):
+        raise IdentityBindingError("rotation_timestamp invalide")
+
+    previous_id, previous_pk_ed, previous_pk_pq = _aiss21_identity_keys(previous_identity)
+    if attestation.get("previous_agent_id") != previous_id:
+        raise IdentityBindingError("previous_agent_id différent de l'identité précédente")
+    if _decode_b64_prefixed(attestation.get("previous_public_key_classical"),
+                            "previous_public_key_classical", _ED25519_PK_SIZE) != previous_pk_ed:
+        raise IdentityBindingError("ancienne clé classique différente de l'identité précédente")
+    if _decode_b64_prefixed(attestation.get("previous_public_key_pq"),
+                            "previous_public_key_pq", _MLDSA65_PK_SIZE) != previous_pk_pq:
+        raise IdentityBindingError("ancienne clé PQ différente de l'identité précédente")
+
+    new_pk_ed = _decode_b64_prefixed(attestation.get("new_public_key_classical"),
+                                     "new_public_key_classical", _ED25519_PK_SIZE)
+    new_pk_pq = _decode_b64_prefixed(attestation.get("new_public_key_pq"),
+                                     "new_public_key_pq", _MLDSA65_PK_SIZE)
+    if attestation.get("new_agent_id") != derive_agent_id_aiss21(new_pk_ed, new_pk_pq):
+        raise IdentityBindingError("new_agent_id ne dérive pas des deux nouvelles clés")
+
+    signatures = attestation.get("signatures")
+    if not isinstance(signatures, dict):
+        raise IdentityBindingError("signatures absentes")
+    message = _domain_signed_message(
+        _ROTATION_DOMAIN_PREFIX, {k: v for k, v in attestation.items() if k != "signatures"})
+    keys = {
+        "previous_classical": previous_pk_ed, "previous_post_quantum": previous_pk_pq,
+        "new_classical": new_pk_ed, "new_post_quantum": new_pk_pq,
+    }
+    for name, algorithm in _ROTATION_SIGNATURES:
+        entry = signatures.get(name)
+        if not isinstance(entry, dict) or entry.get("algorithm") != algorithm:
+            raise IdentityBindingError(f"signature {name} absente ou d'algorithme inattendu")
+        sig = _decode_b64_prefixed(entry.get("signature"), f"signature {name}")
+        if algorithm == "Ed25519":
+            try:
+                ed25519.verify(keys[name], message, sig)
+            except InvalidSignatureError:
+                raise IdentityBindingError(f"signature {name} invalide")
+        elif not dilithium.verify(keys[name], message, sig):
+            raise IdentityBindingError(f"signature {name} invalide")
+
+
+def verify_rotation_attestation_hybrid(
+    attestation: Dict[str, Any],
+    previous_identity: Dict[str, Any],
+) -> bool:
+    """
+    Vérifie une attestation de rotation hybride : les quatre signatures, new_agent_id
+    dérivé des deux nouvelles clés, anciennes clés égales à celles de `previous_identity`
+    (validée par identity_binding_assurance), décodage strict ("base64:", alphabet,
+    tailles 32 et 1952).
+
+    Returns:
+        True si valide, False pour toute anomalie (jamais d'exception sur un document
+        malformé).
+
+    Raises:
+        CryptoBackendError: backend ML-DSA-65 absent (vérification impossible)
+    """
+    from aiss.exceptions import InvalidSignatureError
+    try:
+        _check_rotation_attestation(attestation, previous_identity)
+    except (IdentityBindingError, InvalidSignatureError, KeyError, TypeError,
+            ValueError, AttributeError):
+        return False
+    return True
 
 
 def list_agent_identities() -> list:

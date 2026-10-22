@@ -54,6 +54,8 @@ from aiss.identity import (
     verify_identity_binding,
     identity_binding_assurance,
     IdentityBindingError,
+    create_rotation_attestation_hybrid,
+    verify_rotation_attestation_hybrid,
 )
 from aiss.stamp import stamp_event, stamp_genesis_event
 from aiss.verify import verify_signature, verify_chain, verify_event
