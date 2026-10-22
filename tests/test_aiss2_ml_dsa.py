@@ -1044,6 +1044,17 @@ class TestVerifyChainAISS21(unittest.TestCase):
 class TestSHA512ChainHash(unittest.TestCase):
     """A.3 — compute_event_hash dispatches on version: SHA-512 for AISS-2.1, SHA-256 otherwise."""
 
+    def setUp(self):
+        import aiss.license as lic_module
+        from aiss.crypto import dilithium
+        self._orig_lic = lic_module._license
+        lic_module._license = _make_license("pro")
+        dilithium.reset_demo_counter()
+
+    def tearDown(self):
+        import aiss.license as lic_module
+        lic_module._license = self._orig_lic
+
     def test_aiss21_hash_is_128_chars(self):
         """AISS-2.1 event hash must be 128-char hex (SHA-512)."""
         from aiss.chain import compute_event_hash
@@ -1129,6 +1140,17 @@ class TestSHA512ChainHash(unittest.TestCase):
 
 class TestBase64PrefixEncoding(unittest.TestCase):
     """A.2 — AISS-2.1 signatures use 'base64:<b64>' for both Ed25519 and ML-DSA-65."""
+
+    def setUp(self):
+        import aiss.license as lic_module
+        from aiss.crypto import dilithium
+        self._orig_lic = lic_module._license
+        lic_module._license = _make_license("pro")
+        dilithium.reset_demo_counter()
+
+    def tearDown(self):
+        import aiss.license as lic_module
+        lic_module._license = self._orig_lic
 
     def _make_event(self):
         if _SKIP:
