@@ -99,13 +99,10 @@ def lib_chain(v):
 
 
 def lib_identity(v):
-    from aiss.exceptions import AISSError
     from aiss.identity import IdentityBindingError, identity_binding_assurance
-    from aiss.verify import _identity_form
     try:
-        _identity_form(v["identity"])  # rejette les documents ambigus
         return identity_binding_assurance(v["identity"]) == v["expected_assurance"]
-    except (AISSError, IdentityBindingError):
+    except IdentityBindingError:
         return False
 
 

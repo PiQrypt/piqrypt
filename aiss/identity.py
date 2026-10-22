@@ -967,11 +967,20 @@ def identity_binding_assurance(identity: Dict[str, Any]) -> str:
     - "classical_only" : identité AISS-1 mise à niveau, reposant sur une liaison valide
       (agent_id issu de la clé Ed25519 seule ; la clé ML-DSA-65 lui est liée par signature).
 
+    Un document qui porte public_key_classical avec binding ou avec public_key est ambigu :
+    il est rejeté ici même.
+
     Raises:
-        IdentityBindingError: dans tous les autres cas, y compris une identité AISS-1 pure.
+        IdentityBindingError: document ambigu, et tous les autres cas, y compris une
+            identité AISS-1 pure.
     """
     if not isinstance(identity, dict):
         raise IdentityBindingError("identité absente ou invalide")
+    if "public_key_classical" in identity and ("binding" in identity or "public_key" in identity):
+        raise IdentityBindingError(
+            "identité ambiguë : public_key_classical ne peut pas être combinée à "
+            "binding ou à public_key"
+        )
     if "public_key_classical" in identity and "public_key_pq" in identity:
         pk_ed = _decode_b64_prefixed(
             identity["public_key_classical"], "public_key_classical", _ED25519_PK_SIZE)
