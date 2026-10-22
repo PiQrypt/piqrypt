@@ -24,7 +24,7 @@ import json
 import struct
 import time
 from pathlib import Path
-from typing import Dict, Any, Tuple, Optional
+from typing import Dict, Any, List, Tuple, Optional
 
 from aiss.crypto import ed25519
 from aiss.canonical import hash_bytes
@@ -1226,13 +1226,15 @@ def create_rotation_attestation_hybrid(
 
     Raises:
         IdentityBindingError: ancienne identité invalide
-        ValueError: tailles de clés incorrectes, ou clés privées ne correspondant pas
-            aux clés publiques (auto-contrôle de l'attestation produite)
+        ValueError: tailles de clés incorrectes, rotation vers soi-même, ou clés privées
+            ne correspondant pas aux clés publiques (auto-contrôle de l'attestation produite)
     """
     from aiss.crypto import dilithium
 
     previous_id, previous_pk_ed, previous_pk_pq = _aiss21_identity_keys(previous_identity)
     new_agent_id = derive_agent_id_aiss21(new_public_key_ed, new_public_key_pq)
+    if new_agent_id == previous_id:
+        raise ValueError("Rotation vers soi-même refusée : new_agent_id == previous_agent_id")
 
     unsigned = {
         "version": "AISS-2.1",
@@ -1294,6 +1296,8 @@ def _check_rotation_attestation(attestation: Any, previous_identity: Any) -> Non
                                      "new_public_key_pq", _MLDSA65_PK_SIZE)
     if attestation.get("new_agent_id") != derive_agent_id_aiss21(new_pk_ed, new_pk_pq):
         raise IdentityBindingError("new_agent_id ne dérive pas des deux nouvelles clés")
+    if attestation["new_agent_id"] == previous_id:
+        raise IdentityBindingError("rotation vers soi-même : new_agent_id == previous_agent_id")
 
     signatures = attestation.get("signatures")
     if not isinstance(signatures, dict):
@@ -1340,6 +1344,129 @@ def verify_rotation_attestation_hybrid(
         _check_rotation_attestation(attestation, previous_identity)
     except (IdentityBindingError, InvalidSignatureError, KeyError, TypeError,
             ValueError, AttributeError):
+        return False
+    return True
+
+
+# ─── AISS-2.1 : rotation ancrée dans la chaîne (RFC §12.2) ────────────────────
+
+def create_rotation_event_aiss21(
+    previous_identity: Dict[str, Any],
+    previous_private_key_ed: bytes,
+    previous_private_key_pq: bytes,
+    new_private_key_ed: bytes,
+    new_public_key_ed: bytes,
+    new_private_key_pq: bytes,
+    new_public_key_pq: bytes,
+    previous_hash: str,
+    rotation_timestamp: Optional[int] = None,
+) -> Dict[str, Any]:
+    """
+    Événement AISS-2.1 de rotation, dernier événement de l'ANCIENNE chaîne.
+
+    Signé en hybride par les anciennes clés (stamp_event_aiss2_hybrid, licence Pro
+    requise comme pour tout événement hybride) sous l'agent_id de l'ancien agent. Son
+    payload contient event_type "key_rotation" et l'attestation à quatre signatures de
+    create_rotation_attestation_hybrid. La genèse de la nouvelle chaîne s'y ancre :
+
+        old_chain: E1 → ... → En → ROTATION   (previous_hash = hash de En)
+        new_chain: genèse(previous_hash = hash(ROTATION)) → ...
+
+        rot  = create_rotation_event_aiss21(..., previous_hash=hash_de_En)
+        gen  = stamp_genesis_event_aiss2_hybrid(..., public_key_pq=new_pub_pq,
+                   rotation_previous_hash=compute_event_hash(rot))
+
+    Args:
+        previous_hash: hash du dernier événement de l'ancienne chaîne
+
+    Raises:
+        IdentityBindingError, ValueError: voir create_rotation_attestation_hybrid
+    """
+    from aiss.stamp_aiss2 import stamp_event_aiss2_hybrid
+
+    if not isinstance(previous_hash, str) or not previous_hash:
+        raise ValueError("previous_hash (hash du dernier événement de l'ancienne chaîne) requis")
+    attestation = create_rotation_attestation_hybrid(
+        previous_identity, previous_private_key_ed, previous_private_key_pq,
+        new_private_key_ed, new_public_key_ed, new_private_key_pq, new_public_key_pq,
+        rotation_timestamp,
+    )
+    return stamp_event_aiss2_hybrid(
+        previous_private_key_ed,
+        previous_private_key_pq,
+        attestation["previous_agent_id"],
+        {"event_type": "key_rotation", "attestation": attestation},
+        previous_hash=previous_hash,
+        tsa_stamp_after=False,
+    )
+
+
+def _check_rotation_chain(old_events: Any, previous_identity: Any, new_genesis: Any) -> None:
+    from aiss.chain import compute_event_hash
+    from aiss.stamp_aiss2 import verify_aiss2_hybrid
+    from aiss.verify import verify_chain
+
+    if not isinstance(old_events, list) or not old_events:
+        raise IdentityBindingError("ancienne chaîne absente")
+    if not isinstance(new_genesis, dict):
+        raise IdentityBindingError("genèse absente ou invalide")
+    last = old_events[-1]
+    if not isinstance(last, dict) or last.get("version") != "AISS-2.1":
+        raise IdentityBindingError("le dernier événement doit être un événement AISS-2.1")
+    payload = last.get("payload")
+    if not isinstance(payload, dict) or payload.get("event_type") != "key_rotation":
+        raise IdentityBindingError("le dernier événement n'est pas un événement de rotation")
+    attestation = payload.get("attestation")
+    if not verify_rotation_attestation_hybrid(attestation, previous_identity):
+        raise IdentityBindingError("attestation de rotation invalide")
+    if last.get("agent_id") != attestation["previous_agent_id"]:
+        raise IdentityBindingError("agent_id de l'événement de rotation incohérent")
+
+    verify_chain(old_events, previous_identity)
+
+    if new_genesis.get("previous_hash") != compute_event_hash(last):
+        raise IdentityBindingError("la genèse n'est pas ancrée sur l'événement de rotation")
+    if new_genesis.get("agent_id") != attestation["new_agent_id"]:
+        raise IdentityBindingError("agent_id de la genèse différent de new_agent_id")
+    new_pk_ed = _decode_b64_prefixed(attestation["new_public_key_classical"],
+                                     "new_public_key_classical", _ED25519_PK_SIZE)
+    new_pk_pq = _decode_b64_prefixed(attestation["new_public_key_pq"],
+                                     "new_public_key_pq", _MLDSA65_PK_SIZE)
+    if new_genesis.get("version") != "AISS-2.1":
+        raise IdentityBindingError("la genèse doit être un événement AISS-2.1")
+    verify_aiss2_hybrid(new_genesis, new_pk_ed, new_pk_pq)
+
+
+def verify_rotation_chain(
+    old_events: List[Dict[str, Any]],
+    previous_identity: Dict[str, Any],
+    new_genesis: Dict[str, Any],
+) -> bool:
+    """
+    Vérifie une rotation hybride ancrée dans la chaîne :
+
+    - le dernier événement de `old_events` est un événement de rotation AISS-2.1 dont
+      l'attestation est valide contre `previous_identity` (aucun événement ne peut donc
+      suivre la rotation dans l'ancienne chaîne) ;
+    - l'ancienne chaîne se vérifie (verify_chain) ;
+    - new_genesis.previous_hash == compute_event_hash(événement de rotation) ;
+    - new_genesis.agent_id == attestation.new_agent_id ;
+    - la genèse est un événement AISS-2.1 correctement signé par les nouvelles clés
+      de l'attestation.
+
+    Returns:
+        True si tout est valide, False pour toute anomalie (jamais d'exception sur un
+        document malformé).
+
+    Raises:
+        CryptoBackendError: backend ML-DSA-65 absent (vérification impossible)
+    """
+    from aiss.exceptions import AISSError, CryptoBackendError
+    try:
+        _check_rotation_chain(old_events, previous_identity, new_genesis)
+    except CryptoBackendError:
+        raise
+    except (IdentityBindingError, AISSError, KeyError, TypeError, ValueError, AttributeError):
         return False
     return True
 

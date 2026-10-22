@@ -227,9 +227,15 @@ def stamp_genesis_event_aiss2_hybrid(
     payload: Dict[str, Any],
     public_key_pq: Optional[bytes] = None,
     tsa_stamp_after: bool = True,
+    rotation_previous_hash: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Crée l'événement genèse AISS-2.1 avec signatures hybrides.
+
+    rotation_previous_hash : pour une genèse issue d'une rotation de clés, hash
+    (128 caractères hexadécimaux minuscules) de l'événement de rotation qui termine
+    l'ancienne chaîne. Il remplace alors le hash de genèse dérivé de l'agent_id, qui
+    n'est pas calculé. Sans lui, comportement strictement inchangé.
 
     Lorsque public_key_pq est fourni (chemin recommandé) :
     - Vérifie que agent_id == derive_agent_id_aiss21(public_key_ed25519, public_key_pq).
@@ -248,16 +254,28 @@ def stamp_genesis_event_aiss2_hybrid(
         payload:               Données de l'événement genèse
         public_key_pq:         Clé publique ML-DSA-65 (chemin AISS-2.1 recommandé)
         tsa_stamp_after:       Demander un horodatage TSA après signature (défaut : True)
+        rotation_previous_hash: Hash de l'événement de rotation (voir plus haut)
 
     Returns:
         Événement genèse AISS-2.1
 
     Raises:
-        ValueError: Si agent_id incohérent avec les clés (public_key_pq fourni)
+        ValueError: Si agent_id incohérent avec les clés (public_key_pq fourni), ou si
+            rotation_previous_hash n'est pas une chaîne de 128 hexadécimaux minuscules
     """
     import hashlib as _hashlib
+    import re as _re
     from aiss.canonical import hash_bytes
     from aiss.identity import derive_agent_id_aiss21
+
+    if rotation_previous_hash is not None and not (
+        isinstance(rotation_previous_hash, str)
+        and _re.fullmatch(r"[0-9a-f]{128}", rotation_previous_hash)
+    ):
+        raise ValueError(
+            "rotation_previous_hash doit être une chaîne de 128 caractères "
+            "hexadécimaux minuscules"
+        )
 
     if public_key_pq is not None:
         computed_id = derive_agent_id_aiss21(public_key_ed25519, public_key_pq)
@@ -272,6 +290,8 @@ def stamp_genesis_event_aiss2_hybrid(
     else:
         # Chemin legacy : SHA-256 de la clé publique Ed25519 (convention AISS-1)
         genesis_hash = hash_bytes(public_key_ed25519)
+    if rotation_previous_hash is not None:
+        genesis_hash = rotation_previous_hash
 
     return stamp_event_aiss2_hybrid(
         private_key_ed25519,
