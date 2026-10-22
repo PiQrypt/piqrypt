@@ -348,7 +348,18 @@ def verify_certified_export(export_path: str, cert_path: str) -> bool:
     import hashlib
     import json as _json
     from aiss.crypto import ed25519
-    from aiss.exceptions import InvalidSignatureError
+    from aiss.exceptions import InvalidSignatureError, AISSError
+
+    try:
+        with open(export_path, 'r') as f:
+            _identity = _json.load(f).get('agent_identity', {})
+        _native_hybrid = isinstance(_identity, dict) and 'public_key_classical' in _identity
+    except Exception:
+        _native_hybrid = False
+    if _native_hybrid:
+        raise AISSError(
+            "identité hybride native : non prise en charge par cette commande en 1.10"
+        )
 
     try:
         with open(export_path, 'rb') as f:

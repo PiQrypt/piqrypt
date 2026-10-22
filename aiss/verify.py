@@ -124,6 +124,74 @@ def verify_event(
     return True
 
 
+# ─── Formes d'identité AISS-2.1 (B.4) ────────────────────────────────────────
+
+def _identity_form(identity: Dict[str, Any]) -> str:
+    """
+    Classe un document d'identité :
+      - "classical" : public_key seul (AISS-1, comportement inchangé)
+      - "upgraded"  : identité AISS-1 mise à niveau (public_key + public_key_pq + binding)
+      - "native"    : identité hybride native (public_key_classical + public_key_pq)
+
+    Raises:
+        InvalidChainError: document ambigu (public_key_classical avec binding ou public_key)
+    """
+    if "public_key_classical" in identity:
+        if "binding" in identity or "public_key" in identity:
+            raise InvalidChainError(
+                "Ambiguous identity: public_key_classical cannot be combined with "
+                "binding or public_key"
+            )
+        return "native"
+    if "binding" in identity or "public_key_pq" in identity:
+        return "upgraded"
+    return "classical"
+
+
+def _resolve_aiss21_identity(identity, form, public_key_pq_param):
+    """
+    Valide une identité AISS-2.1 (dérivation des deux clés, ou liaison valide) et
+    renvoie (public_key_ed25519, public_key_pq, binding_assurance).
+
+    Raises:
+        InvalidChainError: identité invalide, ou public_key_pq fourni différent de
+            celui de l'identité (jamais de choix silencieux)
+    """
+    from aiss.identity import IdentityBindingError, identity_binding_assurance, _decode_b64_prefixed
+
+    try:
+        assurance = identity_binding_assurance(identity)
+        source = identity if form == "native" else identity["binding"]
+        public_key = _decode_b64_prefixed(source["public_key_classical"], "public_key_classical", 32)
+        public_key_pq = _decode_b64_prefixed(source["public_key_pq"], "public_key_pq", 1952)
+    except (IdentityBindingError, KeyError, TypeError) as e:
+        raise InvalidChainError(f"Invalid AISS-2.1 identity: {e}")
+
+    if public_key_pq_param is not None and bytes(public_key_pq_param) != public_key_pq:
+        raise InvalidChainError(
+            "public_key_pq parameter differs from the identity's ML-DSA-65 key"
+        )
+    return public_key, public_key_pq, assurance
+
+
+def _check_aiss21_events(events: List[Dict[str, Any]], identity: Dict[str, Any], form: str) -> None:
+    """agent_id des événements et règle anti-downgrade (erreur avec l'index)."""
+    agent_id = identity.get("agent_id")
+    seen_aiss21 = False
+    for i, event in enumerate(events):
+        if event.get("agent_id") != agent_id:
+            raise InvalidChainError("Event agent_id does not match identity agent_id", i)
+        is_21 = str(event.get("version", "")).startswith("AISS-2.1")
+        if form == "native" and not is_21:
+            raise InvalidChainError(
+                "Downgrade: a native hybrid identity only accepts AISS-2.1 events", i)
+        if form == "upgraded":
+            if seen_aiss21 and not is_21:
+                raise InvalidChainError(
+                    "Downgrade: no AISS-1 or AISS-2.0 event may follow the first AISS-2.1 event", i)
+            seen_aiss21 = seen_aiss21 or is_21
+
+
 def verify_chain(
     events: List[Dict[str, Any]],
     identity: Dict[str, Any],
@@ -167,15 +235,21 @@ def verify_chain(
     if not events:
         return True
 
-    # Extract public key from identity
-    public_key_b58 = identity.get('public_key')
-    if not public_key_b58:
-        raise InvalidChainError("Identity missing public_key field")
+    form = _identity_form(identity)
+    if form != "classical":
+        # AISS-2.1 identity (upgraded or native hybrid): keys come from the validated identity
+        public_key, public_key_pq, _ = _resolve_aiss21_identity(identity, form, public_key_pq)
+        _check_aiss21_events(events, identity, form)
+    else:
+        # Extract public key from identity
+        public_key_b58 = identity.get('public_key')
+        if not public_key_b58:
+            raise InvalidChainError("Identity missing public_key field")
 
-    try:
-        public_key = ed25519.decode_base64(public_key_b58)
-    except Exception as e:
-        raise InvalidChainError(f"Invalid public key encoding: {e}")
+        try:
+            public_key = ed25519.decode_base64(public_key_b58)
+        except Exception as e:
+            raise InvalidChainError(f"Invalid public key encoding: {e}")
 
     # Verify all signatures
     for i, event in enumerate(events):
@@ -255,7 +329,8 @@ def get_verification_report(
         "timestamps_valid": True,
         "forks_detected": [],
         "replay_attacks": [],
-        "errors": []
+        "errors": [],
+        "binding_assurance": None,  # "hybrid", "classical_only" or None (classical identity)
     }
 
     if not events:
@@ -263,9 +338,21 @@ def get_verification_report(
 
     # Verify signatures
     try:
-        public_key = ed25519.decode_base64(identity.get('public_key'))
-        for i, event in enumerate(events):
-            verify_signature(event, public_key)
+        form = _identity_form(identity)
+        if form == "classical":
+            public_key = ed25519.decode_base64(identity.get('public_key'))
+            for i, event in enumerate(events):
+                verify_signature(event, public_key)
+        else:
+            from aiss.stamp_aiss2 import verify_aiss2_hybrid
+            public_key, public_key_pq, assurance = _resolve_aiss21_identity(identity, form, None)
+            report["binding_assurance"] = assurance
+            _check_aiss21_events(events, identity, form)
+            for i, event in enumerate(events):
+                if str(event.get("version", "")).startswith("AISS-2"):
+                    verify_aiss2_hybrid(event, public_key, public_key_pq)
+                else:
+                    verify_signature(event, public_key)
     except Exception as e:
         report["signatures_valid"] = False
         report["valid"] = False
@@ -338,7 +425,10 @@ def verify_audit_chain(audit_data: Dict[str, Any]) -> bool:
 
     # If identity with public key is provided, do full signature verification
     identity = audit_data.get("agent_identity") or audit_data.get("identity")
-    if identity and identity.get("public_key"):
+    if isinstance(identity, dict) and any(
+        field in identity
+        for field in ("public_key", "public_key_classical", "public_key_pq", "binding")
+    ):
         return verify_chain(events, identity, check_forks=False, check_replay=False)
 
     # Otherwise verify chain linkage only (structural integrity)

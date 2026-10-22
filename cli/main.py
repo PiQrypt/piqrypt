@@ -315,9 +315,20 @@ def cmd_migrate(args):
         print(f"❌ Erreur de migration : {e}")
 
 
+def _refuse_native_hybrid(doc) -> None:
+    """Garde-fou 1.10 : ces commandes lisent identity['public_key'], absent d'une identité
+    hybride native. Message clair et code de sortie 1 au lieu d'un KeyError."""
+    inner = doc.get('identity', doc) if isinstance(doc, dict) else None
+    if isinstance(inner, dict) and 'public_key_classical' in inner:
+        print("Error: identité hybride native : non prise en charge par cette commande "
+              "en 1.10", file=sys.stderr)
+        sys.exit(1)
+
+
 def cmd_identity_rotate(args):
     print("Loading old identity...")
     old_data = load_json(args.old_key)
+    _refuse_native_hybrid(old_data)
     old_private = aiss.crypto.ed25519.decode_base64(old_data['private_key'])
     old_public  = aiss.crypto.ed25519.decode_base64(old_data['identity']['public_key'])
 
@@ -452,6 +463,7 @@ def cmd_verify(args):
     event = load_json(args.event_file)
 
     identity_data = load_json(args.identity)
+    _refuse_native_hybrid(identity_data)
     public_key = aiss.crypto.ed25519.decode_base64(identity_data['identity']['public_key'])
 
     print("Verifying signature...")
@@ -679,6 +691,7 @@ def cmd_authority_create(args):
 
     print("Loading issuer identity...")
     issuer_data = load_json(args.issuer_key)
+    _refuse_native_hybrid(issuer_data)
     issuer_private = aiss.crypto.ed25519.decode_base64(issuer_data['private_key'])
     issuer_id = issuer_data['identity']['agent_id']
 
@@ -719,6 +732,7 @@ def cmd_authority_verify(args):
 
     print("Loading issuer public key...")
     issuer_data = load_json(args.issuer_key)
+    _refuse_native_hybrid(issuer_data)
     issuer_public = aiss.crypto.ed25519.decode_base64(issuer_data['identity']['public_key'])
 
     action = args.action if hasattr(args, 'action') and args.action else None
@@ -757,6 +771,7 @@ def cmd_authority_chain(args):
     pubkeys = {}
     for issuer_id, key_info in pubkeys_data.items():
         if isinstance(key_info, dict) and 'identity' in key_info:
+            _refuse_native_hybrid(key_info)
             pub = aiss.crypto.ed25519.decode_base64(key_info['identity']['public_key'])
         else:
             pub = aiss.crypto.ed25519.decode_base64(key_info)
@@ -1815,6 +1830,7 @@ def cmd_a2a_propose(args):
     from aiss.a2a import create_identity_proposal
 
     identity_data = load_json(args.identity)
+    _refuse_native_hybrid(identity_data)
     priv = aiss.crypto.ed25519.decode_base64(identity_data["private_key"])
     pub = aiss.crypto.ed25519.decode_base64(identity_data["identity"]["public_key"])
     agent_id = identity_data["identity"]["agent_id"]
@@ -1840,6 +1856,7 @@ def cmd_a2a_respond(args):
     from aiss.a2a import perform_handshake
 
     identity_data = load_json(args.identity)
+    _refuse_native_hybrid(identity_data)
     priv = aiss.crypto.ed25519.decode_base64(identity_data["private_key"])
     pub = aiss.crypto.ed25519.decode_base64(identity_data["identity"]["public_key"])
     agent_id = identity_data["identity"]["agent_id"]
