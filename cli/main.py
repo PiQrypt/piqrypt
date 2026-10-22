@@ -71,8 +71,32 @@ def cmd_identity_create(args):
     # Récupérer le nom
     agent_name = getattr(args, 'name', None)
     non_interactive = getattr(args, 'non_interactive', False)
+    hybrid = getattr(args, 'hybrid', False)
 
-    if non_interactive:
+    if hybrid and non_interactive:
+        agent_name = agent_name or os.environ.get("PIQRYPT_AGENT_NAME", "default")
+        passphrase = os.environ.get("PIQRYPT_PASSPHRASE")
+        if not passphrase:
+            print("❌ Identité hybride : PIQRYPT_PASSPHRASE est obligatoire "
+                  "avec --non-interactive.", file=sys.stderr)
+            sys.exit(1)
+    elif hybrid:
+        if not agent_name:
+            try:
+                agent_name = input("Nom de l'agent : ").strip() or "default"
+            except (KeyboardInterrupt, EOFError):
+                print("\nAnnulé.")
+                sys.exit(1)
+        try:
+            passphrase = getpass.getpass("Passphrase (obligatoire, 8 caractères minimum) : ")
+            confirm = getpass.getpass("Confirmer la passphrase : ")
+        except (KeyboardInterrupt, EOFError):
+            print("\nAnnulé.")
+            sys.exit(1)
+        if not passphrase or passphrase != confirm:
+            print("❌ Passphrase vide ou confirmation différente — annulé.", file=sys.stderr)
+            sys.exit(1)
+    elif non_interactive:
         agent_name = agent_name or os.environ.get("PIQRYPT_AGENT_NAME", "default")
         passphrase = os.environ.get("PIQRYPT_PASSPHRASE")
     else:
@@ -98,16 +122,29 @@ def cmd_identity_create(args):
         except (KeyboardInterrupt, EOFError):
             passphrase = None
 
-    print(f"\nGénération des clés Ed25519 pour '{agent_name}'...")
+    if hybrid:
+        print(f"\nGénération des clés hybrides Ed25519 + ML-DSA-65 pour '{agent_name}'...")
+    else:
+        print(f"\nGénération des clés Ed25519 pour '{agent_name}'...")
 
     try:
-        result = aiss.create_agent_identity(
-            agent_name=agent_name,
-            passphrase=passphrase,
-            tier=aiss.get_tier(),
-        )
+        if hybrid:
+            result = aiss.create_agent_identity(
+                agent_name=agent_name,
+                passphrase=passphrase,
+                tier=aiss.get_tier(),
+                hybrid=True,
+            )
+        else:
+            result = aiss.create_agent_identity(
+                agent_name=agent_name,
+                passphrase=passphrase,
+                tier=aiss.get_tier(),
+            )
     except Exception as e:
-        print(f"❌ Erreur : {e}")
+        print(f"❌ Erreur : {e}", file=sys.stderr if hybrid else sys.stdout)
+        if hybrid:
+            sys.exit(1)
         return
 
     print("\n✅ Identité créée !")
@@ -115,6 +152,8 @@ def cmd_identity_create(args):
     print(f"   Agent ID  : {result['agent_id']}")
     print(f"   Clé       : {'🔒 chiffrée' if result['encrypted'] else '⚠️  non chiffrée'}")
     print(f"   Stockage  : {result['key_path']}")
+    if result.get('hybrid'):
+        print(f"   Clé PQ    : {result['pq_key_path']}")
 
     if not result['encrypted']:
         print("\n   💡 Conseil : protégez la clé avec :")
@@ -124,8 +163,9 @@ def cmd_identity_create(args):
         save_json({"identity": result['identity'], "agent_id": result['agent_id']}, args.output)
         print(f"   Export    : {args.output}")
 
-    aiss.log_identity_created(result['agent_id'], "Ed25519")
-    aiss.track("identity_created", algorithm="Ed25519", tier=aiss.get_tier())
+    algo_label = "Ed25519+ML-DSA-65" if result.get('hybrid') else "Ed25519"
+    aiss.log_identity_created(result['agent_id'], algo_label)
+    aiss.track("identity_created", algorithm=algo_label, tier=aiss.get_tier())
 
 
 def cmd_identity_list(args):
@@ -245,9 +285,26 @@ def cmd_identity_rotate(args):
 # Stamp Command
 # ─────────────────────────────────────────────
 
+def _identity_has_pq_key(data) -> bool:
+    """True si le document (ou son champ 'identity') porte une clé publique ML-DSA-65."""
+    if not isinstance(data, dict):
+        return False
+    inner = data.get('identity')
+    return 'public_key_pq' in data or (isinstance(inner, dict) and 'public_key_pq' in inner)
+
+
+def _refuse_hybrid_stamp():
+    print("Error: cette identité est hybride (public_key_pq présent). "
+          "'piqrypt stamp' ne produit que des événements AISS-1 signés en Ed25519 seul "
+          "et ne doit jamais signer avec un agent_id hybride.", file=sys.stderr)
+    sys.exit(1)
+
+
 def cmd_stamp(args):
     print("Loading identity...")
     identity_data = load_json(args.identity_file)
+    if _identity_has_pq_key(identity_data):
+        _refuse_hybrid_stamp()
     if 'private_key' in identity_data:
         private_key = aiss.crypto.ed25519.decode_base64(identity_data['private_key'])
     elif 'key_path' in identity_data or 'agent_id' in identity_data:
@@ -270,11 +327,20 @@ def cmd_stamp(args):
                     import json as _json
                     data = _json.loads(ident.read_text())
                     if data.get('agent_id') == agent_id_val:
+                        if _identity_has_pq_key(data):
+                            _refuse_hybrid_stamp()
                         key_path = enc if enc.exists() else plain
                         break
             if key_path is None:
                 print(f"Error: aucune cle trouvee pour agent_id {agent_id_val}", file=sys.stderr)
                 sys.exit(1)
+        sibling_identity = Path(key_path).parent / "identity.json"
+        if sibling_identity.exists():
+            try:
+                if _identity_has_pq_key(json.loads(sibling_identity.read_text())):
+                    _refuse_hybrid_stamp()
+            except json.JSONDecodeError:
+                pass
         if is_encrypted(key_path):
             import getpass
             passphrase = getpass.getpass("Passphrase : ")
@@ -845,6 +911,9 @@ Examples:
     id_create.add_argument('--output', '-o', help='Export identity JSON to file')
     id_create.add_argument('--non-interactive', action='store_true',
                            help='Use env vars PIQRYPT_AGENT_NAME + PIQRYPT_PASSPHRASE')
+    id_create.add_argument('--hybrid', action='store_true',
+                           help='Create a hybrid AISS-2.1 identity (Ed25519 + ML-DSA-65); '
+                                'passphrase mandatory (8 characters minimum)')
 
     id_s.add_parser('list', help='List registered agents')
 

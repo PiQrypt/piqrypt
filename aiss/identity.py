@@ -385,6 +385,7 @@ def create_agent_identity(
     metadata: Optional[Dict[str, Any]] = None,
     tier: str = "free",
     base_dir: Optional[str] = None,
+    hybrid: bool = False,
 ) -> Dict[str, Any]:
     """
     Crée une identité complète pour un agent et la stocke dans
@@ -398,15 +399,29 @@ def create_agent_identity(
         tier:       "free" ou "pro"
         base_dir:   Répertoire racine optionnel (utile en tests/CI).
                     Si omis, utilise ~/.piqrypt/agents/.
+        hybrid:     False (défaut) : identité AISS-1, comportement inchangé.
+                    True : identité hybride AISS-2.1 (Ed25519 + ML-DSA-65).
+                    La passphrase est alors obligatoire (8 caractères minimum,
+                    NIST SP 800-63B) et protège les deux clés privées, chacune
+                    avec son propre sel : private.key.enc (v1) et
+                    private_pq.key.enc (v2). Le retour ajoute pq_key_path et
+                    hybrid=True.
 
     Returns:
         Dict avec identity, agent_id, agent_name, key_path, encrypted
 
     Raises:
-        ValueError: Si agent_name est vide ou invalide
+        ValueError: Si agent_name est vide ou invalide, ou (hybrid) si la
+                    passphrase est absente ou trop courte
+        FileExistsError: (hybrid) si l'agent possède déjà une identité ou des clés
     """
     if not agent_name or not agent_name.strip():
         raise ValueError("Le nom de l'agent ne peut pas être vide")
+
+    if hybrid:
+        return _create_hybrid_agent_identity(
+            agent_name, passphrase, metadata, tier, base_dir
+        )
 
     # Générer les clés
     private_key, public_key = generate_keypair()
@@ -502,6 +517,217 @@ def load_agent_identity(agent_name: str) -> Dict[str, Any]:
     identity = json.loads(identity_path.read_text())
     identity["agent_name"] = agent_name
     return identity
+
+
+# ─── AISS-2.1 : identités hybrides (Ed25519 + ML-DSA-65) ─────────────────────
+
+HYBRID_MIN_PASSPHRASE_LEN = 8  # NIST SP 800-63B
+
+
+def _validate_hybrid_passphrase(passphrase: Any) -> None:
+    """Passphrase obligatoire pour toute identité hybride (règle de create/upgrade)."""
+    import unicodedata
+    if not isinstance(passphrase, str) or not passphrase.strip():
+        raise ValueError("Une passphrase est obligatoire pour une identité hybride")
+    if len(unicodedata.normalize("NFKC", passphrase)) < HYBRID_MIN_PASSPHRASE_LEN:
+        raise ValueError(
+            f"La passphrase d'une identité hybride doit faire au moins "
+            f"{HYBRID_MIN_PASSPHRASE_LEN} caractères (NIST SP 800-63B)"
+        )
+
+
+def _atomic_write_json(path: Path, obj: Dict[str, Any], mode: int = 0o644) -> None:
+    """Écrit un JSON de façon atomique : temporaire O_EXCL + fsync + os.replace.
+
+    Un temporaire périmé (plantage antérieur) est supprimé, avec une seule reprise.
+    En cas d'échec, le fichier cible existant reste intact et aucun temporaire ne subsiste.
+    """
+    import os
+    path = Path(path)
+    tmp = path.parent / (path.name + ".tmp")
+    flags = os.O_CREAT | os.O_EXCL | os.O_WRONLY | getattr(os, "O_BINARY", 0)
+    try:
+        fd = os.open(str(tmp), flags, mode)
+    except FileExistsError:
+        os.unlink(str(tmp))
+        fd = os.open(str(tmp), flags, mode)
+    try:
+        try:
+            view = memoryview(json.dumps(obj, indent=2).encode("utf-8"))
+            while view:
+                view = view[os.write(fd, view):]
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+        os.replace(str(tmp), str(path))
+    except BaseException:
+        try:
+            os.unlink(str(tmp))
+        except OSError:
+            pass
+        raise
+
+
+def _missing_dirs(paths) -> set:
+    """Répertoires de `paths` (et leurs ancêtres) qui n'existent pas encore."""
+    missing = set()
+    for d in paths:
+        p = Path(d)
+        while not p.exists() and p not in missing:
+            missing.add(p)
+            p = p.parent
+    return missing
+
+
+def _create_hybrid_agent_identity(
+    agent_name: str,
+    passphrase: Optional[str],
+    metadata: Optional[Dict[str, Any]],
+    tier: str,
+    base_dir: Optional[str],
+) -> Dict[str, Any]:
+    """Création d'une identité hybride AISS-2.1 (voir create_agent_identity(hybrid=True)).
+
+    Ordre d'écriture : private.key.enc, private_pq.key.enc, identity.json (atomique),
+    puis enregistrement au registre. Un identity.json présent signifie donc que les
+    deux clés sont en place. En cas d'échec, seul ce que cet appel a créé est supprimé.
+
+    Gating : aucun contrôle de licence propre à la création. La génération de la clé
+    ML-DSA-65 passe par aiss.crypto.dilithium, dont le compteur de démonstration
+    (1000 opérations par processus) avance sans licence 'quantum'.
+    """
+    import os
+    from aiss.crypto import dilithium
+    from aiss.exceptions import CryptoBackendError
+    from aiss.agent_registry import (
+        get_agent_dir, register_agent, unregister_agent,
+        get_events_plain_dir, get_events_enc_dir, get_keys_dir, get_tsi_dir,
+        _safe_name,
+    )
+    from aiss.key_store import save_encrypted_key, save_encrypted_pq_key
+
+    _validate_hybrid_passphrase(passphrase)
+    if dilithium is None or not dilithium.is_available():
+        raise CryptoBackendError(
+            "ML-DSA-65",
+            "Une identité hybride requiert un backend ML-DSA-65 "
+            "(pip install piqrypt[post-quantum])",
+        )
+
+    if base_dir is not None:
+        agent_dir = Path(base_dir) / "agents" / agent_name
+        wanted_dirs = [agent_dir]
+    else:
+        _safe_name(agent_name)
+        agent_dir = get_agent_dir(agent_name)
+        wanted_dirs = [
+            agent_dir,
+            get_events_plain_dir(agent_name),
+            get_events_enc_dir(agent_name),
+            get_keys_dir(agent_name),
+            get_tsi_dir(agent_name),
+        ]
+
+    key_path = agent_dir / "private.key.enc"
+    pq_key_path = agent_dir / "private_pq.key.enc"
+    identity_path = agent_dir / "identity.json"
+    for existing in (identity_path, key_path, pq_key_path, agent_dir / "private.key.json"):
+        if existing.exists():
+            raise FileExistsError(
+                f"L'agent '{agent_name}' possède déjà une identité ou des clés "
+                f"({existing.name}) : création hybride refusée"
+            )
+
+    private_key, public_key = generate_keypair()
+    private_key_pq, public_key_pq = dilithium.generate_keypair()
+    agent_id = derive_agent_id_aiss21(public_key, public_key_pq)
+    identity = export_identity_aiss21(agent_id, public_key, public_key_pq)
+
+    created_dirs = _missing_dirs(wanted_dirs)
+    created_files = []
+    registered = False
+    try:
+        for d in wanted_dirs:
+            d.mkdir(parents=True, exist_ok=True)
+        if base_dir is None:
+            agent_dir.chmod(0o700)
+
+        created_files.append(key_path)
+        save_encrypted_key(private_key, passphrase, key_path)
+        created_files.append(pq_key_path)
+        save_encrypted_pq_key(private_key_pq, passphrase, pq_key_path)
+        created_files.append(identity_path)
+        _atomic_write_json(identity_path, identity)
+
+        if base_dir is None:
+            register_agent(
+                agent_name=agent_name,
+                agent_id=agent_id,
+                tier=tier,
+                metadata=metadata,
+            )
+            registered = True
+    except BaseException:
+        if registered:
+            unregister_agent(agent_name)
+        for f in created_files:
+            for leftover in (f, f.parent / (f.name + ".tmp")):
+                try:
+                    os.unlink(str(leftover))
+                except OSError:
+                    pass
+        for d in sorted(created_dirs, key=lambda p: len(p.parts), reverse=True):
+            try:
+                d.rmdir()
+            except OSError:
+                pass
+        raise
+
+    logger.info(
+        f"[Identity] Agent hybride '{agent_name}' créé — "
+        f"ID: {agent_id[:16]}... — clés Ed25519 + ML-DSA-65 chiffrées"
+    )
+    _telemetry_track("identity_created", algorithm="Ed25519+ML-DSA-65", tier=tier)
+
+    return {
+        "agent_name":  agent_name,
+        "agent_id":    agent_id,
+        "identity":    identity,
+        "key_path":    str(key_path),
+        "pq_key_path": str(pq_key_path),
+        "encrypted":   True,
+        "hybrid":      True,
+        "tier":        tier,
+        "created_at":  identity["created_at"],
+    }
+
+
+def load_agent_pq_key(
+    agent_name: str,
+    passphrase: str,
+    base_dir: Optional[str] = None,
+) -> bytes:
+    """
+    Charge et déchiffre la clé privée ML-DSA-65 (4032 octets) d'une identité hybride.
+
+    Args:
+        agent_name: Nom de l'agent
+        passphrase: Passphrase de l'identité
+        base_dir:   Répertoire racine optionnel (tests/CI), comme create_agent_identity
+
+    Raises:
+        FileNotFoundError:      Pas de private_pq.key.enc (identité non hybride)
+        InvalidPassphraseError: Passphrase incorrecte
+        KeyFileCorruptedError:  Fichier invalide
+    """
+    from aiss.agent_registry import get_agent_dir
+    from aiss.key_store import load_encrypted_pq_key
+
+    if base_dir is not None:
+        agent_dir = Path(base_dir) / "agents" / agent_name
+    else:
+        agent_dir = get_agent_dir(agent_name)
+    return load_encrypted_pq_key(agent_dir / "private_pq.key.enc", passphrase)
 
 
 def list_agent_identities() -> list:
