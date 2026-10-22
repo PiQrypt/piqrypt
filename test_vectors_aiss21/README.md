@@ -109,4 +109,8 @@ was written in the same project as the library and the generator.
 * The `"reason"` of a negative vector explains the rule; implementations may reject for
   an earlier rule and report a different message.
 * "Concurrent rotations" is rejected by the linkage rule (the second rotation does not
-  follow the first); a pure fork cannot be isolated from the linkage break in one list.
+  follow the first). A fork is detected between two journals, not in a linear list: a list
+  in which two events share a `previous_hash` always also breaks the linkage rule.
+* `verify_chain` does not require the first event to be a genesis event. A chain stripped of
+  its first events is accepted by the library and by the independent verifier, provided the
+  remaining events are consistent. This is a point to settle in the normative text.

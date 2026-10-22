@@ -193,5 +193,26 @@ class TestLibraryAgreesWithVectors(unittest.TestCase):
         self.assertEqual(mismatches, [], "\n".join(mismatches))
 
 
+@pytest.mark.skipif(not _pq_available(), reason="ML-DSA-65 backend not installed")
+class TestDocumentedLimits(unittest.TestCase):
+
+    def test_chain_without_its_first_events_is_accepted(self):
+        """Limite documentée dans le README : le premier événement n'a pas à être une genèse."""
+        from aiss.verify import verify_chain
+        chain = next(v for v in load("chains.json")["vectors"] if v["id"] == "native_chain")
+        truncated = chain["events"][2:]
+        self.assertTrue(verify_chain(truncated, chain["identity"]))
+        spec = importlib.util.spec_from_file_location(
+            "standalone_for_limits", VECTORS_DIR / "verify_standalone.py")
+        standalone = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(standalone)
+        self.assertTrue(standalone.verify_chain(truncated, chain["identity"]))
+
+    def test_concurrent_rotations_reason_matches_the_rule_that_rejects_them(self):
+        vector = next(v for v in load("chains.json")["vectors"] if v["id"] == "concurrent_rotations")
+        self.assertIn("previous_hash", vector["reason"])
+        self.assertNotIn("fork", vector["reason"])
+
+
 if __name__ == "__main__":
     unittest.main()

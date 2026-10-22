@@ -482,7 +482,7 @@ def build_chains():
     rot_c = rotation_event(A, A.agent_id, att_c, event_hash(chain_a[1]), 20, "chA/rotC")
     rot_e = rotation_event(A, A.agent_id, att_e, event_hash(chain_a[1]), 21, "chA/rotE")
     vectors.append(vec("concurrent_rotations", "deux rotations concurrentes sur le même previous_hash",
-                       False, "fork: two events share the same previous_hash",
+                       False, "previous_hash of the second rotation does not match the hash of the first",
                        identity=identity_a, events=chain_a[:2] + [rot_c, rot_e]))
     return doc(
         "Chaînes d'événements avec leur identité. Règles : signatures, previous_hash = hash de "
