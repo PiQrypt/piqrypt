@@ -9,9 +9,12 @@ License: NIST public domain (17 U.S.C. § 105 — US Government work).
    provided that you keep intact this entire notice."
 
 Tests:
-  - keyGen: seed -> (pk, sk) full byte comparison against NIST expected values.
-  - sigVer external/pure: verify(pk, msg, sig, ctx) against NIST pass/fail.
-  - sigVer internal: _verify_internal(pk, msg, sig) against NIST pass/fail.
+  - keyGen (tgId=2): seed → (pk, sk) full byte comparison, 25 vectors.
+  - sigVer external/pure (tgId=3): verify(pk, msg, sig, ctx), 15 vectors,
+    3 passing (tcId 33, 43, 44), 12 failing.
+  - sigVer internal, externalMu=False (tgId=10): _verify_internal(pk, M', σ),
+    15 vectors, 3 passing (tcId 143, 146, 150), 12 failing, messages non-empty.
+    (tgId=9 was externalMu=True — M'=μ — that is a different API level.)
 """
 
 import json
@@ -143,41 +146,43 @@ class TestSigVerExternalNIST:
 # ---------------------------------------------------------------------------
 
 class TestSigVerInternalNIST:
-    """NIST ACVP sigVer tgId=9: ML-DSA-65, internal interface."""
+    """NIST ACVP sigVer tgId=10: ML-DSA-65, internal interface, externalMu=False.
+
+    tgId=10 uses ML-DSA.VerifyInternal(pk, M', σ) where M' is a non-empty message
+    (up to ~6500 bytes), not the μ hash. This is the correct internal-interface group.
+    dilithium-py 1.5.1+ passes all 15/15 cases.
+
+    (tgId=9 was externalMu=True — it passes M'=μ, 64-byte hash — different API.)
+    """
+
+    _EXPECTED_PASS_COUNT = 3   # tcId 143, 146, 150
+    _EXPECTED_FAIL_COUNT = 12
 
     def _load_internal(self):
         if not _SIGVER_FILE.exists():
             pytest.skip(f"Vector file not found: {_SIGVER_FILE}")
         with open(_SIGVER_FILE, encoding="utf-8") as f:
             data = json.load(f)["tests"]
-        return [t for t in data if t["tgId"] == 9]
+        tests = [t for t in data if t["tgId"] == 10]
+        assert len(tests) == 15, f"Expected 15 tgId=10 tests, got {len(tests)}"
+        return tests
 
     def test_internal_pass_cases_verify_true(self):
-        """NIST ACVP passing vectors for _verify_internal.
-
-        Known incompatibility: dilithium-py's _verify_internal returns False for
-        NIST ACVP-generated passing vectors (tcId 121, 122, 128 all have M'=b'').
-        dilithium-py's own sign_internal/verify_internal round-trip is self-consistent
-        but not interoperable with the NIST C reference implementation at this level.
-        This test is marked xfail to document the limitation without blocking CI.
-        """
+        """All testPassed=True must return True from _verify_internal (tcId 143, 146, 150)."""
         _skip_if_unavailable()
         ml = _ml_dsa()
         passing = [t for t in self._load_internal() if t["testPassed"]]
-        assert len(passing) > 0, "No passing internal sigVer vectors found"
-        mismatches = []
+        assert len(passing) == self._EXPECTED_PASS_COUNT, (
+            f"Expected {self._EXPECTED_PASS_COUNT} passing vectors, got {len(passing)}"
+        )
         for vec in passing:
-            pk = bytes.fromhex(vec["pk"])
             msg = bytes.fromhex(vec["message"])
+            assert len(msg) > 0, f"tcId={vec['tcId']}: message must be non-empty for tgId=10"
+            pk = bytes.fromhex(vec["pk"])
             sig = bytes.fromhex(vec["signature"])
             result = ml._verify_internal(pk, msg, sig)
-            if result is not True:
-                mismatches.append(vec["tcId"])
-        if mismatches:
-            pytest.xfail(
-                f"dilithium-py _verify_internal incompatible with NIST ACVP "
-                f"internal sigVer vectors (tcId {mismatches}). "
-                "Self-generated sign/verify round-trip works correctly."
+            assert result is True, (
+                f"tcId={vec['tcId']}: expected True but got {result}"
             )
 
     def test_internal_fail_cases_verify_false(self):
@@ -185,7 +190,9 @@ class TestSigVerInternalNIST:
         _skip_if_unavailable()
         ml = _ml_dsa()
         failing = [t for t in self._load_internal() if not t["testPassed"]]
-        assert len(failing) > 0, "No failing internal sigVer vectors found"
+        assert len(failing) == self._EXPECTED_FAIL_COUNT, (
+            f"Expected {self._EXPECTED_FAIL_COUNT} failing vectors, got {len(failing)}"
+        )
         for vec in failing:
             pk = bytes.fromhex(vec["pk"])
             msg = bytes.fromhex(vec["message"])
