@@ -59,7 +59,7 @@ class TestClassic(_Base):
             load_encrypted_key(path, OLD)
         self.assertEqual(self._tmp_files("cl"), [])
 
-    def test_plaintext_to_encrypted_keeps_bak(self):
+    def test_plaintext_key_is_removed_without_bak(self):
         from aiss.key_store import load_encrypted_key, load_plaintext_key
         self._create("pl", passphrase=None)
         plain = self._dir("pl") / "private.key.json"
@@ -67,7 +67,70 @@ class TestClassic(_Base):
         self._secure("pl", old=None)
         self.assertEqual(load_encrypted_key(self._dir("pl") / "private.key.enc", NEW), before)
         self.assertFalse(plain.exists())
-        self.assertTrue((self._dir("pl") / "private.key.json.bak").exists())
+        self.assertFalse((self._dir("pl") / "private.key.json.bak").exists())
+        self.assertEqual(sorted(p.name for p in self._dir("pl").iterdir()),
+                         ["identity.json", "private.key.enc"])
+
+    def test_plaintext_overwritten_with_zeros_before_removal(self):
+        import os as _os
+        self._create("pl3", passphrase=None)
+        plain = self._dir("pl3") / "private.key.json"
+        size = plain.stat().st_size
+        seen = {}
+        real_unlink = _os.unlink
+
+        def spy(path, *a, **k):
+            if str(path) == str(plain):
+                seen["content"] = Path(path).read_bytes()
+            return real_unlink(path, *a, **k)
+
+        with patch("os.unlink", side_effect=spy):
+            self._secure("pl3", old=None)
+        self.assertEqual(seen["content"], b"\x00" * size)
+        self.assertFalse(plain.exists())
+
+    def test_removal_failure_only_warns_and_command_succeeds(self):
+        import os as _os
+        from aiss.key_store import load_encrypted_key
+        self._create("pl4", passphrase=None)
+        plain = self._dir("pl4") / "private.key.json"
+        size = plain.stat().st_size
+        real_unlink = _os.unlink
+
+        def flaky(path, *a, **k):
+            if str(path) == str(plain):
+                raise PermissionError("verrouillé")
+            return real_unlink(path, *a, **k)
+
+        with patch("os.unlink", side_effect=flaky),                 patch("aiss.identity.logger.warning") as warn:
+            self.assertTrue(self._secure("pl4", old=None))
+        warn.assert_called_once()
+        self.assertTrue(plain.exists())
+        self.assertEqual(plain.read_bytes(), b"\x00" * size)  # déjà écrasé
+        self.assertEqual(len(load_encrypted_key(self._dir("pl4") / "private.key.enc", NEW)), 32)
+
+    def test_verification_failure_deletes_nothing(self):
+        from aiss.key_store import KeyFileCorruptedError
+        self._create("pl5", passphrase=None)
+        plain = self._dir("pl5") / "private.key.json"
+        original = plain.read_bytes()
+        with patch("aiss.key_store.load_encrypted_key", return_value=b"" * 32):
+            with self.assertRaises(KeyFileCorruptedError):
+                self._secure("pl5", old=None)
+        self.assertEqual(plain.read_bytes(), original)
+        self.assertFalse((self._dir("pl5") / "private.key.json.bak").exists())
+        # le fichier chiffré installé par l'appel est retiré : il masquerait la clé en clair
+        self.assertFalse((self._dir("pl5") / "private.key.enc").exists())
+
+    def test_verification_read_error_deletes_nothing(self):
+        from aiss.key_store import InvalidPassphraseError
+        self._create("pl6", passphrase=None)
+        plain = self._dir("pl6") / "private.key.json"
+        original = plain.read_bytes()
+        with patch("aiss.key_store.load_encrypted_key", side_effect=InvalidPassphraseError("x")):
+            with self.assertRaises(InvalidPassphraseError):
+                self._secure("pl6", old=None)
+        self.assertEqual(plain.read_bytes(), original)
 
     def test_write_failure_keeps_old_key_and_no_temp(self):
         from aiss.key_store import load_encrypted_key
@@ -212,6 +275,8 @@ class TestHybrid(_Base):
         self._secure("up")
         self.assertEqual(load_encrypted_key(d / "private.key.enc", NEW), ed0)
         self.assertEqual(len(load_encrypted_pq_key(d / "private_pq.key.enc", NEW)), 4032)
+        self.assertFalse((d / "private.key.json").exists())
+        self.assertFalse((d / "private.key.json.bak").exists())
 
 
 if __name__ == "__main__":

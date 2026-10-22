@@ -1482,6 +1482,62 @@ def list_agent_identities() -> list:
     return list_agents()
 
 
+def _retire_plaintext_key(
+    agent_name: str,
+    plain_path: Path,
+    enc_path: Path,
+    new_passphrase: str,
+    original_key: bytes,
+) -> None:
+    """Supprime la clé en clair une fois le fichier chiffré installé ET relu.
+
+    Le fichier chiffré est relu et déchiffré, puis comparé à la clé d'origine. Si égal,
+    le fichier en clair est écrasé par des zéros, synchronisé (fsync), puis supprimé (plus
+    de .bak). Si la suppression échoue : avertissement dans les logs, l'opération réussit.
+    Si la relecture échoue ou diffère : le fichier en clair n'est pas touché, le fichier
+    chiffré installé par cet appel est retiré (il masquerait sinon la clé en clair) et
+    l'erreur est relevée.
+
+    Limite : l'écrasement ne garantit pas l'effacement physique (journalisation du système
+    de fichiers, SSD et wear-leveling, copies de sauvegarde, snapshots).
+    """
+    import os
+    import secrets
+    from aiss.key_store import load_encrypted_key, KeyFileCorruptedError
+
+    try:
+        reread = bytearray(load_encrypted_key(enc_path, new_passphrase))
+        try:
+            same = secrets.compare_digest(bytes(reread), bytes(original_key))
+        finally:
+            _erase_all([reread])
+        if not same:
+            raise KeyFileCorruptedError("la clé relue diffère de la clé d'origine")
+    except BaseException as exc:
+        try:
+            os.unlink(str(enc_path))
+        except OSError:
+            pass
+        logger.error(
+            f"[Identity] Vérification du fichier chiffré de '{agent_name}' échouée "
+            f"({exc}) : clé en clair conservée"
+        )
+        raise
+
+    try:
+        size = plain_path.stat().st_size
+        with open(plain_path, "r+b") as fh:
+            fh.write(b"\x00" * size)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.unlink(str(plain_path))
+    except OSError as exc:
+        logger.warning(
+            f"[Identity] Clé en clair de '{agent_name}' non supprimée ({exc}) : "
+            f"supprimez {plain_path} manuellement"
+        )
+
+
 def secure_agent_key(
     agent_name: str,
     new_passphrase: str,
@@ -1497,7 +1553,7 @@ def secure_agent_key(
     Aucune ancienne clé n'est supprimée avant que la nouvelle soit écrite : le
     nouveau fichier est écrit dans un temporaire (O_EXCL, fsync) puis installé par
     os.replace. Clé en clair : le fichier chiffré est écrit avant que l'ancien
-    soit renommé en .bak.
+    soit supprimé (relu, comparé, écrasé par des zéros, puis effacé : plus de .bak).
 
     Identité hybride (private_pq.key.enc présent) : les DEUX clés sont déchiffrées
     avec old_passphrase avant toute écriture (si l'une ne s'ouvre pas, rien n'est
@@ -1616,8 +1672,7 @@ def _secure_agent_key_impl(
         raise
 
     if not ed_encrypted:
-        # Clé en clair → l'ancien fichier n'est renommé qu'une fois le chiffré en place
-        plain_path.rename(plain_path.with_suffix(".json.bak"))
+        _retire_plaintext_key(agent_name, plain_path, enc_path, new_passphrase, raw_key)
 
     logger.info(f"[Identity] Clé de '{agent_name}' (re)chiffrée avec succès")
     return True
