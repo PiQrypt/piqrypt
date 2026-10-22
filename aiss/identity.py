@@ -1623,6 +1623,10 @@ def _secure_agent_key_impl(
 
     hybrid = pq_path.exists()
     ed_encrypted = is_encrypted(key_path)
+    if ed_encrypted and old_passphrase is None:
+        raise ValueError(
+            "La clé Ed25519 est chiffrée : old_passphrase (passphrase actuelle) requise"
+        )
     if hybrid:
         _validate_hybrid_passphrase(new_passphrase)
         if old_passphrase_pq is None:
@@ -1685,7 +1689,19 @@ def _secure_agent_key_impl(
         raise
 
     if not ed_encrypted:
-        _retire_plaintext_key(agent_name, plain_path, enc_path, new_passphrase, raw_key)
+        try:
+            _retire_plaintext_key(agent_name, plain_path, enc_path, new_passphrase, raw_key)
+        except BaseException:
+            if hybrid:
+                # La clé PQ a déjà été rechiffrée : on restaure l'originale pour que
+                # l'ancienne passphrase l'ouvre à nouveau (comme au second os.replace).
+                try:
+                    _atomic_write_bytes(pq_path, original_pq, 0o600)
+                except BaseException:
+                    logger.error(
+                        f"[Identity] Restauration de la clé PQ de '{agent_name}' impossible"
+                    )
+            raise
 
     logger.info(f"[Identity] Clé de '{agent_name}' (re)chiffrée avec succès")
     return True

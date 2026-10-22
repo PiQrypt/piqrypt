@@ -362,5 +362,53 @@ class TestSeparatePqPassphrase(_Base):
         self.assertEqual(len(load_encrypted_pq_key(d / "private_pq.key.enc", NEW)), 4032)
 
 
+class TestOldPassphraseRequired(_Base):
+
+    def test_encrypted_classical_key_without_old_passphrase(self):
+        from aiss.identity import create_agent_identity
+        create_agent_identity("cl", passphrase=OLD, base_dir=self.tmp)
+        d = self._dir("cl")
+        before = {p.name: p.read_bytes() for p in d.iterdir()}
+        with patch("aiss.key_store.load_encrypted_key") as loader:
+            with self.assertRaises(ValueError) as ctx:
+                self._secure("cl", old=None)
+            loader.assert_not_called()
+        self.assertIn("old_passphrase", str(ctx.exception))
+        self.assertEqual(before, {p.name: p.read_bytes() for p in d.iterdir()})
+
+    @pytest.mark.skipif(not _pq_available(), reason="ML-DSA-65 backend not installed")
+    def test_hybrid_without_old_passphrase(self):
+        from aiss.identity import create_agent_identity
+        create_agent_identity("hy", passphrase=OLD, base_dir=self.tmp, hybrid=True)
+        with self.assertRaises(ValueError):
+            self._secure("hy", old=None)
+
+
+@pytest.mark.skipif(not _pq_available(), reason="ML-DSA-65 backend not installed")
+class TestHybridPlaintextEd25519Failure(_Base):
+
+    def test_failed_retirement_restores_original_pq_key(self):
+        from aiss.identity import create_agent_identity, upgrade_agent_identity
+        from aiss.key_store import (
+            KeyFileCorruptedError, load_encrypted_pq_key, load_plaintext_key)
+        create_agent_identity("hp", passphrase=None, base_dir=self.tmp)
+        upgrade_agent_identity("hp", OLD, None, base_dir=self.tmp)
+        d = self._dir("hp")
+        pq_before = (d / "private_pq.key.enc").read_bytes()
+        plain_before = (d / "private.key.json").read_bytes()
+        pq_key = load_encrypted_pq_key(d / "private_pq.key.enc", OLD)
+
+        with patch("aiss.key_store.load_encrypted_key", return_value=b"" * 32):
+            with self.assertRaises(KeyFileCorruptedError):
+                self._secure("hp", old=OLD)
+
+        self.assertEqual((d / "private_pq.key.enc").read_bytes(), pq_before)
+        self.assertEqual(load_encrypted_pq_key(d / "private_pq.key.enc", OLD), pq_key)
+        self.assertEqual((d / "private.key.json").read_bytes(), plain_before)
+        self.assertFalse((d / "private.key.enc").exists())
+        self.assertEqual(len(load_plaintext_key(d / "private.key.json")), 32)
+        self.assertEqual([p.name for p in d.iterdir() if p.name.endswith(".tmp")], [])
+
+
 if __name__ == "__main__":
     unittest.main()
