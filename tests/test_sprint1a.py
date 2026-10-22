@@ -168,15 +168,20 @@ def test_select_canonical_chain_tsa_wins():
     short_chain, _ = make_chain(2)
     long_chain, _ = make_chain(5)
 
-    # Add TSA anchor to short chain
+    # Add a TSA anchor to the short chain. The token is fake: the test injects a verifier that
+    # declares it verified, because only a verifier supplied by the caller can anchor an event.
     short_chain[1]["trusted_timestamp"] = {
         "rfc3161_token": "FAKE_TOKEN_FOR_TEST",
         "tsa_id": "freetsa.org",
         "timestamp": int(time.time()),
     }
 
-    canonical, _ = select_canonical_chain([long_chain, short_chain])
-    assert len(canonical) == 2  # Short but anchored wins
+    def test_verifier(event):
+        trusted = event.get("trusted_timestamp") or {}
+        return trusted["timestamp"] if trusted.get("rfc3161_token") == "FAKE_TOKEN_FOR_TEST" else None
+
+    canonical, _ = select_canonical_chain([long_chain, short_chain], tsa_verifier=test_verifier)
+    assert len(canonical) == 2  # Short but verified-anchored wins
     print("✓ select_canonical_chain (TSA-anchored beats longer)")
 
 

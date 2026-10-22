@@ -25,6 +25,13 @@ Selection order (RFC §6.3):
   Step 3 — Longest chain (most events)
   Step 4 — Lexicographically lowest final event hash (tie-breaker)
 
+An event counts as anchored ONLY when a verifier supplied by the caller declares it verified
+and returns the genTime of its token (tsa_verifier: event -> int genTime, or None). The
+trusted_timestamp field is detached and unsigned, so its presence, its self-declared status
+and its local timestamp prove nothing. Without a verifier no event is anchored: steps 1 and 2
+are neutral and the selection falls to the length, then the hash. The result is deterministic
+for the same input AND the same trust store (the verifier's trust roots).
+
 Fork statuses (RFC §6.4 / §6.5):
   FORK_DETECTED          — standard fork
   FORK_AFTER_FINALIZATION — fork after TSA-anchored event (security incident)
@@ -36,6 +43,7 @@ from collections import defaultdict
 
 from aiss.exceptions import ForkDetected
 from aiss.chain import compute_event_hash
+from aiss.tsa_token import has_tsa_token
 
 
 class ForkDetector:
@@ -200,29 +208,47 @@ STATUS_NON_CANONICAL           = "NON_CANONICAL_HISTORY"
 STATUS_CANONICAL               = "CANONICAL"
 
 
-def _count_anchored_events(chain: List[Dict[str, Any]]) -> int:
-    """Count events in chain that have a trusted_timestamp (TSA token)."""
-    return sum(
-        1 for e in chain
-        if e.get("trusted_timestamp") and e["trusted_timestamp"].get("rfc3161_token")
-    )
+NO_ANCHOR = int(1e18)
 
 
-def _earliest_trusted_timestamp(chain: List[Dict[str, Any]]) -> int:
+def _verified_gen_time(event: Dict[str, Any], tsa_verifier) -> Optional[int]:
+    """genTime (int) of the event's token if the caller's verifier declares it verified.
+
+    None when there is no verifier, no structural token, the verifier returns anything but
+    an integer, or raises: an event is never anchored by default. The self-declared "status"
+    field of trusted_timestamp is never consulted."""
+    if tsa_verifier is None or not has_tsa_token(event):
+        return None
+    try:
+        gen_time = tsa_verifier(event)
+    except Exception:
+        return None
+    if isinstance(gen_time, bool) or not isinstance(gen_time, int):
+        return None
+    return gen_time
+
+
+def _anchor_times(chain: List[Dict[str, Any]], tsa_verifier=None) -> List[int]:
+    return [g for g in (_verified_gen_time(e, tsa_verifier) for e in chain) if g is not None]
+
+
+def _count_anchored_events(chain: List[Dict[str, Any]], tsa_verifier=None) -> int:
+    """Count events whose token the caller's verifier declares verified (0 without one)."""
+    return len(_anchor_times(chain, tsa_verifier))
+
+
+def _earliest_trusted_timestamp(chain: List[Dict[str, Any]], tsa_verifier=None) -> int:
     """
-    Return the earliest verifiable trusted timestamp in the chain.
-    Returns int.max if no anchored events exist.
+    Earliest genTime among verified anchored events of the chain.
+    Returns NO_ANCHOR if there are none (always the case without a verifier).
     """
-    anchored_ts = [
-        e["trusted_timestamp"].get("timestamp", int(1e18))
-        for e in chain
-        if e.get("trusted_timestamp") and e["trusted_timestamp"].get("rfc3161_token")
-    ]
-    return min(anchored_ts) if anchored_ts else int(1e18)
+    times = _anchor_times(chain, tsa_verifier)
+    return min(times) if times else NO_ANCHOR
 
 
 def select_canonical_chain(
     branches: List[List[Dict[str, Any]]],
+    tsa_verifier=None,
 ) -> Tuple[List[Dict[str, Any]], List[str]]:
     """
     Select the canonical chain from multiple valid branches (RFC §6.3).
@@ -237,8 +263,14 @@ def select_canonical_chain(
     Step 3 — Longest chain
     Step 4 — Lexicographically lowest final event hash (deterministic tie-breaker)
 
+    Steps 1 and 2 only count events that tsa_verifier declares verified (see the module
+    docstring). Without tsa_verifier they are neutral. The selection is deterministic for the
+    same input and the same trust store.
+
     Args:
-        branches: List of event chains (each chain is a list of events)
+        branches:     List of event chains (each chain is a list of events)
+        tsa_verifier: Optional callable event -> genTime (int) if the event's TSA token is
+                      verified, else None (e.g. aiss.rfc3161.make_tsa_verifier(trust_roots))
 
     Returns:
         Tuple of (canonical_chain, non_canonical_branch_ids)
@@ -253,8 +285,9 @@ def select_canonical_chain(
         return branches[0], []
 
     def sort_key(chain: List[Dict[str, Any]]) -> tuple:
-        anchored   = _count_anchored_events(chain)           # Step 1: more is better → negate
-        earliest   = _earliest_trusted_timestamp(chain)      # Step 2: earlier is better
+        times      = _anchor_times(chain, tsa_verifier)      # verified genTimes only
+        anchored   = len(times)                              # Step 1: more is better → negate
+        earliest   = min(times) if times else NO_ANCHOR      # Step 2: earlier is better
         length     = len(chain)                               # Step 3: longer is better → negate
         last_hash  = compute_event_hash(chain[-1]) if chain else "z" * 64  # Step 4: lower is better
 
@@ -275,6 +308,7 @@ def select_canonical_chain(
 def detect_fork_after_finalization(
     canonical_chain: List[Dict[str, Any]],
     non_canonical_chains: List[List[Dict[str, Any]]],
+    tsa_verifier=None,
 ) -> bool:
     """
     Detect if fork occurs after a TSA-finalized event (RFC §6.5).
@@ -282,9 +316,13 @@ def detect_fork_after_finalization(
     A FORK_AFTER_FINALIZATION indicates intentional or compromised
     behavior and MUST trigger a security incident response.
 
+    An event is finalized only if tsa_verifier declares its token verified; without a verifier
+    nothing is finalized and the function returns False.
+
     Args:
         canonical_chain:     The selected canonical chain
         non_canonical_chains: Non-selected branches
+        tsa_verifier:        Optional callable event -> genTime (int) or None
 
     Returns:
         True if fork occurred after a finalized (TSA-anchored) event
@@ -295,7 +333,7 @@ def detect_fork_after_finalization(
     # Find the last anchored event hash in canonical chain
     last_anchor_hash = None
     for event in reversed(canonical_chain):
-        if event.get("trusted_timestamp") and event["trusted_timestamp"].get("rfc3161_token"):
+        if _verified_gen_time(event, tsa_verifier) is not None:
             last_anchor_hash = compute_event_hash(event)
             break
 
@@ -328,6 +366,7 @@ def detect_fork_after_finalization(
 def classify_fork(
     canonical_chain: List[Dict[str, Any]],
     non_canonical_chains: List[List[Dict[str, Any]]],
+    tsa_verifier=None,
 ) -> str:
     """
     Classify fork type for reporting (RFC §6.4 / §6.5).
@@ -335,7 +374,7 @@ def classify_fork(
     Returns:
         STATUS_FORK_AFTER_FINALIZATION or STATUS_FORK_DETECTED
     """
-    if detect_fork_after_finalization(canonical_chain, non_canonical_chains):
+    if detect_fork_after_finalization(canonical_chain, non_canonical_chains, tsa_verifier):
         return STATUS_FORK_AFTER_FINALIZATION
     return STATUS_FORK_DETECTED
 
@@ -343,6 +382,7 @@ def classify_fork(
 def resolve_fork_canonical(
     branches: List[List[Dict[str, Any]]],
     raise_on_security_incident: bool = True,
+    tsa_verifier=None,
 ) -> Dict[str, Any]:
     """
     High-level fork resolution using Canonical History Rule (RFC §6).
@@ -354,6 +394,8 @@ def resolve_fork_canonical(
     Args:
         branches:                   List of event chains (branches)
         raise_on_security_incident: Raise exception on FORK_AFTER_FINALIZATION
+        tsa_verifier:               Optional callable event -> genTime (int) or None; without
+                                    it no event is anchored (see select_canonical_chain)
 
     Returns:
         Dict with:
@@ -374,10 +416,10 @@ def resolve_fork_canonical(
     from aiss.logger import get_logger
     log = get_logger(__name__)
 
-    canonical, non_canonical_ids = select_canonical_chain(branches)
+    canonical, non_canonical_ids = select_canonical_chain(branches, tsa_verifier)
     non_canonical = [branches[int(i)] for i in non_canonical_ids]
 
-    status = classify_fork(canonical, non_canonical)
+    status = classify_fork(canonical, non_canonical, tsa_verifier)
 
     if status == STATUS_FORK_AFTER_FINALIZATION:
         log.piqrypt_warn(
@@ -394,7 +436,8 @@ def resolve_fork_canonical(
     else:
         log.piqrypt(
             f"Fork resolved: canonical chain selected "
-            f"({len(canonical)} events, {_count_anchored_events(canonical)} TSA-anchored)"
+            f"({len(canonical)} events, "
+            f"{_count_anchored_events(canonical, tsa_verifier)} TSA-anchored)"
         )
 
     return {
@@ -402,7 +445,7 @@ def resolve_fork_canonical(
         "status": status,
         "non_canonical": non_canonical,
         "canonical_length": len(canonical),
-        "tsa_anchored_events": _count_anchored_events(canonical),
+        "tsa_anchored_events": _count_anchored_events(canonical, tsa_verifier),
     }
 
 
