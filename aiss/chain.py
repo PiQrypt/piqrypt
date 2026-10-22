@@ -52,7 +52,7 @@ def compute_event_hash(event: Dict[str, Any]) -> str:
     """
     version = event.get("version", "")
 
-    if version.startswith("AISS-2.1"):
+    if version == "AISS-2.1":
         # AISS-2.1: JCS + SHA-512. Exclude 'signatures' (plural) and 'trusted_timestamp'.
         event_copy = {k: v for k, v in event.items() if k not in ("signatures", "trusted_timestamp")}
         from aiss.canonical_aiss21 import hash_event as _hash21

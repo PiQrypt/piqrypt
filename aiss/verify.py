@@ -181,7 +181,7 @@ def _check_aiss21_events(events: List[Dict[str, Any]], identity: Dict[str, Any],
     for i, event in enumerate(events):
         if event.get("agent_id") != agent_id:
             raise InvalidChainError("Event agent_id does not match identity agent_id", i)
-        is_21 = str(event.get("version", "")).startswith("AISS-2.1")
+        is_21 = event.get("version") == "AISS-2.1"
         if form == "native" and not is_21:
             raise InvalidChainError(
                 "Downgrade: a native hybrid identity only accepts AISS-2.1 events", i)
