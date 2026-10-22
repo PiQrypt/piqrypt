@@ -84,6 +84,10 @@ class SessionAlreadyOpenError(Exception):
     """Une session est déjà ouverte pour cet agent."""
 
 
+class UnsupportedIdentityError(Exception):
+    """Identité non prise en charge par IdentitySession (hybride native, en 1.10)."""
+
+
 # ─── Helpers répertoires ──────────────────────────────────────────────────────
 
 def _safe_name(name: str) -> str:
@@ -206,6 +210,8 @@ class IdentitySession:
                 f"Créez l'agent avec : piqrypt identity create"
             )
 
+        self._reject_native_hybrid(agent_name)
+
         # Charger la clé privée
         key_path = get_key_path(agent_name)
         if key_path is None:
@@ -230,9 +236,18 @@ class IdentitySession:
         # Stocker dans bytearray pour effacement sécurisé
         self._private_key = bytearray(raw_key)
 
-        # Charger l'identité publique
-        self._agent_name = agent_name
-        self._agent_id, self._public_key = self._load_identity(agent_name)
+        # Charger l'identité publique ; en cas d'échec la clé est effacée avant de relever
+        # l'erreur (sinon elle resterait en mémoire dans une session verrouillée).
+        try:
+            self._agent_name = agent_name
+            self._agent_id, self._public_key = self._load_identity(agent_name)
+        except BaseException:
+            _secure_erase(self._private_key)
+            self._private_key = None
+            self._agent_name = None
+            self._agent_id = None
+            self._public_key = None
+            raise
         self._locked = False
         self._opened_at = int(time.time())
 
@@ -381,6 +396,26 @@ class IdentitySession:
                 "Appelez session.unlock() ou utilisez IdentitySession.open()."
             )
 
+    @staticmethod
+    def _reject_native_hybrid(agent_name: str) -> None:
+        """Refuse une identité hybride native avant tout déchiffrement de clé."""
+        import json
+        identity_path = get_identity_path(agent_name)
+        if not identity_path.exists():
+            return
+        try:
+            identity = json.loads(identity_path.read_text())
+        except Exception:
+            return  # document illisible : _load_identity produira l'erreur habituelle
+        if isinstance(identity, dict) and (
+            "public_key_classical" in identity
+            or (identity.get("version") == "AISS-2.1" and "public_key" not in identity)
+        ):
+            raise UnsupportedIdentityError(
+                f"Identité hybride native '{agent_name}' : non prise en charge par "
+                f"IdentitySession en 1.10"
+            )
+
     def _load_identity(self, agent_name: str):
         """
         Charge agent_id et public_key depuis identity.json.
@@ -448,6 +483,7 @@ __all__ = [
     "SessionLockedError",
     "AgentNotFoundError",
     "SessionAlreadyOpenError",
+    "UnsupportedIdentityError",
     "AGENTS_DIR",
     "ENV_AGENT_NAME",
     "ENV_PASSPHRASE",
