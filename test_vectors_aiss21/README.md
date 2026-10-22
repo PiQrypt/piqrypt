@@ -15,7 +15,7 @@ conformance claim or an audit result of any kind.
 | `keys.json` | Test agents A (native hybrid), B (AISS-1 identity upgraded to AISS-2.1), C (rotation target) plus helpers D and E (negatives). Seeds, public keys, private keys. |
 | `agent_id.json` | `derive_agent_id_aiss21`, positive cases and wrong key sizes (31/33 bytes Ed25519, 1951/1953 bytes ML-DSA-65). |
 | `hash_and_message.json` | For five events: JCS bytes, signed message M' and SHA-512 chain hash (hex). Non-ASCII, nested objects, large integers, detached fields. |
-| `events.json` | Valid signed events and negatives (tampered payload, swapped signatures, missing signature, missing or non-strict `base64:`, versions `AISS-2.10` and `AISS-2.0`, foreign keys). |
+| `events.json` | Valid signed events and negatives (tampered payload, swapped signatures, missing signature, missing or non-strict `base64:`, versions `AISS-2.10` and `AISS-2.0`, foreign keys, integer outside +/-(2^53-1)). |
 | `chains.json` | Native chain, upgraded-identity chain (AISS-1 then AISS-2.1), and negatives (downgrade, foreign `agent_id`, removed event, concurrent rotations). |
 | `identities.json` | Native identity, upgraded identity with binding, and negatives (altered binding, replaced keys, ambiguous documents, `agent_id` not derived). |
 | `rotation.json` | Four-signature rotation attestations and complete chained rotations (old chain, rotation event, new genesis), with negatives. |

@@ -323,18 +323,26 @@ def verify_aiss2_hybrid(event: Dict[str, Any], public_key_ed25519: bytes, public
     Raises:
         InvalidSignatureError: If either signature invalid or version unsupported
     """
-    from aiss.exceptions import InvalidSignatureError
+    from aiss.exceptions import AISSError, InvalidCanonicalJSONError, InvalidSignatureError
 
-    version = event.get("version", "")
-    if version == "AISS-2.0":
-        return _verify_aiss2_0(event, public_key_ed25519, public_key_dilithium)
-    elif version == "AISS-2.1":
-        return _verify_aiss2_1(event, public_key_ed25519, public_key_dilithium)
-    else:
-        raise InvalidSignatureError(
-            f"Unsupported AISS version for hybrid verification: {version!r}. "
-            "Expected 'AISS-2.0' or 'AISS-2.1'."
-        )
+    try:
+        version = event.get("version", "")
+        if version == "AISS-2.0":
+            return _verify_aiss2_0(event, public_key_ed25519, public_key_dilithium)
+        elif version == "AISS-2.1":
+            return _verify_aiss2_1(event, public_key_ed25519, public_key_dilithium)
+    except InvalidCanonicalJSONError as exc:
+        raise InvalidSignatureError(f"Event cannot be canonicalized: {exc}") from exc
+    except AISSError:
+        raise
+    except Exception as exc:
+        # Untrusted input (wrong types, out-of-domain numbers, ...) must fail closed with an
+        # AISSError, never leak AttributeError, TypeError or a canonicalizer error.
+        raise InvalidSignatureError(f"Malformed AISS-2 event: {exc}") from exc
+    raise InvalidSignatureError(
+        f"Unsupported AISS version for hybrid verification: {version!r}. "
+        "Expected 'AISS-2.0' or 'AISS-2.1'."
+    )
 
 
 def _verify_aiss2_0(

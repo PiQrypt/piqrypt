@@ -428,6 +428,11 @@ def build_events():
     e = event21(D, 10, "ev/foreign", {"action": "step"}, event_hash(genesis), agent_id=A.agent_id)
     add("signed_by_other_keys", "événement de l'agent A signé par les clés de D", False, e,
         "signatures do not verify under the agent's keys")
+    e = clone(regular); e["payload"]["n"] = 2 ** 53
+    add("integer_out_of_range",
+        "entier hors de +/-(2^53-1) dans la charge utile (signature valide copiée : le verdict "
+        "est invalide quelle que soit la signature)", False, e,
+        "integers outside +/-(2^53-1) cannot be canonicalized (RFC 8785)")
     return doc(
         "Vérification d'un événement AISS-2.1 isolé : version exactement 'AISS-2.1', deux "
         "signatures obligatoires au format 'base64:' strict (Ed25519 puis ML-DSA-65) sur le même "

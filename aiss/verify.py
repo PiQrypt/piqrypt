@@ -179,6 +179,8 @@ def _check_aiss21_events(events: List[Dict[str, Any]], identity: Dict[str, Any],
     agent_id = identity.get("agent_id")
     seen_aiss21 = False
     for i, event in enumerate(events):
+        if not isinstance(event, dict):
+            raise InvalidChainError("Event must be an object", i)
         if event.get("agent_id") != agent_id:
             raise InvalidChainError("Event agent_id does not match identity agent_id", i)
         is_21 = event.get("version") == "AISS-2.1"
@@ -253,7 +255,11 @@ def verify_chain(
 
     # Verify all signatures
     for i, event in enumerate(events):
+        if not isinstance(event, dict):
+            raise InvalidChainError("Event must be an object", i)
         version = event.get("version", "")
+        if not isinstance(version, str):
+            raise InvalidChainError("Event version must be a string", i)
         if version.startswith("AISS-2"):
             if public_key_pq is None:
                 raise InvalidChainError(

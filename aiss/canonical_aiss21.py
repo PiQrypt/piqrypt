@@ -17,6 +17,8 @@ Backed by rfc8785 >= 0.1.4 (Apache-2.0).
 import hashlib
 from typing import Any
 
+from aiss.exceptions import InvalidCanonicalJSONError
+
 try:
     import rfc8785 as _rfc8785
     _AVAILABLE = True
@@ -38,14 +40,19 @@ def canonicalize(obj: Any) -> bytes:
 
     Raises:
         ImportError: if rfc8785 is not installed
-        ValueError: if obj contains non-serializable values (NaN, Infinity)
+        InvalidCanonicalJSONError: (also a ValueError) if obj contains values outside the
+            RFC 8785 domain (NaN, Infinity, integers beyond +/-(2^53-1), unsupported types)
     """
     if not _AVAILABLE:
         raise ImportError(
             "rfc8785 is required for AISS-2.1 canonicalization.\n"
             "Install: pip install 'rfc8785>=0.1.4,<0.2'"
         )
-    return _rfc8785.dumps(obj)
+    try:
+        return _rfc8785.dumps(obj)
+    except _rfc8785.CanonicalizationError as exc:
+        # integers outside +/-(2^53-1), NaN, Infinity, unsupported types
+        raise InvalidCanonicalJSONError(f"Cannot canonicalize (RFC 8785): {exc}") from exc
 
 
 def hash_event(obj: Any) -> str:
