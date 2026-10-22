@@ -350,10 +350,17 @@ def _tsa_report(events: List[Dict[str, Any]], trust_roots=None) -> Dict[str, Any
             counts["absent"] += 1
             continue
         if not available:
-            status = "structure_only" if has_tsa_token(event) else (
-                "pending" if (event.get("trusted_timestamp") or {}).get("status") == "pending"
-                else "invalid")
+            trusted = event["trusted_timestamp"]
+            if has_tsa_token(event):
+                status, reason = "structure_only", "aiss.rfc3161 is not available: token present, not verified"
+            elif isinstance(trusted, dict) and trusted.get("status") == "pending":
+                status, reason = "pending", "no TSA token was obtained yet"
+            elif not isinstance(trusted, dict):
+                status, reason = "invalid", "trusted_timestamp is not an object"
+            else:
+                status, reason = "invalid", "the event carries no TSA token"
             counts[status] += 1
+            details.append({"index": index, "status": status, "reason": reason})
             continue
         try:
             result = verify_tsa_token(event, roots)

@@ -136,5 +136,77 @@ class TestTsaSection(unittest.TestCase):
         self.assertEqual((tsa["absent"], tsa["invalid"]), (1, 2))
 
 
+class TestReportWithoutRfc3161Module(unittest.TestCase):
+    """Build MIT (aiss.rfc3161 absent, simulé) : le rapport ne lève jamais, quel que soit le type."""
+
+    @staticmethod
+    def report(trusted):
+        from aiss.verify import _tsa_report
+        with patch.dict(sys.modules, {"aiss.rfc3161": None}):
+            return _tsa_report([{"trusted_timestamp": trusted}])
+
+    @staticmethod
+    def counts(section):
+        return {k: section[k] for k in ("verified", "structure_only", "pending", "invalid", "absent")}
+
+    def test_counters_for_every_kind_of_trusted_timestamp(self):
+        expected = {
+            "str": ("x", "invalid"), "int": (5, "invalid"), "list": ([{"token": "x"}], "invalid"),
+            "none": (None, "invalid"), "empty dict": ({}, "invalid"),
+            "pending dict": ({"status": "pending"}, "pending"),
+            "token dict": ({"token": "base64:AAAA"}, "structure_only"),
+            "legacy token dict": ({"rfc3161_token": "AAAA"}, "structure_only"),
+            "empty token dict": ({"token": "", "status": "granted"}, "invalid"),
+            "self-declared verified": ({"status": "verified"}, "invalid"),
+        }
+        for label, (value, status) in expected.items():
+            with self.subTest(trusted_timestamp=label):
+                section = self.report(value)
+                self.assertEqual(self.counts(section)[status], 1, section)
+                self.assertEqual(sum(self.counts(section).values()), 1)
+                self.assertFalse(section["verification_available"])
+                self.assertEqual(section["verified"], 0)
+
+    def test_every_non_verified_event_is_listed_with_a_reason(self):
+        section = self.report("x")
+        self.assertEqual([(d["index"], d["status"]) for d in section["details"]], [(0, "invalid")])
+        self.assertTrue(section["details"][0]["reason"])
+
+    def test_absent_field_is_counted_absent(self):
+        from aiss.verify import _tsa_report
+        with patch.dict(sys.modules, {"aiss.rfc3161": None}):
+            section = _tsa_report([{"payload": {}}, {"trusted_timestamp": {"status": "pending"}}])
+        self.assertEqual((section["absent"], section["pending"]), (1, 1))
+
+    def test_get_verification_report_never_raises(self):
+        import aiss
+        from aiss.verify import get_verification_report
+        priv, pub = aiss.generate_keypair()
+        identity = aiss.export_identity(aiss.derive_agent_id(pub), pub)
+        for value in ("x", 5, [1], None, {}, {"status": "pending"}):
+            event = aiss.stamp_event(priv, identity["agent_id"], {"a": 1}, nonce="n-" + repr(value)[:8])
+            event["trusted_timestamp"] = value
+            with self.subTest(trusted_timestamp=repr(value)):
+                with patch.dict(sys.modules, {"aiss.rfc3161": None}):
+                    report = get_verification_report([event], identity)
+                self.assertTrue(report["valid"])
+                self.assertEqual(sum(self.counts(report["tsa"]).values()), 1)
+
+    def test_simulation_leaves_no_trace_in_sys_modules(self):
+        had = "aiss.rfc3161" in sys.modules
+        before = sys.modules.get("aiss.rfc3161")
+        self.report("x")
+        self.assertEqual("aiss.rfc3161" in sys.modules, had)
+        self.assertIs(sys.modules.get("aiss.rfc3161"), before)
+
+    def test_with_the_module_present_the_same_inputs_are_invalid_or_pending(self):
+        from aiss.verify import _tsa_report
+        for value, status in (("x", "invalid"), (5, "invalid"), ([1], "invalid"), (None, "invalid"),
+                              ({}, "invalid"), ({"status": "pending"}, "pending")):
+            with self.subTest(trusted_timestamp=repr(value)):
+                section = _tsa_report([{"trusted_timestamp": value}], [])
+                self.assertEqual(self.counts(section)[status], 1, section)
+
+
 if __name__ == "__main__":
     unittest.main()
