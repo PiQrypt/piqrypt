@@ -1543,6 +1543,7 @@ def secure_agent_key(
     new_passphrase: str,
     old_passphrase: Optional[str] = None,
     base_dir: Optional[str] = None,
+    old_passphrase_pq: Optional[str] = None,
 ) -> bool:
     """
     Chiffre (ou rechiffre) la clé privée d'un agent avec une passphrase.
@@ -1565,8 +1566,13 @@ def secure_agent_key(
     Args:
         agent_name:     Nom de l'agent
         new_passphrase: Nouvelle passphrase
-        old_passphrase: Ancienne passphrase (clé chiffrée, ou clé PQ d'une identité hybride)
+        old_passphrase: Ancienne passphrase de la clé Ed25519 (si elle est chiffrée)
         base_dir:       Répertoire racine optionnel (tests/CI)
+        old_passphrase_pq: Ancienne passphrase de la clé ML-DSA-65 d'une identité
+            hybride (défaut : old_passphrase). Utile quand la clé PQ a été créée par
+            une mise à niveau avec une passphrase différente de celle de la clé Ed25519.
+            Une clé PQ qui refuse la passphrase lève PQKeyPassphraseError
+            (sous-classe d'InvalidPassphraseError), sans rien avoir modifié.
 
     Returns:
         True si succès
@@ -1579,7 +1585,8 @@ def secure_agent_key(
     buffers: list = []
     try:
         return _secure_agent_key_impl(
-            agent_name, new_passphrase, old_passphrase, base_dir, buffers)
+            agent_name, new_passphrase, old_passphrase, base_dir, buffers,
+            old_passphrase if old_passphrase_pq is None else old_passphrase_pq)
     finally:
         _erase_all(buffers)
 
@@ -1590,11 +1597,13 @@ def _secure_agent_key_impl(
     old_passphrase: Optional[str],
     base_dir: Optional[str],
     _buffers: list,
+    old_passphrase_pq: Optional[str],
 ) -> bool:
     """Corps de secure_agent_key ; _buffers recueille les clés à effacer."""
     import os
     from aiss.agent_registry import get_agent_dir
     from aiss.key_store import (
+        InvalidPassphraseError, PQKeyPassphraseError,
         is_encrypted, load_plaintext_key, load_encrypted_key, load_encrypted_pq_key,
         encrypt_private_key, encrypt_pq_private_key,
     )
@@ -1616,7 +1625,7 @@ def _secure_agent_key_impl(
     ed_encrypted = is_encrypted(key_path)
     if hybrid:
         _validate_hybrid_passphrase(new_passphrase)
-        if old_passphrase is None:
+        if old_passphrase_pq is None:
             raise ValueError(
                 "Identité hybride : l'ancienne passphrase est requise (clé ML-DSA-65 chiffrée)"
             )
@@ -1632,7 +1641,11 @@ def _secure_agent_key_impl(
     if hybrid:
         original_pq = pq_path.read_bytes()
         try:
-            raw_pq = load_encrypted_pq_key(pq_path, old_passphrase)
+            raw_pq = load_encrypted_pq_key(pq_path, old_passphrase_pq)
+        except InvalidPassphraseError as exc:
+            raise PQKeyPassphraseError(
+                f"Clé ML-DSA-65 de '{agent_name}' : passphrase refusée ({exc})"
+            ) from exc
         except Exception as exc:
             raise type(exc)(
                 f"Clé ML-DSA-65 de '{agent_name}' illisible avec l'ancienne passphrase "

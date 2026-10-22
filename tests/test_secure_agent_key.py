@@ -279,5 +279,88 @@ class TestHybrid(_Base):
         self.assertFalse((d / "private.key.json.bak").exists())
 
 
+@pytest.mark.skipif(not _pq_available(), reason="ML-DSA-65 backend not installed")
+class TestSeparatePqPassphrase(_Base):
+    """Identité mise à niveau : clé Ed25519 et clé ML-DSA-65 sous deux passphrases."""
+
+    PQ_OLD = "passphrase PQ distincte"
+
+    def _upgraded(self, name="sep"):
+        from aiss.identity import create_agent_identity, upgrade_agent_identity
+        create_agent_identity(name, passphrase=OLD, base_dir=self.tmp)
+        upgrade_agent_identity(name, self.PQ_OLD, OLD, base_dir=self.tmp)
+
+    def _snapshot(self, name):
+        return {p.name: p.read_bytes() for p in self._dir(name).iterdir() if p.is_file()}
+
+    def test_secure_with_two_different_passphrases(self):
+        from aiss.identity import secure_agent_key
+        from aiss.key_store import load_encrypted_key, load_encrypted_pq_key, InvalidPassphraseError
+        self._upgraded()
+        d = self._dir("sep")
+        ed0 = load_encrypted_key(d / "private.key.enc", OLD)
+        pq0 = load_encrypted_pq_key(d / "private_pq.key.enc", self.PQ_OLD)
+        self.assertTrue(secure_agent_key("sep", NEW, OLD, base_dir=self.tmp,
+                                         old_passphrase_pq=self.PQ_OLD))
+        self.assertEqual(load_encrypted_key(d / "private.key.enc", NEW), ed0)
+        self.assertEqual(load_encrypted_pq_key(d / "private_pq.key.enc", NEW), pq0)
+        with self.assertRaises(InvalidPassphraseError):
+            load_encrypted_pq_key(d / "private_pq.key.enc", self.PQ_OLD)
+
+    def test_pq_refusal_is_typed_and_modifies_nothing(self):
+        from aiss.identity import secure_agent_key
+        from aiss.key_store import PQKeyPassphraseError, InvalidPassphraseError
+        self._upgraded()
+        before = self._snapshot("sep")
+        with self.assertRaises(PQKeyPassphraseError) as ctx:
+            secure_agent_key("sep", NEW, OLD, base_dir=self.tmp)  # défaut : old_passphrase
+        self.assertIsInstance(ctx.exception, InvalidPassphraseError)
+        self.assertEqual(before, self._snapshot("sep"))
+
+    def test_ed25519_refusal_is_not_a_pq_error(self):
+        from aiss.identity import secure_agent_key
+        from aiss.key_store import PQKeyPassphraseError, InvalidPassphraseError
+        self._upgraded()
+        before = self._snapshot("sep")
+        with self.assertRaises(InvalidPassphraseError) as ctx:
+            secure_agent_key("sep", NEW, "mauvaise", base_dir=self.tmp,
+                             old_passphrase_pq=self.PQ_OLD)
+        self.assertNotIsInstance(ctx.exception, PQKeyPassphraseError)
+        self.assertEqual(before, self._snapshot("sep"))
+
+    def test_default_pq_passphrase_is_old_passphrase(self):
+        from aiss.identity import create_agent_identity, secure_agent_key
+        from aiss.key_store import load_encrypted_pq_key
+        create_agent_identity("same", passphrase=OLD, base_dir=self.tmp, hybrid=True)
+        self.assertTrue(secure_agent_key("same", NEW, OLD, base_dir=self.tmp))
+        self.assertEqual(len(load_encrypted_pq_key(
+            self._dir("same") / "private_pq.key.enc", NEW)), 4032)
+
+    def test_cli_asks_again_for_the_pq_passphrase(self):
+        import io
+        from contextlib import redirect_stdout
+        import aiss.agent_registry as reg
+        from aiss.key_store import load_encrypted_key, load_encrypted_pq_key
+        from cli.main import cmd_identity_secure
+        from argparse import Namespace
+        self._upgraded()
+        d = self._dir("sep")
+        prompts = []
+        answers = iter([NEW, NEW, OLD, self.PQ_OLD])  # nouvelle, confirmation, Ed25519, PQ
+
+        def fake_getpass(prompt=""):
+            prompts.append(prompt)
+            return next(answers)
+
+        out = io.StringIO()
+        with patch.object(reg, "AGENTS_DIR", Path(self.tmp) / "agents"),                 patch("getpass.getpass", side_effect=fake_getpass), redirect_stdout(out):
+            cmd_identity_secure(Namespace(name="sep"))
+        self.assertEqual(len(prompts), 4)
+        self.assertIn("Ancienne passphrase de la clé ML-DSA-65", prompts[3])
+        self.assertIn("rechiffrées avec succès", out.getvalue())
+        self.assertEqual(len(load_encrypted_key(d / "private.key.enc", NEW)), 32)
+        self.assertEqual(len(load_encrypted_pq_key(d / "private_pq.key.enc", NEW)), 4032)
+
+
 if __name__ == "__main__":
     unittest.main()

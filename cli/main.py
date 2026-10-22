@@ -269,7 +269,14 @@ def cmd_identity_secure(args):
         if hybrid or (enc_path.exists() and is_encrypted(enc_path)):
             old_pp = getpass.getpass("Ancienne passphrase : ")
 
-        aiss.secure_agent_key(agent_name, new_pp, old_pp)
+        old_pp_pq = None
+        from aiss.key_store import PQKeyPassphraseError
+        try:
+            aiss.secure_agent_key(agent_name, new_pp, old_pp)
+        except PQKeyPassphraseError:
+            # Rien n'a été modifié : la clé ML-DSA-65 a peut-être une autre passphrase
+            old_pp_pq = getpass.getpass("Ancienne passphrase de la clé ML-DSA-65 : ")
+            aiss.secure_agent_key(agent_name, new_pp, old_pp, old_passphrase_pq=old_pp_pq)
         if hybrid:
             print(f"✅ Clés Ed25519 et ML-DSA-65 de '{agent_name}' rechiffrées avec succès.")
         else:

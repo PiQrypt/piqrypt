@@ -85,6 +85,10 @@ class InvalidPassphraseError(KeyStoreError):
     """Passphrase incorrecte — déchiffrement impossible."""
 
 
+class PQKeyPassphraseError(InvalidPassphraseError):
+    """La clé ML-DSA-65 refuse la passphrase fournie (la clé Ed25519 s'est ouverte)."""
+
+
 class KeyFileCorruptedError(KeyStoreError):
     """Fichier de clé corrompu ou format invalide."""
 
