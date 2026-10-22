@@ -1,18 +1,18 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2026 PiQrypt Inc.
-# e-Soleau: DSO2026006483 (19/02/2026) â€” DSO2026009143 (12/03/2026)
+# e-Soleau: DSO2026006483 (19/02/2026) — DSO2026009143 (12/03/2026)
 
 """
-piqrypt-hermes â€” PiQrypt plugin for Hermes Agent  v1.0.0
+piqrypt-hermes — PiQrypt plugin for Hermes Agent  v1.0.0
 
 Hermes plugin that adds a cryptographic audit trail to every tool call.
 
 How it works:
-    - on_session_start  â†’ stamps agent_initialized, loads memory context
-    - pre_tool_call     â†’ stamps tool_intent (before execution)
-    - post_tool_call    â†’ stamps tool_result (after execution, chained)
-    - pre_llm_call      â†’ injects recent PiQrypt memory into the LLM turn
-    - on_session_end    â†’ stamps session_end
+    - on_session_start  → stamps agent_initialized, loads memory context
+    - pre_tool_call     → stamps tool_intent (before execution)
+    - post_tool_call    → stamps tool_result (after execution, chained)
+    - pre_llm_call      → injects recent PiQrypt memory into the LLM turn
+    - on_session_end    → stamps session_end
 
 Installation (pip):
     pip install piqrypt-hermes
@@ -39,7 +39,7 @@ from typing import Any, Dict, Optional
 
 logger = logging.getLogger("piqrypt.hermes")
 
-# â”€â”€ piqrypt import â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── piqrypt import ────────────────────────────────────────────────────────────
 
 try:
     import piqrypt as aiss
@@ -47,11 +47,11 @@ try:
 except ImportError:
     _PIQRYPT_AVAILABLE = False
     logger.warning(
-        "[piqrypt-hermes] piqrypt not installed â€” audit trail disabled. "
+        "[piqrypt-hermes] piqrypt not installed — audit trail disabled. "
         "Run: pip install piqrypt"
     )
 
-# â”€â”€ BridgeProtocol (optional â€” graceful degradation) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── BridgeProtocol (optional — graceful degradation) ─────────────────────────
 
 try:
     from aiss.bridge_protocol import BridgeProtocol
@@ -61,10 +61,10 @@ except ImportError:
     _BRIDGE_PROTOCOL_AVAILABLE = False
 
 
-# â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _h(value: Any) -> str:
-    """SHA-256 of any value â€” never stores raw content."""
+    """SHA-256 of any value — never stores raw content."""
     return hashlib.sha256(str(value).encode("utf-8")).hexdigest()
 
 
@@ -73,9 +73,9 @@ def _resolve_identity():
     Resolve PiQrypt identity from environment or generate an ephemeral one.
 
     Priority:
-        1. PIQRYPT_IDENTITY_FILE  â€” path to a saved .json identity
-        2. PIQRYPT_AGENT_NAME     â€” name of an agent in the default PiQrypt dir
-        3. Ephemeral keypair      â€” logged as WARNING (keys lost on restart)
+        1. PIQRYPT_IDENTITY_FILE  — path to a saved .json identity
+        2. PIQRYPT_AGENT_NAME     — name of an agent in the default PiQrypt dir
+        3. Ephemeral keypair      — logged as WARNING (keys lost on restart)
     """
     if not _PIQRYPT_AVAILABLE:
         return None, None
@@ -98,7 +98,7 @@ def _resolve_identity():
         priv, pub = aiss.generate_keypair()
         agent_id  = aiss.derive_agent_id(pub)
         logger.warning(
-            "[piqrypt-hermes] No identity configured â€” using ephemeral keypair. "
+            "[piqrypt-hermes] No identity configured — using ephemeral keypair. "
             "Set PIQRYPT_IDENTITY_FILE or PIQRYPT_AGENT_NAME for persistent identity."
         )
         return priv, agent_id
@@ -109,15 +109,15 @@ def _resolve_identity():
         return priv, aiss.derive_agent_id(pub)
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ══════════════════════════════════════════════════════════════════════════════
 # PiQryptAuditPlugin
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ══════════════════════════════════════════════════════════════════════════════
 
 class _PiQryptAuditPlugin(BridgeProtocol if _BRIDGE_PROTOCOL_AVAILABLE else object):
     """
     Internal plugin state. One instance per Hermes session.
 
-    Not exposed publicly â€” the Hermes plugin API uses the module-level
+    Not exposed publicly — the Hermes plugin API uses the module-level
     register() function.
     """
 
@@ -148,7 +148,7 @@ class _PiQryptAuditPlugin(BridgeProtocol if _BRIDGE_PROTOCOL_AVAILABLE else obje
             "aiss_profile":    "AISS-1",
         })
 
-    # â”€â”€ Internal stamp â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # ── Internal stamp ────────────────────────────────────────────────────────
 
     def _stamp(self, event_type: str, payload: Dict) -> Optional[Dict]:
         """Sign, chain and store one audit event. Noop if piqrypt unavailable."""
@@ -166,7 +166,7 @@ class _PiQryptAuditPlugin(BridgeProtocol if _BRIDGE_PROTOCOL_AVAILABLE else obje
             logger.error("[piqrypt-hermes] stamp failed (%s): %s", event_type, exc)
             return None
 
-    # â”€â”€ Hook handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # ── Hook handlers ─────────────────────────────────────────────────────────
 
     def handle_session_start(self, session_id: str, **kwargs):
         self._session_id = session_id
@@ -234,7 +234,7 @@ class _PiQryptAuditPlugin(BridgeProtocol if _BRIDGE_PROTOCOL_AVAILABLE else obje
         })
 
 
-# â”€â”€ Singleton â€” one plugin instance per process â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── Singleton — one plugin instance per process ───────────────────────────────
 _plugin: Optional[_PiQryptAuditPlugin] = None
 
 
@@ -248,9 +248,9 @@ def _get_plugin() -> Optional[_PiQryptAuditPlugin]:
     return _plugin
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ══════════════════════════════════════════════════════════════════════════════
 # Hermes plugin entry point
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ══════════════════════════════════════════════════════════════════════════════
 
 def register(ctx):
     """
@@ -263,7 +263,7 @@ def register(ctx):
     if not _PIQRYPT_AVAILABLE:
         # Surface the missing dependency as a Hermes tool warning, not a crash
         logger.warning(
-            "[piqrypt-hermes] piqrypt not available â€” "
+            "[piqrypt-hermes] piqrypt not available — "
             "install with: pip install piqrypt"
         )
         return
@@ -279,6 +279,6 @@ def register(ctx):
     ctx.register_hook("on_session_end",   plugin.handle_session_end)
 
     logger.info(
-        "[piqrypt-hermes] PiQrypt audit trail active â€” agent_id=%s",
+        "[piqrypt-hermes] PiQrypt audit trail active — agent_id=%s",
         plugin._pq_id,
     )
