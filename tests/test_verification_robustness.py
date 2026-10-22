@@ -228,5 +228,41 @@ class TestMalformedEvents(unittest.TestCase):
             [self.events[0], bad_event], self.identity, copy.deepcopy(self.events[0])))
 
 
+
+class TestVerifyChainInputTypes(unittest.TestCase):
+    """verify_chain valide le type de ses entrées : InvalidChainError, jamais TypeError."""
+
+    def setUp(self):
+        import aiss
+        priv, pub = aiss.generate_keypair()
+        self.identity = aiss.export_identity(aiss.derive_agent_id(pub), pub)
+        self.event = aiss.stamp_event(priv, self.identity["agent_id"], {"a": 1})
+
+    def test_invalid_event_containers_and_identities_raise_invalid_chain_error(self):
+        import aiss
+        from aiss.exceptions import InvalidChainError
+        events_options = [None, 5, "x", {}, [], [None], [5], ["x"]]
+        identity_options = [None, 5, "x", []]
+        for events in events_options:
+            for identity in identity_options:
+                with self.subTest(events=repr(events), identity=repr(identity)):
+                    with self.assertRaises(InvalidChainError):
+                        aiss.verify_chain(events, identity)
+
+    def test_non_list_events_with_a_valid_identity(self):
+        import aiss
+        from aiss.exceptions import InvalidChainError
+        for events in (None, 5, "x", {}, {"a": 1}):
+            with self.subTest(events=repr(events)):
+                with self.assertRaises(InvalidChainError):
+                    aiss.verify_chain(events, self.identity)
+
+    def test_valid_calls_are_unchanged(self):
+        import aiss
+        self.assertTrue(aiss.verify_chain([], self.identity))
+        self.assertTrue(aiss.verify_chain([self.event], self.identity))
+        self.assertTrue(aiss.verify_chain((self.event,), self.identity))
+
+
 if __name__ == "__main__":
     unittest.main()

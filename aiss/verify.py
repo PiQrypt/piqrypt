@@ -234,6 +234,13 @@ def verify_chain(
         >>> verify_chain(events, agent_identity)
         True
     """
+    if not isinstance(events, (list, tuple)):
+        raise InvalidChainError(
+            f"events must be a list of event objects, got {type(events).__name__}")
+    if not isinstance(identity, dict):
+        raise InvalidChainError(
+            f"identity must be an object, got {type(identity).__name__}")
+
     if not events:
         return True
 
