@@ -419,6 +419,251 @@ def load_key(passphrase: str, path: "Path") -> bytes:
     """Alias court : charge et déchiffre la clé privée."""
     return load_encrypted_key(path, passphrase)
 
+# =============================================================================
+# Format v2 — ML-DSA-65 private key (PQ)
+# =============================================================================
+#
+# Separate file private_pq.key.enc, independent of v1 private.key.enc.
+# v1 loader rejects v2 files via the 97-byte size check (KeyFileCorruptedError).
+#
+# Header layout (42 bytes, used as AAD for AES-256-GCM):
+#   [4]  magic    = b"PQKY"
+#   [1]  version  = 0x02
+#   [1]  algo_id  = V2_ALGO_MLDSA65_SK (0x01) — ML-DSA-65 secret key
+#   [1]  kdf_id   = V2_KDF_SCRYPT (0x01)
+#   [1]  n_log2   — log2(N) for scrypt, e.g. 17 for N=2^17
+#   [1]  r        — scrypt block size
+#   [1]  p        — scrypt parallelism
+#   [16] salt
+#   [12] nonce    — AES-GCM nonce
+#   [4]  ct_len   — ciphertext length, big-endian uint32
+#
+# Followed by: ciphertext (key_len + 16 bytes GCM tag)
+# =============================================================================
+
+import struct as _struct
+
+V2_VERSION       = 0x02
+V2_ALGO_MLDSA65_SK = 0x01    # ML-DSA-65 secret key
+V2_KDF_SCRYPT    = 0x01
+
+_V2_HEADER_SIZE  = 4 + 1 + 1 + 1 + 3 + 16 + 12 + 4  # = 42 bytes
+
+# Scrypt parameter bounds (DoS prevention)
+_V2_N_LOG2_MIN = 10   # 2^10 = 1 024  (tests only)
+_V2_N_LOG2_MAX = 20   # 2^20 = 1 048 576 (~1 GB RAM)
+_V2_R_MIN, _V2_R_MAX = 1, 64
+_V2_P_MIN, _V2_P_MAX = 1, 64
+
+
+def _v2_build_header(
+    algo_id: int,
+    kdf_id: int,
+    n_log2: int,
+    r: int,
+    p: int,
+    salt: bytes,
+    nonce: bytes,
+    ct_len: int,
+) -> bytes:
+    """Build the 42-byte v2 header (AAD)."""
+    return (
+        MAGIC
+        + bytes([V2_VERSION, algo_id, kdf_id, n_log2, r, p])
+        + salt
+        + nonce
+        + _struct.pack(">I", ct_len)
+    )
+
+
+def _v2_derive_key(passphrase: str, salt: bytes, n_log2: int, r: int, p: int) -> bytes:
+    """Derive AES-256 key from passphrase using scrypt with validated parameters."""
+    if not (_V2_N_LOG2_MIN <= n_log2 <= _V2_N_LOG2_MAX):
+        raise KeyFileCorruptedError(
+            f"v2: n_log2={n_log2} hors bornes [{_V2_N_LOG2_MIN}, {_V2_N_LOG2_MAX}]"
+        )
+    if not (_V2_R_MIN <= r <= _V2_R_MAX):
+        raise KeyFileCorruptedError(
+            f"v2: r={r} hors bornes [{_V2_R_MIN}, {_V2_R_MAX}]"
+        )
+    if not (_V2_P_MIN <= p <= _V2_P_MAX):
+        raise KeyFileCorruptedError(
+            f"v2: p={p} hors bornes [{_V2_P_MIN}, {_V2_P_MAX}]"
+        )
+    kdf = Scrypt(salt=salt, length=KEY_SIZE, n=2 ** n_log2, r=r, p=p)
+    return kdf.derive(passphrase.encode("utf-8"))
+
+
+def encrypt_pq_private_key(
+    private_key_bytes: bytes,
+    passphrase: str,
+    n_log2: int = None,
+    r: int = _SCRYPT_R,
+    p: int = _SCRYPT_P,
+) -> bytes:
+    """
+    Encrypt an ML-DSA-65 private key (4032 bytes) with format v2.
+
+    Args:
+        private_key_bytes: ML-DSA-65 secret key (4032 bytes)
+        passphrase:        Passphrase (mandatory)
+        n_log2:            log2(N) for scrypt (default: log2(_SCRYPT_N))
+        r, p:              scrypt parameters
+
+    Returns:
+        v2-encrypted blob (_V2_HEADER_SIZE + len(key) + 16 bytes)
+    """
+    import math
+    if n_log2 is None:
+        n_log2 = int(math.log2(_SCRYPT_N))
+
+    salt  = secrets.token_bytes(16)
+    nonce = secrets.token_bytes(12)
+
+    aes_key = bytearray(_v2_derive_key(passphrase, salt, n_log2, r, p))
+    try:
+        aesgcm = AESGCM(bytes(aes_key))
+        header = _v2_build_header(
+            V2_ALGO_MLDSA65_SK, V2_KDF_SCRYPT, n_log2, r, p,
+            salt, nonce, len(private_key_bytes) + 16,
+        )
+        ciphertext = aesgcm.encrypt(nonce, private_key_bytes, header)
+    finally:
+        _secure_erase(aes_key)
+
+    return header + ciphertext
+
+
+def decrypt_pq_private_key(encrypted_data: bytes, passphrase: str) -> bytes:
+    """
+    Decrypt an ML-DSA-65 private key from format v2.
+
+    Args:
+        encrypted_data: v2-encrypted blob
+        passphrase:     Passphrase
+
+    Returns:
+        ML-DSA-65 secret key bytes
+
+    Raises:
+        KeyFileCorruptedError:   Format or bounds invalid
+        InvalidPassphraseError:  Wrong passphrase (GCM tag mismatch)
+    """
+    if len(encrypted_data) < _V2_HEADER_SIZE:
+        raise KeyFileCorruptedError(
+            f"v2: données trop courtes ({len(encrypted_data)} bytes, "
+            f"minimum {_V2_HEADER_SIZE})"
+        )
+
+    hdr = encrypted_data[:_V2_HEADER_SIZE]
+
+    magic   = hdr[0:4]
+    version = hdr[4]
+    algo_id = hdr[5]
+    kdf_id  = hdr[6]
+    n_log2  = hdr[7]
+    r       = hdr[8]
+    p       = hdr[9]
+    salt    = hdr[10:26]
+    nonce   = hdr[26:38]
+    ct_len, = _struct.unpack(">I", hdr[38:42])
+
+    if magic != MAGIC:
+        raise KeyFileCorruptedError(f"v2: magic invalide {magic!r}")
+    if version != V2_VERSION:
+        raise KeyFileCorruptedError(f"v2: version {version} != {V2_VERSION}")
+    if algo_id != V2_ALGO_MLDSA65_SK:
+        raise KeyFileCorruptedError(f"v2: algo_id inconnu {algo_id}")
+    if kdf_id != V2_KDF_SCRYPT:
+        raise KeyFileCorruptedError(f"v2: kdf_id inconnu {kdf_id}")
+
+    actual_ct_len = len(encrypted_data) - _V2_HEADER_SIZE
+    if actual_ct_len != ct_len:
+        raise KeyFileCorruptedError(
+            f"v2: ct_len header={ct_len} != actual={actual_ct_len}"
+        )
+
+    ciphertext = encrypted_data[_V2_HEADER_SIZE:]
+
+    aes_key = bytearray(_v2_derive_key(passphrase, salt, n_log2, r, p))
+    try:
+        aesgcm = AESGCM(bytes(aes_key))
+        try:
+            plaintext = aesgcm.decrypt(nonce, ciphertext, hdr)
+        except InvalidTag:
+            raise InvalidPassphraseError(
+                "v2: passphrase incorrecte ou fichier corrompu"
+            )
+    finally:
+        _secure_erase(aes_key)
+
+    return plaintext
+
+
+def save_encrypted_pq_key(
+    private_key_bytes: bytes,
+    passphrase: str,
+    path: Path,
+    n_log2: int = None,
+) -> None:
+    """
+    Encrypt and atomically save an ML-DSA-65 private key (format v2).
+
+    Uses a temporary file + os.replace for atomicity.
+    Sets 0o600 permissions on POSIX; logs a notice on Windows (no-op).
+
+    Args:
+        private_key_bytes: ML-DSA-65 secret key
+        passphrase:        Passphrase (mandatory)
+        path:              Destination path (e.g. private_pq.key.enc)
+        n_log2:            log2(N) for scrypt (default: log2(_SCRYPT_N))
+    """
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    encrypted = encrypt_pq_private_key(private_key_bytes, passphrase, n_log2=n_log2)
+
+    tmp = path.with_suffix(".key.enc.tmp")
+    try:
+        tmp.write_bytes(encrypted)
+        import platform as _platform
+        if _platform.system() != "Windows":
+            tmp.chmod(0o600)
+        else:
+            # Windows does not support POSIX permission bits; the file is
+            # protected by the user's ACL inherited from the parent directory.
+            logger.debug("[KeyStore v2] 0o600 non appliqué (Windows)")
+        os.replace(tmp, path)
+    except Exception:
+        if tmp.exists():
+            tmp.unlink(missing_ok=True)
+        raise
+
+    logger.info(f"[KeyStore v2] Clé PQ chiffrée sauvegardée : {path}")
+
+
+def load_encrypted_pq_key(path: Path, passphrase: str) -> bytes:
+    """
+    Load and decrypt an ML-DSA-65 private key from a v2 file.
+
+    Args:
+        path:       Path to the .enc file produced by save_encrypted_pq_key
+        passphrase: Passphrase
+
+    Returns:
+        ML-DSA-65 secret key bytes
+
+    Raises:
+        FileNotFoundError:     File not found
+        KeyFileCorruptedError: Invalid format or parameter bounds exceeded
+        InvalidPassphraseError: Wrong passphrase
+    """
+    path = Path(path)
+    if not path.exists():
+        raise FileNotFoundError(f"Fichier de clé PQ introuvable : {path}")
+    return decrypt_pq_private_key(path.read_bytes(), passphrase)
+
+
 # ─── Public API ───────────────────────────────────────────────────────────────
 __all__ = [
     "encrypt_private_key",
@@ -435,4 +680,13 @@ __all__ = [
     "KeyStoreError",
     "InvalidPassphraseError",
     "KeyFileCorruptedError",
+    # v2 PQ key store
+    "encrypt_pq_private_key",
+    "decrypt_pq_private_key",
+    "save_encrypted_pq_key",
+    "load_encrypted_pq_key",
+    "V2_VERSION",
+    "V2_ALGO_MLDSA65_SK",
+    "V2_KDF_SCRYPT",
+    "_V2_HEADER_SIZE",
 ]
