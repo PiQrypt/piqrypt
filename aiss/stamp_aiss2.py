@@ -142,7 +142,7 @@ def stamp_event_aiss2_hybrid(
         raise CryptoBackendError(
             "ML-DSA-65",
             "AISS-2 requires ML-DSA-65 backend.\n"
-            "Install: pip install liboqs-python>=0.16"
+            'Install: pip install "liboqs-python>=0.16.0.1"'
         )
 
     # Generate nonce and timestamp if not provided

@@ -65,8 +65,9 @@ all-bridges = [
     "RPi.GPIO>=0.7.0; sys_platform == 'linux'",
 ]
 
-post-quantum    = ["liboqs-python>=0.16; python_version >= '3.10'"]
+post-quantum    = ["liboqs-python>=0.16.0.1; python_version >= '3.10'"]
 post-quantum-py = ["dilithium-py>=1.0.0"]
+timestamp       = ["rfc3161-client>=1.0.9,<2"]
 
 dev = [
     "pytest>=7.0.0,<9.0.0",
@@ -75,6 +76,7 @@ dev = [
     "mypy>=1.0.0",
     "ruff>=0.1.0",
     "tomli>=2.0.0; python_version < '3.11'",
+    "rfc3161-client>=1.0.9,<2",
 ]
 
 [project.scripts]

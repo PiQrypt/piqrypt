@@ -385,7 +385,7 @@ def certify_pq_bundle(
         certificate["post_quantum"] = {
             "algorithm": "ML-DSA-65",
             "status": "unavailable",
-            "note": "Install liboqs-python>=0.12.0 or dilithium-py>=1.0.0 for PQ signatures",
+            "note": "Install liboqs-python>=0.16.0.1 or dilithium-py>=1.0.0 for PQ signatures",
         }
         logger.piqrypt_warn("ML-DSA-65 backend not available — PQ signature skipped")
 

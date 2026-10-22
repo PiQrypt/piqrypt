@@ -84,7 +84,7 @@ def _check_available():
             "ML-DSA-65",
             "Post-quantum crypto not installed.\n"
             "Install one of:\n"
-            "  pip install liboqs-python>=0.12.0  (recommended)\n"
+            "  pip install \"liboqs-python>=0.16.0.1\"  (recommended)\n"
             "  pip install dilithium-py>=1.0.0    (pure Python)\n"
         )
 
