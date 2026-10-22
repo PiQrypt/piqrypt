@@ -168,6 +168,65 @@ def cmd_identity_create(args):
     aiss.track("identity_created", algorithm=algo_label, tier=aiss.get_tier())
 
 
+def cmd_identity_upgrade(args):
+    """Met à niveau une identité AISS-1 vers l'AISS-2.1 (ajout ML-DSA-65 + liaison signée)."""
+    import getpass
+    import os
+
+    non_interactive = getattr(args, 'non_interactive', False)
+    agent_name = getattr(args, 'name', None) or os.environ.get("PIQRYPT_AGENT_NAME")
+    if not agent_name:
+        if non_interactive:
+            print("❌ --name ou PIQRYPT_AGENT_NAME requis.", file=sys.stderr)
+            sys.exit(1)
+        try:
+            agent_name = input("Nom de l'agent : ").strip()
+        except (KeyboardInterrupt, EOFError):
+            print("\nAnnulé.")
+            sys.exit(1)
+
+    try:
+        from aiss.key_store import is_encrypted
+        from aiss.agent_registry import get_agent_dir
+        agent_dir = get_agent_dir(agent_name)
+        enc_path = agent_dir / "private.key.enc"
+        key_path = enc_path if enc_path.exists() else agent_dir / "private.key.json"
+        ed_encrypted = key_path.exists() and is_encrypted(key_path)
+
+        if non_interactive:
+            passphrase = os.environ.get("PIQRYPT_PASSPHRASE")
+            if not passphrase:
+                print("❌ PIQRYPT_PASSPHRASE est obligatoire avec --non-interactive.",
+                      file=sys.stderr)
+                sys.exit(1)
+            old_passphrase = passphrase if ed_encrypted else None
+        else:
+            old_passphrase = None
+            if ed_encrypted:
+                old_passphrase = getpass.getpass(
+                    f"Passphrase actuelle de la clé Ed25519 de '{agent_name}' : ")
+            passphrase = getpass.getpass(
+                "Passphrase de la clé ML-DSA-65 (obligatoire, 8 caractères minimum) : ")
+            if passphrase != getpass.getpass("Confirmer la passphrase : "):
+                print("❌ Passphrases différentes — annulé.", file=sys.stderr)
+                sys.exit(1)
+
+        print(f"\nMise à niveau de '{agent_name}' vers AISS-2.1...")
+        result = aiss.upgrade_agent_identity(agent_name, passphrase, old_passphrase)
+    except (KeyboardInterrupt, EOFError):
+        print("\nAnnulé.")
+        sys.exit(1)
+    except Exception as e:
+        print(f"❌ Erreur : {e}", file=sys.stderr)
+        sys.exit(1)
+
+    print("\n✅ Identité mise à niveau !")
+    print(f"   Agent ID   : {result['agent_id']} (inchangé)")
+    print(f"   Assurance  : {result['binding_assurance']}")
+    print(f"   Clé PQ     : {result['pq_key_path']}")
+    print(f"   Sauvegarde : {result['backup_path']}")
+
+
 def cmd_identity_list(args):
     """Liste tous les agents enregistrés."""
     try:
@@ -915,6 +974,12 @@ Examples:
                            help='Create a hybrid AISS-2.1 identity (Ed25519 + ML-DSA-65); '
                                 'passphrase mandatory (8 characters minimum)')
 
+    id_upgrade = id_s.add_parser(
+        'upgrade', help='Upgrade an AISS-1 identity to AISS-2.1 (adds ML-DSA-65, same agent_id)')
+    id_upgrade.add_argument('--name', '-n', required=True, help='Agent name')
+    id_upgrade.add_argument('--non-interactive', action='store_true',
+                            help='Use PIQRYPT_PASSPHRASE for both the Ed25519 and ML-DSA-65 keys')
+
     id_s.add_parser('list', help='List registered agents')
 
     id_secure = id_s.add_parser('secure', help='Encrypt/re-encrypt agent private key')
@@ -1150,6 +1215,8 @@ Examples:
         if args.command == 'identity':
             if args.identity_command == 'create':
                 cmd_identity_create(args)
+            elif args.identity_command == 'upgrade':
+                cmd_identity_upgrade(args)
             elif args.identity_command == 'list':
                 cmd_identity_list(args)
             elif args.identity_command == 'secure':

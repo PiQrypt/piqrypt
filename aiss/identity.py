@@ -537,7 +537,12 @@ def _validate_hybrid_passphrase(passphrase: Any) -> None:
 
 
 def _atomic_write_json(path: Path, obj: Dict[str, Any], mode: int = 0o644) -> None:
-    """Écrit un JSON de façon atomique : temporaire O_EXCL + fsync + os.replace.
+    """Écrit un JSON de façon atomique (voir _atomic_write_bytes)."""
+    _atomic_write_bytes(path, json.dumps(obj, indent=2).encode("utf-8"), mode)
+
+
+def _atomic_write_bytes(path: Path, data: bytes, mode: int = 0o644) -> None:
+    """Écrit des octets de façon atomique : temporaire O_EXCL + fsync + os.replace.
 
     Un temporaire périmé (plantage antérieur) est supprimé, avec une seule reprise.
     En cas d'échec, le fichier cible existant reste intact et aucun temporaire ne subsiste.
@@ -553,7 +558,7 @@ def _atomic_write_json(path: Path, obj: Dict[str, Any], mode: int = 0o644) -> No
         fd = os.open(str(tmp), flags, mode)
     try:
         try:
-            view = memoryview(json.dumps(obj, indent=2).encode("utf-8"))
+            view = memoryview(data)
             while view:
                 view = view[os.write(fd, view):]
             os.fsync(fd)
@@ -728,6 +733,352 @@ def load_agent_pq_key(
     else:
         agent_dir = get_agent_dir(agent_name)
     return load_encrypted_pq_key(agent_dir / "private_pq.key.enc", passphrase)
+
+
+# ─── AISS-2.1 : mise à niveau d'une identité AISS-1 (liaison signée) ──────────
+
+class IdentityBindingError(ValueError):
+    """Liaison d'identité AISS-2.1 invalide, ou mise à niveau refusée."""
+
+
+# Préfixe de domaine distinct de celui des événements (b"PiQrypt-AISS-2.1\x00").
+_BINDING_DOMAIN_PREFIX = b"PiQrypt-AISS-2.1-binding\x00"
+_ED25519_PK_SIZE = 32
+_MLDSA65_PK_SIZE = 1952
+
+
+def _binding_signed_message(unsigned_binding: Dict[str, Any]) -> bytes:
+    """Message M' signé par les deux clés : même construction que les événements
+    AISS-2.1 (étiquette d'algorithmes, contexte vide, JCS du document sans
+    signatures), avec le préfixe de domaine de la liaison."""
+    from aiss.canonical_aiss21 import canonicalize
+    from aiss.stamp_aiss2 import _ALGO_LABEL
+    return (
+        _BINDING_DOMAIN_PREFIX + bytes([len(_ALGO_LABEL)]) + _ALGO_LABEL + b"\x00"
+        + canonicalize(unsigned_binding)
+    )
+
+
+def _b64_prefixed(raw: bytes) -> str:
+    import base64
+    return "base64:" + base64.b64encode(raw).decode("ascii")
+
+
+def _decode_b64_prefixed(value: Any, what: str, expected_len: Optional[int] = None) -> bytes:
+    """Préfixe "base64:" obligatoire, alphabet strict (validate=True), taille exacte."""
+    import base64
+    import binascii
+    if not isinstance(value, str) or not value.startswith("base64:"):
+        raise IdentityBindingError(f"{what} : préfixe 'base64:' obligatoire")
+    try:
+        raw = base64.b64decode(value[7:], validate=True)
+    except (binascii.Error, ValueError) as exc:
+        raise IdentityBindingError(f"{what} : base64 invalide ({exc})")
+    if expected_len is not None and len(raw) != expected_len:
+        raise IdentityBindingError(
+            f"{what} : {len(raw)} octets au lieu de {expected_len}"
+        )
+    return raw
+
+
+def _create_identity_binding(
+    agent_id: str,
+    private_key_ed: bytes,
+    public_key_ed: bytes,
+    private_key_pq: bytes,
+    public_key_pq: bytes,
+) -> Dict[str, Any]:
+    """Construit et signe (Ed25519 ET ML-DSA-65, même message) la liaison AISS-2.1
+    d'une identité AISS-1 : type "identity_binding", binding_assurance "classical_only"."""
+    from aiss.crypto import dilithium
+    if len(public_key_ed) != _ED25519_PK_SIZE:
+        raise ValueError(f"public_key_ed doit faire {_ED25519_PK_SIZE} octets")
+    if len(public_key_pq) != _MLDSA65_PK_SIZE:
+        raise ValueError(f"public_key_pq doit faire {_MLDSA65_PK_SIZE} octets")
+
+    unsigned = {
+        "version": "AISS-2.1",
+        "type": "identity_binding",
+        "agent_id": agent_id,
+        "public_key_classical": _b64_prefixed(public_key_ed),
+        "public_key_pq": _b64_prefixed(public_key_pq),
+        "binding_assurance": "classical_only",
+        "created_at": int(time.time()),
+    }
+    message = _binding_signed_message(unsigned)
+    binding = dict(unsigned)
+    binding["signatures"] = {
+        "classical": {
+            "algorithm": "Ed25519",
+            "signature": _b64_prefixed(ed25519.sign(private_key_ed, message)),
+        },
+        "post_quantum": {
+            "algorithm": "ML-DSA-65",
+            "signature": _b64_prefixed(dilithium.sign(private_key_pq, message)),
+        },
+    }
+    return binding
+
+
+def _check_identity_binding(identity: Any) -> None:
+    """Lève IdentityBindingError (ou InvalidSignatureError) à la première anomalie."""
+    from aiss.crypto import dilithium
+    from aiss.exceptions import InvalidSignatureError
+
+    if not isinstance(identity, dict):
+        raise IdentityBindingError("identité absente ou invalide")
+    binding = identity.get("binding")
+    if not isinstance(binding, dict):
+        raise IdentityBindingError("liaison absente")
+    if binding.get("version") != "AISS-2.1" or binding.get("type") != "identity_binding":
+        raise IdentityBindingError("version ou type de liaison inattendu")
+    if binding.get("binding_assurance") != "classical_only":
+        raise IdentityBindingError("binding_assurance inattendu")
+
+    agent_id = identity.get("agent_id")
+    if not isinstance(agent_id, str) or binding.get("agent_id") != agent_id:
+        raise IdentityBindingError("agent_id de la liaison différent de celui de l'identité")
+
+    pk_ed = _decode_b64_prefixed(
+        binding.get("public_key_classical"), "public_key_classical", _ED25519_PK_SIZE)
+    pk_pq = _decode_b64_prefixed(
+        binding.get("public_key_pq"), "public_key_pq", _MLDSA65_PK_SIZE)
+
+    import base64
+    import binascii
+    try:
+        historical = base64.b64decode(identity.get("public_key"), validate=True)
+    except (binascii.Error, ValueError, TypeError) as exc:
+        raise IdentityBindingError(f"public_key historique invalide ({exc})")
+    if historical != pk_ed:
+        raise IdentityBindingError("clé classique de la liaison différente de public_key")
+    if "public_key_pq" in identity and _decode_b64_prefixed(
+            identity["public_key_pq"], "identity.public_key_pq", _MLDSA65_PK_SIZE) != pk_pq:
+        raise IdentityBindingError("public_key_pq de l'identité différente de la liaison")
+    if derive_agent_id(pk_ed) != agent_id:
+        raise IdentityBindingError("agent_id ne dérive pas de la clé classique")
+
+    signatures = binding.get("signatures")
+    if not isinstance(signatures, dict):
+        raise IdentityBindingError("signatures absentes")
+    classical, post_quantum = signatures.get("classical"), signatures.get("post_quantum")
+    if not isinstance(classical, dict) or not isinstance(post_quantum, dict):
+        raise IdentityBindingError("les deux signatures sont obligatoires")
+    if classical.get("algorithm") != "Ed25519" or post_quantum.get("algorithm") != "ML-DSA-65":
+        raise IdentityBindingError("algorithme de signature inattendu")
+    sig_ed = _decode_b64_prefixed(classical.get("signature"), "signature Ed25519")
+    sig_pq = _decode_b64_prefixed(post_quantum.get("signature"), "signature ML-DSA-65")
+
+    message = _binding_signed_message(
+        {k: v for k, v in binding.items() if k != "signatures"})
+    try:
+        ed25519.verify(pk_ed, message, sig_ed)
+    except InvalidSignatureError:
+        raise IdentityBindingError("signature Ed25519 de la liaison invalide")
+    if not dilithium.verify(pk_pq, message, sig_pq):
+        raise IdentityBindingError("signature ML-DSA-65 de la liaison invalide")
+
+
+def verify_identity_binding(identity: Dict[str, Any]) -> bool:
+    """
+    Vérifie la liaison AISS-2.1 d'une identité AISS-1 mise à niveau.
+
+    Contrôles : les deux signatures (Ed25519 et ML-DSA-65) sur le même message de
+    domaine "binding" ; binding.agent_id == identity.agent_id ; clé classique de la
+    liaison identique à public_key historique ; tailles 32 et 1952 octets ; préfixe
+    "base64:" obligatoire et décodage strict ; agent_id dérivé de la clé classique
+    (sinon un tiers pourrait lier sa propre clé à l'agent_id d'un autre).
+
+    Returns:
+        True si la liaison est valide, False pour toute anomalie (jamais d'exception
+        sur un document malformé).
+
+    Raises:
+        CryptoBackendError: backend ML-DSA-65 absent (la vérification est impossible)
+    """
+    from aiss.exceptions import InvalidSignatureError
+    try:
+        _check_identity_binding(identity)
+    except (IdentityBindingError, InvalidSignatureError, KeyError, TypeError,
+            ValueError, AttributeError):
+        return False
+    return True
+
+
+def identity_binding_assurance(identity: Dict[str, Any]) -> str:
+    """
+    Niveau d'assurance de l'identité, toujours recalculé (jamais lu comme valeur de confiance).
+
+    - "hybrid" : identité AISS-2.1 native dont l'agent_id dérive des deux clés
+      (derive_agent_id_aiss21).
+    - "classical_only" : identité AISS-1 mise à niveau, reposant sur une liaison valide
+      (agent_id issu de la clé Ed25519 seule ; la clé ML-DSA-65 lui est liée par signature).
+
+    Raises:
+        IdentityBindingError: dans tous les autres cas, y compris une identité AISS-1 pure.
+    """
+    if not isinstance(identity, dict):
+        raise IdentityBindingError("identité absente ou invalide")
+    if "public_key_classical" in identity and "public_key_pq" in identity:
+        pk_ed = _decode_b64_prefixed(
+            identity["public_key_classical"], "public_key_classical", _ED25519_PK_SIZE)
+        pk_pq = _decode_b64_prefixed(
+            identity["public_key_pq"], "public_key_pq", _MLDSA65_PK_SIZE)
+        if derive_agent_id_aiss21(pk_ed, pk_pq) != identity.get("agent_id"):
+            raise IdentityBindingError("agent_id ne dérive pas des deux clés")
+        return "hybrid"
+    if "binding" in identity:
+        if verify_identity_binding(identity):
+            return "classical_only"
+        raise IdentityBindingError("liaison d'identité invalide")
+    raise IdentityBindingError("ni identité hybride ni liaison : identité AISS-1 pure")
+
+
+def upgrade_agent_identity(
+    agent_name: str,
+    passphrase: str,
+    old_passphrase: Optional[str] = None,
+    base_dir: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Met à niveau une identité AISS-1 existante vers l'AISS-2.1 sans changer l'agent_id.
+
+    Génère une paire ML-DSA-65, signe une liaison (Ed25519 + ML-DSA-65), écrit
+    private_pq.key.enc (v2, protégée par `passphrase`, 8 caractères minimum) puis
+    met à jour identity.json atomiquement : champs historiques conservés tels quels
+    (agent_id, public_key), ajout de public_key_pq et binding. L'ancien fichier est
+    copié à l'identique dans identity.pre-upgrade.json. La clé Ed25519 garde son
+    stockage actuel (pas de rechiffrement).
+
+    Args:
+        agent_name:     Nom de l'agent
+        passphrase:     Passphrase de la clé ML-DSA-65 (obligatoire)
+        old_passphrase: Passphrase actuelle de la clé Ed25519, si elle est chiffrée
+        base_dir:       Répertoire racine optionnel (tests/CI), comme create_agent_identity
+
+    Returns:
+        Dict agent_name, agent_id, identity (nouveau document), pq_key_path,
+        backup_path, binding_assurance ("classical_only")
+
+    Raises:
+        IdentityBindingError: Identité déjà hybride ou déjà mise à niveau, état
+            incohérent (clé PQ orpheline, sauvegarde existante, clé ≠ public_key)
+        ValueError: Passphrase invalide, ou clé Ed25519 chiffrée sans old_passphrase
+        FileNotFoundError: Identité ou clé introuvable
+    """
+    import os
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+    from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+    from aiss.crypto import dilithium
+    from aiss.exceptions import CryptoBackendError
+    from aiss.agent_registry import get_agent_dir
+    from aiss.key_store import (
+        is_encrypted, load_encrypted_key, load_plaintext_key, save_encrypted_pq_key,
+    )
+
+    _validate_hybrid_passphrase(passphrase)
+
+    if base_dir is not None:
+        agent_dir = Path(base_dir) / "agents" / agent_name
+    else:
+        agent_dir = get_agent_dir(agent_name)
+    identity_path = agent_dir / "identity.json"
+    pq_key_path = agent_dir / "private_pq.key.enc"
+    backup_path = agent_dir / "identity.pre-upgrade.json"
+
+    if not identity_path.exists():
+        raise FileNotFoundError(f"Identité introuvable pour '{agent_name}'")
+    original_bytes = identity_path.read_bytes()
+    identity = json.loads(original_bytes.decode("utf-8"))
+
+    if (
+        "binding" in identity or "public_key_pq" in identity
+        or "public_key_classical" in identity
+        or str(identity.get("version", "")).startswith("AISS-2")
+    ):
+        raise IdentityBindingError(
+            f"L'identité de '{agent_name}' est déjà hybride ou déjà mise à niveau : "
+            f"aucune régénération"
+        )
+    if pq_key_path.exists():
+        raise IdentityBindingError(
+            f"{pq_key_path.name} existe déjà sans liaison dans identity.json "
+            f"(mise à niveau interrompue ?) : vérifiez puis supprimez-le manuellement"
+        )
+    if backup_path.exists():
+        raise IdentityBindingError(
+            f"{backup_path.name} existe déjà : vérifiez puis déplacez-le manuellement"
+        )
+    if dilithium is None or not dilithium.is_available():
+        raise CryptoBackendError(
+            "ML-DSA-65",
+            "La mise à niveau requiert un backend ML-DSA-65 "
+            "(pip install piqrypt[post-quantum])",
+        )
+
+    enc_path = agent_dir / "private.key.enc"
+    key_path = enc_path if enc_path.exists() else agent_dir / "private.key.json"
+    if not key_path.exists():
+        raise FileNotFoundError(f"Clé Ed25519 introuvable pour '{agent_name}'")
+    if is_encrypted(key_path):
+        if old_passphrase is None:
+            raise ValueError(
+                "La clé Ed25519 est chiffrée : old_passphrase (passphrase actuelle) requise"
+            )
+        private_key = load_encrypted_key(key_path, old_passphrase)
+    else:
+        private_key = load_plaintext_key(key_path)
+
+    public_key = Ed25519PrivateKey.from_private_bytes(bytes(private_key)).public_key() \
+        .public_bytes(Encoding.Raw, PublicFormat.Raw)
+    agent_id = identity.get("agent_id")
+    if (
+        ed25519.encode_base64(public_key) != identity.get("public_key")
+        or derive_agent_id(public_key) != agent_id
+    ):
+        raise IdentityBindingError(
+            "La clé Ed25519 ne correspond pas à identity.json : mise à niveau refusée"
+        )
+
+    private_key_pq, public_key_pq = dilithium.generate_keypair()
+    binding = _create_identity_binding(
+        agent_id, private_key, public_key, private_key_pq, public_key_pq)
+    upgraded = dict(identity)
+    upgraded["public_key_pq"] = _b64_prefixed(public_key_pq)
+    upgraded["binding"] = binding
+    if not verify_identity_binding(upgraded):  # auto-contrôle avant toute écriture
+        raise IdentityBindingError("liaison générée invalide : mise à niveau annulée")
+
+    created_files = []
+    try:
+        created_files.append(pq_key_path)
+        save_encrypted_pq_key(private_key_pq, passphrase, pq_key_path)
+        created_files.append(backup_path)
+        _atomic_write_bytes(backup_path, original_bytes)
+        _atomic_write_json(identity_path, upgraded)
+    except BaseException:
+        for f in created_files:
+            for leftover in (f, f.parent / (f.name + ".tmp")):
+                try:
+                    os.unlink(str(leftover))
+                except OSError:
+                    pass
+        raise
+
+    logger.info(
+        f"[Identity] Agent '{agent_name}' mis à niveau AISS-2.1 "
+        f"(classical_only) — ID inchangé : {agent_id[:16]}..."
+    )
+    _telemetry_track("identity_upgraded", algorithm="Ed25519+ML-DSA-65", tier="n/a")
+
+    return {
+        "agent_name":        agent_name,
+        "agent_id":          agent_id,
+        "identity":          upgraded,
+        "pq_key_path":       str(pq_key_path),
+        "backup_path":       str(backup_path),
+        "binding_assurance": "classical_only",
+    }
 
 
 def list_agent_identities() -> list:
