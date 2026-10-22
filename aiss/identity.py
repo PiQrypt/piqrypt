@@ -541,12 +541,11 @@ def _atomic_write_json(path: Path, obj: Dict[str, Any], mode: int = 0o644) -> No
     _atomic_write_bytes(path, json.dumps(obj, indent=2).encode("utf-8"), mode)
 
 
-def _atomic_write_bytes(path: Path, data: bytes, mode: int = 0o644) -> None:
-    """Écrit des octets de façon atomique : temporaire O_EXCL + fsync + os.replace.
-
-    Un temporaire périmé (plantage antérieur) est supprimé, avec une seule reprise.
-    En cas d'échec, le fichier cible existant reste intact et aucun temporaire ne subsiste.
-    """
+def _stage_bytes(path: Path, data: bytes, mode: int = 0o644) -> Path:
+    """Écrit `data` dans le temporaire <path>.tmp (O_EXCL, écriture complète, fsync) et
+    renvoie son chemin, sans toucher à `path`. Un temporaire périmé (plantage
+    antérieur) est supprimé, avec une seule reprise. En cas d'échec, le temporaire
+    est supprimé."""
     import os
     path = Path(path)
     tmp = path.parent / (path.name + ".tmp")
@@ -564,6 +563,23 @@ def _atomic_write_bytes(path: Path, data: bytes, mode: int = 0o644) -> None:
             os.fsync(fd)
         finally:
             os.close(fd)
+    except BaseException:
+        try:
+            os.unlink(str(tmp))
+        except OSError:
+            pass
+        raise
+    return tmp
+
+
+def _atomic_write_bytes(path: Path, data: bytes, mode: int = 0o644) -> None:
+    """Écrit des octets de façon atomique : temporaire O_EXCL + fsync + os.replace.
+
+    En cas d'échec, le fichier cible existant reste intact et aucun temporaire ne subsiste.
+    """
+    import os
+    tmp = _stage_bytes(path, data, mode)
+    try:
         os.replace(str(tmp), str(path))
     except BaseException:
         try:
@@ -1096,6 +1112,7 @@ def secure_agent_key(
     agent_name: str,
     new_passphrase: str,
     old_passphrase: Optional[str] = None,
+    base_dir: Optional[str] = None,
 ) -> bool:
     """
     Chiffre (ou rechiffre) la clé privée d'un agent avec une passphrase.
@@ -1103,41 +1120,105 @@ def secure_agent_key(
     Utilisé par `piqrypt identity secure` pour protéger une clé
     précédemment stockée en clair.
 
+    Aucune ancienne clé n'est supprimée avant que la nouvelle soit écrite : le
+    nouveau fichier est écrit dans un temporaire (O_EXCL, fsync) puis installé par
+    os.replace. Clé en clair : le fichier chiffré est écrit avant que l'ancien
+    soit renommé en .bak.
+
+    Identité hybride (private_pq.key.enc présent) : les DEUX clés sont déchiffrées
+    avec old_passphrase avant toute écriture (si l'une ne s'ouvre pas, rien n'est
+    modifié) ; les deux temporaires sont écrits, puis la clé PQ est remplacée, puis
+    la clé Ed25519 (si ce dernier remplacement échoue, la clé PQ d'origine est
+    restaurée). La nouvelle passphrase suit alors la règle des identités hybrides
+    (8 caractères minimum).
+
     Args:
         agent_name:     Nom de l'agent
         new_passphrase: Nouvelle passphrase
-        old_passphrase: Ancienne passphrase (si clé déjà chiffrée)
+        old_passphrase: Ancienne passphrase (clé chiffrée, ou clé PQ d'une identité hybride)
+        base_dir:       Répertoire racine optionnel (tests/CI)
 
     Returns:
         True si succès
     """
+    import os
     from aiss.agent_registry import get_agent_dir
     from aiss.key_store import (
-        is_encrypted,
-        load_plaintext_key, save_encrypted_key,
+        is_encrypted, load_plaintext_key, load_encrypted_key, load_encrypted_pq_key,
+        encrypt_private_key, encrypt_pq_private_key,
     )
 
-    agent_dir = get_agent_dir(agent_name)
+    if base_dir is not None:
+        agent_dir = Path(base_dir) / "agents" / agent_name
+    else:
+        agent_dir = get_agent_dir(agent_name)
     enc_path   = agent_dir / "private.key.enc"
     plain_path = agent_dir / "private.key.json"
+    pq_path    = agent_dir / "private_pq.key.enc"
 
     key_path = enc_path if enc_path.exists() else plain_path
 
     if not key_path.exists():
         raise FileNotFoundError(f"Clé introuvable pour '{agent_name}'")
 
-    if is_encrypted(key_path):
-        # Rechiffrement : déchiffrer avec l'ancienne, chiffrer avec la nouvelle
-        from aiss.key_store import load_encrypted_key
+    hybrid = pq_path.exists()
+    ed_encrypted = is_encrypted(key_path)
+    if hybrid:
+        _validate_hybrid_passphrase(new_passphrase)
+        if old_passphrase is None:
+            raise ValueError(
+                "Identité hybride : l'ancienne passphrase est requise (clé ML-DSA-65 chiffrée)"
+            )
+
+    # 1) Tout déchiffrer avant la moindre écriture.
+    if ed_encrypted:
         raw_key = load_encrypted_key(key_path, old_passphrase)
-        key_path.unlink()
-        save_encrypted_key(raw_key, new_passphrase, enc_path)
     else:
-        # Clé en clair → chiffrement initial
         raw_key = load_plaintext_key(key_path)
-        plain_path_bak = plain_path.with_suffix(".json.bak")
-        plain_path.rename(plain_path_bak)
-        save_encrypted_key(raw_key, new_passphrase, enc_path)
+    pq_blob = None
+    if hybrid:
+        original_pq = pq_path.read_bytes()
+        try:
+            raw_pq = load_encrypted_pq_key(pq_path, old_passphrase)
+        except Exception as exc:
+            raise type(exc)(
+                f"Clé ML-DSA-65 de '{agent_name}' illisible avec l'ancienne passphrase "
+                f"(les deux clés doivent partager la même) : {exc}"
+            ) from exc
+        pq_blob = encrypt_pq_private_key(raw_pq, new_passphrase)
+    ed_blob = encrypt_private_key(raw_key, new_passphrase)
+
+    # 2) Écrire les temporaires, puis installer (PQ d'abord, Ed25519 ensuite).
+    staged = []
+    try:
+        if hybrid:
+            staged.append(_stage_bytes(pq_path, pq_blob, 0o600))
+        staged.append(_stage_bytes(enc_path, ed_blob, 0o600))
+        if hybrid:
+            os.replace(str(staged[0]), str(pq_path))
+            try:
+                os.replace(str(staged[1]), str(enc_path))
+            except BaseException:
+                try:
+                    _atomic_write_bytes(pq_path, original_pq, 0o600)
+                except BaseException:
+                    logger.error(
+                        f"[Identity] Restauration de la clé PQ de '{agent_name}' impossible"
+                    )
+                raise
+        else:
+            os.replace(str(staged[0]), str(enc_path))
+    except BaseException:
+        for t in staged:
+            try:
+                os.unlink(str(t))
+            except OSError:
+                pass
+        raise
+
+    if not ed_encrypted:
+        # Clé en clair → l'ancien fichier n'est renommé qu'une fois le chiffré en place
+        plain_path.rename(plain_path.with_suffix(".json.bak"))
 
     logger.info(f"[Identity] Clé de '{agent_name}' (re)chiffrée avec succès")
     return True

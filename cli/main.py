@@ -265,11 +265,15 @@ def cmd_identity_secure(args):
         from aiss.agent_registry import get_agent_dir
         agent_dir = get_agent_dir(agent_name)
         enc_path = agent_dir / "private.key.enc"
-        if enc_path.exists() and is_encrypted(enc_path):
+        hybrid = (agent_dir / "private_pq.key.enc").exists()
+        if hybrid or (enc_path.exists() and is_encrypted(enc_path)):
             old_pp = getpass.getpass("Ancienne passphrase : ")
 
         aiss.secure_agent_key(agent_name, new_pp, old_pp)
-        print(f"✅ Clé de '{agent_name}' chiffrée avec succès.")
+        if hybrid:
+            print(f"✅ Clés Ed25519 et ML-DSA-65 de '{agent_name}' rechiffrées avec succès.")
+        else:
+            print(f"✅ Clé de '{agent_name}' chiffrée avec succès.")
     except Exception as e:
         print(f"❌ Erreur : {e}")
 
