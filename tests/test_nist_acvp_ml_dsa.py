@@ -15,6 +15,10 @@ Tests:
   - sigVer internal, externalMu=False (tgId=10): _verify_internal(pk, M', σ),
     15 vectors, 3 passing (tcId 143, 146, 150), 12 failing, messages non-empty.
     (tgId=9 was externalMu=True — M'=μ — that is a different API level.)
+  - sigGen external/pure (tgId=3): sign(sk, msg, ctx, deterministic=True) == NIST
+    signature, 15 vectors (tcId 31-45).
+  - sigGen internal, externalMu=False (tgId=10): _sign_internal(sk, M', bytes(32)) == NIST
+    signature, 15 vectors (tcId 136-150). Deterministic groups only.
 """
 
 import json
@@ -24,6 +28,7 @@ from pathlib import Path
 _VECTORS_DIR = Path(__file__).parent / "vectors_nist"
 _KEYGEN_FILE = _VECTORS_DIR / "ml_dsa_65_keyGen.json"
 _SIGVER_FILE = _VECTORS_DIR / "ml_dsa_65_sigVer.json"
+_SIGGEN_FILE = _VECTORS_DIR / "ml_dsa_65_sigGen.json"
 
 
 def _skip_if_unavailable():
@@ -201,3 +206,48 @@ class TestSigVerInternalNIST:
             assert result is False, (
                 f"tcId={vec['tcId']}: expected False but got {result}"
             )
+
+
+# ---------------------------------------------------------------------------
+# 4. sigGen — deterministic signature must equal the NIST signature byte for byte
+# ---------------------------------------------------------------------------
+
+class TestSigGenNIST:
+    """NIST ACVP sigGen (deterministic groups only)."""
+
+    def _load(self, tg_id):
+        if not _SIGGEN_FILE.exists():
+            pytest.skip(f"Vector file not found: {_SIGGEN_FILE}")
+        with open(_SIGGEN_FILE, encoding="utf-8") as f:
+            tests = [t for t in json.load(f)["tests"] if t["tgId"] == tg_id]
+        assert len(tests) == 15, f"tgId={tg_id}: expected 15 vectors, got {len(tests)}"
+        return tests
+
+    def test_external_pure_signature_matches_nist(self):
+        """tgId=3: sign(sk, msg, ctx=context, deterministic=True) == expected signature."""
+        _skip_if_unavailable()
+        ml = _ml_dsa()
+        for vec in self._load(3):
+            sk = bytes.fromhex(vec["sk"])
+            msg = bytes.fromhex(vec["message"])
+            ctx = bytes.fromhex(vec["context"])
+            expected = bytes.fromhex(vec["signature"])
+            got = ml.sign(sk, msg, ctx=ctx, deterministic=True)
+            assert got == expected, f"tcId={vec['tcId']}: signature differs from NIST"
+            assert len(got) == 3309
+
+    def test_internal_signature_matches_nist(self):
+        """tgId=10 (externalMu=False): _sign_internal(sk, M', bytes(32)) == expected."""
+        _skip_if_unavailable()
+        ml = _ml_dsa()
+        for vec in self._load(10):
+            sk = bytes.fromhex(vec["sk"])
+            msg = bytes.fromhex(vec["message"])
+            expected = bytes.fromhex(vec["signature"])
+            got = ml._sign_internal(sk, msg, bytes(32))
+            assert got == expected, f"tcId={vec['tcId']}: signature differs from NIST"
+
+    def test_sk_size(self):
+        for tg in (3, 10):
+            for vec in self._load(tg):
+                assert len(bytes.fromhex(vec["sk"])) == 4032
