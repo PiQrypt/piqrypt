@@ -46,6 +46,9 @@ from aiss.identity import (
     load_agent_identity,
     list_agent_identities,
     secure_agent_key,
+    # AISS-2.1
+    derive_agent_id_aiss21,
+    export_identity_aiss21,
 )
 from aiss.stamp import stamp_event, stamp_genesis_event
 from aiss.verify import verify_signature, verify_chain, verify_event

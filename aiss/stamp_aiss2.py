@@ -224,7 +224,9 @@ def stamp_genesis_event_aiss2_hybrid(
     private_key_dilithium: bytes,
     public_key_ed25519: bytes,
     agent_id: str,
-    payload: Dict[str, Any]
+    payload: Dict[str, Any],
+    public_key_pq: Optional[bytes] = None,
+    tsa_stamp_after: bool = True,
 ) -> Dict[str, Any]:
     """
     Create AISS-2.1 genesis event with hybrid signatures.
@@ -235,22 +237,32 @@ def stamp_genesis_event_aiss2_hybrid(
         public_key_ed25519: Ed25519 public key (for genesis hash)
         agent_id: Agent ID
         payload: Genesis event data
+        public_key_pq: ML-DSA-65 public key — when provided, uses the AISS-2.1
+            genesis formula: SHA-512(b"PiQrypt-AISS-2.1-genesis\\x00" || agent_id).
+            When absent, falls back to the AISS-1 convention: SHA-256(pub_ed).
+        tsa_stamp_after: Request TSA timestamp after signing (default: True).
 
     Returns:
         AISS-2.1 genesis event
     """
+    import hashlib as _hashlib
     from aiss.canonical import hash_bytes
 
-    # Compute genesis previous_hash from Ed25519 public key
-    # (maintains compatibility with AISS-1)
-    genesis_hash = hash_bytes(public_key_ed25519)
+    if public_key_pq is not None:
+        # AISS-2.1 genesis: domain-separated SHA-512 over agent_id
+        data = b"PiQrypt-AISS-2.1-genesis\x00" + agent_id.encode("ascii")
+        genesis_hash = _hashlib.sha512(data).hexdigest()
+    else:
+        # Legacy AISS-1 convention: SHA-256 of Ed25519 public key
+        genesis_hash = hash_bytes(public_key_ed25519)
 
     return stamp_event_aiss2_hybrid(
         private_key_ed25519,
         private_key_dilithium,
         agent_id,
         payload,
-        previous_hash=genesis_hash
+        previous_hash=genesis_hash,
+        tsa_stamp_after=tsa_stamp_after,
     )
 
 

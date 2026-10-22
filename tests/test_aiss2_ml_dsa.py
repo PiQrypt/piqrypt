@@ -1299,5 +1299,169 @@ class TestBase64StrictValidation(unittest.TestCase):
             verify_aiss2_hybrid(bad, pub_ed, pub_pq)
 
 
+# ===========================================================================
+# B.3 — derive_agent_id_aiss21 + genesis hash AISS-2.1
+# ===========================================================================
+
+@pytest.mark.skipif(_SKIP, reason=_SKIP_REASON)
+class TestDeriveAgentIdAISS21(unittest.TestCase):
+    """B.3 — derive_agent_id_aiss21: determinism, sensitivity, domain sep, length."""
+
+    def setUp(self):
+        import aiss.license as lic_module
+        from aiss.crypto import dilithium
+        self._orig_lic = lic_module._license
+        lic_module._license = _make_license("pro")
+        dilithium.reset_demo_counter()
+
+    def tearDown(self):
+        import aiss.license as lic_module
+        lic_module._license = self._orig_lic
+
+    def test_deterministic(self):
+        """Same keys → same agent_id on every call."""
+        from aiss.identity import derive_agent_id_aiss21
+        priv_ed, pub_ed, priv_pq, pub_pq = _keys()
+        id1 = derive_agent_id_aiss21(pub_ed, pub_pq)
+        id2 = derive_agent_id_aiss21(pub_ed, pub_pq)
+        self.assertEqual(id1, id2)
+
+    def test_length_32(self):
+        """agent_id must be exactly 32 characters."""
+        from aiss.identity import derive_agent_id_aiss21
+        priv_ed, pub_ed, priv_pq, pub_pq = _keys()
+        aid = derive_agent_id_aiss21(pub_ed, pub_pq)
+        self.assertEqual(len(aid), 32, f"Expected 32 chars, got {len(aid)}: {aid!r}")
+
+    def test_sensitive_to_ed_key(self):
+        """Flipping one bit in Ed25519 key changes the agent_id."""
+        from aiss.identity import derive_agent_id_aiss21
+        priv_ed, pub_ed, priv_pq, pub_pq = _keys()
+        bad_ed = bytes([pub_ed[0] ^ 1]) + pub_ed[1:]
+        self.assertNotEqual(
+            derive_agent_id_aiss21(pub_ed, pub_pq),
+            derive_agent_id_aiss21(bad_ed, pub_pq),
+        )
+
+    def test_sensitive_to_pq_key(self):
+        """Flipping one bit in ML-DSA-65 key changes the agent_id."""
+        from aiss.identity import derive_agent_id_aiss21
+        priv_ed, pub_ed, priv_pq, pub_pq = _keys()
+        _, _, _, pub_pq2 = _keys()
+        self.assertNotEqual(
+            derive_agent_id_aiss21(pub_ed, pub_pq),
+            derive_agent_id_aiss21(pub_ed, pub_pq2),
+        )
+
+    def test_domain_separation_from_aiss1(self):
+        """AISS-2.1 agent_id differs from AISS-1 agent_id for the same Ed25519 key."""
+        from aiss.identity import derive_agent_id, derive_agent_id_aiss21
+        priv_ed, pub_ed, priv_pq, pub_pq = _keys()
+        id_aiss1 = derive_agent_id(pub_ed)
+        id_aiss21 = derive_agent_id_aiss21(pub_ed, pub_pq)
+        self.assertNotEqual(id_aiss1, id_aiss21,
+            "AISS-2.1 agent_id must differ from AISS-1 for the same Ed25519 key")
+
+    def test_aiss1_non_regression(self):
+        """derive_agent_id (AISS-1) still produces a 32-char Base58 SHA-256 result."""
+        from aiss.identity import derive_agent_id
+        import hashlib, base58  # noqa: F401
+        priv_ed, pub_ed, priv_pq, pub_pq = _keys()
+        aid = derive_agent_id(pub_ed)
+        self.assertEqual(len(aid), 32)
+        import base58 as _b58
+        expected = _b58.b58encode(bytes.fromhex(
+            __import__("hashlib").sha256(pub_ed).hexdigest()
+        )).decode()[:32]
+        self.assertEqual(aid, expected)
+
+
+@pytest.mark.skipif(_SKIP, reason=_SKIP_REASON)
+class TestGenesisHashAISS21(unittest.TestCase):
+    """B.3 — stamp_genesis_event_aiss2_hybrid produces the correct AISS-2.1 genesis hash."""
+
+    def setUp(self):
+        import aiss.license as lic_module
+        from aiss.crypto import dilithium
+        self._orig_lic = lic_module._license
+        lic_module._license = _make_license("pro")
+        dilithium.reset_demo_counter()
+
+    def tearDown(self):
+        import aiss.license as lic_module
+        lic_module._license = self._orig_lic
+
+    def test_genesis_hash_128_chars_when_pub_pq_provided(self):
+        """Genesis with pub_pq: previous_hash must be 128-char SHA-512 hex."""
+        import hashlib
+        from aiss.identity import derive_agent_id_aiss21
+        from aiss.stamp_aiss2 import stamp_genesis_event_aiss2_hybrid
+        priv_ed, pub_ed, priv_pq, pub_pq = _keys()
+        aid = derive_agent_id_aiss21(pub_ed, pub_pq)
+        event = stamp_genesis_event_aiss2_hybrid(
+            priv_ed, priv_pq, pub_ed, aid, {"action": "genesis_b3"},
+            public_key_pq=pub_pq, tsa_stamp_after=False,
+        )
+        h = event["previous_hash"]
+        self.assertEqual(len(h), 128, f"Expected 128-char hex, got {len(h)}")
+        self.assertRegex(h, r'^[0-9a-f]{128}$')
+        expected = hashlib.sha512(
+            b"PiQrypt-AISS-2.1-genesis\x00" + aid.encode("ascii")
+        ).hexdigest()
+        self.assertEqual(h, expected)
+
+    def test_genesis_hash_64_chars_legacy_path(self):
+        """Genesis without pub_pq: previous_hash must be 64-char SHA-256 hex (AISS-1 convention)."""
+        from aiss.identity import derive_agent_id
+        from aiss.stamp_aiss2 import stamp_genesis_event_aiss2_hybrid
+        priv_ed, pub_ed, priv_pq, pub_pq = _keys()
+        aid = derive_agent_id(pub_ed)
+        event = stamp_genesis_event_aiss2_hybrid(
+            priv_ed, priv_pq, pub_ed, aid, {"action": "genesis_legacy"},
+            tsa_stamp_after=False,
+        )
+        h = event["previous_hash"]
+        self.assertEqual(len(h), 64, f"Expected 64-char hex, got {len(h)}")
+        self.assertRegex(h, r'^[0-9a-f]{64}$')
+
+    def test_genesis_aiss21_domain_separation(self):
+        """AISS-2.1 genesis hash differs from legacy for the same pub_ed key."""
+        import hashlib
+        from aiss.identity import derive_agent_id, derive_agent_id_aiss21
+        from aiss.canonical import hash_bytes
+        from aiss.stamp_aiss2 import stamp_genesis_event_aiss2_hybrid
+        priv_ed, pub_ed, priv_pq, pub_pq = _keys()
+
+        aid_aiss1 = derive_agent_id(pub_ed)
+        ev_legacy = stamp_genesis_event_aiss2_hybrid(
+            priv_ed, priv_pq, pub_ed, aid_aiss1, {"action": "g"},
+            tsa_stamp_after=False,
+        )
+
+        aid_aiss21 = derive_agent_id_aiss21(pub_ed, pub_pq)
+        ev_aiss21 = stamp_genesis_event_aiss2_hybrid(
+            priv_ed, priv_pq, pub_ed, aid_aiss21, {"action": "g"},
+            public_key_pq=pub_pq, tsa_stamp_after=False,
+        )
+
+        self.assertNotEqual(ev_legacy["previous_hash"], ev_aiss21["previous_hash"])
+
+    def test_export_identity_aiss21_fields(self):
+        """export_identity_aiss21 returns the expected AISS-2.1 identity document."""
+        from aiss.identity import derive_agent_id_aiss21, export_identity_aiss21
+        priv_ed, pub_ed, priv_pq, pub_pq = _keys()
+        aid = derive_agent_id_aiss21(pub_ed, pub_pq)
+        doc = export_identity_aiss21(aid, pub_ed, pub_pq)
+        self.assertEqual(doc["version"], "AISS-2.1")
+        self.assertEqual(doc["agent_id"], aid)
+        self.assertIn("public_key_classical", doc)
+        self.assertIn("public_key_pq", doc)
+        self.assertEqual(doc["algorithms"], ["Ed25519", "ML-DSA-65"])
+        self.assertIn("created_at", doc)
+        import base64
+        pq_bytes = base64.b64decode(doc["public_key_pq"])
+        self.assertEqual(pq_bytes, pub_pq, "public_key_pq must round-trip through b64")
+
+
 if __name__ == "__main__":
     unittest.main()

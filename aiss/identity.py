@@ -19,7 +19,9 @@ v1.8.4 additions:
 - list_agent_identities() : liste tous les agents enregistrés
 """
 
+import hashlib
 import json
+import struct
 import time
 from pathlib import Path
 from typing import Dict, Any, Tuple, Optional
@@ -155,6 +157,65 @@ def export_identity(
         identity["metadata"] = metadata
 
     return identity
+
+
+def derive_agent_id_aiss21(public_key_ed: bytes, public_key_pq: bytes) -> str:
+    """
+    Derive deterministic AISS-2.1 agent ID from both public keys.
+
+    Formula (RFC AISS-1.1 §5.2):
+        data  = b"PiQrypt-AISS-2.1-agent-id\\x00"
+              || struct.pack(">I", len(pk_ed)) || pk_ed
+              || struct.pack(">I", len(pk_pq)) || pk_pq
+        agent_id = BASE58( SHA-512(data) )[0:32]
+
+    Domain separation prevents collision with AISS-1 agent IDs.
+
+    Args:
+        public_key_ed: Ed25519 public key (32 bytes)
+        public_key_pq: ML-DSA-65 public key (1952 bytes)
+
+    Returns:
+        32-character Base58 agent ID
+    """
+    data = (
+        b"PiQrypt-AISS-2.1-agent-id\x00"
+        + struct.pack(">I", len(public_key_ed))
+        + public_key_ed
+        + struct.pack(">I", len(public_key_pq))
+        + public_key_pq
+    )
+    digest = hashlib.sha512(data).digest()
+    return ed25519.encode_base58(digest)[:32]
+
+
+def export_identity_aiss21(
+    agent_id: str,
+    public_key_ed: bytes,
+    public_key_pq: bytes,
+) -> Dict[str, Any]:
+    """
+    Export AISS-2.1 agent identity document (RFC AISS-1.1 §6).
+
+    Contains both classical (Ed25519) and post-quantum (ML-DSA-65) public keys.
+
+    Args:
+        agent_id: AISS-2.1 agent ID (from derive_agent_id_aiss21)
+        public_key_ed: Ed25519 public key
+        public_key_pq: ML-DSA-65 public key (1952 bytes)
+
+    Returns:
+        AISS-2.1 identity document dict
+    """
+    import base64 as _b64
+    return {
+        "version": "AISS-2.1",
+        "agent_id": agent_id,
+        "public_key_classical": ed25519.encode_base64(public_key_ed),
+        "public_key_pq": _b64.b64encode(public_key_pq).decode("ascii"),
+        "algorithms": ["Ed25519", "ML-DSA-65"],
+        "created_at": int(time.time()),
+    }
 
 
 def create_rotation_attestation(
