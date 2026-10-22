@@ -667,6 +667,8 @@ def cmd_certify_verify(args):
         print()
         print("  Not checked by this command:")
         print("    - the audit data in the file: event signatures and hash chain")
+        print("    - the link between the attestation and the audit data in the file: the")
+        print("      attestation contains no hash of that data")
         print("    - timestamp tokens (see the tsa section of get_verification_report)")
         print("    - revocation of any key or certificate")
         print()

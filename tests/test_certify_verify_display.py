@@ -103,6 +103,8 @@ def test_command_output_is_factual_and_free_of_forbidden_claims(tmp_path):
     assert_no_forbidden(output)
     for expected in ("Attestation signature verified locally", "Checked locally by this command",
                      "Not checked by this command", "event signatures and hash chain",
+                     "the link between the attestation and the audit data in the file",
+                     "attestation contains no hash of that data",
                      "timestamp tokens", "revocation",
                      "neither an independent audit nor a legal or regulatory statement"):
         assert expected in output, expected
