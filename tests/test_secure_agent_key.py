@@ -114,7 +114,7 @@ class TestClassic(_Base):
         self._create("pl5", passphrase=None)
         plain = self._dir("pl5") / "private.key.json"
         original = plain.read_bytes()
-        with patch("aiss.key_store.load_encrypted_key", return_value=b"" * 32):
+        with patch("aiss.key_store.load_encrypted_key", return_value=b"\x01" * 32):
             with self.assertRaises(KeyFileCorruptedError):
                 self._secure("pl5", old=None)
         self.assertEqual(plain.read_bytes(), original)
@@ -398,7 +398,7 @@ class TestHybridPlaintextEd25519Failure(_Base):
         plain_before = (d / "private.key.json").read_bytes()
         pq_key = load_encrypted_pq_key(d / "private_pq.key.enc", OLD)
 
-        with patch("aiss.key_store.load_encrypted_key", return_value=b"" * 32):
+        with patch("aiss.key_store.load_encrypted_key", return_value=b"\x01" * 32):
             with self.assertRaises(KeyFileCorruptedError):
                 self._secure("hp", old=OLD)
 
