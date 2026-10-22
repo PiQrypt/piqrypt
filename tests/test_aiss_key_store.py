@@ -402,5 +402,44 @@ class TestKeyStoreV2Corrections(unittest.TestCase):
         self.assertEqual(key, recovered2, "NFC passphrase must decrypt a blob encrypted with NFD")
 
 
+class TestKeyStoreV2AtomicWrite(unittest.TestCase):
+    """Écriture atomique : temporaire périmé et écriture interrompue."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.path = Path(self.tmpdir) / "private_pq.key.enc"
+        self.tmp = Path(self.tmpdir) / "private_pq.key.enc.tmp"
+
+    def test_stale_tmp_is_replaced(self):
+        from aiss.key_store import save_encrypted_pq_key, load_encrypted_pq_key
+        self.tmp.write_bytes(b"reste d'un plantage")
+        key = _make_pq_key(4032)
+        save_encrypted_pq_key(key, "passphrase-ok", self.path, n_log2=10)
+        self.assertEqual(load_encrypted_pq_key(self.path, "passphrase-ok"), key)
+        self.assertFalse(self.tmp.exists())
+
+    def test_interrupted_write_keeps_existing_file(self):
+        from unittest.mock import patch
+        from aiss.key_store import save_encrypted_pq_key, load_encrypted_pq_key
+        old = _make_pq_key(4032)
+        save_encrypted_pq_key(old, "passphrase-ok", self.path, n_log2=10)
+        before = self.path.read_bytes()
+        with patch("aiss.key_store.os.write", side_effect=OSError("disque plein")):
+            with self.assertRaises(OSError):
+                save_encrypted_pq_key(_make_pq_key(4032), "autre-passphrase", self.path, n_log2=10)
+        self.assertEqual(self.path.read_bytes(), before)
+        self.assertEqual(load_encrypted_pq_key(self.path, "passphrase-ok"), old)
+        self.assertFalse(self.tmp.exists())
+
+    def test_interrupted_replace_leaves_no_tmp(self):
+        from unittest.mock import patch
+        from aiss.key_store import save_encrypted_pq_key
+        with patch("aiss.key_store.os.replace", side_effect=OSError("verrou")):
+            with self.assertRaises(OSError):
+                save_encrypted_pq_key(_make_pq_key(4032), "passphrase-ok", self.path, n_log2=10)
+        self.assertFalse(self.path.exists())
+        self.assertFalse(self.tmp.exists())
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

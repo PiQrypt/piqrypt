@@ -651,8 +651,9 @@ def save_encrypted_pq_key(
     """
     Encrypt and atomically save an ML-DSA-65 private key (format v2).
 
-    Uses a temporary file + os.replace for atomicity.
-    Sets 0o600 permissions on POSIX; logs a notice on Windows (no-op).
+    Fichier temporaire (O_CREAT|O_EXCL, fsync) + os.replace pour l'atomicité,
+    sur toutes les plateformes. Les bits 0o600 n'ont d'effet que sous POSIX.
+    Un temporaire périmé (plantage antérieur) est supprimé, avec une seule reprise.
 
     Args:
         private_key_bytes: ML-DSA-65 secret key
@@ -667,23 +668,33 @@ def save_encrypted_pq_key(
 
     # Nom du temporaire : même dossier, suffixe .tmp (évite la double extension)
     tmp = path.parent / (path.name + ".tmp")
-    import platform as _platform
+    flags = os.O_CREAT | os.O_EXCL | os.O_WRONLY | getattr(os, "O_BINARY", 0)
+
+    def _open_tmp() -> int:
+        # O_EXCL : jamais d'écrasement silencieux ; 0o600 posé à la création
+        # (sans effet sous Windows, où l'ACL héritée du dossier protège le fichier).
+        return os.open(str(tmp), flags, 0o600)
+
     try:
-        if _platform.system() != "Windows":
-            # O_CREAT|O_EXCL : pas d'écrasement ; 0o600 positionné à la création.
-            fd = os.open(str(tmp), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
-            try:
-                os.write(fd, encrypted)
-                os.fsync(fd)
-            finally:
-                os.close(fd)
-        else:
-            # Windows : les bits POSIX ne sont pas supportés ; l'ACL héritée
-            # du répertoire parent protège le fichier.
-            tmp.write_bytes(encrypted)
-            logger.debug("[KeyStore v2] 0o600 non appliqué (Windows)")
+        try:
+            fd = _open_tmp()
+        except FileExistsError:
+            # Reste d'un plantage précédent : on le supprime et on réessaie une fois.
+            os.unlink(str(tmp))
+            fd = _open_tmp()
+    except OSError:
+        raise  # rien créé par cet appel : on ne supprime pas le temporaire d'un autre
+
+    try:
+        try:
+            view = memoryview(encrypted)
+            while view:
+                view = view[os.write(fd, view):]
+            os.fsync(fd)
+        finally:
+            os.close(fd)
         os.replace(str(tmp), str(path))
-    except Exception:
+    except BaseException:
         try:
             os.unlink(str(tmp))
         except OSError:
