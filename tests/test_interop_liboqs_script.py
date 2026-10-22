@@ -102,9 +102,29 @@ class TestWorkflowShape(unittest.TestCase):
         self.assertIn('LIBOQS_PYTHON_VERSION: "0.16.0.1"', self.text)
         self.assertIn("contents: read", self.text)
         self.assertIn('--branch "${LIBOQS_VERSION}"', self.text)
-        self.assertIn("liboqs-python.git@${LIBOQS_PYTHON_VERSION}", self.text)
+        self.assertIn('--branch "${LIBOQS_PYTHON_VERSION}"', self.text)
         for floating in ("PYOQS_VERSION", "@main", "--branch main", "--branch master"):
             self.assertNotIn(floating, self.text)
+
+    def test_clones_are_checked_against_the_pinned_commits(self):
+        self.assertIn('LIBOQS_COMMIT: "5a1a854b0dc9f2141bdc771c555ee60c37950183"', self.text)
+        self.assertIn('LIBOQS_PYTHON_COMMIT: "62385cd99ababa2a4875257232c68dccda256e3b"', self.text)
+        self.assertEqual(self.text.count("rev-parse HEAD"), 2)
+        self.assertIn('= "${LIBOQS_COMMIT}"', self.text)
+        self.assertIn('= "${LIBOQS_PYTHON_COMMIT}"', self.text)
+        self.assertEqual(self.text.count("exit 1"), 2)
+
+    def test_python_dependencies_are_pinned_to_exact_versions(self):
+        import re
+        pip_lines = [l.strip() for l in self.text.splitlines() if l.strip().startswith(("pip install", "python -m pip install"))]
+        self.assertGreaterEqual(len(pip_lines), 3)
+        for line in pip_lines:
+            self.assertNotRegex(line, r"[<>~]=?|--upgrade")
+        joined = " ".join(pip_lines)
+        for pin in ("pip==26.2.2", "cryptography==50.0.2", "rfc8785==0.1.4",
+                    "base58==2.1.1", "dilithium-py==1.5.1"):
+            self.assertIn(pin, joined)
+        self.assertTrue(re.search(r"pip install \./liboqs-python", joined))
 
     def test_runs_the_interop_script(self):
         self.assertIn("python scripts/interop_liboqs.py", self.text)
