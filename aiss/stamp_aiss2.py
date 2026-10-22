@@ -27,6 +27,7 @@ Recommended by NIST until 2030+ for transition period.
 
 import time
 import base64
+import binascii
 from typing import Dict, Any, Optional, List
 
 from aiss.crypto import ed25519, dilithium
@@ -348,24 +349,30 @@ def _verify_aiss2_1(
     jcs_bytes = _jcs_canonicalize(event_copy)
     signed_msg = _build_signed_message(jcs_bytes)
 
-    # Verify Ed25519 — AISS-2.1 uses "base64:<b64>" encoding.
+    # Verify Ed25519 — AISS-2.1 uses "base64:<b64>" encoding (strict alphabet).
     try:
         raw_ed = classical["signature"]
         if not raw_ed.startswith("base64:"):
             raise InvalidSignatureError("Ed25519 signature must use 'base64:' prefix in AISS-2.1")
-        sig_ed25519 = base64.b64decode(raw_ed[7:])
+        try:
+            sig_ed25519 = base64.b64decode(raw_ed[7:], validate=True)
+        except binascii.Error as exc:
+            raise InvalidSignatureError(f"Ed25519 signature contains invalid base64 characters: {exc}")
         ed25519.verify(public_key_ed25519, signed_msg, sig_ed25519)
     except InvalidSignatureError:
         raise
     except Exception as e:
         raise InvalidSignatureError(f"Ed25519 signature verification failed: {e}")
 
-    # Verify ML-DSA-65 — AISS-2.1 uses "base64:<b64>" encoding.
+    # Verify ML-DSA-65 — AISS-2.1 uses "base64:<b64>" encoding (strict alphabet).
     try:
         raw_pq = post_quantum["signature"]
         if not raw_pq.startswith("base64:"):
             raise InvalidSignatureError("ML-DSA-65 signature must use 'base64:' prefix in AISS-2.1")
-        sig_dilithium = base64.b64decode(raw_pq[7:])
+        try:
+            sig_dilithium = base64.b64decode(raw_pq[7:], validate=True)
+        except binascii.Error as exc:
+            raise InvalidSignatureError(f"ML-DSA-65 signature contains invalid base64 characters: {exc}")
         if not dilithium.verify(public_key_dilithium, signed_msg, sig_dilithium):
             raise InvalidSignatureError("ML-DSA-65 signature verification failed")
     except InvalidSignatureError:

@@ -1199,5 +1199,105 @@ class TestBase64PrefixEncoding(unittest.TestCase):
             verify_aiss2_hybrid(bad, pub_ed, pub_pq)
 
 
+class TestBase64StrictValidation(unittest.TestCase):
+    """A.3-ext — AISS-2.1 base64 decoding rejects non-alphabet characters (validate=True).
+
+    Covers: newline, space, out-of-alphabet char, invalid padding, missing prefix.
+    Tests both Ed25519 and ML-DSA-65 signature slots.
+    """
+
+    def setUp(self):
+        import aiss.license as lic_module
+        from aiss.crypto import dilithium
+        self._orig_lic = lic_module._license
+        lic_module._license = _make_license("pro")
+        dilithium.reset_demo_counter()
+
+    def tearDown(self):
+        import aiss.license as lic_module
+        lic_module._license = self._orig_lic
+
+    def _make_event(self):
+        if _SKIP:
+            self.skipTest(_SKIP_REASON)
+        from aiss.stamp_aiss2 import stamp_event_aiss2_hybrid
+        priv_ed, pub_ed, priv_pq, pub_pq = _keys()
+        aid = _agent_id(pub_ed)
+        return stamp_event_aiss2_hybrid(
+            priv_ed, priv_pq, aid, {"action": "b64_strict"}, tsa_stamp_after=False
+        ), pub_ed, pub_pq
+
+    def _tamper_ed25519(self, event, bad_suffix):
+        """Replace Ed25519 signature payload with bad_suffix (after 'base64:')."""
+        import copy
+        bad = copy.deepcopy(event)
+        bad["signatures"]["classical"]["signature"] = "base64:" + bad_suffix
+        return bad
+
+    def _tamper_ml_dsa(self, event, bad_suffix):
+        """Replace ML-DSA-65 signature payload with bad_suffix (after 'base64:')."""
+        import copy
+        bad = copy.deepcopy(event)
+        bad["signatures"]["post_quantum"]["signature"] = "base64:" + bad_suffix
+        return bad
+
+    def _assert_rejected(self, event, pub_ed, pub_pq):
+        from aiss.stamp_aiss2 import verify_aiss2_hybrid
+        from aiss.exceptions import InvalidSignatureError
+        with self.assertRaises(InvalidSignatureError):
+            verify_aiss2_hybrid(event, pub_ed, pub_pq)
+
+    # ── newline in Ed25519 signature ─────────────────────────────────────────
+
+    def test_ed25519_newline_rejected(self):
+        """Newline embedded in Ed25519 base64 payload must be rejected."""
+        event, pub_ed, pub_pq = self._make_event()
+        raw = event["signatures"]["classical"]["signature"][7:]
+        tampered = self._tamper_ed25519(event, raw[:20] + "\n" + raw[20:])
+        self._assert_rejected(tampered, pub_ed, pub_pq)
+
+    # ── space in ML-DSA-65 signature ─────────────────────────────────────────
+
+    def test_ml_dsa_space_rejected(self):
+        """Space embedded in ML-DSA-65 base64 payload must be rejected."""
+        event, pub_ed, pub_pq = self._make_event()
+        raw = event["signatures"]["post_quantum"]["signature"][7:]
+        tampered = self._tamper_ml_dsa(event, raw[:20] + " " + raw[20:])
+        self._assert_rejected(tampered, pub_ed, pub_pq)
+
+    # ── out-of-alphabet char ─────────────────────────────────────────────────
+
+    def test_ed25519_out_of_alphabet_rejected(self):
+        """Character outside standard base64 alphabet (e.g. '*') must be rejected."""
+        event, pub_ed, pub_pq = self._make_event()
+        raw = event["signatures"]["classical"]["signature"][7:]
+        tampered = self._tamper_ed25519(event, raw[:10] + "*" + raw[11:])
+        self._assert_rejected(tampered, pub_ed, pub_pq)
+
+    # ── invalid padding ──────────────────────────────────────────────────────
+
+    def test_ed25519_invalid_padding_rejected(self):
+        """Truncated base64 string with broken padding must be rejected."""
+        event, pub_ed, pub_pq = self._make_event()
+        raw = event["signatures"]["classical"]["signature"][7:]
+        # Remove last char to break padding
+        tampered = self._tamper_ed25519(event, raw[:-1])
+        self._assert_rejected(tampered, pub_ed, pub_pq)
+
+    # ── missing prefix ───────────────────────────────────────────────────────
+
+    def test_ml_dsa_missing_prefix_rejected(self):
+        """ML-DSA-65 signature without 'base64:' prefix must be rejected."""
+        import copy
+        from aiss.stamp_aiss2 import verify_aiss2_hybrid
+        from aiss.exceptions import InvalidSignatureError
+        event, pub_ed, pub_pq = self._make_event()
+        bad = copy.deepcopy(event)
+        raw = bad["signatures"]["post_quantum"]["signature"]
+        bad["signatures"]["post_quantum"]["signature"] = raw[7:]  # strip "base64:"
+        with self.assertRaises(InvalidSignatureError):
+            verify_aiss2_hybrid(bad, pub_ed, pub_pq)
+
+
 if __name__ == "__main__":
     unittest.main()
