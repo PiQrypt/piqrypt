@@ -163,21 +163,32 @@ def derive_agent_id_aiss21(public_key_ed: bytes, public_key_pq: bytes) -> str:
     """
     Derive deterministic AISS-2.1 agent ID from both public keys.
 
-    Formula (RFC AISS-1.1 §5.2):
+    Formule (AISS-2.1, spécification à rédiger — chantier G) :
         data  = b"PiQrypt-AISS-2.1-agent-id\\x00"
               || struct.pack(">I", len(pk_ed)) || pk_ed
               || struct.pack(">I", len(pk_pq)) || pk_pq
         agent_id = BASE58( SHA-512(data) )[0:32]
 
-    Domain separation prevents collision with AISS-1 agent IDs.
+    La séparation de domaine empêche toute collision avec les agent_id AISS-1.
 
     Args:
-        public_key_ed: Ed25519 public key (32 bytes)
-        public_key_pq: ML-DSA-65 public key (1952 bytes)
+        public_key_ed: Clé publique Ed25519 (exactement 32 bytes)
+        public_key_pq: Clé publique ML-DSA-65 (exactement 1952 bytes)
 
     Returns:
-        32-character Base58 agent ID
+        agent_id de 32 caractères Base58
+
+    Raises:
+        ValueError: Si les tailles de clés ne sont pas conformes
     """
+    if len(public_key_ed) != 32:
+        raise ValueError(
+            f"public_key_ed doit faire 32 bytes (Ed25519), reçu {len(public_key_ed)}"
+        )
+    if len(public_key_pq) != 1952:
+        raise ValueError(
+            f"public_key_pq doit faire 1952 bytes (ML-DSA-65), reçu {len(public_key_pq)}"
+        )
     data = (
         b"PiQrypt-AISS-2.1-agent-id\x00"
         + struct.pack(">I", len(public_key_ed))
@@ -195,24 +206,34 @@ def export_identity_aiss21(
     public_key_pq: bytes,
 ) -> Dict[str, Any]:
     """
-    Export AISS-2.1 agent identity document (RFC AISS-1.1 §6).
+    Export AISS-2.1 agent identity document (AISS-2.1, spécification à rédiger — chantier G).
 
-    Contains both classical (Ed25519) and post-quantum (ML-DSA-65) public keys.
+    Contient les deux clés publiques (Ed25519 + ML-DSA-65) encodées avec le
+    préfixe "base64:" (même convention que les signatures AISS-2.1).
+    L'agent_id fourni est recalculé et comparé ; une incohérence lève ValueError.
 
     Args:
-        agent_id: AISS-2.1 agent ID (from derive_agent_id_aiss21)
-        public_key_ed: Ed25519 public key
-        public_key_pq: ML-DSA-65 public key (1952 bytes)
+        agent_id:      agent_id AISS-2.1 (doit correspondre aux clés fournies)
+        public_key_ed: Clé publique Ed25519 (32 bytes)
+        public_key_pq: Clé publique ML-DSA-65 (1952 bytes)
 
     Returns:
-        AISS-2.1 identity document dict
+        Document d'identité AISS-2.1
+
+    Raises:
+        ValueError: Si agent_id incohérent avec les clés ou tailles incorrectes
     """
     import base64 as _b64
+    computed_id = derive_agent_id_aiss21(public_key_ed, public_key_pq)
+    if computed_id != agent_id:
+        raise ValueError(
+            f"agent_id incohérent : fourni {agent_id!r}, calculé {computed_id!r}"
+        )
     return {
         "version": "AISS-2.1",
         "agent_id": agent_id,
-        "public_key_classical": ed25519.encode_base64(public_key_ed),
-        "public_key_pq": _b64.b64encode(public_key_pq).decode("ascii"),
+        "public_key_classical": "base64:" + _b64.b64encode(public_key_ed).decode("ascii"),
+        "public_key_pq": "base64:" + _b64.b64encode(public_key_pq).decode("ascii"),
         "algorithms": ["Ed25519", "ML-DSA-65"],
         "created_at": int(time.time()),
     }

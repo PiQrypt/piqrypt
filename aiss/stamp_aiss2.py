@@ -229,31 +229,48 @@ def stamp_genesis_event_aiss2_hybrid(
     tsa_stamp_after: bool = True,
 ) -> Dict[str, Any]:
     """
-    Create AISS-2.1 genesis event with hybrid signatures.
+    Crée l'événement genèse AISS-2.1 avec signatures hybrides.
+
+    Lorsque public_key_pq est fourni (chemin recommandé) :
+    - Vérifie que agent_id == derive_agent_id_aiss21(public_key_ed25519, public_key_pq).
+    - Calcule le hash genèse : SHA-512(b"PiQrypt-AISS-2.1-genesis\\x00" || agent_id)
+      (128 caractères hex, AISS-2.1, spécification à rédiger — chantier G).
+
+    Lorsque public_key_pq est absent (compatibilité ascendante) :
+    - Hash genèse : SHA-256(public_key_ed25519) (64 caractères hex, convention AISS-1).
+    - Réservé aux migrations ; le nouveau code doit toujours fournir public_key_pq.
 
     Args:
-        private_key_ed25519: Ed25519 private key
-        private_key_dilithium: ML-DSA-65 private key
-        public_key_ed25519: Ed25519 public key (for genesis hash)
-        agent_id: Agent ID
-        payload: Genesis event data
-        public_key_pq: ML-DSA-65 public key — when provided, uses the AISS-2.1
-            genesis formula: SHA-512(b"PiQrypt-AISS-2.1-genesis\\x00" || agent_id).
-            When absent, falls back to the AISS-1 convention: SHA-256(pub_ed).
-        tsa_stamp_after: Request TSA timestamp after signing (default: True).
+        private_key_ed25519:   Clé privée Ed25519
+        private_key_dilithium: Clé privée ML-DSA-65
+        public_key_ed25519:    Clé publique Ed25519 (hash genèse legacy)
+        agent_id:              Agent ID (doit correspondre aux clés si public_key_pq fourni)
+        payload:               Données de l'événement genèse
+        public_key_pq:         Clé publique ML-DSA-65 (chemin AISS-2.1 recommandé)
+        tsa_stamp_after:       Demander un horodatage TSA après signature (défaut : True)
 
     Returns:
-        AISS-2.1 genesis event
+        Événement genèse AISS-2.1
+
+    Raises:
+        ValueError: Si agent_id incohérent avec les clés (public_key_pq fourni)
     """
     import hashlib as _hashlib
     from aiss.canonical import hash_bytes
+    from aiss.identity import derive_agent_id_aiss21
 
     if public_key_pq is not None:
-        # AISS-2.1 genesis: domain-separated SHA-512 over agent_id
+        computed_id = derive_agent_id_aiss21(public_key_ed25519, public_key_pq)
+        if computed_id != agent_id:
+            raise ValueError(
+                f"agent_id incohérent avec les clés : fourni {agent_id!r}, "
+                f"calculé {computed_id!r}"
+            )
+        # AISS-2.1 genesis: SHA-512 domain-separated over agent_id
         data = b"PiQrypt-AISS-2.1-genesis\x00" + agent_id.encode("ascii")
         genesis_hash = _hashlib.sha512(data).hexdigest()
     else:
-        # Legacy AISS-1 convention: SHA-256 of Ed25519 public key
+        # Chemin legacy : SHA-256 de la clé publique Ed25519 (convention AISS-1)
         genesis_hash = hash_bytes(public_key_ed25519)
 
     return stamp_event_aiss2_hybrid(

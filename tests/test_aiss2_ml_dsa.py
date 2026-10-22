@@ -1459,8 +1459,176 @@ class TestGenesisHashAISS21(unittest.TestCase):
         self.assertEqual(doc["algorithms"], ["Ed25519", "ML-DSA-65"])
         self.assertIn("created_at", doc)
         import base64
-        pq_bytes = base64.b64decode(doc["public_key_pq"])
+        # Les deux clés sont encodées avec le préfixe "base64:" (AISS-2.1)
+        self.assertTrue(doc["public_key_classical"].startswith("base64:"),
+                        "public_key_classical doit avoir le préfixe 'base64:'")
+        self.assertTrue(doc["public_key_pq"].startswith("base64:"),
+                        "public_key_pq doit avoir le préfixe 'base64:'")
+        pq_bytes = base64.b64decode(doc["public_key_pq"][7:])
         self.assertEqual(pq_bytes, pub_pq, "public_key_pq must round-trip through b64")
+        ed_bytes = base64.b64decode(doc["public_key_classical"][7:])
+        self.assertEqual(ed_bytes, pub_ed, "public_key_classical must round-trip through b64")
+
+
+@pytest.mark.skipif(_SKIP, reason=_SKIP_REASON)
+class TestDeriveAgentIdAISS21Corrections(unittest.TestCase):
+    """B.3 corrections — validation des tailles de clés dans derive_agent_id_aiss21."""
+
+    def setUp(self):
+        import aiss.license as lic_module
+        from aiss.crypto import dilithium
+        self._orig_lic = lic_module._license
+        lic_module._license = _make_license("pro")
+        dilithium.reset_demo_counter()
+
+    def tearDown(self):
+        import aiss.license as lic_module
+        lic_module._license = self._orig_lic
+
+    def test_wrong_ed_size_raises(self):
+        """Ed25519 public key != 32 bytes must raise ValueError."""
+        from aiss.identity import derive_agent_id_aiss21
+        _, _, _, pub_pq = _keys()
+        with self.assertRaises(ValueError):
+            derive_agent_id_aiss21(b"\x00" * 31, pub_pq)
+
+    def test_wrong_pq_size_raises(self):
+        """ML-DSA-65 public key != 1952 bytes must raise ValueError."""
+        from aiss.identity import derive_agent_id_aiss21
+        _, pub_ed, _, _ = _keys()
+        with self.assertRaises(ValueError):
+            derive_agent_id_aiss21(pub_ed, b"\x00" * 1951)
+
+    def test_ed_key_33_bytes_raises(self):
+        """Ed25519 public key 33 bytes must raise ValueError."""
+        from aiss.identity import derive_agent_id_aiss21
+        _, _, _, pub_pq = _keys()
+        with self.assertRaises(ValueError):
+            derive_agent_id_aiss21(b"\x00" * 33, pub_pq)
+
+    def test_pq_key_1953_bytes_raises(self):
+        """ML-DSA-65 public key 1953 bytes must raise ValueError."""
+        from aiss.identity import derive_agent_id_aiss21
+        _, pub_ed, _, _ = _keys()
+        with self.assertRaises(ValueError):
+            derive_agent_id_aiss21(pub_ed, b"\x00" * 1953)
+
+    def test_determinism_preserved(self):
+        """derive_agent_id_aiss21 still deterministic after corrections."""
+        from aiss.identity import derive_agent_id_aiss21
+        _, pub_ed, _, pub_pq = _keys()
+        self.assertEqual(
+            derive_agent_id_aiss21(pub_ed, pub_pq),
+            derive_agent_id_aiss21(pub_ed, pub_pq),
+        )
+
+
+@pytest.mark.skipif(_SKIP, reason=_SKIP_REASON)
+class TestExportIdentityAISS21Corrections(unittest.TestCase):
+    """B.3 corrections — export_identity_aiss21 : recalcul agent_id, préfixe base64:."""
+
+    def setUp(self):
+        import aiss.license as lic_module
+        from aiss.crypto import dilithium
+        self._orig_lic = lic_module._license
+        lic_module._license = _make_license("pro")
+        dilithium.reset_demo_counter()
+
+    def tearDown(self):
+        import aiss.license as lic_module
+        lic_module._license = self._orig_lic
+
+    def test_incoherent_agent_id_raises(self):
+        """export_identity_aiss21 doit rejeter un agent_id incohérent avec les clés."""
+        from aiss.identity import derive_agent_id_aiss21, export_identity_aiss21
+        _, pub_ed, _, pub_pq = _keys()
+        _, pub_ed2, _, pub_pq2 = _keys()
+        # ID calculé pour les clés 2, fourni avec les clés 1 → incohérent
+        wrong_id = derive_agent_id_aiss21(pub_ed2, pub_pq2)
+        with self.assertRaises(ValueError):
+            export_identity_aiss21(wrong_id, pub_ed, pub_pq)
+
+    def test_base64_prefix_on_classical_key(self):
+        """public_key_classical doit avoir le préfixe 'base64:'."""
+        from aiss.identity import derive_agent_id_aiss21, export_identity_aiss21
+        _, pub_ed, _, pub_pq = _keys()
+        aid = derive_agent_id_aiss21(pub_ed, pub_pq)
+        doc = export_identity_aiss21(aid, pub_ed, pub_pq)
+        self.assertTrue(doc["public_key_classical"].startswith("base64:"))
+
+    def test_base64_prefix_on_pq_key(self):
+        """public_key_pq doit avoir le préfixe 'base64:'."""
+        from aiss.identity import derive_agent_id_aiss21, export_identity_aiss21
+        _, pub_ed, _, pub_pq = _keys()
+        aid = derive_agent_id_aiss21(pub_ed, pub_pq)
+        doc = export_identity_aiss21(aid, pub_ed, pub_pq)
+        self.assertTrue(doc["public_key_pq"].startswith("base64:"))
+
+    def test_round_trip_after_prefix(self):
+        """Les clés doivent être récupérables en retirant le préfixe 'base64:'."""
+        import base64
+        from aiss.identity import derive_agent_id_aiss21, export_identity_aiss21
+        _, pub_ed, _, pub_pq = _keys()
+        aid = derive_agent_id_aiss21(pub_ed, pub_pq)
+        doc = export_identity_aiss21(aid, pub_ed, pub_pq)
+        ed_back = base64.b64decode(doc["public_key_classical"][7:])
+        pq_back = base64.b64decode(doc["public_key_pq"][7:])
+        self.assertEqual(ed_back, pub_ed)
+        self.assertEqual(pq_back, pub_pq)
+
+
+@pytest.mark.skipif(_SKIP, reason=_SKIP_REASON)
+class TestGenesisAgentIdConsistency(unittest.TestCase):
+    """B.3 corrections — stamp_genesis : reject incohérent agent_id."""
+
+    def setUp(self):
+        import aiss.license as lic_module
+        from aiss.crypto import dilithium
+        self._orig_lic = lic_module._license
+        lic_module._license = _make_license("pro")
+        dilithium.reset_demo_counter()
+
+    def tearDown(self):
+        import aiss.license as lic_module
+        lic_module._license = self._orig_lic
+
+    def test_incoherent_agent_id_in_genesis_raises(self):
+        """stamp_genesis doit rejeter un agent_id incohérent si public_key_pq fourni."""
+        from aiss.identity import derive_agent_id_aiss21
+        from aiss.stamp_aiss2 import stamp_genesis_event_aiss2_hybrid
+        priv_ed, pub_ed, priv_pq, pub_pq = _keys()
+        _, pub_ed2, _, pub_pq2 = _keys()
+        wrong_id = derive_agent_id_aiss21(pub_ed2, pub_pq2)
+        with self.assertRaises(ValueError):
+            stamp_genesis_event_aiss2_hybrid(
+                priv_ed, priv_pq, pub_ed, wrong_id, {"action": "g"},
+                public_key_pq=pub_pq, tsa_stamp_after=False,
+            )
+
+    def test_coherent_agent_id_in_genesis_succeeds(self):
+        """stamp_genesis réussit quand agent_id correspond aux clés."""
+        from aiss.identity import derive_agent_id_aiss21
+        from aiss.stamp_aiss2 import stamp_genesis_event_aiss2_hybrid
+        priv_ed, pub_ed, priv_pq, pub_pq = _keys()
+        correct_id = derive_agent_id_aiss21(pub_ed, pub_pq)
+        event = stamp_genesis_event_aiss2_hybrid(
+            priv_ed, priv_pq, pub_ed, correct_id, {"action": "g"},
+            public_key_pq=pub_pq, tsa_stamp_after=False,
+        )
+        self.assertEqual(event["version"], "AISS-2.1")
+
+    def test_legacy_path_no_pq_key_not_validated(self):
+        """Chemin legacy (pas de public_key_pq) : pas de validation agent_id."""
+        from aiss.identity import derive_agent_id
+        from aiss.stamp_aiss2 import stamp_genesis_event_aiss2_hybrid
+        priv_ed, pub_ed, priv_pq, pub_pq = _keys()
+        # agent_id AISS-1 valide, aucune vérif croisée attendue
+        aid = derive_agent_id(pub_ed)
+        event = stamp_genesis_event_aiss2_hybrid(
+            priv_ed, priv_pq, pub_ed, aid, {"action": "g"},
+            tsa_stamp_after=False,
+        )
+        self.assertEqual(len(event["previous_hash"]), 64)
 
 
 if __name__ == "__main__":
