@@ -48,6 +48,10 @@ AISS_CORE_FILES: List[Tuple[str, str]] = [
     ("aiss/agent_registry.py",       "aiss/agent_registry.py"),
     ("aiss/bridge_protocol.py",      "aiss/bridge_protocol.py"),
     ("aiss/agent_identity.py",  "aiss/agent_identity.py"),
+    ("aiss/tsa_token.py",           "aiss/tsa_token.py"),
+    ("aiss/key_store.py",           "aiss/key_store.py"),
+    ("aiss/signer.py",              "aiss/signer.py"),
+    ("aiss/signer_conformance.py",  "aiss/signer_conformance.py"),
 
     # ── Crypto ────────────────────────────────────────────────────────────────
     ("aiss/crypto/__init__.py",      "aiss/crypto/__init__.py"),
