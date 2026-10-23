@@ -266,7 +266,7 @@ for event in suspicious_events:
 
 **PiQrypt guarantees:**
 1. **Non-repudiation** — OpenClaw cannot deny actions
-2. **Tamper-proof** — Cannot modify history after execution
+2. **Tamper-evident** — Cannot modify history after execution
 3. **Auditability** — Humans can verify what happened
 4. **Accountability** — Signed record of agent behavior
 5. **Behavioral drift** — TSI/A2C detect anomalous patterns over time

@@ -6,6 +6,8 @@
 
 ---
 
+> **Scope of this document.** This document describes the design and intent of PiQrypt. Words such as "tamper-proof", "immutable" or "audit trail", and the mapping tables for regulations and standards, are references and intent, not findings: PiQrypt signs events, chains them by hash and verifies them offline, and does not make a system compliant with anything. Some tags in older tables are being corrected. Where it says "Dilithium3", the implemented algorithm is ML-DSA-65 (NIST FIPS 204), which does not interoperate with round-3 Dilithium3. See [docs/LIMITS_AND_POSTURE.md](docs/LIMITS_AND_POSTURE.md).
+
 ## Table of Contents
 
 1. [Installation](#1-installation)
@@ -602,7 +604,7 @@ session.export("audit_session.json")
 
 ```bash
 python quickstart_session.py                     # trading pipeline
-python quickstart_session.py --scenario healthcare  # EU AI Act Art.22
+python quickstart_session.py --scenario healthcare  # human oversight (EU AI Act Art.14)
 python quickstart_session.py --scenario robotics    # IEC 62443
 python quickstart_session.py --scenario all         # all three
 ```
@@ -640,7 +642,7 @@ session.stamp("agent", "patient_visit", {
     "diagnosis": "NSTEMI",                  # → stored as diagnosis_hash: sha256("NSTEMI")
     "confidence": 0.91,                     # → stored as confidence_hash: sha256("0.91")
 })
-# Raw diagnosis never persisted. RGPD-compliant by design.
+# Raw diagnosis never persisted (only its hash).
 ```
 
 ### 9.4 AgentSession API reference
@@ -1375,21 +1377,22 @@ Security vulnerabilities: **security@piqrypt.com** — 48h acknowledgement, 15-d
 
 ## 18. Compliance Reference
 
+This table maps PiQrypt controls to references. It is not an assessment of compliance with any of them.
+
 | Regulation | Article | Related PiQrypt control |
 |-----------|---------|-----------------|
-| EU AI Act | Art.9 | Risk management — TrustGate policy versioning |
-| EU AI Act | Art.12 | Automatic logging — TrustGate audit journal |
-| EU AI Act | Art.13 | Transparency — agent identity + chain export |
+| EU AI Act | Art.9 | One input to a risk management system (TrustGate thresholds and policy versioning) |
+| EU AI Act | Art.12 | Automatic event logging (TrustGate audit journal, hash-linked) |
 | EU AI Act | Art.14 | Human oversight — REQUIRE_HUMAN flow + TTL |
-| EU AI Act | Art.22 | High-risk AI — `ai_act_high_risk.yaml` profile |
-| NIST AI RMF | GOVERN 1.2 | Role-based access — TrustGate roles |
+| EU AI Act | Art.19, 26(6) | Log retention, at least six months (`retention_days` in `ai_act_high_risk.yaml`) |
+| NIST AI RMF | GOVERN 3.2 | Roles and oversight for human-AI configurations (TrustGate principals and roles) |
 | NIST AI RMF | MANAGE 1.3 | Risk prioritization — VRS thresholds |
-| NIST AI RMF | MEASURE 2.5 | TSI monitoring — Vigil |
+| NIST AI RMF | MEASURE 2.4 | VRS and TSI monitoring (Vigil) |
 | ANSSI | R9 | No automated critical action — REQUIRE_HUMAN |
 | ANSSI | R25 | Dangerous input filtering — `dangerous_patterns` |
 | MiFID II | Art.17 | Algorithmic trading records — chain export |
 | RGPD | — | Raw data never stored — payload hashing by default |
-| IEC 62443 | — | Industrial robot audit — ROS2 bridge |
+| IEC 62443 | — | Event record for ROS2 nodes (ROS2 bridge) |
 
 ---
 

@@ -179,7 +179,7 @@ import piqrypt as aiss
 def anchor_output(private_key, agent_id, content, content_type="text"):
     """
     Prove output existed at this moment — without storing it.
-    Content is hashed, never stored. GDPR-compliant by design.
+    Content is hashed, never stored.
     """
     if isinstance(content, str):
         content_bytes = content.encode("utf-8")

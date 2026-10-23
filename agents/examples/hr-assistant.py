@@ -33,7 +33,7 @@ class HRAssistant:
         """
         Evaluate candidate with explainable AI.
 
-        GDPR Art. 22 concerns decisions based solely on automated processing. This example stores the inputs and outputs of each decision so that a person can review it.
+        GDPR Art. 22 concerns decisions based solely on automated processing. This example stores a hash of the CV and the score, decision and reasons of each evaluation so that a person can review the outcome.
         """
         # Simulate AI evaluation (in real: NLP model)
         import random
@@ -53,7 +53,7 @@ class HRAssistant:
         if score > 80:
             reasons.append("Strong overall fit")
 
-        # Decision payload (GDPR compliant - no PII)
+        # Decision payload (CV hashed, no raw CV)
         payload = {
             "event_type": "candidate_evaluation",
             "cv_hash": cv_hash,  # Hashed, not raw CV
@@ -62,7 +62,7 @@ class HRAssistant:
             "decision": decision,
             "reasons": reasons,
             "model_version": "hr_nlp_v2.3",
-            "protected_attributes_used": False,  # EEOC compliance
+            "protected_attributes_used": False,  # example value, not computed by this demo
             "timestamp": time.time()
         }
 
@@ -198,7 +198,7 @@ def demo():
 
     print()
     print("=" * 60)
-    print("✅ Demo complete - GDPR compliant")
+    print("✅ Demo complete")
     print()
     print("Features:")
     print("  ✓ Each decision recorded for human review")

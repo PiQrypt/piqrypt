@@ -7,6 +7,8 @@
 
 ---
 
+> **Scope of this document.** This document describes the design and intent of PiQrypt. Words such as "tamper-proof", "immutable" or "audit trail", and the mapping tables for regulations and standards, are references and intent, not findings: PiQrypt signs events, chains them by hash and verifies them offline, and does not make a system compliant with anything. Some tags in older tables are being corrected. Where it says "Dilithium3", the implemented algorithm is ML-DSA-65 (NIST FIPS 204), which does not interoperate with round-3 Dilithium3. See [LIMITS_AND_POSTURE.md](LIMITS_AND_POSTURE.md).
+
 ## Overview
 
 PiQrypt is the reference implementation of the AISS (Agent Identity and Signature Standard) v2.0.
@@ -158,7 +160,7 @@ PiQrypt is the reference implementation of the AISS (Agent Identity and Signatur
 |---------|--------|--------|---------|
 | Policy engine (deterministic, 10-priority) | ✅ Complete | `trustgate/policy_engine.py` | v1.8.4 |
 | Hash-chained governance journal | ✅ Complete | `trustgate/audit_journal.py` | v1.8.4 |
-| Immutable policy versioning + SHA-256 | ✅ Complete | `trustgate/policy_versioning.py` | v1.8.4 |
+| Policy versioning + SHA-256 (append-only history) | ✅ Complete | `trustgate/policy_versioning.py` | v1.8.4 |
 | REQUIRE_HUMAN with TTL + auto-deny | ✅ Complete | `trustgate/decision.py` | v1.8.4 |
 | Policy simulation (dry-run) | ✅ Complete | `trustgate/policy_engine.py` | v1.8.4 |
 | 3 built-in compliance profiles | ✅ Complete | `trustgate/profiles/` | v1.8.4 |

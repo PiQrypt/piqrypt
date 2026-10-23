@@ -13,6 +13,8 @@ IP:         e-Soleau DSO2026006483 + DSO2026009143 (INPI France)
 
 ---
 
+> **Scope of this document.** This document describes the design and intent of PiQrypt. Words such as "tamper-proof", "immutable" or "audit trail", and the mapping tables for regulations and standards, are references and intent, not findings: PiQrypt signs events, chains them by hash and verifies them offline, and does not make a system compliant with anything. Some tags in older tables are being corrected. Where it says "Dilithium3", the implemented algorithm is ML-DSA-65 (NIST FIPS 204), which does not interoperate with round-3 Dilithium3. See [LIMITS_AND_POSTURE.md](LIMITS_AND_POSTURE.md).
+
 ## Abstract
 
 Digital infrastructure has been built in layers.
@@ -140,7 +142,7 @@ This is a different question. It is a question about *behaviour over time* — n
 
 Consider what happens when an autonomous trading agent executes a sequence of decisions over eight hours. Each individual decision may be logged. But:
 
-- Are the logs tamper-proof?
+- Are the logs tamper-evident?
 - Can anyone verify that no log was deleted or reordered?
 - Is there a record of which agent, with which identity, made each decision?
 - Is there a record of interactions with other agents or external systems?

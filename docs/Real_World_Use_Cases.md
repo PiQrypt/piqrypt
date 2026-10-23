@@ -2,7 +2,9 @@
 
 **Prove what your AI did. Cryptographically.**
 
-Signed • Timestamped • Post-Quantum Ready • Tamper-Proof
+Signed • Timestamped • Post-Quantum Ready • Tamper-Evident
+
+> **Scope of this document.** This document describes the design and intent of PiQrypt. Words such as "tamper-proof", "immutable" or "audit trail", and the mapping tables for regulations and standards, are references and intent, not findings: PiQrypt signs events, chains them by hash and verifies them offline, and does not make a system compliant with anything. Some tags in older tables are being corrected. Where it says "Dilithium3", the implemented algorithm is ML-DSA-65 (NIST FIPS 204), which does not interoperate with round-3 Dilithium3. See [LIMITS_AND_POSTURE.md](LIMITS_AND_POSTURE.md).
 
 
 ## 🎯 Real-World Use Cases
@@ -254,7 +256,7 @@ event = aiss.stamp_event(
     }
 )
 
-# 3. Store (tamper-proof)
+# 3. Store (tamper-evident)
 aiss.store_event(event)
 
 # 4. Export for audit

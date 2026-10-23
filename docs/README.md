@@ -2,7 +2,9 @@
 
 **Prove what your AI did. Cryptographically.**
 
-Signed • Timestamped • Post-Quantum Ready • Tamper-Proof
+Signed • Timestamped • Post-Quantum Ready • Tamper-Evident
+
+> **Scope of this document.** This document describes the design and intent of PiQrypt. Words such as "tamper-proof", "immutable" or "audit trail", and the mapping tables for regulations and standards, are references and intent, not findings: PiQrypt signs events, chains them by hash and verifies them offline, and does not make a system compliant with anything. Some tags in older tables are being corrected. Where it says "Dilithium3", the implemented algorithm is ML-DSA-65 (NIST FIPS 204), which does not interoperate with round-3 Dilithium3. See [LIMITS_AND_POSTURE.md](LIMITS_AND_POSTURE.md).
 
 [![PyPI](https://img.shields.io/badge/PyPI-piqrypt-blue)](https://pypi.org/project/piqrypt/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
@@ -18,7 +20,7 @@ But when something goes wrong:
 
 - **Who did what?**
 - **Can it be proven?**
-- **Is the log tamper-proof?**
+- **Is the log tamper-evident?**
 - **Is it quantum-resistant?**
 
 **Most systems rely on editable logs.** Trust is not cryptographic.
@@ -39,7 +41,7 @@ PiQrypt creates **cryptographic audit trails** for autonomous systems.
 Every decision is:
 
 ✅ **Cryptographically signed** (Ed25519 + Dilithium3)  
-✅ **Hash-chained** (tamper-proof, blockchain-like)  
+✅ **Hash-chained** (tamper-evident, blockchain-like)  
 ✅ **Timestamped** (RFC 3161 independent proof)  
 ✅ **Post-quantum secured** (NIST FIPS 204)  
 
@@ -48,7 +50,7 @@ Every decision is:
 ```
 ✅ PiQrypt Audit Trail
    ├─ Cryptographically signed (Ed25519/Dilithium3)
-   ├─ Immutable hash chains (tamper-proof)
+   ├─ Immutable hash chains (tamper-evident)
    └─ Quantum-resistant (50+ year proof)
 ```
 
@@ -77,7 +79,7 @@ event = aiss.stamp_event(
     payload={"action": "buy", "symbol": "AAPL", "quantity": 100}
 )
 
-# Tamper-proof storage
+# Tamper-evident storage
 aiss.store_event(event)
 
 # Export for auditors
@@ -229,7 +231,7 @@ event = aiss.stamp_event(
     }
 )
 
-# 3. Store (tamper-proof)
+# 3. Store (tamper-evident)
 aiss.store_event(event)
 
 # 4. Export for audit

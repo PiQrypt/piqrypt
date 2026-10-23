@@ -10,6 +10,8 @@
 
 ---
 
+> **Scope of this document.** This document describes the design and intent of PiQrypt. Words such as "tamper-proof", "immutable" or "audit trail", and the mapping tables for regulations and standards, are references and intent, not findings: PiQrypt signs events, chains them by hash and verifies them offline, and does not make a system compliant with anything. Some tags in older tables are being corrected. Where it says "Dilithium3", the implemented algorithm is ML-DSA-65 (NIST FIPS 204), which does not interoperate with round-3 Dilithium3. See [LIMITS_AND_POSTURE.md](LIMITS_AND_POSTURE.md).
+
 ## Abstract
 
 Autonomous AI agents are rapidly moving from experimental tools to operational actors in finance, healthcare, infrastructure, and digital governance. They execute transactions, coordinate with other agents, and trigger downstream automated actions — often without human review.
@@ -19,7 +21,7 @@ Yet the AI ecosystem lacks a fundamental infrastructure primitive: **verifiable 
 PiQrypt introduces the **Proof of Continuity Protocol (PCP)** — a four-layer cryptographic infrastructure enabling autonomous agents to prove:
 
 - **Who they are** — persistent cryptographic identity (AISS)
-- **What they did** — tamper-proof signed event chains (PiQrypt Core)
+- **What they did** — tamper-evident signed event chains (PiQrypt Core)
 - **Whether their behaviour remained coherent** — real-time risk scoring (Vigil)
 - **Whether a human approved it** — policy enforcement and oversight gate (TrustGate)
 
@@ -853,7 +855,7 @@ This enables the emergence of:
 
 ## 17. Conclusion
 
-PiQrypt addresses a critical gap in AI agent infrastructure: **verifiable, tamper-proof decision trails with behavioural continuity monitoring and human oversight.**
+PiQrypt addresses a critical gap in AI agent infrastructure: **verifiable, tamper-evident decision trails with behavioural continuity monitoring and human oversight.**
 
 By implementing the Proof of Continuity Protocol across four integrated layers — AISS, PiQrypt Core, Vigil, and TrustGate — PiQrypt transforms autonomous agents from ephemeral software processes into **verifiable digital entities**.
 
