@@ -1121,8 +1121,8 @@ The exported JSON contains:
 | Format | Description | Notes |
 |--------|-------------|---------------|
 | `.pqz CERTIFIED` | Ed25519 signed + RFC 3161 TSA timestamp | No legal value is claimed. See docs/LIMITS_AND_POSTURE.md |
-| `.pqz MEMORY` | Full history, portable, auto-extractible | No legal value is claimed. See docs/LIMITS_AND_POSTURE.md |
-| `PDF REPORT` | Human-readable report | No legal value is claimed. See docs/LIMITS_AND_POSTURE.md |
+| `.pqz MEMORY` | Full history, portable, auto-extractible | Internal audit use |
+| `PDF REPORT` | Human-readable report | Internal audit - not certified |
 
 ```bash
 # Via Vigil API

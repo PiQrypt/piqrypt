@@ -1,6 +1,6 @@
 # ANSSI Strict Profile — Trust Gate
 # Strict profile inspired by ANSSI-PA-102 (2024). It is a set of thresholds and controls, not an assessment of compliance.
-# Designed for: French public sector, OIV, critical infrastructure
+# Stricter thresholds and controls than the other profiles. Validate them against your own requirements before use.
 #
 # Key characteristics:
 # - Lower VRS thresholds → more human oversight (R9)
