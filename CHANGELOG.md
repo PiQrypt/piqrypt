@@ -141,6 +141,7 @@ existing checks behave, because some of them accepted more than they should have
 ### Licensing
 
 - `aiss/key_store.py` and `aiss/logger.py` are now released under the MIT license (they were Elastic-2.0). Their code is unchanged. `aiss/signer_file.py` remains Elastic-2.0. Versions released before 1.10.0 keep the license they were published under.
+- The ML-DSA-65 backend (`aiss/crypto/dilithium_liboqs.py`) no longer applies its 1000 operation per-process limit when the module `aiss.license` does not exist, which is the case in the `aiss-standard` (MIT) build. Releases of `aiss-standard` up to 2.0.2 applied it. In `piqrypt` nothing changes: the limit still applies without a licence that grants the quantum feature.
 
 ### Fixed
 

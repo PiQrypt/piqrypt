@@ -114,7 +114,9 @@ differs between the two packages.
   require a Pro licence. Creating a hybrid identity, upgrading an identity, and hybrid rotation are
   not licence-checked. Without a licence that grants the quantum feature, a per-process counter
   limits ML-DSA-65 operations (1000).
-* In `aiss-standard` (MIT) there is no licence module: the same functions are not gated.
+* In `aiss-standard` (MIT) there is no licence module: the same functions are not gated,
+  and the ML-DSA-65 backend shipped from 1.10.0 applies no operation limit. Releases of
+  `aiss-standard` up to 2.0.2 applied the same 1000 operation limit.
 * Requesting an RFC 3161 token is not licence-checked in 1.10.
 * The Free-tier token is checked with a local HMAC whose secret is in the source, and the demo
   counter lives in the process. Neither is designed to resist a determined user.
