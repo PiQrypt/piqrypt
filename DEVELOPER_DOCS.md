@@ -1118,11 +1118,11 @@ The exported JSON contains:
 
 ### 13.2 Export formats (Vigil)
 
-| Format | Description | Legal standing |
+| Format | Description | Notes |
 |--------|-------------|---------------|
-| `.pqz CERTIFIED` | Ed25519 signed + RFC 3161 TSA timestamp | eIDAS Art.26 advanced electronic signature |
-| `.pqz MEMORY` | Full history, portable, auto-extractible | Internal audit use |
-| `PDF REPORT` | Human-readable report | Internal audit — not certified |
+| `.pqz CERTIFIED` | Ed25519 signed + RFC 3161 TSA timestamp | No legal value is claimed. See docs/LIMITS_AND_POSTURE.md |
+| `.pqz MEMORY` | Full history, portable, auto-extractible | No legal value is claimed. See docs/LIMITS_AND_POSTURE.md |
+| `PDF REPORT` | Human-readable report | No legal value is claimed. See docs/LIMITS_AND_POSTURE.md |
 
 ```bash
 # Via Vigil API
@@ -1389,7 +1389,6 @@ Security vulnerabilities: **security@piqrypt.com** — 48h acknowledgement, 15-d
 | ANSSI | R25 | Dangerous input filtering — `dangerous_patterns` |
 | MiFID II | Art.17 | Algorithmic trading records — chain export |
 | RGPD | — | Raw data never stored — payload hashing by default |
-| eIDAS | Art.26 | Advanced electronic signature — certified `.pqz` |
 | IEC 62443 | — | Industrial robot audit — ROS2 bridge |
 
 ---

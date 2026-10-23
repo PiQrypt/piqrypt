@@ -158,7 +158,7 @@ Standard logging infrastructure was designed for debugging and operations monito
 | **Tampering** | Logs can be modified, deleted, or reordered | Hash-chained signed events — any modification breaks the chain |
 | **No identity binding** | Logs record system events, not agent decisions | Every event is signed by the agent's cryptographic private key |
 | **No portability** | Logs are siloed in the producing system | `.pqz` bundles are self-contained and independently verifiable |
-| **No temporal anchoring** | Log timestamps are internal and unverifiable | RFC 3161 trusted timestamping (TSA) — external, legally admissible |
+| **No temporal anchoring** | Log timestamps are internal and unverifiable | RFC 3161 trusted timestamping (TSA) — external |
 | **No interaction record** | Inter-agent interactions are not captured jointly | A2A co-signed handshakes — both parties record the same event |
 | **No behavioural baseline** | There is no mechanism to detect drift over time | Vigil TSI and VRS — continuous behavioural monitoring |
 | **No human oversight trail** | Human approvals are not recorded in the decision chain | TrustGate decisions are signed events in the chain |
@@ -368,7 +368,7 @@ PCP's Canonical History Rule resolves forks deterministically, prioritising TSA-
 
 ### 7.3 RFC 3161 Timestamping
 
-Events can be anchored to an external Time Stamping Authority (RFC 3161 TSP), producing a legally admissible timestamp independent of PiQrypt infrastructure. This anchoring has two effects:
+Events can be anchored to an external Time Stamping Authority (RFC 3161 TSP), producing a timestamp token independent of PiQrypt infrastructure. This anchoring has two effects:
 
 - It proves the event existed at a specific time, verifiable by any third party
 - It finalises the event — a fork after a finalised event is classified as a compromise attempt
@@ -640,7 +640,7 @@ An autonomous trading system executes thousands of decisions per day. Regulators
 With PCP:
 - Every trading signal, order, and justification is signed by the agent's private key
 - The decision trail is hash-chained — reordering or deletion is cryptographically detectable
-- RFC 3161 timestamps anchor the trail to an external, legally admissible time source
+- RFC 3161 timestamps anchor the trail to an external time source
 - `.pqz` bundles are self-contained and verifiable without access to the trading system
 - Vigil detects unusual coordination between trading agents before orders are submitted
 

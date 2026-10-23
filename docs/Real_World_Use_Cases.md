@@ -90,7 +90,7 @@ Client Request
       ▼
   Secure Event Store (AES-256-GCM)
       │
-      ├──▶  Exportable verified audit → court-admissible
+      ├──▶  Exportable verified audit
       │
       └──▶  Vigil Server (port 18421)
              Trust State Index (TSI)
@@ -99,7 +99,6 @@ Client Request
 
 **What this gives you:**
 
-- ✅ Legal proof in case of dispute
 - ✅ AI Act compliance
 - ✅ Commercial differentiation: *"We can prove what our AI said."*
 - ✅ Behavioral drift detection between model versions (TSI + A2C, 16 scenarios)

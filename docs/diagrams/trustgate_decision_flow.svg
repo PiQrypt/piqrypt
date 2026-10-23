@@ -73,5 +73,5 @@
 <text font-family="sans-serif" font-size="12" x="133" y="562" text-anchor="middle" fill="#185FA5">TrustGate audit journal</text>
 <rect x="222" y="546" width="182" height="24" rx="6" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
 <text font-family="sans-serif" font-size="12" x="313" y="562" text-anchor="middle" fill="#534AB7">AISS chain — agent signed</text>
-<text font-family="sans-serif" font-size="12" x="230" y="594" text-anchor="middle" fill="#88878070">Legally admissible · No infra access needed · Offline verifiable</text>
+<text font-family="sans-serif" font-size="12" x="230" y="594" text-anchor="middle" fill="#88878070">No infra access needed · Offline verifiable</text>
 </svg>

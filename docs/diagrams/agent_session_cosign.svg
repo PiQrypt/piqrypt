@@ -89,7 +89,7 @@
 <!-- Result -->
 <rect x="80" y="504" width="520" height="72" rx="12" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
 <text font-family="sans-serif" font-weight="500" font-size="14" x="340" y="528" text-anchor="middle" fill="#3C3489">Neither agent can deny the interaction</text>
-<text font-family="sans-serif" font-size="12" x="340" y="548" text-anchor="middle" fill="#534AB7">Cross-framework · Offline · No shared server · Legally admissible</text>
+<text font-family="sans-serif" font-size="12" x="340" y="548" text-anchor="middle" fill="#534AB7">Cross-framework · Offline · No shared server</text>
 <text font-family="sans-serif" font-size="12" x="340" y="566" text-anchor="middle" fill="#534AB7">LangChain + AutoGen + Custom Python — same session, independent keys</text>
 <!-- Ecosystem note -->
 <text font-family="sans-serif" font-size="12" x="340" y="606" text-anchor="middle" fill="#88878050">LangSmith · CrewAI · AutoGen · LangGraph — none offer cross-agent co-signed identity</text>

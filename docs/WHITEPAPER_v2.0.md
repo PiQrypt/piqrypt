@@ -312,7 +312,7 @@ def resolve_fork(branch_a, branch_b):
 
 ### 4.3 RFC 3161 Timestamping
 
-Events can be anchored to an external, trusted Time Stamping Authority (TSA), producing a legally admissible timestamp independent of PiQrypt infrastructure.
+Events can be anchored to an external, trusted Time Stamping Authority (TSA), producing an RFC 3161 timestamp token independent of PiQrypt infrastructure.
 
 ### 4.4 .pqz Certification Format
 
@@ -572,9 +572,9 @@ executor = AgentExecutor(agent=agent, callbacks=[handler])
 
 ## 11. Certification Services
 
-PiQrypt offers three certification tiers for producing legally admissible audit bundles:
+PiQrypt offers three certification tiers for producing signed audit bundles:
 
-| Tier | Price | Cryptography | Legal value |
+| Tier | Price | Cryptography | Notes |
 |------|-------|--------------|-------------|
 | **Simple** | €9 | PiQrypt CA signature | Internal disputes |
 | **Timestamp** | €29 | + RFC 3161 TSA | GDPR, HIPAA compliant |

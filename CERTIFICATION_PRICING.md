@@ -19,8 +19,8 @@ Certification adds:
 - A portable certified bundle — verifiable by anyone, anywhere
 - No dependency on your infrastructure for future verification
 
-The certified bundle can be submitted to regulators, courts,
-auditors, or counterparties without sharing any original content.
+The certified bundle can be shared with
+auditors or counterparties without sharing any original content.
 
 ---
 
@@ -52,7 +52,23 @@ For contractual disputes, IP protection, and general proof of existence.
 **Verification:**
 ```bash
 piqrypt certify-verify bundle.piqrypt-certified
-# ✅ Certified by PiQrypt CA — chain intact
+# Verifying PiQrypt attestation...
+#   File: bundle.piqrypt-certified
+#
+# Attestation signature verified locally
+# ============================================================
+#   (attestation id, issue date, issuer and CA key id, then:)
+#
+#   Checked locally by this command:
+#     - the file format version
+#     - the signature of the attestation, with the CA public key shipped with this package
+#
+#   Not checked by this command:
+#     - the audit data in the file: event signatures and hash chain
+#     - the link between the attestation and the audit data in the file: the
+#       attestation contains no hash of that data
+#     - timestamp tokens (see the tsa section of get_verification_report)
+#     - revocation of any key or certificate
 ```
 
 <div align="center">
@@ -71,10 +87,9 @@ For regulatory contexts, GDPR compliance, and legal proceedings
 where an independently verifiable timestamp is required.
 
 - Everything in Simple
-- RFC 3161 trusted timestamp from an accredited TSA
+- RFC 3161 timestamp token from a third-party TSA
 - Independent proof of when the chain existed
 - GDPR / HIPAA compatible
-- Suitable for regulatory submission
 
 **When to use:**
 Automated decision systems subject to GDPR Article 22.
@@ -104,7 +119,7 @@ and contexts where proof must remain valid for decades.
 
 **When to use:**
 Medical records, industrial certifications, financial archives,
-intellectual property requiring long-term legal standing.
+intellectual property requiring long-term verifiability.
 Any context where today's proof must be verifiable in 2050.
 
 <div align="center">
@@ -148,7 +163,7 @@ Any context where today's proof must be verifiable in 2050.
 
 4. Verify anytime, anywhere
    piqrypt certify-verify bundle.piqrypt-certified
-   ✅ Certified by PiQrypt CA
+   Attestation signature verified locally
 ```
 
 No integration required. Works with any existing PiQrypt audit chain.
@@ -175,9 +190,9 @@ Relevant for: IP disputes · freelance contracts · content authorship
 A client disputes a recommendation your system made.
 A regulator requests evidence of system behavior.
 
-A Timestamp certification provides a court-admissible,
-independently verified record of your agent's audit chain
-at the time of the disputed event.
+A Timestamp certification provides a signed record of your agent's
+audit chain with an RFC 3161 timestamp token,
+so that its existence at a given time can be checked.
 
 Relevant for: legal-tech · fintech · health-tech · HR automation
 

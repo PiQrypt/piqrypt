@@ -196,7 +196,7 @@ AGENT_METADATA: Dict[str, Any] = {
         },
         {
             "mistake": "Storing rotation attestation as separate document",
-            "impact": "Chain continuity broken — not legally provable",
+            "impact": "Chain continuity broken — continuity cannot be shown from this chain",
             "fix": "Use create_rotation_pcp_event() — inserts as final event of old chain"
         },
         {

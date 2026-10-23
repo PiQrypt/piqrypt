@@ -17,7 +17,7 @@
 decision.py — Trust Gate Decision
 
 Every governance decision is an immutable, signed, chainable record.
-It is a first-class AISS event — auditable, exportable, legally opposable.
+It is a first-class AISS event — auditable, exportable.
 
 References:
     ANSSI R9  — human approval signature + justification

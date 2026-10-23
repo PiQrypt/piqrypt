@@ -42,7 +42,7 @@ License validation is **local-first** — no internet required after activation.
 - ✅ AISS-2 — Hybrid signatures (Ed25519 + Dilithium3)
 - ✅ RFC 3161 trusted timestamps (TSA integration)
 - ✅ Encrypted key storage (scrypt N=2¹⁷ + AES-256-GCM)
-- ✅ Certified export (.pqz certified — eIDAS Art.26)
+- ✅ Certified export (.pqz certified: Ed25519 signed archive with RFC 3161 timestamp token)
 - ✅ AgentSession — cross-framework co-signed sessions (N agents)
 - ✅ TrustGate — manual mode (REQUIRE_HUMAN flow, policy evaluation)
 - ✅ Vigil — full mode (write API, event injection)
@@ -122,7 +122,7 @@ All Pro features at no cost. Requirements: OSI-approved license · public repo �
 | HSM integration | — | — | — | option | ✅ |
 | **Export** | | | | | |
 | .pqz memory export | ✅ | ✅ | ✅ | ✅ | ✅ |
-| .pqz certified (eIDAS Art.26) | — | ✅ | ✅ | ✅ | ✅ |
+| .pqz certified (Ed25519 + RFC 3161 token) | — | ✅ | ✅ | ✅ | ✅ |
 | **Vigil** | | | | | |
 | Dashboard read-only | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Vigil full mode (write API) | — | ✅ | ✅ | ✅ | ✅ |

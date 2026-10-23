@@ -111,9 +111,9 @@ Timeline événementielle par agent avec marqueurs de rupture. Événements posi
 
 Recherche par nom d'agent, type d'export et tier. Trois formats distincts :
 
-| Format | Contenu | Portée légale |
+| Format | Contenu | Notes |
 |---|---|---|
-| `.pqz CERTIFIED` | Archive signée Ed25519 + horodatage TSA RFC 3161, chaîne de hachage vérifiable | Valeur probante légale (eIDAS Art.26) |
+| `.pqz CERTIFIED` | Archive signée Ed25519 + horodatage TSA RFC 3161, chaîne de hachage vérifiable | Aucune valeur legale n'est revendiquee. Voir docs/LIMITS_AND_POSTURE.md |
 | `.pqz MEMORY` | Historique complet auto-extractible, portable | Audit interne, migration système |
 | `PDF REPORT` | Rapport lisible local | Communication interne uniquement — mention "Export local — non certifié PiQrypt" |
 

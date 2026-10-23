@@ -27,7 +27,6 @@ But when something goes wrong:
 ❌ Traditional Logs
    ├─ Modifiable after the fact
    ├─ No cryptographic proof
-   ├─ No legal standing
    └─ Vulnerable to quantum attacks
 ```
 
@@ -43,7 +42,6 @@ Every decision is:
 ✅ **Hash-chained** (tamper-proof, blockchain-like)  
 ✅ **Timestamped** (RFC 3161 independent proof)  
 ✅ **Post-quantum secured** (NIST FIPS 204)  
-✅ **Court-admissible** (legal standing)
 
 **No blockchain. No token. Just verifiable cryptography.**
 
@@ -51,7 +49,6 @@ Every decision is:
 ✅ PiQrypt Audit Trail
    ├─ Cryptographically signed (Ed25519/Dilithium3)
    ├─ Immutable hash chains (tamper-proof)
-   ├─ Legal standing (court-admissible)
    └─ Quantum-resistant (50+ year proof)
 ```
 
@@ -379,7 +376,7 @@ PCP → The protocol. PiQrypt → The reference implementation.
 ┌─────────────────────────────────────────────────────────────┐
 │              Export for Auditors/Regulators                 │
 │  • Certified bundles (.piqrypt-certified)                   │
-│  • Court-admissible proof                                   │
+│  • Signed audit export                                      │
 │  • Compliance reports (SOC2, HIPAA, SEC)                    │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -456,7 +453,7 @@ event = aiss.stamp_event(priv, agent_id, {
 })
 ```
 
-**Result:** Court-admissible proof of AI recommendation.
+**Result:** Signed, hash-chained record of the AI recommendation.
 
 ---
 

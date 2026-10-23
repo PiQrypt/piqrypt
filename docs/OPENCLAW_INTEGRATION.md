@@ -268,7 +268,7 @@ for event in suspicious_events:
 1. **Non-repudiation** — OpenClaw cannot deny actions
 2. **Tamper-proof** — Cannot modify history after execution
 3. **Auditability** — Humans can verify what happened
-4. **Accountability** — Legal proof of agent behavior
+4. **Accountability** — Signed record of agent behavior
 5. **Behavioral drift** — TSI/A2C detect anomalous patterns over time
 
 ---
@@ -301,7 +301,23 @@ piqrypt certify-request audit.json audit.json.cert --email compliance@company.co
 
 # Verify
 piqrypt certify-verify audit-CERT-XXXXX.piqrypt-certified
-# ✅ Certified by PiQrypt Inc.
+# Verifying PiQrypt attestation...
+#   File: bundle.piqrypt-certified
+#
+# Attestation signature verified locally
+# ============================================================
+#   (attestation id, issue date, issuer and CA key id, then:)
+#
+#   Checked locally by this command:
+#     - the file format version
+#     - the signature of the attestation, with the CA public key shipped with this package
+#
+#   Not checked by this command:
+#     - the audit data in the file: event signatures and hash chain
+#     - the link between the attestation and the audit data in the file: the
+#       attestation contains no hash of that data
+#     - timestamp tokens (see the tsa section of get_verification_report)
+#     - revocation of any key or certificate
 ```
 
 ---

@@ -11,7 +11,7 @@
 PiQrypt External Certification — v1.3.0
 
 Allows users to request external certification from PiQrypt Inc.
-Creates legally-stronger audit exports certified by a trusted third party.
+Creates audit exports accompanied by an attestation signed with the PiQrypt CA key.
 
 Workflow:
     1. User: piqrypt certify-request audit.json audit.json.cert
@@ -30,7 +30,7 @@ Workflow:
 
 RFC Compliance:
     - External certification = independent third-party attestation
-    - Stronger legal standing than self-certification
+    - No legal value is claimed (see docs/LIMITS_AND_POSTURE.md)
     - PiQrypt CA acts as trusted authority
 """
 

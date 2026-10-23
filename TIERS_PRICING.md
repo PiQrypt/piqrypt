@@ -212,7 +212,23 @@ Additional certifications available à la carte at any tier.
 **Verification — anyone, anywhere, no PiQrypt needed:**
 ```bash
 piqrypt certify-verify bundle.piqrypt-certified
-# ✅ Certified by PiQrypt CA — chain intact — 2026-03-13T14:22:00Z
+# Verifying PiQrypt attestation...
+#   File: bundle.piqrypt-certified
+#
+# Attestation signature verified locally
+# ============================================================
+#   (attestation id, issue date, issuer and CA key id, then:)
+#
+#   Checked locally by this command:
+#     - the file format version
+#     - the signature of the attestation, with the CA public key shipped with this package
+#
+#   Not checked by this command:
+#     - the audit data in the file: event signatures and hash chain
+#     - the link between the attestation and the audit data in the file: the
+#       attestation contains no hash of that data
+#     - timestamp tokens (see the tsa section of get_verification_report)
+#     - revocation of any key or certificate
 ```
 
 ---
