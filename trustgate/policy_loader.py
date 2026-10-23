@@ -21,8 +21,6 @@ Loads, validates and manages policy.yaml files.
 References:
     Policy file integrity (SHA-256 hash on load)
     ANSSI R29  — policy_version + policy_hash in every decision
-    NIST GOVERN 6.2 — policies reviewed and updated with audit trail
-    AI Act Art.9  — risk management system documented and maintained
 """
 
 import hashlib

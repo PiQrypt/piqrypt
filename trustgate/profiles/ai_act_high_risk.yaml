@@ -1,11 +1,11 @@
 # EU AI Act — High Risk Profile — Trust Gate
-# Profile referencing Articles 9, 12, 13, 14, 17. It is not an assessment of compliance.
+# Profile referencing Articles 9, 12, 14, 17 and 19. It is not an assessment of compliance.
 # Designed for: EU enterprise, regulated sectors (finance, health, HR, justice)
 #
 # Key characteristics:
 # - Mandatory human oversight for all critical actions (Art.14)
-# - Full audit logging with 2-year retention (Art.12)
-# - Explainable decisions — reason field mandatory (Art.13)
+# - Event logging (Art.12), 2-year retention (PiQrypt default; Art.19 and 26(6) require at least six months)
+# - Reason field mandatory on every decision (Art.14(4)(c))
 # - Human override always available (Art.14 §4)
 # - BLOCK on timeout — safe default for high-risk contexts
 
@@ -74,7 +74,7 @@ notification:
 
 # Art.12 — record keeping
 logging:
-  retention_days: 730           # 2 years minimum — Art.12
+  retention_days: 730           # 2 years (PiQrypt default); Art.19/26(6): at least 6 months
   log_allow: false
   payload_mode: "hash"          # RGPD Art.5 — hash only
   export_formats: ["json_signed", "pdf_certified"]

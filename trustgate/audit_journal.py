@@ -10,18 +10,22 @@
 """
 audit_journal.py — Trust Gate Audit Journal
 
-Immutable, hash-linked journal of all governance decisions.
+Hash-linked journal of governance decisions.
 
 Every entry is:
 - Stored as a JSON line in the journal file
-- Hash-linked to the previous entry (like PiQrypt event chain)
-- Exportable as signed JSON or PDF
+- Hash-linked to the previous entry (SHA-256 over a fixed set of fields)
+- Exportable as JSON
 
 References:
     ANSSI R29  — log ALL processing with fine-grained granularity
-    AI Act Art.12 — automatic logging, tamper-proof, retention management
-    NIST MANAGE 4.1 — residual risks documented
-    NIST MEASURE 4.1 — measurement results shared and exportable
+    AI Act Art.12: record-keeping capability (automatic event logging)
+    AI Act Art.19 and 26(6): logs kept at least six months where under the provider's or deployer's control
+    NIST MANAGE 4.1: post-deployment monitoring (records of decisions and overrides)
+
+Limits: the hash covers a fixed set of fields (see JournalEntry.compute_hash); other fields
+are not covered. Entries are not signed and the journal is not anchored outside this
+machine, so removal of the last entries is not detectable.
 """
 
 import hashlib
@@ -125,7 +129,7 @@ class AuditJournal:
     def __init__(
         self,
         journal_dir: Path = DEFAULT_JOURNAL_DIR,
-        retention_days: int = 730,          # AI Act Art.12 — 2 years default
+        retention_days: int = 730,          # PiQrypt default (2 years); AI Act Art.19/26(6): at least 6 months
         log_all: bool = False,              # True → log ALLOW too (verbose mode)
     ):
         self.journal_dir    = journal_dir
@@ -235,7 +239,7 @@ class AuditJournal:
         Verify integrity of the entire journal chain.
         Returns (is_valid, list_of_errors).
 
-        AI Act Art.12 — tamper detection.
+        Detects a change to the hashed fields of an entry, or a broken link between entries.
         """
         errors = []
         prev_hash = ""
@@ -276,8 +280,8 @@ class AuditJournal:
         days:     int = 30,
     ) -> str:
         """
-        Export journal entries as signed JSON.
-        AI Act Art.12 / ANSSI R29 — exportable evidence.
+        Export journal entries as JSON (entries are not signed).
+        ANSSI R29 / AI Act Art.12: exportable event records.
         """
         entries = self.get_recent(agent_id=agent_id, outcome=outcome, days=days)
         export = {
@@ -296,7 +300,7 @@ class AuditJournal:
     def purge_old(self) -> int:
         """
         Delete journal files older than retention_days.
-        AI Act Art.12 — retention management.
+        Retention management (retention_days).
         Returns number of files deleted.
         """
         cutoff = time.time() - self.retention_days * 86400

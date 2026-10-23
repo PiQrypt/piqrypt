@@ -28,7 +28,7 @@ Channels:
 References:
     ANSSI R9   — human must be reachable, not just notified if online
     AI Act Art.14 — effective human oversight requires active notification
-    NIST MANAGE 2.2 — human oversight mechanism documented
+    NIST GOVERN 3.2: roles and oversight for human-AI configurations
 """
 
 import json
@@ -49,7 +49,7 @@ class NotificationContext:
     """
     Complete context sent to principals for a REQUIRE_HUMAN decision.
     Must contain everything needed to make an informed approval decision.
-    AI Act Art.13 — transparency about what is being decided.
+    Gives the human reviewer the context needed to interpret the decision (AI Act Art.14(4)(c)).
     """
     decision_id:     str
     agent_id:        str
@@ -337,7 +337,7 @@ class Notifier:
     def _build_context(self, decision: Decision) -> NotificationContext:
         """
         Build notification context from a Decision.
-        AI Act Art.13 — transparent, human-readable context.
+        Human-readable context (AI Act Art.14(4)(c)).
         """
         # Determine severity
         if decision.vrs_at_decision >= 0.75:

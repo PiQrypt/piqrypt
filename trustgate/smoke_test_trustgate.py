@@ -30,10 +30,10 @@ References exercised by these checks:
     ANSSI R25  — BLOC 04
     ANSSI R29  — BLOC 07, 13
     NIST MANAGE 1.3 — BLOC 04
-    NIST MANAGE 2.2 — BLOC 10, 13, 15
-    NIST MEASURE 2.5 — BLOC 04, 14
+    NIST GOVERN 3.2 — BLOC 10, 13, 15
+    NIST MEASURE 2.4 — BLOC 04, 14
     AI Act Art.12   — BLOC 07, 13
-    AI Act Art.13   — BLOC 04
+    AI Act Art.14(4)(c) — BLOC 04
     AI Act Art.14   — BLOC 10, 13, 15
     AI Act Art.9    — BLOC 12
 """
@@ -334,12 +334,12 @@ def bloc_04():
     d = evaluate(make_ctx(vrs=0.10, tsi_state="STABLE"), p)
     check("P10 — ALLOW (all checks passed)",       d.outcome == Outcome.ALLOW)
 
-    # AI Act Art.13 — reason always set
+    # reason always set
     contexts = [make_ctx(vrs=v, tsi_state=t) for v,t in
                 [(0.10,"STABLE"),(0.70,"STABLE"),(0.90,"STABLE"),(0.30,"CRITICAL")]]
     pe._alert_counts.clear()
     all_reasons = all(evaluate(c, p).reason for c in contexts)
-    check("AI Act Art.13 — reason never empty",    all_reasons)
+    check("reason never empty",    all_reasons)
 
     # policy_version and policy_hash in every decision
     pe._alert_counts.clear()
@@ -924,7 +924,7 @@ def bloc_14():
         check("Vigil bridge — BLOCK/REQUIRE_HUMAN (above threshold)",
               data.get("outcome") in ("BLOCK","REQUIRE_HUMAN","RESTRICTED"))
         check("Vigil bridge — decision_id present", "decision_id" in data)
-        check("NIST MEASURE 2.5 — Vigil→TrustGate bridge", s == 200)
+        check("NIST MEASURE 2.4 - Vigil to TrustGate bridge", s == 200)
 
         srv.stop()
 
@@ -984,7 +984,7 @@ def bloc_15():
         check("E2E — AI Act Art.12 — chain",     audit.get("chain_valid") is True)
 
         srv.stop()
-        print(f"\n    {G}{BOLD}References exercised by these checks: ANSSI R9, AI Act Art.14, NIST MANAGE 2.2{RESET}")
+        print(f"\n    {G}{BOLD}References exercised by these checks: ANSSI R9, AI Act Art.14, NIST GOVERN 3.2{RESET}")
 
 
 # ─── Runner ───────────────────────────────────────────────────────────────────

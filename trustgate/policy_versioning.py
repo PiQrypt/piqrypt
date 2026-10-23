@@ -17,13 +17,11 @@
 policy_versioning.py — Trust Gate Policy Versioning
 
 Every policy change is hashed, recorded, and diffable.
-Policy history is an immutable log — never deleted, only appended.
+Policy history is kept as an append-only log by this module.
 
 References:
     Protect policy file integrity (SHA-256)
-    NIST GOVERN 6.2 — policies reviewed and updated with audit trail
-    AI Act Art.9  — risk management system version-controlled
-    AI Act Art.17 — quality management — corrective action procedures
+    The change history supports traceability of policy changes.
 """
 
 import hashlib
@@ -93,7 +91,7 @@ class PolicyVersioning:
         Args:
             policy_path:  Path to the policy file
             activated_by: principal_id who activated (audit trail)
-            comment:      Change reason — NIST GOVERN 6.2
+            comment:      Change reason
 
         Returns:
             PolicyVersion record

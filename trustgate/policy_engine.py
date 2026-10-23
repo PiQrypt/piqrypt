@@ -30,7 +30,8 @@ References:
     Network whitelist enforced
     ANSSI R27 — progressive restriction of automatic actions on repeated anomalies
     NIST MANAGE 1.3 — risk responses prioritized by severity
-    NIST MANAGE 2.2 — human oversight mechanism for high-risk actions
+    NIST GOVERN 3.2: roles and oversight for human-AI configurations
+    NIST MEASURE 2.4: functionality and behavior monitored in production (VRS, TSI)
     AI Act Art.14 — human can always override — REQUIRE_HUMAN flow
 
 Priority order (highest to lowest):
@@ -132,7 +133,7 @@ def _evaluate_rules(ctx: EvaluationContext, policy: Policy) -> tuple[Outcome, st
                 return (
                     Outcome.BLOCK,
                     f"Dangerous pattern matched: '{pattern}' "
-                    f"[ANSSI R25 / NIST MAP 5.1]"
+                    f"[ANSSI R25]"
                 )
         except re.error:
             # Invalid regex in policy — log and skip
@@ -145,7 +146,7 @@ def _evaluate_rules(ctx: EvaluationContext, policy: Policy) -> tuple[Outcome, st
         return (
             Outcome.BLOCK,
             f"Action '{ctx.action}' not permitted for role '{ctx.role}' "
-            f"[least privilege / NIST GOVERN 1.2]"
+            f"[least privilege]"
         )
 
     # ── Priority 4: TSI CRITICAL ──────────────────────────────────────────────
@@ -155,7 +156,7 @@ def _evaluate_rules(ctx: EvaluationContext, policy: Policy) -> tuple[Outcome, st
         return (
             tsi_outcome,
             "TSI state CRITICAL — agent shows critical temporal drift "
-            "[NIST MEASURE 2.5 / AI Act Art.9]"
+            "[NIST MEASURE 2.4]"
         )
 
     # ── Priority 5: Network domain violation ──────────────────────────────────
@@ -168,7 +169,7 @@ def _evaluate_rules(ctx: EvaluationContext, policy: Policy) -> tuple[Outcome, st
             return (
                 Outcome.BLOCK,
                 f"Domain '{ctx.target_domain}' not in allowed_domains whitelist "
-                f"[Zero Trust network / NIST GOVERN 4.1]"
+                f"[Zero Trust network]"
             )
 
     # ── Priority 6: VRS above human threshold ─────────────────────────────────
@@ -187,7 +188,7 @@ def _evaluate_rules(ctx: EvaluationContext, policy: Policy) -> tuple[Outcome, st
         return (
             tsi_outcome,
             "TSI state UNSTABLE — agent Trust Score shows significant drift "
-            "[NIST MEASURE 2.5]"
+            "[NIST MEASURE 2.4]"
         )
 
     # ── Priority 8: Escalation threshold ─────────────────────────────────────
@@ -206,7 +207,7 @@ def _evaluate_rules(ctx: EvaluationContext, policy: Policy) -> tuple[Outcome, st
         return (
             Outcome.ALLOW_WITH_LOG,
             "TSI state WATCH — action allowed with enhanced logging "
-            "[NIST MEASURE 2.5]"
+            "[NIST MEASURE 2.4]"
         )
 
     # ── Priority 10: Default ALLOW ────────────────────────────────────────────

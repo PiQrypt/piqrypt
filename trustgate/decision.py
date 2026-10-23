@@ -16,16 +16,16 @@
 """
 decision.py — Trust Gate Decision
 
-Every governance decision is an immutable, signed, chainable record.
-It is a first-class AISS event — auditable, exportable.
+Every governance decision is a record with a fixed set of fields.
+It is written to the audit journal and can be exported. The trustgate_signature field exists but is not populated in 1.10.0.
 
 References:
     ANSSI R9  — human approval signature + justification
     ANSSI R29 — full context logged at every decision
     Policy version + hash in every record
-    AI Act Art.12 — automatic logging, tamper-proof via PiQrypt chain
-    AI Act Art.14 — approval_signature proves human oversight
-    NIST MANAGE 2.2 — human oversight mechanism documented
+    AI Act Art.12: automatic event logging (hash-linked journal, see audit_journal.py)
+    AI Act Art.14: approval_signature records the human principal's decision
+    NIST GOVERN 3.2: roles and oversight for human-AI configurations
 
 Outcomes (ordered by severity):
     ALLOW             — action permitted, no log
@@ -81,7 +81,7 @@ class DecisionState(str, Enum):
 class EvaluationContext:
     """
     Complete context provided to policy_engine.evaluate().
-    Immutable snapshot of the agent's state at decision time.
+    Snapshot of the agent's state at decision time.
 
     ANSSI R29 / AI Act Art.12: every field is logged in the AuditEntry.
     """
@@ -121,12 +121,12 @@ class EvaluationContext:
 @dataclass
 class Decision:
     """
-    Immutable governance decision record.
+    Governance decision record.
 
-    Once created, a Decision is:
-    - Signed by Trust Gate (trustgate_signature)
-    - Chainable as an AISS event
-    - Exportable as audit evidence
+    A Decision holds:
+    - the outcome, the reason, the policy version and the policy hash
+    - a trustgate_signature field (not populated in 1.10.0)
+    - the fields written to the audit journal
 
     REQUIRE_HUMAN decisions gain additional fields when resolved:
     - approved_by, approval_signature, approval_timestamp, justification
@@ -150,10 +150,10 @@ class Decision:
 
     # ── Decision ──────────────────────────────────────────────────────────────
     outcome:        str = Outcome.ALLOW
-    reason:         str = ""     # human-readable — AI Act Art.13 transparency
+    reason:         str = ""     # human-readable reason for the outcome
     state:          str = DecisionState.RESOLVED
 
-    # ── Policy traceability — NIST MANAGE 2.4 ────────────────────
+    # ── Policy traceability ──────────────────────────────────────
     policy_version: str = ""
     policy_hash:    str = ""
 

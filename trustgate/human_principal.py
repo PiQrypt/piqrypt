@@ -23,8 +23,7 @@ References:
     ANSSI R9   — human approval signature + justification
     Privileged access control with clearance levels
     AI Act Art.14 — natural person oversight, always available
-    NIST GOVERN 1.2 — accountability structures with named principals
-    NIST MANAGE 2.2 — human oversight mechanism
+    NIST GOVERN 3.2: roles and oversight for human-AI configurations
 
 Clearance levels:
     L1 — Operator  : can approve REQUIRE_HUMAN for VRS < 0.75
@@ -183,7 +182,7 @@ class HumanPrincipal:
     Phase 2 (AISS):
         - Personal Ed25519 keypair in encrypted KeyStore
         - Decisions signed by principal's own private key
-        - Cryptographically non-repudiable
+        - Signed with the principal's own key
 
     Usage (Phase 1 — SSO):
         principal = HumanPrincipal.load("alice", principals_dir)
@@ -436,7 +435,7 @@ class HumanPrincipal:
     ) -> bytes:
         """
         Phase 2: sign a governance decision with principal's own Ed25519 key.
-        Cryptographically non-repudiable.
+        Signed with the principal's own key.
 
         References: AI Act Art.14 — human oversight, verifiable signature
         """

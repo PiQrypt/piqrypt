@@ -364,7 +364,7 @@ def test_engine_simulate():
 
 
 def test_engine_reason_not_empty():
-    """Every outcome must have a non-empty reason — AI Act Art.13 transparency."""
+    """Every outcome must have a non-empty reason."""
     contexts = [
         make_ctx(vrs=0.20, tsi_state="STABLE"),
         make_ctx(vrs=0.70),
@@ -376,7 +376,7 @@ def test_engine_reason_not_empty():
     for ctx in contexts:
         d = evaluate(ctx, policy)
         assert d.reason, f"Empty reason for outcome={d.outcome}"
-    print("  ✓ Policy engine — reason field always populated (AI Act Art.13)")
+    print("  ✓ Policy engine — reason field always populated")
 
 
 # ─── BLOC 4 — Audit Journal ───────────────────────────────────────────────────
@@ -552,7 +552,7 @@ def run_all():
         ("Engine REQUIRE_HUMAN (TSI UNSTABLE)", test_engine_tsi_unstable),
         ("Engine ALLOW_WITH_LOG (TSI WATCH)", test_engine_tsi_watch),
         ("Engine simulate() mode", test_engine_simulate),
-        ("Engine reason always set (AI Act Art.13)", test_engine_reason_not_empty),
+        ("Engine reason always set", test_engine_reason_not_empty),
 
         # BLOC 4 — Audit Journal
         ("Journal record + retrieve", test_journal_record_and_retrieve),

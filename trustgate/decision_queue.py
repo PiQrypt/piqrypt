@@ -26,8 +26,8 @@ Timeout policy (configurable in policy.yaml):
 
 References:
     ANSSI R9   — human must be in decision loop, no timeout bypass
-    AI Act Art.14 — human oversight mechanism, always interruptible
-    NIST MANAGE 2.2 — documented human oversight procedure
+    AI Act Art.14: human approval or rejection before the action proceeds
+    NIST GOVERN 3.2: roles and oversight for human-AI configurations
 """
 
 import json
@@ -193,7 +193,7 @@ class DecisionQueue:
         """
         Reject a pending decision — action will be denied.
 
-        References: AI Act Art.14 — human can always stop the agent
+        References: AI Act Art.14: the human can reject the pending action
         """
         with self._lock:
             decision = self._load_pending(decision_id)

@@ -23,8 +23,8 @@ Bridges all Trust Gate modules into a unified REST API:
 References:
     ANSSI R29  — all API calls logged via audit_journal
     All admin endpoints require principal auth
-    AI Act Art.14 — /decisions/<id>/approve|reject always available
-    NIST MANAGE 2.2 — human oversight accessible via API
+    AI Act Art.14: /decisions/<id>/approve|reject endpoints for the human principal
+    NIST GOVERN 3.2: roles and oversight for human-AI configurations
 
 Endpoints:
 
@@ -659,7 +659,7 @@ class TrustGateServer:
     def _handle_decision_action(self, decision_id: str, action: str, body: dict):
         """
         Approve or reject a REQUIRE_HUMAN decision.
-        AI Act Art.14 — human oversight always available.
+        Lets the human principal approve or reject (AI Act Art.14).
         """
         principal_name = body.get("principal_name")
         token_id       = body.get("token_id")
@@ -803,8 +803,8 @@ class TrustGateServer:
 
     def _handle_audit_export(self, params: dict):
         """
-        Export signed audit journal.
-        ANSSI R29 / AI Act Art.12 - exportable audit records.
+        Export the hash-linked journal as JSON (entries are not signed).
+        ANSSI R29 / AI Act Art.12 - exportable event records.
         """
         agent_id = params.get("agent_id", [None])[0]
         outcome  = params.get("outcome", [None])[0]

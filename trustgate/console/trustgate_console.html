@@ -651,7 +651,7 @@
     <!-- Audit Journal -->
     <div class="panel" id="panel-audit">
       <div class="panel-title">Audit Journal</div>
-      <div class="panel-sub">Immutable hash-linked decision log — ANSSI R29 / AI Act Art.12</div>
+      <div class="panel-sub">Hash-linked decision log. References: ANSSI R29, AI Act Art.12</div>
 
       <div class="audit-filters">
         <select class="filter-select" onchange="filterAudit(this.value)" id="audit-filter-outcome">
@@ -869,7 +869,7 @@ const DEMO_DECISIONS = [
     vrs_at_decision: 0.81,
     tsi_state: 'UNSTABLE',
     a2c_score: 0.42,
-    reason: 'TSI state UNSTABLE — agent shows significant drift [NIST MEASURE 2.5]',
+    reason: 'TSI state UNSTABLE — agent shows significant drift [NIST MEASURE 2.4]',
     policy_version: 'production@1.2',
     policy_hash: 'a3f8c1d2e4b5...',
     timestamp: Date.now()/1000 - 480,
@@ -1349,19 +1349,15 @@ function renderCompliance() {
       {ref:'R29',  text:'Full audit journal with chain'},
     ]},
     { title:'NIST AI RMF 1.0', color:'#00e5a0', items:[
-      {ref:'GOVERN 1.2',  text:'Principal hierarchy + accountability'},
-      {ref:'GOVERN 6.2',  text:'Policy versioning + audit trail'},
+      {ref:'GOVERN 3.2',  text:'Roles and oversight for human-AI configurations'},
       {ref:'MANAGE 1.3',  text:'6-level risk response taxonomy'},
-      {ref:'MANAGE 2.2',  text:'Human oversight mechanism'},
-      {ref:'MEASURE 2.5', text:'Continuous VRS/TSI monitoring'},
-      {ref:'AI 600-1',    text:'Agentic AI — no unsupervised critical acts'},
+      {ref:'MEASURE 2.4', text:'VRS/TSI monitoring of agent behavior'},
     ]},
     { title:'EU AI Act', color:'#f5a623', items:[
-      {ref:'Art. 9',  text:'Risk management system — continuous'},
-      {ref:'Art. 12', text:'Automatic logging — tamper-proof chain'},
-      {ref:'Art. 13', text:'Transparency — reason on every decision'},
-      {ref:'Art. 14', text:'Human oversight — always interruptible'},
-      {ref:'Art. 17', text:'Quality management — versioned policies'},
+      {ref:'Art. 9',  text:'Configurable risk thresholds (one input to a risk management system)'},
+      {ref:'Art. 12', text:'Automatic event logging, hash-linked'},
+      {ref:'Art. 14', text:'Human approval or rejection of flagged actions, with the reason shown'},
+      {ref:'Art. 17', text:'Versioned policies (traceability of changes)'},
     ]},
   ];
   document.getElementById('compliance-grid').innerHTML = data.map(c => {
