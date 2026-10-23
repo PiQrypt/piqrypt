@@ -62,8 +62,8 @@ Shipped implementations:
 | `InMemoryEd25519Signer`, `InMemoryMlDsa65Signer` | `aiss.signer` | MIT | `bytearray`, erased by `close()` |
 | `EncryptedFileEd25519Signer`, `EncryptedFileMlDsa65Signer`, `load_hybrid_signer` | `aiss.signer_file` | Elastic-2.0 | `private.key.enc` (v1) and `private_pq.key.enc` (v2), format unchanged |
 
-`aiss.signer_file` imports `aiss/key_store.py` and therefore carries the same Elastic-2.0 header;
-`aiss.signer` and `aiss.signer_conformance` do not import it and stay MIT.
+`aiss.signer_file` stays Elastic-2.0. It imports `aiss/key_store.py`, which is MIT since 1.10.0.
+`aiss.signer` and `aiss.signer_conformance` do not import `key_store.py` and stay free of that dependency.
 
 ## Requirements for an HSM, KMS or PKCS#11 implementer
 

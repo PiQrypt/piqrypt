@@ -569,7 +569,7 @@ class TestConformance(unittest.TestCase):
 
 
 class TestLicenceBoundary(unittest.TestCase):
-    """aiss.signer reste MIT et ne dépend pas de key_store.py (Elastic-2.0)."""
+    """aiss.signer et aiss.signer_conformance restent MIT et ne dependent ni de key_store.py (MIT depuis 1.10.0) ni de signer_file.py (Elastic-2.0)."""
 
     @staticmethod
     def _imports(path):
