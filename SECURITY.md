@@ -132,6 +132,9 @@ have checked that the encrypted key opens.
 | Vigil and TrustGate use one static token from the environment, over plain HTTP | No per-user authentication, no TLS | Bind to 127.0.0.1 or put a reverse proxy in front |
 | The Free-tier token is checked with a local HMAC | Can be bypassed by a motivated developer | By design for the Free tier |
 | `verify_chain` does not require a genesis event; forks are found by comparing two logs | A chain with a cut head can verify | To settle in the AISS-2.1 text |
+| TrustGate HTTP approvals are not authenticated per person | The approve and reject endpoints build the session from the principal name in the request and sign it with a constant secret that is in the source. A holder of the TrustGate token can record an approval under any registered principal | Do not treat an HTTP approval as proof of who approved. Planned for 1.10.1 |
+| The TrustGate journal protects only part of each entry | The hash covers 12 fields; `agent_name`, `approved_by`, `approval_timestamp` and `state` can be edited undetected. Entries are unsigned and not anchored, so removing the last entries is not detected, and `verify_chain` fails after `purge_old` removes the oldest file | Treat it as an operational log and keep copies elsewhere. Planned for 1.10.1 |
+| `get_scope_assessment` matches keywords inside words | "phi" matches "sophisticated" and "test" matches "latest". It is a heuristic, not a determination | Do not use it for a decision. Whole-word matching planned |
 
 ---
 

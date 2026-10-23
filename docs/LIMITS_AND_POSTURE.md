@@ -134,6 +134,8 @@ default and authenticate with a static bearer token taken from the environment (
 HTTP. Do not expose them to a network without a reverse proxy that provides TLS and your own
 access control.
 
+TrustGate approvals made through the HTTP endpoints are not authenticated per person, and the TrustGate journal hash covers only part of each entry. Treat TrustGate records as operational logs (details in `SECURITY.md`, Known Limitations).
+
 ## 7. Wording used in PiQrypt documents
 
 PiQrypt documents describe what a function checks, not what a result is worth. They use words such

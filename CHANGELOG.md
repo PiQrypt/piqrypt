@@ -137,6 +137,8 @@ existing checks behave, because some of them accepted more than they should have
   identity, observability, governance".
 - Licence gating is unchanged in this release (see `docs/LIMITS_AND_POSTURE.md`).
 - TrustGate: ANSSI references. Decision reasons, error messages, the console and the documentation no longer cite ANSSI R22, R26, R28, R30 or R35: in the ANSSI guide ANSSI-PA-102 (2024) those numbers cover other topics than the controls they were attached to. R9, R25, R27 and R29 are kept. The `anssi_strict` profile keeps its name and its thresholds. The profile, the console and the smoke tests no longer state compliance, a coverage percentage or a count of requirements covered. These are references, not an assessment of compliance with the ANSSI guide, the NIST AI RMF or the EU AI Act.
+- TrustGate: NIST and EU AI Act tags corrected. Tags attached to controls they did not describe were fixed or removed in decision reasons (`[NIST MEASURE 2.5]` is now `[NIST MEASURE 2.4]`; NIST MAP 5.1, GOVERN 1.2, GOVERN 4.1 and AI Act Art.9 are removed from the pattern, role, network and TSI CRITICAL reasons), docstrings, the console and the profiles. Journals already written keep their old text. No threshold, rule or outcome changed.
+- Wording. Docstrings, READMEs and banners no longer say "tamper-proof", "immutable" or "GDPR-compliant", and the ML-DSA-65 docstrings no longer say Dilithium3. The long documents carry a scope notice. No code changed.
 
 ### Licensing
 
@@ -185,6 +187,11 @@ existing checks behave, because some of them accepted more than they should have
   are not yet adapted to the Signer interface.
 - The persistent ML-DSA certificate authority announced in the 1.9.2 notes is not part of 1.10.0.
   It is planned for 1.11.
+- TrustGate HTTP approvals are not authenticated per person, and the TrustGate journal hash covers only
+  12 of its fields. See SECURITY.md. Planned for 1.10.1.
+- `get_scope_assessment` matches keywords inside words. It is a heuristic, not a determination.
+- `trustgate/smoke_test_trustgate.py` fails mostly on its HTTP blocks (13 to 15): the script sends no
+  bearer token and the server answers 401. The pytest suites of TrustGate pass.
 
 ---
 
