@@ -136,6 +136,7 @@ existing checks behave, because some of them accepted more than they should have
 - The project description (PyPI summary) is now "Trust infrastructure for autonomous AI agents:
   identity, observability, governance".
 - Licence gating is unchanged in this release (see `docs/LIMITS_AND_POSTURE.md`).
+- TrustGate: ANSSI references. Decision reasons, error messages, the console and the documentation no longer cite ANSSI R22, R26, R28, R30 or R35: in the ANSSI guide ANSSI-PA-102 (2024) those numbers cover other topics than the controls they were attached to. R9, R25, R27 and R29 are kept. The `anssi_strict` profile keeps its name and its thresholds. The profile, the console and the smoke tests no longer state compliance, a coverage percentage or a count of requirements covered. These are references, not an assessment of compliance with the ANSSI guide, the NIST AI RMF or the EU AI Act.
 
 ### Fixed
 
