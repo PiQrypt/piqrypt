@@ -1343,40 +1343,34 @@ function renderLiveFeed() {
 
 function renderCompliance() {
   const data = [
-    { title:'ANSSI 2024', color:'#4d9fff', score:100, items:[
-      {ok:true, ref:'R9',   text:'REQUIRE_HUMAN for critical actions'},
-      {ok:true, ref:'R25',  text:'Dangerous pattern filtering'},
-      {ok:true, ref:'R29',  text:'Full audit journal with chain'},
+    { title:'ANSSI 2024', color:'#4d9fff', items:[
+      {ref:'R9',   text:'REQUIRE_HUMAN for critical actions'},
+      {ref:'R25',  text:'Dangerous pattern filtering'},
+      {ref:'R29',  text:'Full audit journal with chain'},
     ]},
-    { title:'NIST AI RMF 1.0', color:'#00e5a0', score:100, items:[
-      {ok:true, ref:'GOVERN 1.2',  text:'Principal hierarchy + accountability'},
-      {ok:true, ref:'GOVERN 6.2',  text:'Policy versioning + audit trail'},
-      {ok:true, ref:'MANAGE 1.3',  text:'6-level risk response taxonomy'},
-      {ok:true, ref:'MANAGE 2.2',  text:'Human oversight mechanism'},
-      {ok:true, ref:'MEASURE 2.5', text:'Continuous VRS/TSI monitoring'},
-      {ok:true, ref:'AI 600-1',    text:'Agentic AI — no unsupervised critical acts'},
+    { title:'NIST AI RMF 1.0', color:'#00e5a0', items:[
+      {ref:'GOVERN 1.2',  text:'Principal hierarchy + accountability'},
+      {ref:'GOVERN 6.2',  text:'Policy versioning + audit trail'},
+      {ref:'MANAGE 1.3',  text:'6-level risk response taxonomy'},
+      {ref:'MANAGE 2.2',  text:'Human oversight mechanism'},
+      {ref:'MEASURE 2.5', text:'Continuous VRS/TSI monitoring'},
+      {ref:'AI 600-1',    text:'Agentic AI — no unsupervised critical acts'},
     ]},
-    { title:'EU AI Act', color:'#f5a623', score:100, items:[
-      {ok:true, ref:'Art. 9',  text:'Risk management system — continuous'},
-      {ok:true, ref:'Art. 12', text:'Automatic logging — tamper-proof chain'},
-      {ok:true, ref:'Art. 13', text:'Transparency — reason on every decision'},
-      {ok:true, ref:'Art. 14', text:'Human oversight — always interruptible'},
-      {ok:true, ref:'Art. 17', text:'Quality management — versioned policies'},
+    { title:'EU AI Act', color:'#f5a623', items:[
+      {ref:'Art. 9',  text:'Risk management system — continuous'},
+      {ref:'Art. 12', text:'Automatic logging — tamper-proof chain'},
+      {ref:'Art. 13', text:'Transparency — reason on every decision'},
+      {ref:'Art. 14', text:'Human oversight — always interruptible'},
+      {ref:'Art. 17', text:'Quality management — versioned policies'},
     ]},
   ];
   document.getElementById('compliance-grid').innerHTML = data.map(c => {
-    const r = 20, circ = 2 * Math.PI * r, dash = circ * c.score / 100;
     return '<div class="compliance-card">' +
       '<h3>' + c.title + '</h3>' +
-      '<svg class="score-ring" width="54" height="54" viewBox="0 0 54 54">' +
-        '<circle cx="27" cy="27" r="' + r + '" fill="none" stroke="var(--border)" stroke-width="3"/>' +
-        '<circle cx="27" cy="27" r="' + r + '" fill="none" stroke="' + c.color + '" stroke-width="3"' +
-          ' stroke-dasharray="' + dash + ' ' + circ + '" stroke-linecap="round" transform="rotate(-90 27 27)"/>' +
-        '<text x="27" y="32" text-anchor="middle" fill="' + c.color + '" font-family="\'Share Tech Mono\'" font-size="12">' + c.score + '%</text>' +
-      '</svg>' +
+      '<div class="score-ring" style="font-family:var(--mono);font-size:11px;color:' + c.color + '">' + c.items.length + ' controls mapped</div>' +
       c.items.map(i =>
         '<div class="req-item">' +
-          '<span class="req-icon" style="color:' + (i.ok?'var(--allow)':'var(--danger)') + '">' + (i.ok?'✓':'✗') + '</span>' +
+          '<span class="req-icon" style="color:var(--text-dim)">-</span>' +
           '<div><div class="req-text">' + i.text + '</div><div class="req-ref">' + i.ref + '</div></div>' +
         '</div>'
       ).join('') +
