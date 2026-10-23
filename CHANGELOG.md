@@ -140,7 +140,7 @@ existing checks behave, because some of them accepted more than they should have
 
 ### Licensing
 
-- `aiss/key_store.py` is now released under the MIT license (it was Elastic-2.0). Its code is unchanged. `aiss/signer_file.py` remains Elastic-2.0. Versions released before 1.10.0 keep the license they were published under.
+- `aiss/key_store.py` and `aiss/logger.py` are now released under the MIT license (they were Elastic-2.0). Their code is unchanged. `aiss/signer_file.py` remains Elastic-2.0. Versions released before 1.10.0 keep the license they were published under.
 
 ### Fixed
 
