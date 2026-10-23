@@ -7,6 +7,181 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.10.0] - Unreleased
+
+The release date is set when the tag is created.
+
+This release adds AISS-2.1 (hybrid Ed25519 + ML-DSA-65 with domain separation), real RFC 3161
+verification, a Signer interface, and published test vectors. It also changes how several
+existing checks behave, because some of them accepted more than they should have. Read
+"Behaviour changes" before upgrading.
+
+### Security
+
+- **Fork resolution no longer trusts a detached, unsigned field.** `aiss.fork` counted an event
+  as anchored when its `trusted_timestamp` carried a non-empty token, and broke ties with the
+  self-declared `trusted_timestamp.timestamp`. Anyone can add that field to a branch. An event now
+  counts as anchored only when a `tsa_verifier` supplied by the caller declares its token verified
+  and returns its genTime. Without a verifier no event is anchored: the first two steps are
+  neutral and the choice falls to chain length, then hash.
+- **`verify_tsa_token` really verifies.** The previous implementation reported `verified` for any
+  DER blob starting with byte 0x30. It now checks the CMS signature, the TSA certificate
+  (critical `timeStamping` extended key usage), the chain to a root of the trust store, the
+  imprint recomputed from the event, the nonce, and certificate validity at genTime. See
+  `docs/TIMESTAMPS.md` for what is still not checked (revocation first).
+- **`secure_agent_key` no longer destroys the private key on failure.** The old key was deleted
+  before the new file was written. The new file is now written to a temporary file and installed
+  with `os.replace`, and a plaintext key is removed only after the installed encrypted file has
+  been read back and compared.
+- **`IdentitySession.unlock` erases the key** it had loaded when the identity file turns out to be
+  invalid. Previously the key stayed in memory in a locked session.
+
+### Added
+
+- **AISS-2.1 event format.** Hybrid signatures over a domain-separated message
+  `M' = b"PiQrypt-AISS-2.1\x00" || len(label) || label || 0x00 || JCS(event)`, with
+  `label = b"Ed25519+ML-DSA-65"` and an empty ML-DSA context. The signed content excludes
+  `signatures` and `trusted_timestamp`. Chain hash is SHA-512 (128 hexadecimal characters).
+  Signatures are `base64:` prefixed and decoded strictly. Canonicalization is RFC 8785 through
+  the new `aiss/canonical_aiss21.py`; `rfc8785>=0.1.4,<0.2` becomes a core dependency. The version
+  string is compared by exact equality: `AISS-2.10` is an unknown version, not AISS-2.1.
+  AISS-1 and AISS-2.0 events keep their formats and remain verifiable. AISS-1 is frozen by
+  `test_vectors/`.
+- **Hybrid identities.** `create_agent_identity(hybrid=True)` and
+  `piqrypt identity create --hybrid` create an Ed25519 + ML-DSA-65 identity (passphrase required,
+  8 characters minimum, one distinct salt per key). `derive_agent_id_aiss21`,
+  `export_identity_aiss21` and `load_agent_pq_key` are new. The genesis hash of a hybrid agent is
+  derived from its `agent_id`.
+- **Upgrade of an existing identity.** `upgrade_agent_identity` and `piqrypt identity upgrade`
+  add an ML-DSA-65 key pair to an AISS-1 identity without changing its `agent_id`, through an
+  `identity_binding` signed by both keys. The binding is classical-only in assurance, because the
+  historical `agent_id` does not commit to the ML-DSA key. `verify_identity_binding` and
+  `identity_binding_assurance` recompute that level and never read a declared value. The previous
+  `identity.json` is kept as `identity.pre-upgrade.json`.
+- **Key store v2** for the ML-DSA-65 private key (`private_pq.key.enc`, magic `PQKY`, version
+  0x02): AES-256-GCM with the 42-byte header as associated data, scrypt, bounded parameters
+  checked on read and write, atomic write, mandatory passphrase, NFKC normalization. The v1 file
+  (`private.key.enc`) is unchanged and a v1 loader rejects a v2 blob.
+- **Chain verification for the new identity forms.** `verify_chain` and `get_verification_report`
+  distinguish classical, upgraded and native hybrid identities, check the `agent_id` of every
+  event, reject ambiguous identity documents, and apply an anti-downgrade rule (a native hybrid
+  chain accepts only AISS-2.1; an upgraded chain accepts no AISS-1 or AISS-2.0 event after its
+  first AISS-2.1 event). The report exposes `binding_assurance`.
+- **Hybrid key rotation anchored in the chain.** `create_rotation_attestation_hybrid` and
+  `verify_rotation_attestation_hybrid` (four signatures under a dedicated domain prefix),
+  `create_rotation_event_aiss21`, `verify_rotation_chain`, and the `rotation_previous_hash`
+  parameter of `stamp_genesis_event_aiss2_hybrid`. A rotation to the same `agent_id` is rejected.
+  `create_rotation_attestation` (AISS-1) is unchanged.
+- **Signer interface** (`aiss.signer` and `aiss.signer_conformance`, MIT; `aiss.signer_file`,
+  Elastic-2.0): `Signer`, `HybridSigner`, in-memory and encrypted-file signers, reusable
+  conformance checks, and an optional trailing `signer` parameter on
+  `stamp_event_aiss2_hybrid` and `stamp_genesis_event_aiss2_hybrid`. See `docs/SIGNER.md`. No
+  HSM, KMS or PKCS#11 module has been tested.
+- **RFC 3161 verification.** `aiss.rfc3161.verify_tsa_token(event, trust_roots=None)` and
+  `make_tsa_verifier`, behind the new optional extra `timestamp` (`rfc3161-client>=1.0.9,<2`).
+  Statuses are `verified`, `structure_only`, `pending` and `invalid`. For AISS-2.1 events the
+  imprint is the SHA-512 chain hash; AISS-1 and AISS-2.0 stay on SHA-256. Requests carry a nonce
+  that the response must echo. PiQrypt ships no trust root. `get_verification_report` gains an
+  informational `tsa` section (counts per status, details for every event not verified, number
+  of roots used) that never changes `valid`. See `docs/TIMESTAMPS.md`.
+- **Test vectors.** NIST ACVP ML-DSA-65 vectors (keyGen, sigVer, sigGen; deterministic groups) are
+  reproduced by dilithium-py. `test_vectors_aiss21/` holds 57 AISS-2.1 vectors (agent_id, hash and
+  signed message, events, chains, identities, rotation, positive and negative) produced by the
+  deterministic generator `scripts/gen_aiss21_vectors.py`, plus `verify_standalone.py`, an
+  independent verifier that imports nothing from `aiss` or `piqrypt`. These are interoperability
+  test data, not a certification.
+- **`.github/workflows/interop-liboqs.yml`** (manual trigger only) and `scripts/interop_liboqs.py`
+  to cross-check liboqs and dilithium-py on the vectors. **This workflow has never been run.**
+
+### Behaviour changes
+
+- `verify_tsa_token(event, trust_roots=None)`: the `expected_data` parameter is removed. Statuses
+  are lowercase strings. Code that relied on any 0x30-prefixed DER being `verified` will now see
+  `structure_only` or `invalid`. A pending placeholder is `{"status": "pending"}`.
+- `aiss.fork` functions (`select_canonical_chain`, `detect_fork_after_finalization`,
+  `classify_fork`, `resolve_fork_canonical`) take an optional `tsa_verifier`. The default (none)
+  anchors nothing. `aiss.tsa_token.has_tsa_token` is the single structural check (MIT) and proves
+  nothing by itself.
+- `request_timestamp` and `retry_pending_timestamps` follow the event version (SHA-512 for
+  AISS-2.1). The wording "legally admissible" and similar statements about legal value are
+  removed from the RFC 3161 code, its docstrings and its messages.
+- `verify_chain` raises `InvalidChainError` (with the event index) for a non-text version or an
+  event that is not an object, and for inputs of the wrong type (events not a list or tuple,
+  identity not a dictionary). `verify_aiss2_hybrid` turns any malformed input into
+  `InvalidSignatureError`. An integer outside +/-(2^53-1) in an AISS-2.1 event raises
+  `InvalidCanonicalJSONError` (also a `ValueError`). Valid inputs give the same verdict as before.
+- `piqrypt certify-verify` changed what it prints, not what it checks. It no longer prints
+  "PiQrypt Certification VALID", "independently certified" or "Valid for legal and compliance
+  purposes". It prints that the attestation signature was verified locally, lists what this
+  command checked and did not check, presents the attestation values as declared by the issuer, and
+  states that the attestation is not an independent audit and not a legal or regulatory
+  statement. File formats, JSON fields, exit codes and API return values are unchanged. Scripts
+  that parse the old output text must be updated. New attestations carry a factual
+  `legal_statement` that lists the checks actually made.
+- `piqrypt stamp` refuses an identity that has a `public_key_pq` (it only produces AISS-1 events).
+  `piqrypt identity rotate` refuses such an identity (it would drop the ML-DSA key); use
+  `create_rotation_event_aiss21` and `verify_rotation_chain`. CLI commands that read
+  `identity['public_key']`, and the certified-export verification, refuse a native hybrid identity
+  with an explicit error and exit code 1. `IdentitySession` refuses a native hybrid identity with
+  `UnsupportedIdentityError`.
+- `secure_agent_key` accepts `old_passphrase_pq` (default: `old_passphrase`) so that the two keys of
+  an upgraded identity can be under different passphrases; a refused ML-DSA key raises
+  `PQKeyPassphraseError`. An Ed25519 key that is encrypted but given no `old_passphrase` raises a
+  clear `ValueError`.
+- `stamp_genesis_event_aiss2_hybrid` accepts `public_key_pq`, `tsa_stamp_after` and
+  `rotation_previous_hash`. Existing callers are unaffected.
+- Extras: `post-quantum` is now `liboqs-python>=0.16.0.1` for Python 3.10 and later (0.16.0
+  is affected by GHSA-pw23-r5gj-42g8); `timestamp` is new; `rfc3161-client` is added to `dev`.
+  `post-quantum-py` (dilithium-py) is unchanged. See "Known limitations" about that backend.
+- The project description (PyPI summary) is now "Trust infrastructure for autonomous AI agents:
+  identity, observability, governance".
+- Licence gating is unchanged in this release (see `docs/LIMITS_AND_POSTURE.md`).
+
+### Fixed
+
+- `secure_agent_key` no longer leaves `private.key.json.bak` behind when it encrypts a plaintext
+  key: after verification the plaintext file is overwritten with zeros, synced and removed. If
+  removal fails a warning is logged and the operation still succeeds. Overwriting does not
+  guarantee physical erasure on journaled file systems or SSDs. Backups left by earlier versions
+  are not removed automatically; delete them yourself once you have checked the encrypted key.
+- `_tsa_report` raised `AttributeError` in an MIT-only installation when `trusted_timestamp` was
+  not an object. Such a value is now counted as `invalid` and listed in `details`.
+- Double-encoded characters (UTF-8 read as cp1252 and saved again) are repaired in
+  `docs/RFC_AISS_v2.0.md`, `docs/RFC_AISS_v2.0_narrative.md`, `docs/IMPLEMENTATION_STATUS.md`,
+  `bridges/hermes/__init__.py` and its tests. Code and test logic are unchanged. The restored
+  characters include em dashes and arrows in those three documents.
+
+### Tests
+
+- Suites for AISS-2.1 events, identities, bindings, rotation, key store v2, strict base64, fork
+  anchoring, RFC 3161 (real fixtures from freetsa.org in SHA-512 and SHA-256, no network), the
+  Signer interface, fail-closed verification, and the Pro licence path with an ephemeral token
+  signed by a throwaway key. `tests/test_verify_standalone.py` runs the independent verifier with
+  `aiss` and `piqrypt` imports blocked and compares its verdicts with the library's.
+
+### Known limitations
+
+- The normative text of AISS-2.1 is not published yet. Until it is, the vectors and the reference
+  implementation define the format, and `verify_standalone.py` guards against the implementation
+  defining the specification by itself.
+- ML-DSA-65 is exercised against NIST ACVP vectors through dilithium-py only. The liboqs
+  interoperability workflow has never run. The pure-Python fallback is not constant time and its
+  authors state that it is not meant for cryptographic use; install the `post-quantum` extra for
+  signing.
+- No revocation check on TSA certificates, no trust root shipped, no qualified timestamps. Tokens
+  from DigiCert and Entrust currently verify as `invalid` because `rfc3161-client` 1.0.9 cannot parse
+  them.
+- The attestation read by `piqrypt certify-verify` contains no hash of the audit data in the same
+  file, so the command cannot link the two.
+- A chain passed to `verify_chain` is not required to start at a genesis event, and a fork can only
+  be detected by comparing two logs.
+- No hardware security module has been tested. Identity bindings and hybrid rotation attestations
+  are not yet adapted to the Signer interface.
+- The persistent ML-DSA certificate authority announced in the 1.9.2 notes is not part of 1.10.0.
+  It is planned for 1.11.
+
+---
+
 ## [1.9.2] - 2026-10-21
 
 ### Fixed
