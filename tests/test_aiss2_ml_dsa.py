@@ -19,6 +19,7 @@ Couvre :
 import nacl.signing  # noqa: F401
 
 import os
+import sys
 import unittest
 from unittest.mock import patch
 
@@ -631,6 +632,86 @@ class TestPQDemoLimit(unittest.TestCase):
                 dilithium.sign(priv, b"free_limit")
         finally:
             lic_module._license = orig
+
+
+class TestPQDemoLimitLicenceModuleAbsent(unittest.TestCase):
+    """When the module aiss.license does not exist (aiss-standard build), no limit applies."""
+
+    def setUp(self):
+        from aiss.crypto import dilithium
+        dilithium.reset_demo_counter()
+
+    def tearDown(self):
+        from aiss.crypto import dilithium
+        dilithium.reset_demo_counter()
+
+    @staticmethod
+    def _clean_env():
+        env = patch.dict(os.environ, {}, clear=True)
+        env.start()
+        for k in ("AISS2_LICENSE_KEY", "PIQRYPT_LICENSE_KEY"):
+            os.environ.pop(k, None)
+        return env
+
+    def test_has_valid_license_true_when_licence_module_absent(self):
+        from aiss.crypto import dilithium
+
+        env = self._clean_env()
+        try:
+            with patch.dict(sys.modules, {"aiss.license": None}):
+                self.assertTrue(dilithium._has_valid_license())
+        finally:
+            env.stop()
+
+    def test_backend_info_reports_no_demo_when_licence_module_absent(self):
+        from aiss.crypto import dilithium
+
+        env = self._clean_env()
+        try:
+            with patch.dict(sys.modules, {"aiss.license": None}):
+                info = dilithium.get_backend_info()
+            self.assertFalse(info["demo_mode"])
+            self.assertIsNone(info["events_limit"])
+            self.assertIsNone(info["events_used"])
+        finally:
+            env.stop()
+
+    def test_sign_beyond_limit_when_licence_module_absent(self):
+        if _SKIP:
+            self.skipTest(_SKIP_REASON)
+        from aiss.crypto import dilithium
+
+        env = self._clean_env()
+        try:
+            dilithium.reset_demo_counter()
+            priv, pub = dilithium.generate_keypair()
+            dilithium.EVENT_COUNT = 5000
+            with patch.dict(sys.modules, {"aiss.license": None}):
+                dilithium.sign(priv, b"no_limit_without_licence_module")
+            self.assertEqual(dilithium.EVENT_COUNT, 5000)
+        finally:
+            env.stop()
+
+    def test_limit_kept_when_another_module_is_missing(self):
+        from aiss.crypto import dilithium
+
+        env = self._clean_env()
+        try:
+            err = ModuleNotFoundError("No module named 'nacl'", name="nacl")
+            with patch("aiss.license.get_license", side_effect=err):
+                self.assertFalse(dilithium._has_valid_license())
+        finally:
+            env.stop()
+
+    def test_limit_kept_when_licence_check_raises_other_error(self):
+        from aiss.crypto import dilithium
+
+        env = self._clean_env()
+        try:
+            with patch("aiss.license.get_license", side_effect=RuntimeError("boom")):
+                self.assertFalse(dilithium._has_valid_license())
+        finally:
+            env.stop()
 
 
 # ===========================================================================

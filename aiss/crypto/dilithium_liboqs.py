@@ -65,7 +65,14 @@ DEMO_LIMIT = 1000
 
 
 def _has_valid_license() -> bool:
-    """Check whether any license source grants quantum access."""
+    """Check whether any license source grants quantum access.
+
+    Returns True when no licence system exists at all: in the aiss-standard
+    (MIT) build the module aiss.license is absent, so there is nothing to
+    check and no demo limit applies. This mirrors aiss.stamp_aiss2._pro_only.
+    Any other failure (for example a missing dependency inside aiss.license)
+    keeps the limit active.
+    """
     # Legacy: any non-empty value bypassed the demo limit before v1.9.2
     if os.getenv("AISS2_LICENSE_KEY"):
         return True
@@ -73,6 +80,9 @@ def _has_valid_license() -> bool:
         # Lazy import to avoid circular dependencies at module load time
         from aiss.license import get_license  # type: ignore
         return get_license().has_feature("quantum")
+    except ModuleNotFoundError as exc:
+        # Only the licence module itself being absent lifts the limit.
+        return exc.name == "aiss.license"
     except Exception:
         return False
 
