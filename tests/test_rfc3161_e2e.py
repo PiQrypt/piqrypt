@@ -81,7 +81,7 @@ def test_rfc3161_in_aiss2():
 
     try:
         if not dilithium or not dilithium.is_available():
-            print("⚠️  Dilithium3 not available — skipping AISS-2 test")
+            print("⚠️  ML-DSA-65 not available — skipping AISS-2 test")
             deactivate_license()
             return "skipped"
 

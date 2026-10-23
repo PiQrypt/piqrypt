@@ -118,7 +118,7 @@ def export_identity(
     """
     Export agent identity document (RFC Section 6.1).
 
-    Creates AISS-1.0 compliant identity document with:
+    Creates an identity document in the AISS-1.0 format with:
     - version: AISS-1.0
     - agent_id: Deterministic ID
     - public_key: Base58 encoded

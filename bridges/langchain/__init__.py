@@ -9,8 +9,8 @@
 piqrypt-langchain — PiQrypt bridge for LangChain
 
 Adds Verifiable AI Agent Memory to LangChain agents, tools, and chains.
-Every tool call, chain execution, and agent action is signed,
-hash-chained, and tamper-proof.
+Every tool call, chain execution, and agent action is signed and
+hash-chained, so that a later change to a stamped event is detectable.
 
 Install:
     pip install piqrypt-langchain

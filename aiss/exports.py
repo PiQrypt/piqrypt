@@ -11,7 +11,7 @@
 Audit Export Format (RFC Section 15)
 
 This module implements the standard audit export format for
-regulatory compliance and forensic analysis.
+record keeping and review of event chains.
 """
 
 import time
@@ -31,7 +31,7 @@ def export_audit_chain(
     include_metadata: bool = True
 ) -> Dict[str, Any]:
     """
-    Export event chain in RFC Section 15 compliant format.
+    Export an event chain in the RFC Section 15 export format.
 
     Creates standardized audit file containing:
     - Agent identity document
@@ -40,9 +40,8 @@ def export_audit_chain(
     - Export metadata
 
     This format is designed for:
-    - Regulatory compliance
-    - Forensic analysis
-    - Third-party audits
+    - Record keeping
+    - Review by a third party
     - Archive/backup
 
     Args:

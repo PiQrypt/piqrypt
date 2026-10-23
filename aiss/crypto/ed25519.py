@@ -4,7 +4,7 @@
 """
 Ed25519 Cryptographic Backend (AISS-1)
 
-RFC 8032 compliant Ed25519 using Python stdlib 'cryptography' package.
+Ed25519 (RFC 8032) using the third-party 'cryptography' package.
 Zero external dependencies beyond 'cryptography' (ships with Python 3.x).
 
 Encoding strategy:

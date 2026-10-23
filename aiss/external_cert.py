@@ -28,10 +28,10 @@ Workflow:
     5. User: piqrypt certify-verify audit.json.piqrypt-certified
        → Verifies PiQrypt CA signature
 
-RFC Compliance:
-    - External certification = independent third-party attestation
+Notes:
+    - External certification = attestation signed by the PiQrypt CA
     - No legal value is claimed (see docs/LIMITS_AND_POSTURE.md)
-    - PiQrypt CA acts as trusted authority
+    - The PiQrypt CA is operated by the PiQrypt project
 """
 
 import json

@@ -11,7 +11,8 @@ piqrypt-rpi — PiQrypt bridge for Raspberry Pi
 
 Adds cryptographic audit trails to Raspberry Pi agents.
 Every sensor reading, GPIO event, decision, actuator command,
-and system metric is Ed25519-signed, hash-chained, and tamper-proof.
+and system metric is Ed25519-signed and hash-chained,
+so that a later change to a stamped event is detectable.
 
 Designed to be generic and extensible :
     - Works without GPIO hardware (simulation/mock mode)

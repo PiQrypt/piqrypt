@@ -4,7 +4,7 @@
 """
 ML-DSA-65 Cryptographic Backend (AISS-2) - Hybrid Implementation
 
-NIST FIPS 204 compliant post-quantum signature scheme.
+Implements the post-quantum signature scheme ML-DSA-65 (NIST FIPS 204).
 Supports multiple backends with automatic fallback:
   1. liboqs-python >= 0.12.0 (preferred, faster, C-based)
   2. dilithium-py >= 1.0.0   (fallback, pure Python)
@@ -122,13 +122,13 @@ def _check_license():
 
 def generate_keypair() -> tuple[bytes, bytes]:
     """
-    Generate Dilithium3 keypair.
+    Generate an ML-DSA-65 keypair.
 
     Returns:
         Tuple of (private_key_bytes, public_key_bytes)
 
     Raises:
-        CryptoBackendError: If Dilithium3 backend not available
+        CryptoBackendError: If the ML-DSA-65 backend is not available
     """
     _check_available()
     _check_license()
@@ -154,14 +154,14 @@ def generate_keypair() -> tuple[bytes, bytes]:
 
 def sign(private_key: bytes, message: bytes) -> bytes:
     """
-    Sign message with Dilithium3 private key.
+    Sign a message with an ML-DSA-65 private key.
 
     Args:
-        private_key: Dilithium3 private key bytes
+        private_key: ML-DSA-65 private key bytes
         message: Message bytes to sign
 
     Returns:
-        Dilithium3 signature bytes (~3293 bytes)
+        ML-DSA-65 signature bytes (3309 bytes)
 
     Raises:
         CryptoBackendError: If backend not available or signing fails
@@ -187,10 +187,10 @@ def sign(private_key: bytes, message: bytes) -> bytes:
 
 def verify(public_key: bytes, message: bytes, signature: bytes) -> bool:
     """
-    Verify Dilithium3 signature.
+    Verify an ML-DSA-65 signature.
 
     Args:
-        public_key: Dilithium3 public key bytes
+        public_key: ML-DSA-65 public key bytes
         message: Original message bytes
         signature: Signature to verify
 
@@ -221,7 +221,7 @@ def verify(public_key: bytes, message: bytes, signature: bytes) -> bool:
 
 def is_available() -> bool:
     """
-    Check if Dilithium3 backend is available.
+    Check if an ML-DSA-65 backend is available.
 
     Returns:
         True if AISS-2 crypto is available

@@ -9,7 +9,7 @@
 AISS (Agent Identity and Signature Standard)
 PiQrypt v1.8.4
 
-RFC Compliance:
+Standards referenced:
 - RFC 8785  (JSON Canonicalization Scheme) — MANDATORY
 - RFC 8032  (Ed25519 signatures)
 - RFC 3161  (Trusted Timestamps — Pro)

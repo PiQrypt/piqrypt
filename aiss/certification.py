@@ -13,7 +13,7 @@ PiQrypt Certification Service — Pay-Per Tier
 Automated certification with 3 tiers:
 - Simple (€9): PiQrypt CA signature
 - Timestamp (€29): + TSA RFC 3161
-- Post-Quantum (€99): + Dilithium3 + .pqz archive
+- Post-Quantum (€99): + ML-DSA-65 + .pqz archive
 
 Workflow:
     1. User uploads audit.json

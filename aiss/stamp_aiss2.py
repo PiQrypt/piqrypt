@@ -101,7 +101,7 @@ def stamp_event_aiss2_hybrid(
 
     Args:
         private_key_ed25519:   Ed25519 private key (32 bytes)
-        private_key_dilithium: Dilithium3 private key
+        private_key_dilithium: ML-DSA-65 private key
         agent_id:              Agent ID
         payload:               Event data
         previous_hash:         Hash of previous event (None for genesis)

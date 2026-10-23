@@ -309,11 +309,11 @@ def scenario_trading(AgentSession):
 
 def scenario_healthcare(AgentSession):
     """
-    EU AI Act Art.22 — high-risk AI in healthcare
+    EU AI Act Art.14: human oversight of high-risk AI in healthcare
     Diagnostic AI → Validation AI → Human approval → Execution
     """
     print(f"\n{bold('Scenario: Healthcare Diagnostic Pipeline')}")
-    print(f"{dim('EU AI Act Art.22 — human oversight for high-risk medical AI')}")
+    print(f"{dim('EU AI Act Art.14: human oversight of high-risk medical AI')}")
     print(SEP)
 
     session = AgentSession([

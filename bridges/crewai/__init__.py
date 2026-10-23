@@ -9,8 +9,8 @@
 piqrypt-crewai — PiQrypt bridge for CrewAI
 
 Adds cryptographic audit trails to CrewAI agents and tasks.
-Every agent decision, tool call, and task result is signed,
-hash-chained, and tamper-proof.
+Every agent decision, tool call, and task result is signed and
+hash-chained, so that a later change to a stamped event is detectable.
 
 Install:
     pip install piqrypt-crewai

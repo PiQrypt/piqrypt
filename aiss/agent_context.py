@@ -47,7 +47,7 @@ It provides cryptographic continuity for agent decisions: signing, chaining, tim
 
 Every significant decision you make can be cryptographically stamped:
 - Signed with your unique agent identity (Ed25519, AISS-1)
-- Hash-chained to previous events (tamper-proof continuity)
+- Hash-chained to previous events (a later change to a stamped event is detectable)
 - Timestamped (local by default; RFC 3161 TSA available in Pro)
 
 ### Scope — read before acting
@@ -64,7 +64,7 @@ AISS-1 is NOT suitable for:
   - Legal evidence production
   - Government critical infrastructure
 
-For regulated production, AISS-2 (Ed25519 + Dilithium3 hybrid) is required.
+For regulated production, AISS-2 (Ed25519 + ML-DSA-65 hybrid) is recommended. Whether a regime requires it is for you and your compliance function to decide.
 
 ### Correct usage pattern
 
@@ -327,7 +327,7 @@ def build_agent_context(
         parts.append(
             f"\n**Active agent identity:** `{agent_id}`\n"
             f"This identity is cryptographically bound to your keypair. "
-            f"It cannot be forged or transferred."
+            f"It is derived from your public key; whoever holds the matching private key can sign as this agent."
         )
 
     # Profile disclosure — always explicit
@@ -348,7 +348,7 @@ def build_agent_context(
     if tier in ("pro", "oss", "enterprise") and not short:
         parts.append(
             "\n**Available in your tier:** "
-            "Dilithium3 hybrid signatures · AES-256-GCM encrypted storage · "
+            "ML-DSA-65 hybrid signatures · AES-256-GCM encrypted storage · "
             "RFC 3161 trusted timestamps · A2A network · External certification"
         )
 
@@ -400,7 +400,7 @@ def get_scope_assessment(use_case: str) -> Dict[str, Any]:
         return {
             "suitable_aiss1": False,
             "recommended_profile": "AISS-2",
-            "reasoning": "Use case matches regulated/production criteria. AISS-2 required.",
+            "reasoning": "Use case matches regulated/production keywords. AISS-2 is recommended; whether a regime requires it is for you and your counsel to decide.",
             "disclaimer": "This is a heuristic assessment only. Consult legal counsel.",
             "requires_expert": True
         }

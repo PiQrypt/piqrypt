@@ -9,8 +9,8 @@
 piqrypt-mcp — PiQrypt bridge for Model Context Protocol (MCP)
 
 Adds cryptographic audit trail to MCP tool calls, resource reads,
-and prompt invocations. Every interaction is signed Ed25519,
-hash-chained, and tamper-proof.
+and prompt invocations. Every interaction is signed with Ed25519 and
+hash-chained, so that a later change to a stamped event is detectable.
 
 Install:
     pip install piqrypt[mcp]

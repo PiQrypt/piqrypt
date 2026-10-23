@@ -11,7 +11,8 @@ piqrypt-ros — PiQrypt bridge for ROS2
 
 Adds cryptographic audit trails to ROS2 nodes.
 Every published message, service call, action goal/result/feedback,
-and lifecycle transition is Ed25519-signed, hash-chained, and tamper-proof.
+and lifecycle transition is Ed25519-signed and hash-chained,
+so that a later change to a stamped event is detectable.
 
 Install:
     pip install piqrypt[ros]

@@ -36,7 +36,7 @@ Index schema v1.6:
         session_id          TEXT     -- v1.6: multi-agent session_id
     );
 
-RFC Compliance:
+Design notes:
     - Index contains ONLY metadata (no sensitive payloads)
     - Events remain signed + hash-chained in storage files
     - Nonce retention for 7 years (AISS-2 §11.2)

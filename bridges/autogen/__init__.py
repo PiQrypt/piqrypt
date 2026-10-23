@@ -9,8 +9,8 @@
 piqrypt-autogen — PiQrypt bridge for AutoGen
 
 Adds cryptographic audit trails to AutoGen agents and conversations.
-Every message exchange, code execution, and group chat turn is signed,
-hash-chained, and tamper-proof.
+Every message exchange, code execution, and group chat turn is signed and
+hash-chained, so that a later change to a stamped event is detectable.
 
 Install:
     pip install piqrypt-autogen
