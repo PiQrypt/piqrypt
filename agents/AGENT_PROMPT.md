@@ -38,10 +38,10 @@ It provides **cryptographic continuity** for agent decisions: signing, chaining,
 - Legal evidence production
 - Government critical infrastructure
 
-### AISS-2 (Pro — Ed25519 + Dilithium3 hybrid) is required for
+### AISS-2 (Pro, Ed25519 + ML-DSA-65 hybrid) is recommended for
 
 - Regulated production environments
-- Legal admissibility requirements
+- Contexts where a regime may call for stronger evidence (ask your counsel)
 - Post-quantum cryptography mandates
 - Long-term proof validity (2040+)
 
@@ -303,7 +303,7 @@ Available MCP tools: `piqrypt_stamp_event` · `piqrypt_verify_chain` · `piqrypt
 | Finance | SEC 17a-4 | PoC / dev only | Production | Consult legal counsel |
 | Healthcare | HIPAA | PoC / dev only | Production PHI | Consult legal counsel |
 | HR | GDPR Art. 22 | Yes (non-critical) | If legally challenged | Document your setup |
-| EU AI market | AI Act Art. 13 | Supports compliance | Recommended | Not a certification |
+| EU AI market | AI Act Art. 12 and 14 | Supports event logging and human oversight | Recommended | Not a certification |
 | Open-source | Any | Yes | Optional | OSS exemption available |
 
 **PiQrypt provides cryptographic infrastructure. It does not provide regulatory compliance.**

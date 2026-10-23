@@ -7,7 +7,7 @@
 [![PiQrypt](https://img.shields.io/badge/powered%20by-PiQrypt-00C8E0)](https://piqrypt.com)
 
 Every agent decision, task execution, and crew result — signed Ed25519,
-hash-chained, tamper-proof. Drop-in replacement — one line change.
+hash-chained, tamper-evident. Drop-in replacement — one line change.
 
 ---
 

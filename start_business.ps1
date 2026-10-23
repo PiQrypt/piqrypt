@@ -19,7 +19,7 @@ Write-Host "  Historique  : 90 jours" -ForegroundColor DarkGray
 Write-Host "  Bridges     : illimites" -ForegroundColor DarkGray
 Write-Host "  Exports     : .pqz certifie + PDF + SIEM" -ForegroundColor DarkGray
 Write-Host "  TrustGate   : full auto (politiques driven)" -ForegroundColor DarkGray
-Write-Host "  Compliance  : AI Act, GDPR Art.22, MiFID II" -ForegroundColor DarkGray
+Write-Host "  References  : AI Act, GDPR, MiFID II (mapping only)" -ForegroundColor DarkGray
 Write-Host "  Reseau      : accessible LAN (0.0.0.0)" -ForegroundColor DarkGray
 Write-Host "  Agents max  : 500  --  Events/mois : 20 000 000" -ForegroundColor DarkGray
 Write-Host ""

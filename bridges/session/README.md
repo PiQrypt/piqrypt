@@ -118,8 +118,7 @@ print(session.summary())
 | `{event_type}` | `session.stamp(...)` | event_type, payload_hash, session_id |
 | `{event_type}_received` | peer side of stamp | payload_hash, peer_id, session_id |
 
-**Privacy by design:** raw payloads are never stored. Only SHA-256 hashes.  
-GDPR-compliant out of the box.
+**Privacy by design:** raw payloads are never stored. Only SHA-256 hashes.
 
 ---
 

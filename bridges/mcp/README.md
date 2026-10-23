@@ -7,7 +7,7 @@
 [![PiQrypt](https://img.shields.io/badge/powered%20by-PiQrypt-00C8E0)](https://piqrypt.com)
 
 Every MCP tool call, resource read, and prompt invocation — signed Ed25519,
-hash-chained, tamper-proof. Audit what your MCP-connected AI agents
+hash-chained, tamper-evident. Audit what your MCP-connected AI agents
 actually did with the tools and resources they accessed.
 
 ---

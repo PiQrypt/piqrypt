@@ -6,7 +6,7 @@
 Trading Bot with PiQrypt Audit Trail
 
 Demonstrates how a trading bot can use PiQrypt to create
-an immutable audit trail for SEC/FINRA compliance.
+a hash-chained, tamper-evident record of its decisions.
 
 Usage:
     python trading-bot.py

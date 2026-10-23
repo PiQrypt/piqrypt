@@ -7,7 +7,7 @@
 [![PiQrypt](https://img.shields.io/badge/powered%20by-PiQrypt-00C8E0)](https://piqrypt.com)
 
 Every message, reply, and group chat turn — signed Ed25519, hash-chained,
-tamper-proof. Drop-in replacement for `AssistantAgent` and `UserProxyAgent`.
+tamper-evident. Drop-in replacement for `AssistantAgent` and `UserProxyAgent`.
 
 ---
 

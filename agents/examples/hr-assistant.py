@@ -27,13 +27,13 @@ class HRAssistant:
 
         print("👥 HR Assistant initialized")
         print(f"   Agent ID: {self.agent_id}")
-        print("   Compliance: GDPR Art. 22 (automated decisions)")
+        print("   Reference: GDPR Art. 22 (automated decisions), mapping only")
 
     def evaluate_candidate(self, cv_text, job_requirements):
         """
         Evaluate candidate with explainable AI.
 
-        GDPR Art. 22: Right to explanation of automated decisions.
+        GDPR Art. 22 concerns decisions based solely on automated processing. This example stores the inputs and outputs of each decision so that a person can review it.
         """
         # Simulate AI evaluation (in real: NLP model)
         import random
@@ -80,7 +80,7 @@ class HRAssistant:
 
     def explain_decision(self, event):
         """
-        Provide explanation (GDPR Art. 22).
+        Provide the stored explanation for a decision.
 
         Candidate has right to:
         1. Know decision was automated
@@ -200,10 +200,9 @@ def demo():
     print("=" * 60)
     print("✅ Demo complete - GDPR compliant")
     print()
-    print("Compliance features:")
-    print("  ✓ Automated decision transparency (Art. 22)")
-    print("  ✓ Right to explanation")
-    print("  ✓ Audit trail (immutable)")
+    print("Features:")
+    print("  ✓ Each decision recorded for human review")
+    print("  ✓ Hash-chained event record")
     print("  ✓ Data minimization (hashed CVs)")
     print("  ✓ Right of access (Art. 15)")
     print("=" * 60)

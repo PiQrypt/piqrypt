@@ -3,7 +3,7 @@
 PiQrypt cryptographic audit trail bridge for **Ollama**.
 
 Every `generate()` and `chat()` call is signed with Ed25519, hash-chained,
-and stored as a tamper-proof local audit trail — compatible with AISS v1.1.
+and stored as a tamper-evident local audit trail — compatible with AISS v1.1.
 
 ## Install
 

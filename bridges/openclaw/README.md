@@ -7,7 +7,7 @@
 [![PiQrypt](https://img.shields.io/badge/powered%20by-PiQrypt-00C8E0)](https://piqrypt.com)
 
 Every code execution, tool invocation, and file operation — signed Ed25519,
-hash-chained, tamper-proof. Know exactly what code your AI agents ran,
+hash-chained, tamper-evident. Know exactly what code your AI agents ran,
 when, and what it returned.
 
 ---

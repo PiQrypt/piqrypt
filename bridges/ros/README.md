@@ -7,7 +7,7 @@
 [![PiQrypt](https://img.shields.io/badge/powered%20by-PiQrypt-00C8E0)](https://piqrypt.com)
 
 Every topic publication, service call, action, and timer tick — signed Ed25519,
-hash-chained, tamper-proof. Audit what your robots actually did, when, and why.
+hash-chained, tamper-evident. Audit what your robots actually did, when, and why.
 
 ---
 
@@ -39,7 +39,7 @@ cmd_pub = node.create_audited_publisher(Twist, "/cmd_vel", 10)
 
 twist = Twist()
 twist.linear.x = 0.5
-cmd_pub.publish(twist)   # ← signed, hash-chained, tamper-proof
+cmd_pub.publish(twist)   # ← signed, hash-chained, tamper-evident
 
 # Export audit trail
 node.export_audit("robot_audit.json")

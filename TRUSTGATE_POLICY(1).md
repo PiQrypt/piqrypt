@@ -103,12 +103,12 @@ TrustGate est **déterministe** : même entrée → même sortie, toujours.
 | Priorité | Condition | Décision | Référence |
 |---|---|---|---|
 | 1 | VRS >= `vrs_block` | **BLOCK** | ANSSI R9, NIST MANAGE 1.3 |
-| 2 | Pattern dangereux détecté | **BLOCK** | ANSSI R25, NIST MAP 5.1 |
+| 2 | Pattern dangereux détecté | **BLOCK** | ANSSI R25 |
 | 3 | Action interdite pour ce rôle | **BLOCK** | - |
-| 4 | TSI = CRITICAL | **BLOCK** *(configurable)* | NIST MEASURE 2.5, AI Act Art.9 |
+| 4 | TSI = CRITICAL | **BLOCK** *(configurable)* | NIST MEASURE 2.4 |
 | 5 | Domaine réseau non autorisé | **BLOCK** | Zero Trust |
 | 6 | VRS >= `vrs_require_human` | **REQUIRE_HUMAN** | ANSSI R9, AI Act Art.14 |
-| 7 | TSI = UNSTABLE | **REQUIRE_HUMAN** *(configurable)* | NIST MEASURE 2.5 |
+| 7 | TSI = UNSTABLE | **REQUIRE_HUMAN** *(configurable)* | NIST MEASURE 2.4 |
 | 8 | Seuil d'escalade atteint | **RESTRICTED** | ANSSI R27 |
 | 9 | TSI = WATCH | **ALLOW_WITH_LOG** | — |
 | 10 | Aucune règle déclenchée | **ALLOW** | — |

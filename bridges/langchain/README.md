@@ -7,7 +7,7 @@
 [![PiQrypt](https://img.shields.io/badge/powered%20by-PiQrypt-00C8E0)](https://piqrypt.com)
 
 Every LLM call, tool execution, chain run, and agent action — signed Ed25519,
-hash-chained, tamper-proof. Zero raw data stored. GDPR-compliant.
+hash-chained, tamper-evident. Zero raw data stored.
 
 ---
 
@@ -52,7 +52,7 @@ response = llm.invoke("Analyse the portfolio risk for AAPL")
 | Agent finish | `output_hash`, return values hash |
 
 **Privacy by design:** prompts and responses are never stored — only their
-SHA-256 hash. GDPR Article 22 compliant.
+SHA-256 hash.
 
 ---
 
@@ -188,9 +188,9 @@ session.export("session_audit.json")           # Cross-agent co-signatures
 
 **Regulated finance (MiFID II / SEC Rule 17a-4)**
 Every LLM-generated trading signal is signed, hash-chained, and timestamped RFC 3161.
-Reproducible audit for any regulator.
+Anyone holding the public key can re-verify the chain offline.
 
-**Healthcare (EU AI Act Art. 13 / HIPAA)**
+**Healthcare**
 Every diagnostic suggestion stamped — model version, input hash, output hash.
 Never stores patient data. Cryptographic proof of what the AI recommended.
 

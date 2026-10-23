@@ -7,7 +7,7 @@
 [![PiQrypt](https://img.shields.io/badge/powered%20by-PiQrypt-00C8E0)](https://piqrypt.com)
 
 Every GPIO operation, sensor reading, actuator command, and AI decision —
-signed Ed25519, hash-chained, tamper-proof. From the edge device all the way
+signed Ed25519, hash-chained, tamper-evident. From the edge device all the way
 to the cloud audit trail.
 
 ---

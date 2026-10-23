@@ -16,7 +16,7 @@ Write-Host "  Alertes     : tous niveaux (CRITICAL/HIGH/MEDIUM/LOW)" -Foreground
 Write-Host "  Historique  : 90 jours" -ForegroundColor DarkGray
 Write-Host "  Bridges     : illimites (9 types)" -ForegroundColor DarkGray
 Write-Host "  Exports     : .pqz certifie + PDF" -ForegroundColor DarkGray
-Write-Host "  Crypto      : Dilithium3 PQ + RFC 3161 TSA" -ForegroundColor DarkGray
+Write-Host "  Crypto      : ML-DSA-65 PQ + RFC 3161 TSA" -ForegroundColor DarkGray
 Write-Host "  Agents max  : 50  --  Events/mois : 500 000" -ForegroundColor DarkGray
 Write-Host ""
 
