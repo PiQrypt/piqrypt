@@ -1317,7 +1317,6 @@ escalate:
 frameworks:
   - eu_ai_act_art14
   - nist_ai_rmf_govern_1_2
-  - anssi_2024_r30
 
 audit_all: true
 ```
@@ -1330,7 +1329,7 @@ Full policy schema is specified in Appendix G.
 |-----------|---------|
 | EU AI Act | Art. 9 (risk management), Art. 12 (inviolable logs), Art. 14 (human oversight) |
 | NIST AI RMF | GOVERN 1.2, MANAGE 2.2, MEASURE 2.5 |
-| ANSSI 2024 | R25 (pattern filtering), R29 (audit trail), R30 (clearance-based access) |
+| ANSSI 2024 | R25 (pattern filtering), R29 (audit trail) |
 | Custom | YAML-configurable rules per agent profile |
 
 ### 20.8 Availability
@@ -1445,17 +1444,17 @@ Each RFC 3161 anchor creates a `FINAL` event whose timestamp is established by a
 Legitimate agent behaviour builds a TSI baseline over time. A fraudulent operator producing events that deviate from the established pattern — different event_type distribution, different interaction graph, different temporal rhythm — will shift the VRS. The deviation does not require cryptographic proof; it is a statistical signal.
 
 *Layer 4 — TrustGate policy binding:*  
-Policy profiles (YAML, SHA-256 verified on every load per ANSSI R35) define the permitted action space per role. An insider who signs events outside the policy's `allowed_actions` for the agent's declared role receives a `BLOCK` decision (Priority 3 in the policy engine's explicit priority order). The block is a signed chain event — it cannot be removed without breaking chain integrity.
+Policy profiles (YAML, SHA-256 verified on every load) define the permitted action space per role. An insider who signs events outside the policy's `allowed_actions` for the agent's declared role receives a `BLOCK` decision (Priority 3 in the policy engine's explicit priority order). The block is a signed chain event — it cannot be removed without breaking chain integrity.
 
 ```
 Insider signs event: {"event_type": "data_exfil", "role": "reader"}
   → TrustGate policy_engine: action 'data_exfil' not in role 'reader' allowed_actions
-  → Outcome: BLOCK [ANSSI R26/R30 — least privilege]
+  → Outcome: BLOCK [least privilege]
   → Signed trustgate_block event appended to chain ✅
   → Chain integrity: removing the BLOCK event breaks all subsequent hashes ✅
 ```
 
-**Residual risk (documented):** If the insider has *both* key access *and* the ability to modify the policy file before loading, they can create a policy that permits their action. Countermeasure: policy files are SHA-256 verified against the stored `content_hash` on every load (`policy_versioning.py` — ANSSI R35). Policy activation events are recorded in the TrustGate audit journal (itself hash-linked). A modified policy produces a different `content_hash` — verifiable by any auditor.
+**Residual risk (documented):** If the insider has *both* key access *and* the ability to modify the policy file before loading, they can create a policy that permits their action. Countermeasure: policy files are SHA-256 verified against the stored `content_hash` on every load (`policy_versioning.py`). Policy activation events are recorded in the TrustGate audit journal (itself hash-linked). A modified policy produces a different `content_hash` — verifiable by any auditor.
 
 ---
 
@@ -1582,7 +1581,7 @@ Verifier receives event: version="AISS-2.0", signatures.post_quantum = MISSING
 | Threat | Countermeasure | Location |
 |--------|---------------|----------|
 | Insider — fraudulent signing with valid key | Key zeroization · TSA finalization · VRS baseline · TrustGate role policy | §§ 4.3, 8.3, 19, 20 |
-| Policy tampering by insider | SHA-256 policy hash verification on every load · versioning audit trail | `policy_versioning.py` — ANSSI R35 |
+| Policy tampering by insider | SHA-256 policy hash verification on every load · versioning audit trail | `policy_versioning.py` |
 | Vigil channel injection | `compute_vrs()` reads signed chain only · in-process TSI hook | `anomaly_monitor.py` |
 | Chain flooding | A2C silence_break detector · VRS CRITICAL → TrustGate BLOCK | §§ 19.4, 20 |
 | TSA unavailability | `tsa_status: pending` graceful degradation · 24h retry · alert on failure | § 8.2 |
@@ -1773,7 +1772,6 @@ The 17 known failures in v1.7.1 are infrastructure-dependent (external cert auth
 | **SOX** | §404 Internal controls | Signed decision records |
 | **ANSSI 2024** | R25 Pattern filtering | A2C detector (§ 19.4) |
 | **ANSSI 2024** | R29 Audit trail | Hash chain + .pqz |
-| **ANSSI 2024** | R30 Clearance-based access | TrustGate ALLOW/DENY |
 
 ---
 
@@ -1993,7 +1991,7 @@ frameworks:
   - string                      # One or more of:
                                 # eu_ai_act_art14, eu_ai_act_art9, eu_ai_act_art12
                                 # nist_ai_rmf_govern_1_2, nist_ai_rmf_manage_2_2
-                                # anssi_2024_r25, anssi_2024_r29, anssi_2024_r30
+                                # anssi_2024_r25, anssi_2024_r29
                                 # custom (requires custom_rules block)
 
 audit_all: bool                 # If true, EVERY action produces a trustgate_audit event

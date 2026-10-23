@@ -104,9 +104,9 @@ TrustGate est **déterministe** : même entrée → même sortie, toujours.
 |---|---|---|---|
 | 1 | VRS >= `vrs_block` | **BLOCK** | ANSSI R9, NIST MANAGE 1.3 |
 | 2 | Pattern dangereux détecté | **BLOCK** | ANSSI R25, NIST MAP 5.1 |
-| 3 | Action interdite pour ce rôle | **BLOCK** | ANSSI R26/R30 |
+| 3 | Action interdite pour ce rôle | **BLOCK** | - |
 | 4 | TSI = CRITICAL | **BLOCK** *(configurable)* | NIST MEASURE 2.5, AI Act Art.9 |
-| 5 | Domaine réseau non autorisé | **BLOCK** | ANSSI R28 Zero Trust |
+| 5 | Domaine réseau non autorisé | **BLOCK** | Zero Trust |
 | 6 | VRS >= `vrs_require_human` | **REQUIRE_HUMAN** | ANSSI R9, AI Act Art.14 |
 | 7 | TSI = UNSTABLE | **REQUIRE_HUMAN** *(configurable)* | NIST MEASURE 2.5 |
 | 8 | Seuil d'escalade atteint | **RESTRICTED** | ANSSI R27 |
@@ -242,4 +242,4 @@ Invoke-RestMethod -Uri "http://localhost:8422/api/policy" `
 ---
 
 *PiQrypt TrustGate — Deterministic governance for autonomous agents.*
-*AI Act Art.9/14 · ANSSI R9/R25/R26/R27/R28 · NIST AI RMF*
+*AI Act Art.9/14 · ANSSI R9/R25/R27 · NIST AI RMF*

@@ -50,5 +50,5 @@ Commercial license : contact@piqrypt.com — Subject: Commercial License Inquiry
 ---
 Component : TrustGate — Governance Engine (trustgate/)
 Scope     : Policy enforcement, REQUIRE_HUMAN flow,
-            automated governance, compliance profiles
+            automated governance, policy profiles
             (EU AI Act, NIST AI RMF, ANSSI)

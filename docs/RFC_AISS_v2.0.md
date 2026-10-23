@@ -1261,7 +1261,6 @@ escalate:
 frameworks:
   - eu_ai_act_art14
   - nist_ai_rmf_govern_1_2
-  - anssi_2024_r30
 
 audit_all: true
 ```
@@ -1274,7 +1273,7 @@ Full policy schema is specified in Appendix G.
 |-----------|---------|
 | EU AI Act | Art. 9 (risk management), Art. 12 (inviolable logs), Art. 14 (human oversight) |
 | NIST AI RMF | GOVERN 1.2, MANAGE 2.2, MEASURE 2.5 |
-| ANSSI 2024 | R25 (pattern filtering), R29 (audit trail), R30 (clearance-based access) |
+| ANSSI 2024 | R25 (pattern filtering), R29 (audit trail) |
 | Custom | YAML-configurable rules per agent profile |
 
 ### 20.8 Availability
@@ -1533,7 +1532,6 @@ The 17 known failures in v1.7.1 are infrastructure-dependent (external cert auth
 | **SOX** | §404 Internal controls | Signed decision records |
 | **ANSSI 2024** | R25 Pattern filtering | A2C detector (§ 19.4) |
 | **ANSSI 2024** | R29 Audit trail | Hash chain + .pqz |
-| **ANSSI 2024** | R30 Clearance-based access | TrustGate ALLOW/DENY |
 
 ---
 
@@ -1753,7 +1751,7 @@ frameworks:
   - string                      # One or more of:
                                 # eu_ai_act_art14, eu_ai_act_art9, eu_ai_act_art12
                                 # nist_ai_rmf_govern_1_2, nist_ai_rmf_manage_2_2
-                                # anssi_2024_r25, anssi_2024_r29, anssi_2024_r30
+                                # anssi_2024_r25, anssi_2024_r29
                                 # custom (requires custom_rules block)
 
 audit_all: bool                 # If true, EVERY action produces a trustgate_audit event

@@ -82,7 +82,7 @@ python quickstart_dev.py            # Full demo in ~5 seconds
 ```
 ┌─────────────────────────────────────────────────────┐
 │  TRUSTGATE   Policy / Governance Engine              │  Layer 4
-│              EU AI Act · NIST · ANSSI · Compliance   │
+│              EU AI Act · NIST · ANSSI · References   │
 ├─────────────────────────────────────────────────────┤
 │  VIGIL       Behavioural Monitoring                  │  Layer 3
 │              TSI · VRS · A2C · Anomaly Detection     │
@@ -847,7 +847,7 @@ Three built-in profiles are included:
 |---------|----------|-----------|----------------|
 | `ai_act_high_risk.yaml` | EU AI Act high-risk AI | 0.70 | Blocked |
 | `nist_balanced.yaml` | US enterprise, moderate risk | 0.85 | Allowed with log |
-| `anssi_strict.yaml` | French critical infrastructure | 0.65 | Blocked |
+| `anssi_strict.yaml` | Strict profile inspired by ANSSI-PA-102 (2024) | 0.65 | Blocked |
 
 Load a profile:
 
@@ -1375,7 +1375,7 @@ Security vulnerabilities: **security@piqrypt.com** — 48h acknowledgement, 15-d
 
 ## 18. Compliance Reference
 
-| Regulation | Article | PiQrypt Coverage |
+| Regulation | Article | Related PiQrypt control |
 |-----------|---------|-----------------|
 | EU AI Act | Art.9 | Risk management — TrustGate policy versioning |
 | EU AI Act | Art.12 | Automatic logging — TrustGate audit journal |
@@ -1387,8 +1387,6 @@ Security vulnerabilities: **security@piqrypt.com** — 48h acknowledgement, 15-d
 | NIST AI RMF | MEASURE 2.5 | TSI monitoring — Vigil |
 | ANSSI | R9 | No automated critical action — REQUIRE_HUMAN |
 | ANSSI | R25 | Dangerous input filtering — `dangerous_patterns` |
-| ANSSI | R26/R30 | Least privilege — role-action binding |
-| ANSSI | R35 | Policy integrity — SHA-256 on load |
 | MiFID II | Art.17 | Algorithmic trading records — chain export |
 | RGPD | — | Raw data never stored — payload hashing by default |
 | eIDAS | Art.26 | Advanced electronic signature — certified `.pqz` |

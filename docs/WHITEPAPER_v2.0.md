@@ -100,7 +100,7 @@ Three major frameworks are converging simultaneously:
 | Framework | Key requirements |
 |-----------|-----------------|
 | **EU AI Act** | Art. 12 (inviolable logs), Art. 14 (human oversight mandatory for high-risk AI), Art. 9 (risk management) |
-| **ANSSI 2024** | R25 (dangerous pattern filtering), R29 (audit trail), R30 (clearance-based access) |
+| **ANSSI 2024** | R25 (dangerous pattern filtering), R29 (audit trail) |
 | **NIST AI RMF 1.0** | GOVERN 1.2, MANAGE 2.2, MEASURE 2.5, AI 600-1 (agentic AI supervision) |
 
 Traditional logs are not designed for adversarial or legal scrutiny. PiQrypt addresses this gap.
@@ -434,7 +434,7 @@ TrustGate evaluates each action against a configurable policy profile. Supported
 |-----------|---------------|
 | EU AI Act | Art. 9 risk management, Art. 12 logging, Art. 14 human oversight |
 | NIST AI RMF | GOVERN 1.2, MANAGE 2.2, MEASURE 2.5 |
-| ANSSI 2024 | R25 pattern filtering, R29 audit trail, R30 clearance access |
+| ANSSI 2024 | R25 pattern filtering, R29 audit trail |
 | Custom policies | YAML-configurable rules per agent profile |
 
 Possible outcomes per action:
@@ -618,7 +618,7 @@ Public verification: any third party can verify a certificate hash without acces
 | **SEC** | Rule 17a-4 7-year retention | .pqz certified exports |
 | **SOX** | §404 Internal controls | Signed decision records |
 | **NIST AI RMF** | GOVERN 1.2, MANAGE 2.2 | TrustGate policy engine |
-| **ANSSI 2024** | R25, R29, R30 | A2C detection, audit trail, access control |
+| **ANSSI 2024** | R25, R29 | A2C detection, audit trail |
 
 ---
 
@@ -860,7 +860,7 @@ By implementing the Proof of Continuity Protocol across four integrated layers �
 **Key capabilities (v2.0.0):**
 - ✅ <10ms overhead per event (Ed25519 signing)
 - ✅ Post-quantum secure archives (Dilithium3, NIST FIPS 204)
-- ✅ Compliance-native (EU AI Act, ANSSI, NIST AI RMF, GDPR, SOC2, HIPAA, SEC)
+- Reference mapping (EU AI Act, ANSSI, NIST AI RMF, GDPR, SOC2, HIPAA, SEC)
 - ✅ Behavioural drift detection (TSI, A2C, VRS)
 - ✅ External peer observation — no PiQrypt required on the observed side
 - ✅ Human oversight gate (TrustGate)

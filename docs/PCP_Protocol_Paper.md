@@ -496,7 +496,6 @@ TrustGate is the direct technical implementation of human oversight mandates:
 | EU AI Act Art. 14 | Human oversight mandatory for high-risk AI systems | ESCALATE with TTL · fail-safe DENY |
 | EU AI Act Art. 12 | Inviolable logging of high-risk AI decisions | Every decision is a signed chain event |
 | NIST AI RMF GOVERN 1.2 | Governance mechanisms for AI systems | Configurable policy profiles per agent |
-| ANSSI 2024 R30 | Clearance-based access control for AI actions | ALLOW/DENY per policy profile |
 
 ---
 
@@ -558,17 +557,16 @@ The NIST AI Risk Management Framework, widely adopted in the United States and r
 
 ### 11.3 ANSSI 2024
 
-France's national cybersecurity agency (ANSSI) published AI security recommendations in 2024 that directly map to PCP capabilities:
+France's national cybersecurity agency (ANSSI) published AI security recommendations in 2024 to which some PCP capabilities can be mapped. This mapping is not an assessment of compliance:
 
 | Recommendation | Requirement | PCP Layer |
 |---------------|-------------|-----------|
 | R25 | Dangerous pattern filtering before execution | TrustGate DENY |
 | R29 | Audit trail — complete, tamper-evident | PiQrypt Core |
-| R30 | Clearance-based access control | TrustGate ALLOW/DENY per policy |
 
 ### 11.4 The Window
 
-Three major regulatory frameworks are converging simultaneously in 2026. The organisations that deploy PCP now — or build on PCP-compliant infrastructure — will have a compliance artefact that satisfies all three. Those that do not will be retrofitting accountability into systems that were not designed for it.
+Three major regulatory frameworks are converging simultaneously in 2026. The organisations that deploy PCP now — or build on PCP-compliant infrastructure — will have a verifiable record that can be mapped to all three. Those that do not will be retrofitting accountability into systems that were not designed for it.
 
 Retrofitting accountability is harder than building it in. TLS is not retrofitted on top of an insecure protocol. It is the protocol. PCP is the same category of infrastructure.
 

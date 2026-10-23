@@ -101,7 +101,7 @@ aiss.export_audit_chain("audit.json", certified=True)
 | **Autonomous Vehicles** | Legal liability for accidents | Black box with crypto proof |
 | **Supply Chain** | Track AI inventory decisions | Non-repudiable logistics trail |
 
-**Compliance:** SOC2 • ISO 27001 • HIPAA • GDPR • SEC/FINRA • EU AI Act Art.14 • NIST AI RMF • ANSSI 2024
+**References:** SOC2 • ISO 27001 • HIPAA • GDPR • SEC/FINRA • EU AI Act Art.14 • NIST AI RMF • ANSSI 2024
 
 **v1.7.1 — New:** TrustGate governance engine · AgentSession cross-framework sessions · 9 framework bridges (LangChain, CrewAI, AutoGen, OpenClaw, Session, MCP, Ollama, ROS2, RPi)
 
