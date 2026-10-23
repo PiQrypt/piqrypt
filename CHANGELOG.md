@@ -138,6 +138,10 @@ existing checks behave, because some of them accepted more than they should have
 - Licence gating is unchanged in this release (see `docs/LIMITS_AND_POSTURE.md`).
 - TrustGate: ANSSI references. Decision reasons, error messages, the console and the documentation no longer cite ANSSI R22, R26, R28, R30 or R35: in the ANSSI guide ANSSI-PA-102 (2024) those numbers cover other topics than the controls they were attached to. R9, R25, R27 and R29 are kept. The `anssi_strict` profile keeps its name and its thresholds. The profile, the console and the smoke tests no longer state compliance, a coverage percentage or a count of requirements covered. These are references, not an assessment of compliance with the ANSSI guide, the NIST AI RMF or the EU AI Act.
 
+### Licensing
+
+- `aiss/key_store.py` is now released under the MIT license (it was Elastic-2.0). Its code is unchanged. `aiss/signer_file.py` remains Elastic-2.0. Versions released before 1.10.0 keep the license they were published under.
+
 ### Fixed
 
 - `secure_agent_key` no longer leaves `private.key.json.bak` behind when it encrypts a plaintext
