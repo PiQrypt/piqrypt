@@ -237,7 +237,7 @@ Full details → [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md)
 > the root MIT license applies.
 
 > Within aiss/, the SPDX-License-Identifier header at the top of a file prevails over
-> the directory LICENSE file. For example aiss/identity.py, aiss/key_store.py,
+> the directory LICENSE file. For example aiss/identity.py, aiss/key_store.py, aiss/logger.py,
 > aiss/signer.py and aiss/signer_conformance.py are MIT.
 
 ---
