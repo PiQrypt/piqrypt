@@ -39,7 +39,7 @@ TELEMETRY_ENDPOINT = os.getenv(
 )
 
 # ── Version ──────────────────────────────────────────────────────────────────
-_VERSION = "1.9.2"
+_VERSION = "1.10.0"
 
 # ── System fingerprint (computed once at import) ─────────────────────────────
 _os_name   = platform.system()    # Linux / Windows / Darwin

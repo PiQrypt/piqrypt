@@ -7,9 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.10.0] - Unreleased
-
-The release date is set when the tag is created.
+## [1.10.0] - 2026-10-23
 
 This release adds AISS-2.1 (hybrid Ed25519 + ML-DSA-65 with domain separation), real RFC 3161
 verification, a Signer interface, and published test vectors. It also changes how several

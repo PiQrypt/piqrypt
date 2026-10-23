@@ -1,6 +1,6 @@
 # PiQrypt License System
 
-**Version:** 1.9.2
+**Version:** 1.10.0
 **Last Updated:** 2026-03-12
 
 ---

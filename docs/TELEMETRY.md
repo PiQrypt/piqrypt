@@ -1,7 +1,7 @@
 # Telemetry System
 
-**Version:** 1.9.2
-**Date:** 2026-10-21
+**Version:** 1.10.0
+**Date:** 2026-10-23
 **Status:** Current
 
 ---
@@ -374,7 +374,7 @@ It helps us improve the product, fix bugs faster, and prioritize features — wh
 ---
 
 **Last Updated:** 2026-03-12
-**Version:** 1.9.2
+**Version:** 1.10.0
 
 ---
 

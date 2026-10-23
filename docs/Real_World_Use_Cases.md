@@ -279,7 +279,7 @@ piqrypt verify audit.json
 
 **Built with ❤️ for autonomous systems**
 
-*PiQrypt v1.9.2 — Cryptographic Proof for AI Agents*
+*PiQrypt v1.10.0 — Cryptographic Proof for AI Agents*
 
 ---
 

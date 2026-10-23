@@ -1,7 +1,7 @@
 # OpenClaw Integration Guide
 
-**Version:** 1.9.2
-**Date:** 2026-10-21
+**Version:** 1.10.0
+**Date:** 2026-10-23
 **Status:** Current
 
 ---
