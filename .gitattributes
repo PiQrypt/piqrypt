@@ -1,2 +1,4 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+# Pinned trust-root fixtures must stay byte-exact on every platform (no EOL conversion)
+tests/vectors_tsa/*.pem -text
