@@ -18,8 +18,8 @@ policy_loader.py — Trust Gate Policy Loader
 
 Loads, validates and manages policy.yaml files.
 
-Compliance:
-    ANSSI R35  — policy file integrity (SHA-256 hash on load)
+References:
+    Policy file integrity (SHA-256 hash on load)
     ANSSI R29  — policy_version + policy_hash in every decision
     NIST GOVERN 6.2 — policies reviewed and updated with audit trail
     AI Act Art.9  — risk management system documented and maintained
@@ -46,7 +46,7 @@ class PolicyLoadError(Exception):
     """Policy file cannot be loaded or parsed."""
 
 class PolicyIntegrityError(Exception):
-    """Policy file hash mismatch — possible tampering. ANSSI R35."""
+    """Policy file hash mismatch — possible tampering."""
 
 class PolicyValidationError(Exception):
     """Policy file is structurally invalid."""
@@ -109,7 +109,7 @@ class Policy:
     author:      str = ""
     created_at:  int = field(default_factory=lambda: int(time.time()))
 
-    # ── Integrity — ANSSI R35 ─────────────────────────────────────────────────
+    # ── Integrity ─────────────────────────────────────────────────
     content_hash: str = ""          # SHA-256 of raw file content
 
     # ── Sections ──────────────────────────────────────────────────────────────
@@ -137,14 +137,14 @@ def load_policy(path: Path, verify_hash: Optional[str] = None) -> Policy:
     Args:
         path:        Path to policy.yaml or policy.json
         verify_hash: Expected SHA-256 hash — raises PolicyIntegrityError if mismatch.
-                     ANSSI R35: must be verified in production.
+                     Must be verified in production.
 
     Returns:
         Validated Policy object.
 
     Raises:
         PolicyLoadError:       File not found or cannot be parsed
-        PolicyIntegrityError:  Hash mismatch — ANSSI R35
+        PolicyIntegrityError:  Hash mismatch
         PolicyValidationError: Schema validation failure
     """
     if not path.exists():
@@ -152,7 +152,7 @@ def load_policy(path: Path, verify_hash: Optional[str] = None) -> Policy:
 
     raw = path.read_bytes()
 
-    # ── Integrity check — ANSSI R35 ──────────────────────────────────────────
+    # ── Integrity check ──────────────────────────────────────────
     computed_hash = hashlib.sha256(raw).hexdigest()
     if verify_hash and computed_hash != verify_hash:
         raise PolicyIntegrityError(
@@ -160,7 +160,7 @@ def load_policy(path: Path, verify_hash: Optional[str] = None) -> Policy:
             f"  Expected : {verify_hash}\n"
             f"  Got      : {computed_hash}\n"
             f"  File     : {path}\n"
-            f"Policy may have been tampered with. — ANSSI R35"
+            f"Policy may have been tampered with."
         )
 
     # ── Parse ─────────────────────────────────────────────────────────────────

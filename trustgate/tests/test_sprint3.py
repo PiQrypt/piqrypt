@@ -512,7 +512,7 @@ def test_approve_insufficient_clearance():
     )
     assert status == 403
     assert "L1" in data["error"] or "clearance" in data["error"].lower()
-    print("  ✓ Approve 403 — L1 cannot approve VRS=0.80 (ANSSI R30)")
+    print("  ✓ Approve 403 — L1 cannot approve VRS=0.80")
 
 
 # ─── BLOC 7 — Audit endpoints ─────────────────────────────────────────────────
@@ -606,7 +606,7 @@ def test_full_require_human_flow():
     5. Principal approves
     6. Decision resolved with signature
 
-    AI Act Art.14 / ANSSI R9 compliance: provable end-to-end.
+    References exercised: AI Act Art.14, ANSSI R9 (end-to-end flow).
     """
     f = get_fixture()
 
@@ -664,7 +664,7 @@ def test_full_require_human_flow():
     print(
         "  ✓ FULL E2E REQUIRE_HUMAN FLOW — "
         "evaluate→queue→authenticate→approve→audit "
-        "[ANSSI R9 / AI Act Art.14 ✅]"
+        "[references exercised: ANSSI R9, AI Act Art.14]"
     )
 
 
@@ -704,7 +704,7 @@ def run_all():
         # BLOC 6 — Approve / Reject
         ("Full approve flow", test_approve_flow),
         ("Full reject flow", test_reject_flow),
-        ("Approve 403 — insufficient clearance (R30)", test_approve_insufficient_clearance),
+        ("Approve 403 — insufficient clearance", test_approve_insufficient_clearance),
 
         # BLOC 7 — Audit
         ("GET /api/audit", test_audit_list),

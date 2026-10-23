@@ -19,8 +19,8 @@ policy_versioning.py — Trust Gate Policy Versioning
 Every policy change is hashed, recorded, and diffable.
 Policy history is an immutable log — never deleted, only appended.
 
-Compliance:
-    ANSSI R35  — protect policy file integrity (SHA-256)
+References:
+    Protect policy file integrity (SHA-256)
     NIST GOVERN 6.2 — policies reviewed and updated with audit trail
     AI Act Art.9  — risk management system version-controlled
     AI Act Art.17 — quality management — corrective action procedures
@@ -73,7 +73,7 @@ class PolicyVersioning:
     Each time a policy is activated, a version record is appended
     to the history log. The content is stored for diff capability.
 
-    ANSSI R35: Hash-verified load at every activation.
+    Hash-verified load at every activation.
     """
 
     def __init__(self, versions_dir: Path = DEFAULT_VERSIONS_DIR):
@@ -200,7 +200,7 @@ class PolicyVersioning:
                 f"Policy hash mismatch — file may have been modified outside versioning.\n"
                 f"  Recorded hash : {last.content_hash[:16]}...\n"
                 f"  Current hash  : {current_hash[:16]}...\n"
-                f"  ANSSI R35: use activate() to record changes."
+                f"  Use activate() to record changes."
             )
 
     # ── Internal ──────────────────────────────────────────────────────────────

@@ -19,10 +19,10 @@ decision.py — Trust Gate Decision
 Every governance decision is an immutable, signed, chainable record.
 It is a first-class AISS event — auditable, exportable, legally opposable.
 
-Compliance:
+References:
     ANSSI R9  — human approval signature + justification
     ANSSI R29 — full context logged at every decision
-    ANSSI R35 — policy version + hash in every record
+    Policy version + hash in every record
     AI Act Art.12 — automatic logging, tamper-proof via PiQrypt chain
     AI Act Art.14 — approval_signature proves human oversight
     NIST MANAGE 2.2 — human oversight mechanism documented
@@ -153,7 +153,7 @@ class Decision:
     reason:         str = ""     # human-readable — AI Act Art.13 transparency
     state:          str = DecisionState.RESOLVED
 
-    # ── Policy traceability — ANSSI R35 / NIST MANAGE 2.4 ────────────────────
+    # ── Policy traceability — NIST MANAGE 2.4 ────────────────────
     policy_version: str = ""
     policy_hash:    str = ""
 
@@ -233,7 +233,7 @@ class Decision:
         signature: bytes,
         justification: str = "",
     ) -> None:
-        """Record human approval — AI Act Art.14 compliance."""
+        """Record human approval — AI Act Art.14."""
         if self.outcome != Outcome.REQUIRE_HUMAN:
             raise ValueError(f"Cannot approve a {self.outcome} decision")
         if self.state != DecisionState.PENDING:
@@ -250,7 +250,7 @@ class Decision:
         signature: bytes,
         justification: str = "",
     ) -> None:
-        """Record human rejection — AI Act Art.14 compliance."""
+        """Record human rejection — AI Act Art.14."""
         if self.outcome != Outcome.REQUIRE_HUMAN:
             raise ValueError(f"Cannot reject a {self.outcome} decision")
         if self.state != DecisionState.PENDING:

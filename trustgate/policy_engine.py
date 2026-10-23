@@ -24,10 +24,11 @@ Design principles:
     - Every decision has a documented reason
     - Priority order is explicit and auditable
 
-Compliance:
+References:
     ANSSI R9  — automated critical actions forbidden → REQUIRE_HUMAN or BLOCK
-    ANSSI R26 — role-based access control enforced
-    ANSSI R27 — network whitelist + escalation on uncontrolled inputs
+    Role-based access control enforced
+    Network whitelist enforced
+    ANSSI R27 — progressive restriction of automatic actions on repeated anomalies
     NIST MANAGE 1.3 — risk responses prioritized by severity
     NIST MANAGE 2.2 — human oversight mechanism for high-risk actions
     AI Act Art.14 — human can always override — REQUIRE_HUMAN flow
@@ -86,7 +87,7 @@ def evaluate(ctx: EvaluationContext, policy: Policy) -> Decision:
         policy: Active policy (loaded and hash-verified)
 
     Returns:
-        Decision — outcome + reason + full compliance metadata
+        Decision — outcome + reason + full audit metadata
     """
     outcome, reason = _evaluate_rules(ctx, policy)
 
@@ -138,13 +139,13 @@ def _evaluate_rules(ctx: EvaluationContext, policy: Policy) -> tuple[Outcome, st
             continue
 
     # ── Priority 3: Role violation ────────────────────────────────────────────
-    # ANSSI R26, R30 — least privilege enforcement
+    # Least privilege enforcement
     role_policy = policy.get_role(ctx.role)
     if not role_policy.can_use(ctx.action):
         return (
             Outcome.BLOCK,
             f"Action '{ctx.action}' not permitted for role '{ctx.role}' "
-            f"[ANSSI R26/R30 — least privilege / NIST GOVERN 1.2]"
+            f"[least privilege / NIST GOVERN 1.2]"
         )
 
     # ── Priority 4: TSI CRITICAL ──────────────────────────────────────────────
@@ -158,7 +159,7 @@ def _evaluate_rules(ctx: EvaluationContext, policy: Policy) -> tuple[Outcome, st
         )
 
     # ── Priority 5: Network domain violation ──────────────────────────────────
-    # ANSSI R28 — Zero Trust network policy
+    # Zero Trust network policy
     if ctx.target_domain:
         if (
             policy.network.block_external
@@ -167,7 +168,7 @@ def _evaluate_rules(ctx: EvaluationContext, policy: Policy) -> tuple[Outcome, st
             return (
                 Outcome.BLOCK,
                 f"Domain '{ctx.target_domain}' not in allowed_domains whitelist "
-                f"[ANSSI R28 — Zero Trust network / NIST GOVERN 4.1]"
+                f"[Zero Trust network / NIST GOVERN 4.1]"
             )
 
     # ── Priority 6: VRS above human threshold ─────────────────────────────────
@@ -220,7 +221,7 @@ def simulate(ctx: EvaluationContext, policy: Policy) -> dict:
     No alert counters updated. No journal entry.
 
     Used for:
-    - Policy testing before activation (ANSSI R22)
+    - Policy testing before activation
     - CLI: piqrypt trustgate simulate --policy policy_v2.yaml
     - Dashboard: Policy Editor preview
 

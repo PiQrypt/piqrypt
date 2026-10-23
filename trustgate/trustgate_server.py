@@ -17,12 +17,12 @@ Bridges all Trust Gate modules into a unified REST API:
     - Policy Engine  — evaluate actions
     - Decision Queue — REQUIRE_HUMAN flow
     - Human Principal — SSO authentication
-    - Audit Journal  — compliance export
+    - Audit Journal  — audit export
     - Vigil bridge   — sync agent states
 
-Compliance:
+References:
     ANSSI R29  — all API calls logged via audit_journal
-    ANSSI R30  — all admin endpoints require principal auth
+    All admin endpoints require principal auth
     AI Act Art.14 — /decisions/<id>/approve|reject always available
     NIST MANAGE 2.2 — human oversight accessible via API
 
@@ -462,11 +462,11 @@ class TrustGateServer:
     # ── Handlers ─────────────────────────────────────────────────────────────
 
     def _handle_list_profiles(self):
-        """GET /api/profiles — liste les profils de conformité disponibles."""
+        """GET /api/profiles — liste les profils disponibles."""
         profiles_dir = Path(__file__).parent / "profiles"
         profiles = []
         descriptions = {
-            "anssi_strict":    "ANSSI 2024 — Secteur public français, OIV, infra critique",
+            "anssi_strict":    "Strict profile inspired by ANSSI-PA-102 (2024)",
             "nist_balanced":   "NIST AI RMF 1.0 — Entreprise US, risque modéré",
             "ai_act_high_risk":"EU AI Act — Finance, santé, RH, justice",
         }
@@ -581,7 +581,7 @@ class TrustGateServer:
         """
         POST /api/policy/simulate
         Accepte un champ optionnel "yaml" pour simuler un profil
-        non encore activé — ANSSI R22 / Policy Editor preview.
+        non encore activé: Policy Editor preview.
         """
         try:
             # Si un yaml est fourni, on crée une policy temporaire
@@ -804,7 +804,7 @@ class TrustGateServer:
     def _handle_audit_export(self, params: dict):
         """
         Export signed audit journal.
-        ANSSI R29 / AI Act Art.12 — exportable compliance evidence.
+        ANSSI R29 / AI Act Art.12 - exportable audit records.
         """
         agent_id = params.get("agent_id", [None])[0]
         outcome  = params.get("outcome", [None])[0]

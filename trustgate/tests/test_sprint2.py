@@ -229,7 +229,7 @@ def test_principal_clearance_levels():
         except InsufficientClearanceError as e:
             assert "L1" in str(e)
 
-        print("  ✓ Clearance levels L1/L2/L3 — VRS limits enforced (ANSSI R30)")
+        print("  ✓ Clearance levels L1/L2/L3 — VRS limits enforced")
 
 
 def test_principal_deactivate():
@@ -342,7 +342,7 @@ def test_queue_insufficient_clearance():
 
         # Decision still pending
         assert queue.count_pending() == 1
-        print("  ✓ DecisionQueue — insufficient clearance rejected (ANSSI R30)")
+        print("  ✓ DecisionQueue — insufficient clearance rejected")
 
 
 def test_queue_double_resolve():
@@ -568,14 +568,14 @@ def run_all():
         ("SSO authenticate — token issued", test_principal_sso_authenticate),
         ("SSO token expiry", test_principal_sso_expired_token),
         ("sign_decision_sso — HMAC-SHA256", test_principal_sign_decision_sso),
-        ("Clearance levels L1/L2/L3 (ANSSI R30)", test_principal_clearance_levels),
+        ("Clearance levels L1/L2/L3", test_principal_clearance_levels),
         ("Principal deactivate/reactivate", test_principal_deactivate),
 
         # BLOC 2 — Decision Queue
         ("Queue enqueue — persisted as pending", test_queue_enqueue),
         ("Queue approve — signed, state=APPROVED", test_queue_approve),
         ("Queue reject — state=REJECTED", test_queue_reject),
-        ("Queue insufficient clearance (ANSSI R30)", test_queue_insufficient_clearance),
+        ("Queue insufficient clearance", test_queue_insufficient_clearance),
         ("Queue double-approve rejected", test_queue_double_resolve),
         ("Queue timeout → auto-BLOCK (ANSSI R9)", test_queue_timeout_auto_reject),
         ("Queue on_resolve() callback", test_queue_callback_on_resolve),

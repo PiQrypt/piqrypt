@@ -25,7 +25,7 @@ Channels:
     email     — SMTP (optional)
     console   — stdout (dev/testing)
 
-Compliance:
+References:
     ANSSI R9   — human must be reachable, not just notified if online
     AI Act Art.14 — effective human oversight requires active notification
     NIST MANAGE 2.2 — human oversight mechanism documented

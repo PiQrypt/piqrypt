@@ -10,29 +10,25 @@ Run before every release. All 74 checks must pass.
 
 Structure:
     BLOC 01 — Decision dataclass & serialization
-    BLOC 02 — Policy loading & integrity (ANSSI R35)
+    BLOC 02 — Policy loading & integrity
     BLOC 03 — Policy validation & error handling
     BLOC 04 — Policy Engine — all 10 priority rules
     BLOC 05 — Policy Engine — simulate() mode
     BLOC 06 — Policy Versioning — hash, history, diff, tamper
     BLOC 07 — Audit Journal — record, chain, export, filter
     BLOC 08 — Human Principal — SSO create/load/auth/sign
-    BLOC 09 — Human Principal — clearance levels (ANSSI R30)
+    BLOC 09 — Human Principal — clearance levels
     BLOC 10 — Decision Queue — enqueue, approve, reject, timeout
     BLOC 11 — Notifier — context, severity, channels
-    BLOC 12 — Compliance Profiles — ANSSI / NIST / AI Act
+    BLOC 12 — Policy Profiles — ANSSI / NIST / AI Act
     BLOC 13 — HTTP API — evaluate, decisions, principals, audit
     BLOC 14 — Vigil bridge — agent state → Trust Gate
     BLOC 15 — Full E2E — evaluate → queue → auth → approve → audit
 
-Compliance mapping verified:
+References exercised by these checks:
     ANSSI R9   — BLOC 04, 10, 13, 15
     ANSSI R25  — BLOC 04
-    ANSSI R26  — BLOC 04, 12
-    ANSSI R28  — BLOC 04, 12
     ANSSI R29  — BLOC 07, 13
-    ANSSI R30  — BLOC 09, 10
-    ANSSI R35  — BLOC 02, 06, 12
     NIST MANAGE 1.3 — BLOC 04
     NIST MANAGE 2.2 — BLOC 10, 13, 15
     NIST MEASURE 2.5 — BLOC 04, 14
@@ -195,7 +191,7 @@ def bloc_01():
 # ─── BLOC 02 — Policy loading & integrity ─────────────────────────────────────
 
 def bloc_02():
-    bloc("BLOC 02 — Policy loading & integrity (ANSSI R35)")
+    bloc("BLOC 02 — Policy loading & integrity")
     with tempfile.TemporaryDirectory() as d:
         content = (
             "version: '1.0'\nname: 'smoke_load'\n"
@@ -216,9 +212,9 @@ def bloc_02():
 
         try:
             load_policy(path, verify_hash="0" * 64)
-            check("ANSSI R35 — wrong hash raises", False, "should have raised")
+            check("Wrong hash raises", False, "should have raised")
         except PolicyIntegrityError:
-            check("ANSSI R35 — wrong hash raises PolicyIntegrityError", True)
+            check("Wrong hash raises PolicyIntegrityError", True)
 
 
 # ─── BLOC 03 — Policy validation ──────────────────────────────────────────────
@@ -290,7 +286,7 @@ def bloc_04():
     # P3: role violation
     pe._alert_counts.clear()
     d = evaluate(make_ctx(role="operator", action="shell"), p)
-    check("P3 — BLOCK (role violation ANSSI R26)", d.outcome == Outcome.BLOCK)
+    check("P3 — BLOCK (role violation)", d.outcome == Outcome.BLOCK)
     check("P3 — reason mentions role",
           "role" in d.reason.lower() or "operator" in d.reason)
 
@@ -304,7 +300,7 @@ def bloc_04():
     pe._alert_counts.clear()
     p_net = make_policy(block_external=True)
     d = evaluate(make_ctx(action="http_get", target_domain="evil.com"), p_net)
-    check("P5 — BLOCK (domain not whitelisted R28)", d.outcome == Outcome.BLOCK)
+    check("P5 — BLOCK (domain not whitelisted)", d.outcome == Outcome.BLOCK)
 
     # P5b: whitelisted domain passes
     pe._alert_counts.clear()
@@ -375,7 +371,7 @@ def bloc_05():
 # ─── BLOC 06 — Policy versioning ─────────────────────────────────────────────
 
 def bloc_06():
-    bloc("BLOC 06 — Policy Versioning — hash, history, diff, tamper (ANSSI R35)")
+    bloc("BLOC 06 — Policy Versioning — hash, history, diff, tamper")
     with tempfile.TemporaryDirectory() as d:
         v1 = (
             "version: '1.0'\nname: 'ver_test'\n"
@@ -415,10 +411,10 @@ def bloc_06():
         valid, msg = pv.verify_current(p2)
         check("verify_current() — valid",    valid, msg)
 
-        # Tamper p2 — hash mismatch must be detected (ANSSI R35)
+        # Tamper p2 — hash mismatch must be detected
         p2.write_text(v2 + "# TAMPERED\n")
         valid2, msg2 = pv.verify_current(p2)
-        check("ANSSI R35 — tamper detected", not valid2)
+        check("Tamper detected", not valid2)
 
 
 # ─── BLOC 07 — Audit Journal ──────────────────────────────────────────────────
@@ -520,7 +516,7 @@ def bloc_08():
 # ─── BLOC 09 — Clearance levels ───────────────────────────────────────────────
 
 def bloc_09():
-    bloc("BLOC 09 — Human Principal — clearance levels (ANSSI R30)")
+    bloc("BLOC 09 — Human Principal — clearance levels")
     with tempfile.TemporaryDirectory() as d:
         pdir = Path(d) / "principals"
 
@@ -611,7 +607,7 @@ def bloc_10():
             queue.approve(d3.decision_id, l1, token_l1)
             check("L1 cannot approve VRS=0.80", False)
         except InsufficientClearanceError:
-            check("L1 cannot approve VRS=0.80 (ANSSI R30)", True)
+            check("L1 cannot approve VRS=0.80", True)
 
         # Timeout
         d4 = make_d(timeout=1)
@@ -700,10 +696,10 @@ def bloc_11():
     check("Failed channel — no raise",         r2["failed"] == 1)
 
 
-# ─── BLOC 12 — Compliance Profiles ───────────────────────────────────────────
+# ─── BLOC 12 — Policy Profiles ───────────────────────────────────────────
 
 def bloc_12():
-    bloc("BLOC 12 — Compliance Profiles — ANSSI / NIST / AI Act")
+    bloc("BLOC 12 — Policy Profiles — ANSSI / NIST / AI Act")
     profiles_dir = ROOT / "trustgate" / "profiles"
 
     for profile_name, expected in [
@@ -988,7 +984,7 @@ def bloc_15():
         check("E2E — AI Act Art.12 — chain",     audit.get("chain_valid") is True)
 
         srv.stop()
-        print(f"\n    {G}{BOLD}[ANSSI R9 ✅ AI Act Art.14 ✅ NIST MANAGE 2.2 ✅]{RESET}")
+        print(f"\n    {G}{BOLD}References exercised by these checks: ANSSI R9, AI Act Art.14, NIST MANAGE 2.2{RESET}")
 
 
 # ─── Runner ───────────────────────────────────────────────────────────────────
@@ -1018,9 +1014,6 @@ def main():
 
     if failed == 0:
         print(f"  {G}{BOLD}ALL {total} CHECKS PASSED ✅{RESET}")
-        print(f"\n  {G}ANSSI 2024   — 21 requirements covered{RESET}")
-        print(f"  {G}NIST AI RMF  — 5 functions covered{RESET}")
-        print(f"  {G}EU AI Act    — Art. 9/12/13/14/17 covered{RESET}")
     else:
         print(f"  {R}{BOLD}{passed}/{total} passed — {failed} FAILED{RESET}")
         print(f"\n{R}Failures:{RESET}")

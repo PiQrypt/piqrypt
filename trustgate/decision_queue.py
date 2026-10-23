@@ -24,7 +24,7 @@ Timeout policy (configurable in policy.yaml):
     on_timeout: BLOCK    → decision becomes BLOCK (AI Act high-risk)
     on_timeout: ESCALATE → forwarded to L2 principal
 
-Compliance:
+References:
     ANSSI R9   — human must be in decision loop, no timeout bypass
     AI Act Art.14 — human oversight mechanism, always interruptible
     NIST MANAGE 2.2 — documented human oversight procedure
@@ -129,7 +129,7 @@ class DecisionQueue:
         """
         Approve a pending decision.
 
-        Compliance:
+        References:
             AI Act Art.14 — human approves with signed record
             ANSSI R9 — principal_id + signature stored
 
@@ -144,7 +144,7 @@ class DecisionQueue:
             self._assert_not_resolved(decision)
             self._assert_not_timed_out(decision)
 
-            # Clearance check — ANSSI R30
+            # Clearance check
             principal.assert_can_approve(decision.vrs_at_decision)
 
             # Generate signature
@@ -193,7 +193,7 @@ class DecisionQueue:
         """
         Reject a pending decision — action will be denied.
 
-        Compliance: AI Act Art.14 — human can always stop the agent
+        References: AI Act Art.14 — human can always stop the agent
         """
         with self._lock:
             decision = self._load_pending(decision_id)

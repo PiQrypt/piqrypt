@@ -1,11 +1,11 @@
 # ANSSI Strict Profile — Trust Gate
-# Full compliance with ANSSI 2024 — 35 recommendations
+# Strict profile inspired by ANSSI-PA-102 (2024). It is a set of thresholds and controls, not an assessment of compliance.
 # Designed for: French public sector, OIV, critical infrastructure
 #
 # Key characteristics:
 # - Lower VRS thresholds → more human oversight (R9)
 # - Faster escalation (R27)
-# - All external domains blocked by default (R28)
+# - All external domains blocked by default
 # - Mandatory justification for approvals (R9)
 # - Auto-reject on timeout (Zero Trust default)
 # - Full payload logging — note: set to hash-only if RGPD applies
@@ -22,7 +22,7 @@ thresholds:
   tsi_unstable_action: "REQUIRE_HUMAN"
   tsi_critical_action: "BLOCK"
 
-# ── Roles — R26, R30 — Least privilege ────────────────────────────────────────
+# ── Roles — Least privilege ────────────────────────────────────────
 roles:
   read_only:
     allowed_tools: [read_db, list_files, search, query]
@@ -36,7 +36,7 @@ roles:
     allowed_tools: [read_db, write_db, http_get, http_post, query]
     blocked_tools: [shell, admin, create_user, financial_transfer]
 
-  # No role has shell or admin by default — ANSSI R26
+  # No role has shell or admin by default
 
 # ── Escalation — R27 ──────────────────────────────────────────────────────────
 escalation:
@@ -44,7 +44,7 @@ escalation:
   auto_restrict_after: 3
   restrict_duration_minutes: 120
 
-# ── Network — R28 Zero Trust ──────────────────────────────────────────────────
+# ── Network — Zero Trust ──────────────────────────────────────────────────
 network:
   allowed_domains: []           # empty — explicit whitelist required per deployment
   block_external: true

@@ -17,7 +17,7 @@ Every entry is:
 - Hash-linked to the previous entry (like PiQrypt event chain)
 - Exportable as signed JSON or PDF
 
-Compliance:
+References:
     ANSSI R29  — log ALL processing with fine-grained granularity
     AI Act Art.12 — automatic logging, tamper-proof, retention management
     NIST MANAGE 4.1 — residual risks documented
@@ -190,7 +190,7 @@ class AuditJournal:
     ) -> List[JournalEntry]:
         """
         Retrieve recent journal entries with optional filters.
-        Used for: audit export, escalation counting, compliance reports.
+        Used for: audit export, escalation counting, audit reports.
         """
         cutoff = int(time.time()) - days * 86400
         results = []

@@ -207,14 +207,14 @@ def test_policy_integrity_check():
         p = load_policy(path, verify_hash=correct_hash)
         assert p.name == "integrity_test"
 
-        # Wrong hash — raises PolicyIntegrityError (ANSSI R35)
+        # Wrong hash — raises PolicyIntegrityError
         try:
             load_policy(path, verify_hash=wrong_hash)
             assert False, "Should have raised PolicyIntegrityError"
         except PolicyIntegrityError as e:
             assert "tampered" in str(e).lower() or "integrity" in str(e).lower()
 
-        print("  ✓ Policy integrity check — ANSSI R35")
+        print("  ✓ Policy integrity check")
     finally:
         path.unlink(missing_ok=True)
 
@@ -294,7 +294,7 @@ def test_engine_block_role_violation():
     d = evaluate(ctx, policy)
     assert d.outcome == Outcome.BLOCK
     assert "role" in d.reason.lower() or "operator" in d.reason.lower()
-    print("  ✓ Policy engine — BLOCK (role violation — least privilege ANSSI R26)")
+    print("  ✓ Policy engine — BLOCK (role violation — least privilege)")
 
 
 def test_engine_block_network():
@@ -307,7 +307,7 @@ def test_engine_block_network():
     d = evaluate(ctx, policy)
     assert d.outcome == Outcome.BLOCK
     assert "domain" in d.reason.lower() or "whitelist" in d.reason.lower()
-    print("  ✓ Policy engine — BLOCK (domain not whitelisted ANSSI R28)")
+    print("  ✓ Policy engine — BLOCK (domain not whitelisted)")
 
 
 def test_engine_allow_whitelisted_domain():
@@ -521,7 +521,7 @@ def test_versioning_verify_current():
         valid, msg = versioning.verify_current(policy_path)
         assert not valid
         assert "mismatch" in msg.lower() or "tampered" in msg.lower()
-        print("  ✓ Policy versioning — tamper detection (ANSSI R35)")
+        print("  ✓ Policy versioning — tamper detection")
 
 
 # ─── Runner ───────────────────────────────────────────────────────────────────
@@ -536,7 +536,7 @@ def run_all():
 
         # BLOC 2 — Policy Loader
         ("Policy load YAML", test_policy_load_yaml),
-        ("Policy integrity check (ANSSI R35)", test_policy_integrity_check),
+        ("Policy integrity check", test_policy_integrity_check),
         ("Policy validation errors", test_policy_validation_errors),
 
         # BLOC 3 — Policy Engine
@@ -545,8 +545,8 @@ def run_all():
         ("Engine REQUIRE_HUMAN (VRS)", test_engine_require_human_vrs),
         ("Engine BLOCK (dangerous pattern rm -rf)", test_engine_block_dangerous_pattern),
         ("Engine BLOCK (dangerous pattern SQL)", test_engine_block_sql_injection),
-        ("Engine BLOCK (role violation ANSSI R26)", test_engine_block_role_violation),
-        ("Engine BLOCK (domain not whitelisted R28)", test_engine_block_network),
+        ("Engine BLOCK (role violation)", test_engine_block_role_violation),
+        ("Engine BLOCK (domain not whitelisted)", test_engine_block_network),
         ("Engine ALLOW (whitelisted domain)", test_engine_allow_whitelisted_domain),
         ("Engine BLOCK (TSI CRITICAL)", test_engine_tsi_critical),
         ("Engine REQUIRE_HUMAN (TSI UNSTABLE)", test_engine_tsi_unstable),
@@ -563,7 +563,7 @@ def run_all():
         # BLOC 5 — Policy Versioning
         ("Versioning activate()", test_versioning_activate),
         ("Versioning history (2 versions)", test_versioning_history),
-        ("Versioning tamper detection (R35)", test_versioning_verify_current),
+        ("Versioning tamper detection", test_versioning_verify_current),
     ]
 
     GREEN = "\033[92m"

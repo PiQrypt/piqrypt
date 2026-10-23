@@ -595,7 +595,7 @@
         <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M8 2L3 5v4c0 3 2.5 5.5 5 6.5C11 14.5 13 12 13 9V5L8 2z"/>
         </svg>
-        Compliance
+        References
       </div>
     </div>
 
@@ -700,7 +700,7 @@
     <!-- Policy Editor -->
     <div class="panel" id="panel-policy">
       <div class="panel-title">Policy Editor</div>
-      <div class="panel-sub">Edit and simulate policy before activation — ANSSI R35</div>
+      <div class="panel-sub">Edit and simulate policy before activation</div>
 
       <div class="two-col">
         <div>
@@ -729,7 +729,7 @@
         <select class="filter-select" id="profile-select" onchange="loadProfile(this.value)" style="margin-left:8px">
           <option value="">— Load Profile —</option>
           <option value="nist_balanced">NIST Balanced</option>
-          <option value="anssi_strict">ANSSI Strict</option>
+          <option value="anssi_strict">Strict (inspired by ANSSI-PA-102)</option>
           <option value="ai_act_high_risk">AI Act High Risk</option>
         </select>
       </div>
@@ -737,8 +737,8 @@
 
     <!-- Compliance -->
     <div class="panel" id="panel-compliance">
-      <div class="panel-title">Compliance Dashboard</div>
-      <div class="panel-sub">ANSSI 2024 · NIST AI RMF 1.0 · EU AI Act — coverage map</div>
+      <div class="panel-title">References Mapping</div>
+      <div class="panel-sub">ANSSI 2024 · NIST AI RMF 1.0 · EU AI Act. Mapping of TrustGate controls to these references. It is not an assessment of compliance.</div>
 
       <div class="compliance-grid" id="compliance-grid"></div>
     </div>
@@ -1346,11 +1346,7 @@ function renderCompliance() {
     { title:'ANSSI 2024', color:'#4d9fff', score:100, items:[
       {ok:true, ref:'R9',   text:'REQUIRE_HUMAN for critical actions'},
       {ok:true, ref:'R25',  text:'Dangerous pattern filtering'},
-      {ok:true, ref:'R26',  text:'Role-based access control'},
-      {ok:true, ref:'R28',  text:'Zero Trust network policy'},
       {ok:true, ref:'R29',  text:'Full audit journal with chain'},
-      {ok:true, ref:'R30',  text:'Clearance levels L1/L2/L3'},
-      {ok:true, ref:'R35',  text:'Policy file integrity (SHA-256)'},
     ]},
     { title:'NIST AI RMF 1.0', color:'#00e5a0', score:100, items:[
       {ok:true, ref:'GOVERN 1.2',  text:'Principal hierarchy + accountability'},

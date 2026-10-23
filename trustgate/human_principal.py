@@ -19,9 +19,9 @@ Phase 2 (upgrade): Full Ed25519 keypair per human — Human Principal AISS
 The Human Principal signs governance decisions.
 His signature is the cryptographic proof of human oversight.
 
-Compliance:
+References:
     ANSSI R9   — human approval signature + justification
-    ANSSI R30  — privileged access control with clearance levels
+    Privileged access control with clearance levels
     AI Act Art.14 — natural person oversight, always available
     NIST GOVERN 1.2 — accountability structures with named principals
     NIST MANAGE 2.2 — human oversight mechanism
@@ -77,7 +77,7 @@ class PrincipalNotFoundError(Exception):
     pass
 
 class InsufficientClearanceError(Exception):
-    """Principal clearance too low for this decision. ANSSI R30."""
+    """Principal clearance too low for this decision."""
     pass
 
 class PrincipalLockedError(Exception):
@@ -374,7 +374,7 @@ class HumanPrincipal:
 
         Returns bytes — stored in Decision.approval_signature
 
-        Compliance: AI Act Art.14 — human oversight documented
+        References: AI Act Art.14 — human oversight documented
         """
         if not token.is_valid():
             raise SSOAuthenticationError("SSO token expired or invalid")
@@ -438,7 +438,7 @@ class HumanPrincipal:
         Phase 2: sign a governance decision with principal's own Ed25519 key.
         Cryptographically non-repudiable.
 
-        Compliance: AI Act Art.14 — human oversight, verifiable signature
+        References: AI Act Art.14 — human oversight, verifiable signature
         """
         if not self._session_open or not self._private_key:
             raise PrincipalLockedError(
@@ -461,7 +461,7 @@ class HumanPrincipal:
     def can_approve(self, vrs: float) -> bool:
         """
         Check if this principal has sufficient clearance to approve
-        a decision with the given VRS score. ANSSI R30.
+        a decision with the given VRS score.
         """
         if not self.record.active:
             return False
@@ -475,7 +475,7 @@ class HumanPrincipal:
                 f"Principal '{self.record.name}' (clearance={self.record.clearance}) "
                 f"cannot approve decision with VRS={vrs:.3f} "
                 f"(limit for {self.record.clearance}={limit}). "
-                f"Requires L2 or L3 clearance. — ANSSI R30"
+                f"Requires L2 or L3 clearance."
             )
 
     # ── Admin ─────────────────────────────────────────────────────────────────
