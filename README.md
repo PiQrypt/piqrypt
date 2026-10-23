@@ -9,11 +9,11 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/piqrypt/piqrypt/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/piqrypt/piqrypt/actions)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue?style=flat-square)](https://pypi.org/project/piqrypt/)
 [![License](https://img.shields.io/badge/AISS%20core-MIT-green?style=flat-square)](LICENSE)
-[![Post-Quantum](https://img.shields.io/badge/Post--Quantum-Dilithium3-ff8c00?style=flat-square)](https://csrc.nist.gov/pubs/fips/204/final)
+[![Post-Quantum](https://img.shields.io/badge/Post--Quantum-ML--DSA--65-ff8c00?style=flat-square)](https://csrc.nist.gov/pubs/fips/204/final)
 [![e-Soleau](https://img.shields.io/badge/e--Soleau-DSO2026006483-7c3aed?style=flat-square)](https://www.inpi.fr)
 [![AISS](https://img.shields.io/badge/AISS-v2.0-green)](https://aiss-standard.org)
 
-**472 tests · 9 framework bridges · 4-layer stack · EU AI Act ready**
+**1,000+ tests · 9 framework bridges · 4-layer stack**
 
 [Website](https://piqrypt.com) · [Quick Start](QUICK-START.md) · [PyPI](https://pypi.org/project/piqrypt/) · [Protocol](docs/RFC_AISS_v2.0.md)
 
@@ -36,7 +36,7 @@ Who authorized it?
   UNKNOWN                                # Who acted?      ✅ agent_id: PIQR1a3f8...
                                          # What happened?  ✅ signed · hash-chained
 Can we prove it?                         # Authorized?     ✅ TrustGate: ALLOW
-  NO                                     # Provable?       ✅ .pqz · offline · legal
+  NO                                     # Provable?       ✅ .pqz · offline
 ```
 
 ---
@@ -45,7 +45,7 @@ Can we prove it?                         # Authorized?     ✅ TrustGate: ALLOW
 
 PiQrypt is the **cryptographic identity, memory and governance layer** for autonomous AI agents.
 
-It answers three questions regulators and auditors are asking today: *who acted, what happened, should it have?* — with cryptographic proof, offline-verifiable, cross-framework, portable in a self-contained `.pqz` archive readable without PiQrypt installed.
+It answers three questions regulators and auditors are asking today: *who acted, what happened, should it have?* — with signed, hash-chained records, offline-verifiable, cross-framework, portable in a self-contained `.pqz` archive readable without PiQrypt installed.
 
 > Just as OAuth solved delegated authorization without sharing credentials —
 > **PCP (Proof of Continuity Protocol)** does the same for AI agent accountability.
@@ -57,13 +57,15 @@ It answers three questions regulators and auditors are asking today: *who acted,
 
 Autonomous agents execute financial transactions, generate legally relevant content, and coordinate without human review — in production, today. Three regulatory frameworks are converging simultaneously:
 
-| Framework | What it requires |
+| Framework | What it asks for |
 |---|---|
-| **EU AI Act** — Art. 12/14 | Inviolable logs · human oversight mandatory |
-| **ANSSI 2024** — R25/R29 | Dangerous pattern filtering · audit trail |
-| **NIST AI RMF** — MANAGE 2.2 | Agentic AI supervision · verifiable decisions |
+| **EU AI Act** — Art. 12/14 | Automatic event logging · human oversight |
+| **ANSSI 2024** — R25/R29 | Input and output filtering · logging of all processing |
+| **NIST AI RMF** — GOVERN 3.2 | Roles and oversight for human-AI configurations |
 
-Traditional logs are forgeable. Traditional monitoring is session-scoped. Neither was designed for adversarial or legal scrutiny. PiQrypt was.
+These references say what each text asks for. PiQrypt supports event logging and human decisions; it does not make a system compliant. See [docs/LIMITS_AND_POSTURE.md](docs/LIMITS_AND_POSTURE.md).
+
+Traditional logs are forgeable. Traditional monitoring is session-scoped. PiQrypt signs and hash-chains each event, so that a later change to a stamped event is detectable.
 
 ---
 
@@ -138,7 +140,7 @@ Your agents (LangChain · CrewAI · AutoGen · MCP · Ollama · ROS2 · RPi · �
 │  VRS risk score · A2C anomaly detection · TSI                        │
 ├─────────────────────────────────────────────────────────────────────┤
 │  PiQrypt Core — Continuity engine                                    │
-│  .pqz portable archives · RFC 3161 TSA · Dilithium3                 │
+│  .pqz portable archives · RFC 3161 TSA · ML-DSA-65                  │
 ├─────────────────────────────────────────────────────────────────────┤
 │  AISS — Agent Identity Signing Standard                MIT ©2026     │
 │  Ed25519 identity · SHA-256 hash chains · PCP                        │
@@ -156,7 +158,7 @@ Your agents (LangChain · CrewAI · AutoGen · MCP · Ollama · ROS2 · RPi · �
 
 ## AISS — Open Standard
 
-AISS (Agent Identity and Signature Standard) is an independent MIT
+AISS (Agent Identity and Signature Standard) is an open, MIT-licensed
 protocol, usable without PiQrypt.
 
 ```bash
@@ -193,13 +195,13 @@ pip install piqrypt[all-bridges]   # install all at once
 
 **Privacy by design:** raw prompts, model responses, and tool outputs are never stored — only their SHA-256 fingerprints. Structural, not configurable.
 
-**Offline by default:** no third-party server receives any data. The `.pqz` audit archive is verifiable without access to the original infrastructure.
+**Offline by default:** no third-party server receives any data. A `.pqz` archive can be verified offline, without access to the original infrastructure.
 
 ---
 
 ## Cross-framework trust — AgentSession
 
-When agents from different frameworks collaborate, `AgentSession` records the full interaction as co-signed, independently verifiable chain entries — without a shared server.
+When agents from different frameworks collaborate, `AgentSession` records the full interaction as co-signed chain entries, each verifiable by every party — without a shared server.
 
 ```python
 from bridges.session import AgentSession
@@ -249,8 +251,8 @@ session.stamp("reviewer", "review_signed",   {"approved": True},            peer
 | Standard | Purpose | Tier |
 |----------|---------|------|
 | Ed25519 (RFC 8032) | Agent signatures — STANDARD | All |
-| Dilithium3 (NIST FIPS 204) | Post-quantum signatures — QUANTUM | Pro+ |
-| SHA-256 (NIST FIPS 180-4) | Hash chains | All |
+| ML-DSA-65 (NIST FIPS 204) | Post-quantum signatures — QUANTUM | Pro+ |
+| SHA-256 and SHA-512 (NIST FIPS 180-4) | Hash chains (SHA-512 for AISS-2.1) | All |
 | AES-256-GCM (NIST FIPS 197) | Key encryption at rest | Pro+ |
 | scrypt N=2¹⁷ (RFC 7914) | Key derivation | Pro+ |
 | RFC 3161 | Trusted timestamps (TSA) | Pro+ |
@@ -260,9 +262,9 @@ session.stamp("reviewer", "review_signed",   {"approved": True},            peer
 
 ## Threat model
 
-PiQrypt protects against post-event log modification, identity repudiation, timeline alteration (TSA-anchored), behavioural anomalies, and unsupervised critical actions (TrustGate).
+PiQrypt helps detect after-the-fact modification, reordering or removal of events inside a hash chain, shows which key signed an event, and can show that an event existed before a given time when a timestamp token has been verified against a trust root you configure. Vigil flags statistical anomalies, and TrustGate can require a human decision before critical actions.
 
-PiQrypt does **not** protect against compromised private keys, malicious logic before stamping, or fully compromised hosts. See [SECURITY.md](SECURITY.md) for the complete threat model.
+PiQrypt does **not** protect against compromised private keys, malicious logic before stamping, or fully compromised hosts. Removing the last events of a chain is not detectable without an external anchor. See [SECURITY.md](SECURITY.md) for the complete threat model.
 
 ---
 
@@ -282,6 +284,12 @@ PiQrypt does **not** protect against compromised private keys, malicious logic b
 
 ---
 
+## Scope and limits
+
+PiQrypt signs events, chains them by hash and verifies them offline. It is not an audit, a certification, a legal service or a compliance programme. A `.pqz CERTIFIED` export carries an attestation signed by the issuer; `piqrypt certify-verify` checks the format version and that signature, and does not check the audit data inside the file. Cryptographic labels such as ML-DSA-65 name the algorithm being implemented, not a validation. See [docs/LIMITS_AND_POSTURE.md](docs/LIMITS_AND_POSTURE.md) for what each output means and does not mean.
+
+---
+
 ## Documentation
 
 | | |
@@ -296,6 +304,7 @@ PiQrypt does **not** protect against compromised private keys, malicious logic b
 | 🔗 A2A Session Guide | [docs/A2A_SESSION_GUIDE.md](docs/A2A_SESSION_GUIDE.md) |
 | 🔒 Security Policy | [SECURITY.md](SECURITY.md) |
 | 🖥️ CLI Reference | `piqrypt --help` |
+| ⚖️ Limits and posture | [docs/LIMITS_AND_POSTURE.md](docs/LIMITS_AND_POSTURE.md) |
 
 ---
 ⭐ **If PiQrypt is useful to you, a star helps others find it** — [star on GitHub](https://github.com/piqrypt/piqrypt)
@@ -317,7 +326,7 @@ PiQrypt does **not** protect against compromised private keys, malicious logic b
 <div align="center">
 
 *PiQrypt does not change how agents think.*
-*It records — verifiably, portably, in compliance with EU AI Act —*
+*It records, verifiably and portably,*
 *what they did, how they interacted, and whether a human approved it.*
 
 **The trust layer for autonomous AI agents.**
