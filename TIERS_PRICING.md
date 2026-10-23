@@ -242,7 +242,7 @@ No purchase required — earned by configuration.
 ```
 [![PiQrypt Verified](https://img.shields.io/badge/PiQrypt-Verified-blue)](https://piqrypt.com/verify)
 ```
-**Requirements:** AISS-1 compliant · Ed25519 · hash chain · fork detection
+**Requirements:** AISS-1 format · Ed25519 · hash chain · fork detection
 **Available:** Free tier and above
 
 ---

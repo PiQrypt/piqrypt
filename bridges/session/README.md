@@ -7,7 +7,7 @@
 [![PiQrypt](https://img.shields.io/badge/powered%20by-PiQrypt-00C8E0)](https://piqrypt.com)
 
 Every cross-agent interaction — signed by **both** agents, in **both** memories,  
-with the **same payload hash**. Tamper-proof. Framework-agnostic.
+with the **same payload hash**. Tamper-evident. Framework-agnostic.
 
 ---
 

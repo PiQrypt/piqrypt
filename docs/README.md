@@ -65,7 +65,7 @@ It provides:
 - Cryptographic profiles (Classical and Hybrid Post-Quantum)
 - Deterministic event validation
 - Canonical history enforcement
-- Audit-ready certification export
+- Certified `.pqz` export (attestation signed by the issuer)
 
 ### For Developers
 
@@ -98,7 +98,7 @@ aiss.export_audit_chain("audit.json", certified=True)
 | **Healthcare** | HIPAA compliance for AI decisions | Immutable diagnosis records |
 | **HR** | GDPR Art. 22 (explain AI decisions) | Verifiable hiring audit |
 | **Autonomous Vehicles** | Legal liability for accidents | Black box with crypto proof |
-| **Supply Chain** | Track AI inventory decisions | Non-repudiable logistics trail |
+| **Supply Chain** | Track AI inventory decisions | Signed logistics trail |
 
 **References:** SOC2 • ISO 27001 • HIPAA • GDPR • SEC/FINRA • EU AI Act Art.14 • NIST AI RMF • ANSSI 2024
 
@@ -439,7 +439,7 @@ event = aiss.stamp_event(priv, agent_id, {
 })
 ```
 
-**Result:** SEC Rule 17a-4 compliant audit trail.
+**Result:** A signed, hash-chained record of each decision.
 
 ---
 
@@ -451,7 +451,7 @@ event = aiss.stamp_event(priv, agent_id, {
     "event_type": "diagnosis",
     "condition": "pneumonia",
     "confidence": 0.94,
-    "patient_id_hash": sha256(patient_id)  # HIPAA compliant
+    "patient_id_hash": sha256(patient_id)  # patient id hashed
 })
 ```
 
@@ -471,7 +471,7 @@ event = aiss.stamp_event(priv, agent_id, {
 })
 ```
 
-**Result:** GDPR-compliant audit with explanations.
+**Result:** Decisions recorded with their explanations, personal data hashed.
 
 ---
 

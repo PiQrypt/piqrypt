@@ -215,7 +215,7 @@ Logistics─┘
 | **Healthcare** | HIPAA compliance for AI decisions | Immutable diagnosis records |
 | **HR** | GDPR Art. 22 (explain AI decisions) | Verifiable hiring audit |
 | **Autonomous Vehicles** | Legal liability for accidents | Black box with crypto proof |
-| **Supply Chain** | Track AI inventory decisions | Non-repudiable logistics trail |
+| **Supply Chain** | Track AI inventory decisions | Signed logistics trail |
 
 **Compliance:** SOC2 • ISO 27001 • HIPAA • GDPR • SEC/FINRA • NIST PQC (FIPS 204)
 

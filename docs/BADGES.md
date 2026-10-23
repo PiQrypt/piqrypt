@@ -36,11 +36,11 @@ Visual badges for your README files, documentation, and websites.
 
 ---
 
-### AISS Compliance Badges
+### AISS Badges
 
-**AISS-1 Compliant:**
+**AISS-1 implemented:**
 ```markdown
-[![AISS-1](https://img.shields.io/badge/AISS--1-Compliant-green)](https://piqrypt.org/docs/AISS-1)
+[![AISS-1](https://img.shields.io/badge/AISS--1-Implemented-green)](https://piqrypt.org/docs/AISS-1)
 ```
 
 **AISS-2 Ready:**
@@ -88,12 +88,12 @@ Visual badges for your README files, documentation, and websites.
 
 **RFC 8032 (Ed25519):**
 ```markdown
-[![RFC 8032](https://img.shields.io/badge/RFC%208032-Compliant-blue)](https://datatracker.ietf.org/doc/html/rfc8032)
+[![RFC 8032](https://img.shields.io/badge/RFC%208032-Implemented-blue)](https://datatracker.ietf.org/doc/html/rfc8032)
 ```
 
 **RFC 8785 (Canonical JSON):**
 ```markdown
-[![RFC 8785](https://img.shields.io/badge/RFC%208785-Compliant-blue)](https://datatracker.ietf.org/doc/html/rfc8785)
+[![RFC 8785](https://img.shields.io/badge/RFC%208785-Implemented-blue)](https://datatracker.ietf.org/doc/html/rfc8785)
 ```
 
 **RFC 3161 (Trusted Timestamps — Pro):**
@@ -134,7 +134,7 @@ Visual badges for your README files, documentation, and websites.
 **Full Stack:**
 ```markdown
 [![PiQrypt](https://img.shields.io/badge/PiQrypt-v1.8.4-blue)](https://piqrypt.org)
-[![AISS-1](https://img.shields.io/badge/AISS--1-Compliant-green)](https://piqrypt.org/docs/AISS-1)
+[![AISS-1](https://img.shields.io/badge/AISS--1-Implemented-green)](https://piqrypt.org/docs/AISS-1)
 [![AISS-2](https://img.shields.io/badge/AISS--2-Ready-brightgreen)](https://piqrypt.org/docs/AISS-2)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
@@ -143,7 +143,7 @@ Visual badges for your README files, documentation, and websites.
 **Minimal:**
 ```markdown
 [![PiQrypt](https://img.shields.io/badge/PiQrypt-Powered-blue)](https://piqrypt.org)
-[![AISS-1](https://img.shields.io/badge/AISS--1-Compliant-green)](https://piqrypt.org)
+[![AISS-1](https://img.shields.io/badge/AISS--1-Implemented-green)](https://piqrypt.org)
 ```
 
 **Pro User:**
@@ -200,10 +200,10 @@ https://img.shields.io/badge/<LABEL>-<MESSAGE>-<COLOR>
 
 **Examples:**
 ```markdown
-[![Audited](https://img.shields.io/badge/Security-Audited-green)](https://piqrypt.org/security)
-[![Compliance](https://img.shields.io/badge/HIPAA-Compliant-blue)](https://piqrypt.org/compliance)
-[![Enterprise](https://img.shields.io/badge/Enterprise-Ready-gold)](https://piqrypt.org/enterprise)
+[![Custom](https://img.shields.io/badge/Label-Message-green)](https://example.org)
 ```
+
+Do not use a badge that claims an audit, a certification or compliance unless you hold the corresponding report or attestation.
 
 ### Colors
 
@@ -230,9 +230,9 @@ https://img.shields.io/badge/<LABEL>-<MESSAGE>-<COLOR>
   <img src="https://img.shields.io/badge/PiQrypt-Powered-blue" alt="PiQrypt Powered">
 </a>
 
-<!-- AISS-1 Compliant -->
+<!-- AISS-1 Implemented -->
 <a href="https://piqrypt.org/docs/AISS-1">
-  <img src="https://img.shields.io/badge/AISS--1-Compliant-green" alt="AISS-1 Compliant">
+  <img src="https://img.shields.io/badge/AISS--1-Implemented-green" alt="AISS-1 Implemented">
 </a>
 ```
 

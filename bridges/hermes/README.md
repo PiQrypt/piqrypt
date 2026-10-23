@@ -108,9 +108,9 @@ The injected context looks like:
 
 ## EU AI Act
 
-PiQrypt implements the logging requirements of EU AI Act Art. 12 (inviolable logs)
-and Art. 14 (human oversight) for high-risk AI systems.
-See [piqrypt.com/eu-ai-act](https://piqrypt.com/eu-ai-act) for the compliance mapping.
+PiQrypt can support the event logging (Art. 12) and the human oversight (Art. 14)
+that the EU AI Act asks for high-risk AI systems. It does not make a system compliant.
+See [piqrypt.com/eu-ai-act](https://piqrypt.com/eu-ai-act) for the mapping.
 
 ---
 

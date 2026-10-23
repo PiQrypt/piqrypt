@@ -1273,7 +1273,7 @@ Full policy schema is specified in Appendix G.
 
 | Framework | Controls |
 |-----------|---------|
-| EU AI Act | Art. 9 (risk management), Art. 12 (inviolable logs), Art. 14 (human oversight) |
+| EU AI Act | Art. 9 (risk management), Art. 12 (event logs), Art. 14 (human oversight) |
 | NIST AI RMF | GOVERN 1.2, MANAGE 2.2, MEASURE 2.5 |
 | ANSSI 2024 | R25 (pattern filtering), R29 (audit trail) |
 | Custom | YAML-configurable rules per agent profile |
@@ -1512,7 +1512,7 @@ The 17 known failures in v1.7.1 are infrastructure-dependent (external cert auth
 
 | Framework | Control | AISS Implementation |
 |-----------|---------|---------------------|
-| **EU AI Act** | Art. 12 — Inviolable logging | Hash-chained signed events |
+| **EU AI Act** | Art. 12 — Automatic event logging | Hash-chained signed events |
 | **EU AI Act** | Art. 14 — Human oversight | TrustGate ESCALATE/DENY (§ 20) |
 | **EU AI Act** | Art. 9 — Risk management | VRS composite scoring (§ 19.3) |
 | **SOC2** | CC6.1 Identity verification | Deterministic agent ID (§ 5) |

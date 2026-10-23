@@ -5,7 +5,7 @@
 """
 HR Assistant with PiQrypt Audit Trail
 
-Demonstrates GDPR/EEOC compliant AI hiring decisions
+Demonstrates how to record AI hiring decisions (hashed CV)
 with cryptographic audit trail.
 
 Usage:

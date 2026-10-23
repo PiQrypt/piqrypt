@@ -101,7 +101,7 @@ Three major frameworks are converging simultaneously:
 
 | Framework | Key requirements |
 |-----------|-----------------|
-| **EU AI Act** | Art. 12 (inviolable logs), Art. 14 (human oversight mandatory for high-risk AI), Art. 9 (risk management) |
+| **EU AI Act** | Art. 12 (event logs), Art. 14 (human oversight mandatory for high-risk AI), Art. 9 (risk management) |
 | **ANSSI 2024** | R25 (dangerous pattern filtering), R29 (audit trail) |
 | **NIST AI RMF 1.0** | GOVERN 1.2, MANAGE 2.2, MEASURE 2.5, AI 600-1 (agentic AI supervision) |
 
@@ -323,7 +323,7 @@ The `.pqz` format is PiQrypt's portable audit bundle:
 - Dilithium3 post-quantum signature (Pro+)
 - RFC 3161 TSA token (Pro+)
 - SHA-256 hash of event chain
-- Human-readable certificate (Claude Haiku generated, Pro+)
+- Human-readable certificate (Pro+)
 
 ### 4.5 Anti-Replay Protection
 
@@ -579,7 +579,7 @@ PiQrypt offers three certification tiers for producing signed audit bundles:
 | Tier | Price | Cryptography | Notes |
 |------|-------|--------------|-------------|
 | **Simple** | €9 | PiQrypt CA signature | Internal disputes |
-| **Timestamp** | €29 | + RFC 3161 TSA | GDPR, HIPAA compliant |
+| **Timestamp** | €29 | + RFC 3161 TSA | Adds a trusted timestamp token |
 | **Post-Quantum** | €99 | + Dilithium3 + .pqz | 50+ year archival security |
 
 Certification workflow:
@@ -592,7 +592,7 @@ JSON submitted to certification endpoint
         ↓
 Webhook triggers certification worker
         ↓
-Worker signs, timestamps, generates PDF certificate (Claude Haiku)
+Worker signs, timestamps, generates PDF certificate
         ↓
 Bundle (.pqz + PDF) delivered by email (< 5 min)
         ↓
@@ -607,7 +607,7 @@ Public verification: any third party can verify a certificate hash without acces
 
 | Framework | Control | PiQrypt Implementation |
 |-----------|---------|----------------------|
-| **EU AI Act** | Art. 12 — Inviolable logging | Hash-chained signed events |
+| **EU AI Act** | Art. 12 — Automatic event logging | Hash-chained signed events |
 | **EU AI Act** | Art. 14 — Human oversight | TrustGate ESCALATE/DENY |
 | **EU AI Act** | Art. 9 — Risk management | VRS composite scoring |
 | **SOC2** | CC6.1 Identity verification | AISS deterministic agent ID |

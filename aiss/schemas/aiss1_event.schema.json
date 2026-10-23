@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://piqrypt.org/schemas/aiss-1/event.json",
   "title": "AISS-1.0 Event Stamp",
-  "description": "RFC-compliant event structure with signature",
+  "description": "Event structure with signature, as defined in the RFC",
   "type": "object",
   "required": ["version", "agent_id", "timestamp", "nonce", "payload", "previous_hash", "signature"],
   "properties": {

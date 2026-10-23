@@ -496,7 +496,7 @@ TrustGate is the direct technical implementation of human oversight mandates:
 | Regulation | Requirement | TrustGate response |
 |------------|-------------|-------------------|
 | EU AI Act Art. 14 | Human oversight mandatory for high-risk AI systems | ESCALATE with TTL · fail-safe DENY |
-| EU AI Act Art. 12 | Inviolable logging of high-risk AI decisions | Every decision is a signed chain event |
+| EU AI Act Art. 12 | Automatic event logging of high-risk AI decisions | Every decision is a signed chain event |
 | NIST AI RMF GOVERN 1.2 | Governance mechanisms for AI systems | Configurable policy profiles per agent |
 
 ---
@@ -537,12 +537,12 @@ The EU AI Act (Regulation 2024/1689) is in force. Its high-risk AI provisions �
 | Article | Requirement | PCP Layer |
 |---------|-------------|-----------|
 | Art. 9 | Risk management system — documented, monitored, updated | Vigil VRS |
-| Art. 12 | Automatic logging — inviolable, tamper-evident, retained | PiQrypt Core |
+| Art. 12 | Automatic logging — tamper-evident, retained | PiQrypt Core |
 | Art. 13 | Transparency — decisions explainable to users | Signed payload |
 | Art. 14 | Human oversight — ability to intervene, override, stop | TrustGate |
 | Art. 17 | Quality management — documented processes and controls | RFC AISS v2.0 |
 
-Operators of high-risk AI systems who cannot produce a compliant audit trail under Art. 12 face penalties of up to €30M or 6% of global annual turnover.
+Providers of high-risk AI systems that do not meet their obligations under Article 16, which include the requirements of Article 12, face administrative fines of up to EUR 15 million or 3% of worldwide annual turnover, whichever is higher (Article 99(4)).
 
 **PCP is compliance infrastructure.**
 

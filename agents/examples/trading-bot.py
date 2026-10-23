@@ -54,7 +54,7 @@ class TradingBot:
         - What decision was made
         - When it was made
         - By which agent
-        - Cannot be modified retroactively
+        - A later change is detectable
         """
         # Analyze market
         analysis = self.analyze_market(symbol)

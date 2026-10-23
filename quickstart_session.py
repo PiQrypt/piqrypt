@@ -260,7 +260,7 @@ def scenario_trading(AgentSession):
     )
     ih1_short = ih1[:16] if ih1 else "n/a"
     print(f"  {green('✓')} Claude    → LangGraph  interaction_hash: {cyan(ih1_short)}...")
-    print(dim("      Same hash in both memories — co-signed, non-repudiable"))
+    print(dim("      Same hash in both memories, co-signed by both agents"))
 
     print(f"\n  {bold('Interaction 2 — LangGraph sends decision to CrewAI:')}")
     recommendation = "BUY AAPL 100 @ market — confidence 0.87"

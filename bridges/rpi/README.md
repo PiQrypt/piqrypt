@@ -229,7 +229,7 @@ Cryptographic proof of what the AI measured and decided.
 **Industrial control (IEC 61511 / IEC 62443)**
 Safety PLC backup with AI anomaly detection. Every sensor reading, every
 shutdown command, every valve activation — signed and timestamped.
-Impossible to alter the incident log after the fact.
+A later change to the incident log is detectable.
 
 **Smart agriculture**
 LLM-coordinated irrigation: soil sensors on RPi, decisions in cloud.

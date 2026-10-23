@@ -118,7 +118,7 @@ An **event** is a signed JSON record that captures one agent action:
 - `agent_id` — derived deterministically from the public key. No central registry.
 - `nonce` — UUIDv4, prevents replay attacks.
 - `previous_hash` — links this event to the prior one. Changing any event breaks all subsequent hashes.
-- `signature` — Ed25519 over the canonical JSON (RFC 8785). Non-repudiable.
+- `signature` — Ed25519 over the canonical JSON (RFC 8785), verifiable with the agent's public key.
 
 ### What is a chain?
 
@@ -220,7 +220,7 @@ pq_priv, pq_pub = dilithium.generate_keypair()
 ```python
 from aiss.identity_session import IdentitySession
 
-# Recommended: context manager guarantees RAM erasure
+# Recommended: context manager erases the key from RAM on a best-effort basis
 with IdentitySession.open("my_agent", passphrase="my-strong-passphrase") as session:
     event = aiss.stamp_event(session.private_key, session.agent_id, payload)
     aiss.store_event(event)
@@ -1156,7 +1156,7 @@ print(result["chain_hash"])     # sha256...
 
 ### 13.4 Public verification registry
 
-PiQrypt-issued certifications are registered in a public GitHub-based verification registry (SHA-256 / HMAC, RGPD-compliant). Anyone can verify a certificate without contacting PiQrypt:
+PiQrypt-issued certifications are registered in a public GitHub-based verification registry (SHA-256 / HMAC). Anyone can verify a certificate without contacting PiQrypt:
 
 ```bash
 piqrypt verify-public <certificate_hash>
@@ -1342,7 +1342,7 @@ piqrypt session-verify <session_audit.json>  # verify cross-framework audit
 - **Never commit key files to version control.** The provided `.gitignore` excludes `*.key.enc` and `*.key.json` — verify before every push.
 - **Use encrypted keys in production** (`piqrypt identity secure`). Free-tier plaintext keys are acceptable only for development.
 - **Use HSM for Enterprise/critical deployments** — contact sales@piqrypt.com.
-- `IdentitySession` guarantees RAM erasure via `_secure_erase()` — prefer it over holding `private_key` in a plain variable.
+- `IdentitySession` attempts RAM erasure via `_secure_erase()` (best effort, see docs/LIMITS_AND_POSTURE.md) — prefer it over holding `private_key` in a plain variable.
 
 ### 17.2 Threat model summary
 
