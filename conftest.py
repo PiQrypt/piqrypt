@@ -1,6 +1,17 @@
 import sys
 from pathlib import Path
 
+import os
+
+# Test runs must never reach the production Trust Server. An invalid URL
+# scheme fails instantly (no DNS lookup, no connection attempt) and the
+# telemetry client swallows the error. setdefault keeps an explicit
+# override possible for anyone who wants to point tests at a local
+# listener.
+os.environ.setdefault(
+    "PIQRYPT_TELEMETRY_ENDPOINT", "pytest-no-network://telemetry"
+)
+
 _REPO_ROOT = Path(__file__).resolve().parent
 
 def pytest_configure(config):
