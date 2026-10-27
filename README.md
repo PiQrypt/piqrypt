@@ -290,6 +290,12 @@ PiQrypt signs events, chains them by hash and verifies them offline. It is not a
 
 ---
 
+## Telemetry
+
+PiQrypt sends a small anonymous usage event (random installation ID, version, event name, operating system) to the PiQrypt Trust Server. It is enabled by default, announced on the first run of the `piqrypt` command, and never includes agent IDs, event payloads or keys. Turn it off with `piqrypt telemetry disable` or `PIQRYPT_TELEMETRY=0`. Details: [docs/TELEMETRY.md](docs/TELEMETRY.md).
+
+---
+
 ## Documentation
 
 | | |
@@ -305,6 +311,7 @@ PiQrypt signs events, chains them by hash and verifies them offline. It is not a
 | 🔒 Security Policy | [SECURITY.md](SECURITY.md) |
 | 🖥️ CLI Reference | `piqrypt --help` |
 | ⚖️ Limits and posture | [docs/LIMITS_AND_POSTURE.md](docs/LIMITS_AND_POSTURE.md) |
+| 📡 Telemetry | [docs/TELEMETRY.md](docs/TELEMETRY.md) |
 
 ---
 ⭐ **If PiQrypt is useful to you, a star helps others find it** — [star on GitHub](https://github.com/piqrypt/piqrypt)

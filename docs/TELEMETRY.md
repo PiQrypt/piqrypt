@@ -1,379 +1,111 @@
 # Telemetry System
 
 **Version:** 1.10.0
-**Date:** 2026-10-23
+**Date:** 2026-10-25
 **Status:** Current
 
 ---
 
 ## Overview
 
-PiQrypt includes **optional, privacy-first telemetry** to help improve the product while respecting user privacy.
+PiQrypt sends a small anonymous usage event to the PiQrypt Trust Server. Telemetry is **enabled by default** and you can turn it off at any time. It lets the project see which versions, operating systems and features are in use.
 
-## Core Principles
-
-1. **Transparent** — Enabled by default on fresh installs
-   with clear opt-out. Existing users unaffected.
-2. **Anonymous** — No personal data
-3. **Transparent** — See exactly what's sent
-4. **Minimal** — Only usage statistics
-5. **Respectful** — Easy to disable anytime
+A notice is printed the first time the `piqrypt` command line tool runs. A program that only imports the library (`import aiss` or `import piqrypt`) does not see that notice, but telemetry is on for it as well. For servers, containers and CI, set `PIQRYPT_TELEMETRY=0` (see below).
 
 ---
 
-## Quick Start
-
-### Enable Telemetry
+## Turn it off or on
 
 ```bash
-piqrypt telemetry enable
+piqrypt telemetry disable     # turn off
+piqrypt telemetry enable      # turn on again
+piqrypt telemetry status      # show the current state
 ```
 
-### Disable Telemetry
+Environment variable (an "off" value always wins over the configuration file):
 
 ```bash
-piqrypt telemetry disable
+export PIQRYPT_TELEMETRY=0    # also accepted: false, no, off (any case)
 ```
 
-### Check Status
-
-```bash
-piqrypt telemetry status
-# Telemetry: Disabled
-# Last sent: Never
-```
+When telemetry is off, nothing is written to the local event log and nothing is sent. A random installation ID file (`~/.piqrypt/installation_id`) is still created on your machine; it is only transmitted while telemetry is on, and you can delete it.
 
 ---
 
-## What Data is Collected
+## What is sent
 
-### ✅ Collected (Anonymous)
+Each event is one HTTPS POST with exactly this body:
 
-**Usage Statistics:**
-- Feature usage counts (e.g., "stamped 100 events")
-- Command frequency
-- License tier (Free, Pro, OSS)
-- Python version
-- PiQrypt version
-- Operating system
-- Timestamp (UTC)
-
-**Performance Metrics:**
-- Average operation duration
-- Event chain lengths
-- Error counts (no error details)
-
-**Example payload:**
 ```json
 {
-  "version": "1.8.4",
-  "python": "3.10",
-  "os": "linux",
-  "license_tier": "free",
-  "timestamp": "2026-03-02T14:30:00Z",
-  "metrics": {
-    "events_stamped": 1000,
-    "chains_verified": 50,
-    "forks_detected": 2,
-    "avg_stamp_duration_ms": 2.3,
-    "commands": {
-      "stamp": 1000,
-      "verify": 500,
-      "audit": 50
-    }
-  }
+  "installation_id": "3f2b8c1e-5a47-4d0e-9b61-0c7d2e8f4a19",
+  "version": "1.10.0",
+  "event": "identity_created",
+  "system": { "os": "Linux", "arch": "x86_64", "is_server": false }
 }
 ```
 
-### ❌ Never Collected
+| Field | Meaning |
+|---|---|
+| `installation_id` | Random UUID created on first use and stored in `~/.piqrypt/installation_id`. It is not derived from your machine, your agents or your keys. |
+| `version` | PiQrypt version. |
+| `event` | Event name, for example `install`, `identity_created`, `event_signed`. |
+| `system.os` | `Linux`, `Windows` or `Darwin`. |
+| `system.arch` | CPU architecture, for example `x86_64` or `ARM64`. |
+| `system.is_server` | `true` when standard output is not a terminal. |
 
-- ❌ Personal information (names, emails, IPs)
-- ❌ Agent IDs
-- ❌ Private keys or passphrases
-- ❌ KeyStore files or contents
-- ❌ Payloads or data content
-- ❌ Signatures
-- ❌ Hostnames or machine IDs
-- ❌ File paths
-- ❌ Geographic location
+## What is not sent
 
----
+Agent IDs, event payloads, keys and passphrases, key store contents, signatures, file paths, host names, license keys, and the properties attached to events in your code. Those properties are written only to the local log described below.
 
-## How It Works
+## Local log
 
-### Transmission
-
-- **Frequency:** Once per day (00:00 UTC)
-- **Method:** HTTPS POST to telemetry.piqrypt.org
-- **Async:** Non-blocking
-- **Retry:** 3 attempts, then discard
-- **Timeout:** 5 seconds max
-- **Failure:** Silently ignored — never breaks your app
-
-### Storage (Local)
-
-All telemetry stored locally first:
-```
-~/.piqrypt/telemetry.json
-```
-
-Inspect anytime:
-```bash
-cat ~/.piqrypt/telemetry.json
-```
+While telemetry is on, each event is also appended to `~/.piqrypt/telemetry.log` as one JSON line (event name, UTC timestamp, installation ID, version and the local-only properties). Read it to see what happened on your machine. Only the fields listed above leave it.
 
 ---
 
-## Privacy Guarantees
+## What the server does with it
 
-**No way to identify users:**
-- No unique IDs sent
-- No IP addresses logged
-- No fingerprinting
-- No session correlation
+The Trust Server (`/api/telemetry`) checks that the three required fields are present, uses the installation ID only for that check and does not store it, derives a country code from the IP address of the request with a local GeoIP database (the code is `XX` when GeoIP is unavailable), discards the IP address, and increments counters grouped by event name, version, operating system, architecture, server or desktop, and country. The application keeps no record per installation and stores no IP address. The hosting provider's own infrastructure logs are outside the application's control.
 
-```
-We know: "Someone used stamp_event 1000 times"
-We DON'T know: "User X used stamp_event"
-```
+## How it is sent
 
-**Compliance:**
-- **GDPR:** No personal data = no consent needed
-- **CCPA:** No data sold
-- **HIPAA:** No PHI collected
+- HTTPS POST to `https://trust-server-ucjb.onrender.com/api/telemetry`.
+- Synchronous, at the moment of the event, with a 3 second timeout. No retry, no queue. An unreachable server can therefore delay an event by up to 3 seconds.
+- Every error is ignored: telemetry never raises an exception into your program, and PiQrypt works offline.
+- To capture the requests on your own listener, or to send them to your own server, set `PIQRYPT_TELEMETRY_ENDPOINT` (for example `http://127.0.0.1:8000/api/telemetry`) before PiQrypt is first imported.
 
 ---
 
-## Configuration
+## For organizations
 
-### Basic
-
-```python
-from piqrypt import configure_telemetry
-
-configure_telemetry(
-    enabled=True,
-    frequency="daily",
-    endpoint="https://telemetry.piqrypt.org"
-)
-```
-
-### Environment Variables
-
-```bash
-export PIQRYPT_TELEMETRY=false
-export PIQRYPT_TELEMETRY=true
-export PIQRYPT_TELEMETRY_ENDPOINT=https://your-server.com
-```
-
----
-
-## Metrics Collected
-
-### Usage Metrics
-
-```python
-{
-  "events_stamped": 1234,
-  "events_verified": 567,
-  "chains_validated": 89,
-  "identities_created": 12,
-  "key_rotations": 3,
-  "forks_detected": 2,
-  "replay_attacks_blocked": 5,
-  "audit_exports": 10,
-  "keystore_created": 3,     # v1.8.4
-  "agents_registered": 5     # v1.8.4
-}
-```
-
-### Performance Metrics
-
-```python
-{
-  "avg_stamp_duration_ms": 2.3,
-  "avg_verify_duration_ms": 1.2,
-  "avg_chain_validation_ms": 45.6,
-  "avg_keystore_load_ms": 420.0    # v1.8.4 — scrypt expected ~400ms
-}
-```
-
-### Feature Usage
-
-```python
-{
-  "cli_commands": {
-    "stamp": 1000,
-    "verify": 500,
-    "audit": 50,
-    "identity_create": 12,
-    "vigil_start": 8           # v1.5.0+
-  },
-  "behavioral_monitoring": {
-    "tsi_computed": 200,       # v1.5.0+
-    "a2c_scans": 150,          # v1.5.0+
-    "vrs_computed": 200        # v1.5.0+
-  }
-}
-```
-
-### Error Metrics
-
-```python
-{
-  "errors": {
-    "InvalidSignatureError": 5,
-    "ForkDetected": 2,
-    "ReplayAttackDetected": 5,
-    "LicenseRequiredError": 3,
-    "KeyStoreAuthError": 1       # v1.8.4
-  }
-}
-```
-
----
-
-## CLI Commands
-
-### Status
-
-```bash
-piqrypt telemetry status
-# Telemetry: Enabled
-# Frequency: Daily
-# Last sent: 2026-03-02 00:00:00 UTC
-# Next scheduled: 2026-03-03 00:00:00 UTC
-# Events pending: 1,234
-```
-
-### Send Now
-
-```bash
-piqrypt telemetry send
-
-# Dry run — see what would be sent
-piqrypt telemetry send --dry-run
-```
-
-### View Pending Data
-
-```bash
-piqrypt telemetry show
-```
-
-### Clear Data
-
-```bash
-piqrypt telemetry clear
-```
-
----
-
-## Opt-Out Best Practices
-
-### For Organizations
+Disable it centrally with the environment variable, for example in a service unit, a container image or a CI configuration:
 
 ```bash
 # Ansible
 - name: Disable PiQrypt telemetry
-  command: piqrypt telemetry disable
-
-# Or via environment
-- name: Set telemetry environment variable
   lineinfile:
     path: /etc/environment
-    line: 'PIQRYPT_TELEMETRY=false'
+    line: 'PIQRYPT_TELEMETRY=0'
 ```
 
----
-
-## Transparency
-
-### View Source Code
-
-```
-piqrypt/telemetry.py
-```
-
-### Data Retention
-
-- **Raw data:** None (only aggregates received)
-- **Aggregated stats:** 90 days
-- **Reports:** Anonymous summaries
+The installation ID is a random, persistent identifier. It is not linked to a person in PiQrypt's own systems, but your organization may still need to assess it under its own privacy rules (for example GDPR). This page describes behavior; it is not legal advice.
 
 ---
 
 ## FAQ
 
-**Is telemetry enabled by default?**
-Yes, on fresh installs. A notice is shown on first CLI run
-and in the onboarding dashboard with clear opt-out instructions.
-Existing users who have already configured telemetry are
-unaffected. Set PIQRYPT_TELEMETRY=0 to disable at any time.
+**Is telemetry enabled by default?** Yes. A notice is shown on the first run of the `piqrypt` command and the setting is written to `~/.piqrypt/telemetry.json`. If that file already exists, your earlier choice is kept.
 
-**Can telemetry identify me?** No. No IDs, IPs, or fingerprints.
+**Can I see what is sent?** Yes. The full body is shown above, the local log records each event, and `PIQRYPT_TELEMETRY_ENDPOINT` lets you capture the requests on your own listener. The code is in `aiss/telemetry.py`.
 
-**Does it slow down PiQrypt?** No. Async, batched, <1KB payload, sent once daily.
+**Can I use PiQrypt offline?** Yes. Failed sends are ignored.
 
-**Can I audit what's sent?** Yes: `piqrypt telemetry show`
-
-**Can I use PiQrypt offline?** Yes. Telemetry fails silently if offline.
-
-**Can I host my own telemetry server?** Yes. Set `PIQRYPT_TELEMETRY_ENDPOINT=https://your-server.com`.
-
-**How do I know you're not lying?** Code is open source: `cat piqrypt/telemetry.py`
+**Can I host my own server?** Yes, with `PIQRYPT_TELEMETRY_ENDPOINT`. The body format is the one shown above.
 
 ---
 
-## Support Telemetry
-
-If you find PiQrypt useful, consider enabling telemetry:
-
-```bash
-piqrypt telemetry enable
-```
-
-It helps us improve the product, fix bugs faster, and prioritize features — while respecting your privacy 100%.
-
-**Alternative ways to help:**
-- ⭐ Star on GitHub
-- 🐛 Report bugs via issues
-- 💡 Request features
-- 🤝 Contribute code (PRs welcome)
-
----
-
-## Technical Details
-
-### Payload Schema
-
-```json
-{
-  "schema_version": "1.1",
-  "piqrypt_version": "1.8.4",
-  "python_version": "3.10.4",
-  "os": "linux",
-  "license_tier": "free",
-  "timestamp": "2026-03-02T14:30:00Z",
-  "metrics": {
-    "usage": {},
-    "performance": {},
-    "features": {},
-    "errors": {}
-  }
-}
-```
-
-### Security
-
-- ✅ HTTPS only (TLS 1.3)
-- ✅ No authentication (anonymous)
-- ✅ Rate limited
-- ✅ DDoS protection
-
----
-
-**Last Updated:** 2026-03-12
+**Last Updated:** 2026-10-25
 **Version:** 1.10.0
 
 ---

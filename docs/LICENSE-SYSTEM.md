@@ -163,12 +163,12 @@ Pro+    →  JWT Ed25519 — vérifié offline           — réseau au renouvel
 - **Grace period:** 72 heures après expiration avant dégradation vers Free. Jamais de blocage brutal.
 - **Dégradation gracieuse:** expiration → Free tier automatiquement. Zéro perte de données. Les signatures existantes restent valides.
 
-### No phone-home
+### Réseau et licence
 
 - ✅ Validation offline complète après activation
-- ✅ Aucun tracking d'usage
-- ✅ Aucune télémétrie sauf opt-in explicite
-- ✅ Free tier : zéro réseau, jamais
+- ✅ Aucune vérification de licence côté serveur à l'usage
+- ✅ Télémétrie anonyme activée par défaut, désactivable (voir docs/TELEMETRY.md)
+- ✅ Free tier : aucun appel réseau pour la licence
 
 ---
 

@@ -957,8 +957,10 @@ def _maybe_show_telemetry_notice():
         pass
     print("\n" + "─" * 58)
     print("  PiQrypt collects anonymous usage statistics to help")
-    print("  improve the project. No personal data, no agent IDs,")
-    print("  no payloads. Full details: piqrypt.com/telemetry")
+    print("  improve the project. Each event carries a random")
+    print("  installation ID, the version and the OS. No personal")
+    print("  data, no agent IDs, no payloads.")
+    print("  Full details: https://github.com/PiQrypt/piqrypt/blob/main/docs/TELEMETRY.md")
     print("")
     print("  To opt out at any time:")
     print("    piqrypt telemetry disable")
@@ -1144,7 +1146,7 @@ Examples:
     # ── telemetry ──
     tel_p = sub.add_parser('telemetry', help='Telemetry management')
     tel_s = tel_p.add_subparsers(dest='telemetry_command')
-    tel_s.add_parser('enable',  help='Enable opt-in telemetry')
+    tel_s.add_parser('enable',  help='Enable telemetry again (on by default)')
     tel_s.add_parser('disable', help='Disable telemetry')
     tel_s.add_parser('status',  help='Show telemetry status')
 

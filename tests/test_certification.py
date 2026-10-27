@@ -430,7 +430,7 @@ class TestGenerateBadgeSnippets:
 # ══════════════════════════════════════════════════════════════════════════════
 
 class TestTelemetry:
-    """Telemetry — opt-in only, no PII, graceful failure."""
+    """Telemetry: enabled by default with opt-out, no PII, graceful failure."""
 
     @pytest.fixture(autouse=True)
     def isolate_telemetry(self, tmp_path, monkeypatch):
@@ -450,7 +450,7 @@ class TestTelemetry:
             yield
         importlib.reload(tel_mod)  # Restore after test
 
-    def test_disabled_by_default(self):
+    def test_enabled_by_default(self):
         assert self.tel_mod.is_telemetry_enabled()
 
     def test_env_var_override_disables(self, monkeypatch):

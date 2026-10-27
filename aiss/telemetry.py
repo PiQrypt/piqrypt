@@ -8,16 +8,22 @@
 # Commercial license: contact@piqrypt.com
 
 """
-Opt-in Telemetry for PiQrypt
+Telemetry for PiQrypt (enabled by default, opt-out)
 
-Anonymous usage statistics to improve the project.
-Users must explicitly opt-in. No PII collected.
-
-Enable:
-    piqrypt telemetry enable
+Anonymous usage statistics to improve the project. Telemetry is enabled by
+default and a notice is shown on the first run of the piqrypt command line.
+No agent IDs, event payloads or personal data are sent. Each event carries a
+random installation ID, the PiQrypt version, the event name and coarse system
+information (operating system, CPU architecture, whether stdout is a
+terminal). Details: docs/TELEMETRY.md
 
 Disable:
     piqrypt telemetry disable
+    or set the environment variable PIQRYPT_TELEMETRY=0
+    (also accepted: false, no, off, in any case)
+
+Enable again:
+    piqrypt telemetry enable
 
 Status:
     piqrypt telemetry status
@@ -46,10 +52,18 @@ _os_name   = platform.system()    # Linux / Windows / Darwin
 _arch      = platform.machine()   # x86_64 / ARM64 / etc.
 _is_server = not sys.stdout.isatty()
 
+# Values of PIQRYPT_TELEMETRY that switch telemetry off (any case).
+_OFF_VALUES = ("0", "false", "no", "off")
+
+
+def _env_disables_telemetry() -> bool:
+    """True when PIQRYPT_TELEMETRY is set to one of the usual 'off' values."""
+    return os.getenv("PIQRYPT_TELEMETRY", "").strip().lower() in _OFF_VALUES
+
 
 class Telemetry:
     """
-    Anonymous telemetry collection (opt-in only)
+    Anonymous telemetry collection (enabled by default, opt-out)
 
     Collected data:
       - Event types (identity_created, event_signed, etc.)
@@ -77,7 +91,7 @@ class Telemetry:
 
     def _check_enabled(self) -> bool:
         """Check if telemetry is enabled"""
-        if os.getenv("PIQRYPT_TELEMETRY") == "0":
+        if _env_disables_telemetry():
             return False
         if self.config_file.exists():
             try:
@@ -143,10 +157,10 @@ class Telemetry:
         self.enabled = True
 
         print("✓ Telemetry enabled")
-        print("\nWhat is collected:")
-        print("  • Feature usage (anonymous)")
-        print("  • Error types")
-        print("  • Performance metrics")
+        print("\nWhat is sent with each event:")
+        print("  • Event name (for example identity_created)")
+        print("  • Random installation ID and PiQrypt version")
+        print("  • Operating system, CPU architecture, terminal or not")
         print("\nWhat is NOT collected:")
         print("  • Agent IDs")
         print("  • Event payloads")
@@ -177,8 +191,8 @@ class Telemetry:
         }
 
     def _send_to_server(self, event_type: str) -> None:
-        """Send anonymous event to trust-server (fire-and-forget, 3 s timeout)."""
-        if os.getenv("PIQRYPT_TELEMETRY") == "0":
+        """Send the anonymous event to the Trust Server (3 s timeout, errors ignored)."""
+        if _env_disables_telemetry():
             return
         try:
             import urllib.request
@@ -244,7 +258,7 @@ _telemetry = Telemetry()
 
 def track(event_name: str, **properties):
     """
-    Track anonymous event (if opt-in enabled)
+    Track anonymous event (no-op when telemetry is disabled)
 
     Examples:
         track("identity_created", algorithm="Ed25519")
