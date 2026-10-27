@@ -601,5 +601,38 @@ class TestTrialCli(unittest.TestCase):
         self.assertFalse(trial_json.exists())
 
 
+class TestCmdTrialStartDays(TrialTestBase):
+    """Verify that cmd_trial_start prints at most trial_days, not days_left."""
+
+    def _run_cmd(self, days_left, trial_days):
+        import io
+        from contextlib import redirect_stdout
+        import cli.main as _cli
+
+        token, payload = self._make_trial_token(days=trial_days)
+        result = {
+            "license_id": payload["license_id"],
+            "expires_at": payload["expires_at"],
+            "trial_days": trial_days,
+            "days_left": days_left,
+        }
+        out = io.StringIO()
+        with patch.object(self._trial, "start_trial", return_value=result):
+            with redirect_stdout(out):
+                _cli.cmd_trial_start(None)
+        return out.getvalue()
+
+    def test_days_left_exceeds_trial_days_capped(self):
+        """days_left=31, trial_days=30 -> "(30 days)" printed."""
+        output = self._run_cmd(days_left=31, trial_days=30)
+        self.assertIn("(30 days)", output)
+        self.assertNotIn("(31 days)", output)
+
+    def test_days_left_below_trial_days_unchanged(self):
+        """days_left=12, trial_days=30 -> "(12 days)" printed (re-issued trial)."""
+        output = self._run_cmd(days_left=12, trial_days=30)
+        self.assertIn("(12 days)", output)
+
+
 if __name__ == "__main__":
     unittest.main()

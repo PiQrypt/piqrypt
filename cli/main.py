@@ -932,7 +932,9 @@ def cmd_trial_start(args):
         from datetime import datetime, timezone
         expires_dt = datetime.fromtimestamp(result["expires_at"], tz=timezone.utc)
         date_str = expires_dt.strftime("%Y-%m-%d")
-        days = result.get("days_left") or result.get("trial_days", 30)
+        trial_days = result.get("trial_days", 30)
+        days_left = result.get("days_left")
+        days = min(days_left, trial_days) if isinstance(days_left, int) else trial_days
         print("✓ Trial active: Pro features unlocked until " + date_str + " (" + str(days) + " days).")
         print("  Check anytime: piqrypt trial status")
         print("  When it ends, PiQrypt returns to the Free tier (3 agents) and your data is untouched.")
