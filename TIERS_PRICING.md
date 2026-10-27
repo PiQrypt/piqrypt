@@ -46,7 +46,7 @@ No credit card. No expiry.
 
 ## 30-day Pro trial (not a tier)
 
-Run `piqrypt trial start` to request a 30-day Pro token from the Trust Server. No email, no card, no account. One HTTPS request is sent containing the anonymous installation ID and the client version (see docs/TELEMETRY.md for what is retained). The returned token is verified offline like a paid license. During the trial the quota is 50 agents and 500,000 events/month. All Pro features are active except server-side certification credits: certified `.pqz` exports and post-quantum certification require paid credits and are rejected by the certification service during a trial. At the end of the 30 days there is a 72-hour grace period, then the license falls back to Free (3 agents). One trial per installation ID. The trial adds no tier; this file stays synchronized with `aiss/license.py TIERS{}`.
+Run `piqrypt trial start` to request a 30-day Pro token from the Trust Server. No email, no card, no account. One HTTPS request is sent containing the anonymous installation ID and the client version (see docs/TELEMETRY.md for what is retained). The returned token is verified offline like a paid license. During the trial the quota is 50 agents and 500,000 events/month. All Pro features are active, including the local certified export (`piqrypt export --certified`). PiQrypt external certifications (Simple, Timestamp, Post-quantum) are not available: the trial has no certification credits and the certification service returns "License not found" for trial license IDs. At the end of the 30 days there is a 72-hour grace period, then the license falls back to Free (3 agents). One trial per installation ID. The trial adds no tier; this file stays synchronized with `aiss/license.py TIERS{}`.
 
 ---
 

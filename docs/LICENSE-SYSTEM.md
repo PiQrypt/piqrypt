@@ -130,7 +130,9 @@ The trial activates a Pro license token valid for 30 days, verified offline like
 - **50 agents** · **500,000 events/month**
 - All Pro features: AISS-2 post-quantum signatures, RFC 3161 trusted timestamps, encrypted key storage, AgentSession, Vigil full mode, TrustGate manual mode, Trust Scoring (TS), TSI, A2C anomaly detection, VRS
 
-**Not included:** server-side certification credits (`cert_simple_month`, `cert_timestamp_month`, `cert_pq_month`). The `.pqz certified` export feature flag is enabled locally (tier Pro), but the certification service requires paid credits; a trial carries none, so certified `.pqz` exports and post-quantum certification will be rejected by the server.
+**Local certified export available:** `piqrypt export --certified` and `certify_export` are gated by the local license only. A trial license is tier Pro, so they work and produce a locally self-signed audit export.
+
+**PiQrypt external certifications not available:** Simple, Timestamp, and Post-quantum certifications (`piqrypt certify-request`) require certification credits. A trial has no credits, and the certification service returns "License not found" for trial license IDs because trial licenses are not stored in the licenses table. `piqrypt license status` still lists the `cert_simple_month`, `cert_timestamp_month`, and `cert_pq_month` feature flags as part of the Pro tier display; they do not imply certification credits for a trial.
 
 ### Reminders
 
@@ -349,7 +351,7 @@ piqrypt license activate <token>
 ## FAQ
 
 **Is there a free trial of Pro?**
-Yes. Run `piqrypt trial start` — no email, no card. The trial lasts 30 days and gives the full Pro quota (50 agents, 500,000 events/month) and features. Server-side certification credits are not included. One trial per installation ID. See [30-day Pro trial](#30-day-pro-trial).
+Yes. Run `piqrypt trial start` — no email, no card. The trial lasts 30 days and gives the full Pro quota (50 agents, 500,000 events/month) and features, including local certified exports (`piqrypt export --certified`). PiQrypt external certifications (Simple, Timestamp, Post-quantum) are not available because the trial carries no certification credits. One trial per installation ID. See [30-day Pro trial](#30-day-pro-trial).
 
 **Les 9 bridges sont-ils gratuits ?**
 Oui. LangChain, CrewAI, AutoGen, OpenClaw, Session, MCP, Ollama, ROS2, RPi — tous MIT/Apache-2.0, disponibles sur tous les tiers.

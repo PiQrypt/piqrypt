@@ -601,6 +601,33 @@ class TestTrialCli(unittest.TestCase):
         self.assertFalse(trial_json.exists())
 
 
+class TestCertifiedExportDuringTrial(TrialTestBase):
+    """Prove that the local certified export works with a trial Pro license."""
+
+    def test_certify_export_does_not_raise(self):
+        """A trial Pro token passes is_pro(); certify_export must not raise."""
+        import aiss
+        from aiss.exports import export_audit_chain, certify_export
+        from aiss.crypto import ed25519
+
+        # Activate a trial Pro token
+        token, _ = self._make_trial_token(days=30)
+        self._lic._license.activate(token)
+
+        # Build a minimal chain
+        priv, pub = ed25519.generate_keypair()
+        agent_id = aiss.derive_agent_id(pub)
+        identity = aiss.export_identity(agent_id, pub)
+        events = [aiss.stamp_event(priv, agent_id, {"i": i}) for i in range(2)]
+
+        audit_path = self.tmp / "audit_trial.json"
+        audit_path.write_text(json.dumps(export_audit_chain(identity, events)))
+
+        # Must not raise FeatureNotAvailableError
+        cert_path = certify_export(str(audit_path), priv, agent_id)
+        self.assertTrue(Path(cert_path).exists())
+
+
 class TestCmdTrialStartDays(TrialTestBase):
     """Verify that cmd_trial_start prints at most trial_days, not days_left."""
 

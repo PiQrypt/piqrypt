@@ -21,9 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`PIQRYPT_TRIAL_ENDPOINT`** — overrides the Trust Server address, for private deployments.
 - **License info fields `status`, `trial`, `days_left`** — `piqrypt license status` now shows
   trial state and days remaining; `get_license().info()` returns these fields for all tiers.
-- **Tests** — `tests/test_trial_client.py` (33 + 2 new tests), `tests/test_license_status.py`
+- **Tests** — `tests/test_trial_client.py`, `tests/test_license_status.py`
   (license info fields), `tests/test_public_pricing_text.py` (public price texts),
   `tests/test_telemetry_env_values.py` (telemetry opt-out values).
+- **`piqrypt trial start`** shows at most the trial length in days right after issuance.
 
 ### Changed
 
@@ -37,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **`piqrypt onboard` activation step** imported a function that does not exist (`activate`)
-  and read keys (`license_key`, `events_per_month`) that do not exist. It now uses
+  and read keys (`agent_limit`, `events_month_limit`) that do not exist. It now uses
   `activate_license`, `agents_max` and `events_month`.
 
 ### Behaviour changes

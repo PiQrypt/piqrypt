@@ -282,7 +282,7 @@ PiQrypt does **not** protect against compromised private keys, malicious logic b
 | **Business** | 500 | 20,000,000 | On request | All Team + TrustGate full, SIEM, multi-org |
 | **Enterprise** | Unlimited | Unlimited | On request | All Business + SSO, on-premise, SLA, air-gap |
 
-Every installation can try Pro for 30 days with `piqrypt trial start`; see [docs/LICENSE-SYSTEM.md](docs/LICENSE-SYSTEM.md). Certified exports (`.pqz certified`) are not included in the trial.
+Every installation can try Pro for 30 days with `piqrypt trial start`; see [docs/LICENSE-SYSTEM.md](docs/LICENSE-SYSTEM.md). The trial does not include PiQrypt external certifications (they are issued per certification credit); the local certified export of Pro (`piqrypt export --certified`) is available.
 
 Buy Pro and see the current prices: [piqrypt.com/pricing](https://piqrypt.com/pricing)
 
