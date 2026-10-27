@@ -83,6 +83,9 @@ piqrypt start --tier free                  # Vigil dashboard · port 8421
 piqrypt start --tier business --manual     # + TrustGate human approval queue
 ```
 
+Try Pro free for 30 days: `piqrypt trial start` (no email, no card).
+See [docs/LICENSE-SYSTEM.md#30-day-pro-trial](docs/LICENSE-SYSTEM.md#30-day-pro-trial) for what is included.
+
 Python API — two lines to get started:
 
 ```python
@@ -278,6 +281,8 @@ PiQrypt does **not** protect against compromised private keys, malicious logic b
 | **Team** | 150 | 5,000,000 | On request | All Startup + priority support |
 | **Business** | 500 | 20,000,000 | On request | All Team + TrustGate full, SIEM, multi-org |
 | **Enterprise** | Unlimited | Unlimited | On request | All Business + SSO, on-premise, SLA, air-gap |
+
+Every installation can try Pro for 30 days with `piqrypt trial start`; see [docs/LICENSE-SYSTEM.md](docs/LICENSE-SYSTEM.md). Certified exports (`.pqz certified`) are not included in the trial.
 
 Buy Pro and see the current prices: [piqrypt.com/pricing](https://piqrypt.com/pricing)
 

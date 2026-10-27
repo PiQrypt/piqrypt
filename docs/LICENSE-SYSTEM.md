@@ -108,6 +108,55 @@ All Pro features at no cost. Requirements: OSI-approved license · public repo �
 
 ---
 
+## 30-day Pro trial
+
+### How to start
+
+```bash
+piqrypt trial start   # request and activate the trial
+piqrypt trial status  # check remaining days
+```
+
+No email, no card, no account required.
+
+### What is sent
+
+One HTTPS POST to the PiQrypt Trust Server containing the anonymous installation ID (a random UUID stored in `~/.piqrypt/installation_id`) and the client version. This request is sent even when telemetry is disabled, because you asked for the trial. See [docs/TELEMETRY.md — Trial request](TELEMETRY.md#trial-request) for the full body and what the server retains.
+
+### What is included
+
+The trial activates a Pro license token valid for 30 days, verified offline like a paid license. During the trial the local license is tier **Pro**:
+
+- **50 agents** · **500,000 events/month**
+- All Pro features: AISS-2 post-quantum signatures, RFC 3161 trusted timestamps, encrypted key storage, AgentSession, Vigil full mode, TrustGate manual mode, Trust Scoring (TS), TSI, A2C anomaly detection, VRS
+
+**Not included:** server-side certification credits (`cert_simple_month`, `cert_timestamp_month`, `cert_pq_month`). The `.pqz certified` export feature flag is enabled locally (tier Pro), but the certification service requires paid credits; a trial carries none, so certified `.pqz` exports and post-quantum certification will be rejected by the server.
+
+### Reminders
+
+One message is shown the first time each threshold is crossed:
+
+- at 7 days remaining
+- at 1 day remaining
+- when the grace period starts (trial expired, still on Pro)
+- when the trial has ended and the tier is back to Free
+
+Each message is shown once.
+
+### End of trial
+
+72 hours of grace after the token expires (existing behavior for all tiers), then the license falls back to Free (3 agents, 10,000 events/month). No data is deleted. Creating new agents beyond 3 is refused; existing agent data is untouched.
+
+### One trial per installation
+
+After the trial has expired, the server records that it was already used. Running `piqrypt trial start` again returns a clear message with no traceback. Reinstalling PiQrypt (or deleting `~/.piqrypt/installation_id`) generates a new installation ID, which the server treats as a new installation; the server may issue a new trial for it.
+
+### Custom endpoint
+
+`PIQRYPT_TRIAL_ENDPOINT` overrides the server address, useful for private deployments. It cannot make an invalid or expired token valid — the token is verified locally with the embedded public key.
+
+---
+
 ## Feature Matrix
 
 | Feature | Free | Pro | Team | Business | Enterprise |
@@ -273,6 +322,8 @@ def stamp_with_tsa(event):
 
 ### Pro
 
+A 30-day trial is available before purchasing: `piqrypt trial start` — see [30-day Pro trial](#30-day-pro-trial).
+
 <div align="center">
 
 [![Pro €390/year](https://img.shields.io/badge/Pro-€390/year-orange?style=for-the-badge&logo=stripe)](https://piqrypt.com/pricing)
@@ -296,6 +347,9 @@ piqrypt license activate <token>
 ---
 
 ## FAQ
+
+**Is there a free trial of Pro?**
+Yes. Run `piqrypt trial start` — no email, no card. The trial lasts 30 days and gives the full Pro quota (50 agents, 500,000 events/month) and features. Server-side certification credits are not included. One trial per installation ID. See [30-day Pro trial](#30-day-pro-trial).
 
 **Les 9 bridges sont-ils gratuits ?**
 Oui. LangChain, CrewAI, AutoGen, OpenClaw, Session, MCP, Ollama, ROS2, RPi — tous MIT/Apache-2.0, disponibles sur tous les tiers.

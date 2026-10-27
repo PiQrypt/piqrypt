@@ -7,6 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.11.0] - 2026-10-28
+
+### Added
+
+- **`piqrypt trial start` and `piqrypt trial status`** — request and inspect a 30-day Pro trial
+  token from the Trust Server. No email, no card required. The request sends the anonymous
+  installation ID and the client version; it is sent regardless of the telemetry setting. The
+  returned JWT token is verified offline using the same mechanism as a paid license.
+- **`aiss/trial.py`** — `start_trial()`, `trial_status()`, `pending_notice()`.
+  `pending_notice()` emits one message per state transition (7 days left, 1 day left, grace
+  period, ended) and persists each notification in `~/.piqrypt/trial.json`.
+- **`PIQRYPT_TRIAL_ENDPOINT`** — overrides the Trust Server address, for private deployments.
+- **License info fields `status`, `trial`, `days_left`** — `piqrypt license status` now shows
+  trial state and days remaining; `get_license().info()` returns these fields for all tiers.
+- **Tests** — `tests/test_trial_client.py` (33 + 2 new tests), `tests/test_license_status.py`
+  (license info fields), `tests/test_public_pricing_text.py` (public price texts),
+  `tests/test_telemetry_env_values.py` (telemetry opt-out values).
+
+### Changed
+
+- **Telemetry opt-out** now accepts `0`, `false`, `no`, and `off` in any case (previously only
+  `0` disabled it). The first-run notice and `docs/TELEMETRY.md` were rewritten to match the
+  real payload and actual opt-out behavior.
+- **Public price texts aligned with the code**: early-bird offer removed, Startup tier listed
+  at €990/year, Team and Business listed as "on request", TrustGate described as demo mode in
+  Free. CLI price text corrected to EUR 390/year for Pro.
+
+### Fixed
+
+- **`piqrypt onboard` activation step** imported a function that does not exist (`activate`)
+  and read keys (`license_key`, `events_per_month`) that do not exist. It now uses
+  `activate_license`, `agents_max` and `events_month`.
+
+### Behaviour changes
+
+`get_license().info()` now always includes `status`, `trial` and `days_left` keys (values may
+be `None` for tiers that do not use them). Callers that check `"status" in info` will now
+always find the key.
+
+---
+
 ## [1.10.0] - 2026-10-23
 
 This release adds AISS-2.1 (hybrid Ed25519 + ML-DSA-65 with domain separation), real RFC 3161
