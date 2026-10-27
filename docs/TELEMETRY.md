@@ -1,7 +1,7 @@
 # Telemetry System
 
-**Version:** 1.10.0
-**Date:** 2026-10-25
+**Version:** 1.11.0
+**Date:** 2026-10-27
 **Status:** Current
 
 ---
@@ -112,7 +112,7 @@ The installation ID is a random, persistent identifier. It is not linked to a pe
 ---
 
 **Last Updated:** 2026-10-25
-**Version:** 1.10.0
+**Version:** 1.11.0
 
 ---
 

@@ -439,7 +439,7 @@ def configure_logging(
 ---
 
 **Last Updated:** 2026-03-12
-**Version:** 1.10.0
+**Version:** 1.11.0
 
 ---
 

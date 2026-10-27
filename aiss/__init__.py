@@ -34,7 +34,7 @@ Quick Start — Archive (Pro):
     >>> create_archive(events, identity, "backup.pqz", passphrase="strong-pass")
 """
 
-__version__ = "1.10.0"
+__version__ = "1.11.0"
 
 # Core AISS-1
 from aiss.identity import (

@@ -1,6 +1,6 @@
 # PiQrypt Quick Start Guide
 
-**PiQrypt v1.10.0 — AISS v2.0 Reference Implementation**
+**PiQrypt v1.11.0 — AISS v2.0 Reference Implementation**
 
 Get started in 5 minutes.
 
