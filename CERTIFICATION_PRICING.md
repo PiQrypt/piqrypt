@@ -230,8 +230,7 @@ Relevant for: medical records · industrial certifications
 | Tier | Certifications included |
 |---|---|
 | Free | 1 Simple (à l'activation) |
-| Pro (Early-Bird €290) | 10 Simple / month |
-| Pro (Standard €390) | 50 Simple / month |
+| Pro | 10 Simple / month |
 | Team | 100 Simple / month |
 | Business | Custom volume |
 | Enterprise | Custom volume |

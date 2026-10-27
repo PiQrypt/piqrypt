@@ -135,7 +135,7 @@ TIERS: Dict[str, Dict[str, Any]] = {
         "agents_max":           50,
         "events_month":         500_000,
         "price_monthly":        None,       # annual only
-        "price_annual":         390,        # 290 early-bird
+        "price_annual":         390,
         "quantum":              True,
         "tsa_rfc3161":          True,
         "pqz_certified":        True,

@@ -1677,7 +1677,7 @@ class VIGILServer:
         log.info("  Tier      → %s  [%s]", tier.upper(), lic_status.upper())
         if lic_exp:
             log.info("  Expires   → %s", lic_exp)
-        log.info("  TrustGate → %s", tier_inf["trustgate_level"] or "unavailable (upgrade to Pro)")
+        log.info("  TrustGate → %s", tier_inf["trustgate_level"] or "demo (Free tier)")
         log.info(
             "  Features  → record=%s  alerts=%s  export_pdf=%s  export_pqz=%s  full_vrs=%s  bridges=%s",  # noqa: E501
             "✅" if vf.get("record")      else "🔒",

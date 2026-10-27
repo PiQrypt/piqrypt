@@ -32,6 +32,8 @@ For individuals, open-source projects, and evaluation.
 - All 9 bridges available to choose from: LangChain, CrewAI, AutoGen, MCP,
   OpenClaw, AgentSession, Ollama, ROS2, RPi
 
+**TrustGate:** demo mode (real policy engine and approval queue with demo operators; the queue and journal are reset at each start)
+
 **Support:** Community
 
 ```bash
@@ -42,7 +44,7 @@ No credit card. No expiry.
 
 ---
 
-## Pro — €290/year (Early-Bird) · €390/year (Standard)
+## Pro — €390/year
 
 For production workloads, freelancers, consultants, and compliance-sensitive environments.
 
@@ -70,7 +72,7 @@ For production workloads, freelancers, consultants, and compliance-sensitive env
 
 **Support:** Email — 48h response
 
-> **Pro tier — coming soon · contact@piqrypt.com**
+> **Pro is available now: https://piqrypt.com/pricing**
 
 ---
 
@@ -94,7 +96,7 @@ For small teams of 2–10 engineers, AI labs, early-stage startups.
 
 ---
 
-## Team — €2,990/year
+## Team — on request
 
 For AI product teams, robotics teams, quant teams.
 
@@ -115,7 +117,7 @@ For AI product teams, robotics teams, quant teams.
 
 ---
 
-## Business — €14,990/year
+## Business — on request
 
 For organizations requiring governance at scale — regulated AI, robotics fleets, finance.
 
@@ -167,12 +169,12 @@ For regulated industries, critical infrastructure, large deployments.
 | **VRS history** | 7 days | 90 days | 90 days | 90 days | 90 days | ∞ |
 | **PQ signatures** | 🔒 | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **RFC 3161 TSA** | 🔒 | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **TrustGate** | 🔒 | manual | manual | manual | **full auto** | full auto |
+| **TrustGate** | demo | manual | manual | manual | **full auto** | full auto |
 | **Multi-org** | 🔒 | 🔒 | 🔒 | 🔒 | ✅ | ✅ |
 | **SIEM** | 🔒 | 🔒 | 🔒 | 🔒 | ✅ | ✅ |
 | **SSO** | 🔒 | 🔒 | 🔒 | 🔒 | 🔒 | ✅ |
 | **HSM** | 🔒 | 🔒 | 🔒 | 🔒 | 🔒 | ✅ |
-| **Price/year** | Free | €290–390 | €990 | €2,990 | €14,990 | custom |
+| **Price/year** | Free | €390 | €990 | on request | on request | on request |
 
 ---
 
@@ -187,8 +189,7 @@ See full details → [CERTIFICATION_PRICING.md](CERTIFICATION_PRICING.md)
 | Tier | Simple (€9) | Timestamp (€29) | Post-Quantum (€99) |
 |---|---|---|---|
 | Free | 1 (activation) | — | — |
-| Pro (Early-Bird) | 10/month | — | — |
-| Pro (Standard) | 10/month | — | — |
+| Pro | 10/month | — | — |
 | Startup | — | 5/month | — |
 | Team | — | 10/month | — |
 | Business | — | — | 5/month |

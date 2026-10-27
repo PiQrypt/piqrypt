@@ -275,45 +275,25 @@ pip install piqrypt
 
 ---
 
-### ⚡ Early-Bird Pro — €290/year
-
-**⏰ Limited-time adoption pricing**
-
-Perfect for startups, trading bots, automation workflows.
-
-**Includes:**
-- ✅ **50** (vs 3 Free)
-- ✅ **Ed25519 + Dilithium3** (post-quantum)
-- ✅ **AES-256-GCM** encrypted storage
-- ✅ **Unlimited exports**
-- ✅ **10 Simple certifications/month FREE**
-- ✅ **TSA timestamps** (RFC 3161)
-- ✅ **AgentSession** — N-agent cross-framework co-signed sessions
-- ✅ **Email support** (48h)
-
-<a href="https://buy.stripe.com/4gM6oAeZe9tX6KreEX2VG02">
-<img src="https://img.shields.io/badge/Get_Early--Bird_Pro-€290/year-blue?style=for-the-badge&logo=stripe&logoColor=white" alt="Early-Bird Pro €290/year">
-</a>
-
-**⏰ Lock in €290/year before Standard pricing. Limited slots.**
-
----
-
-### 🔥 Standard Pro — €390/year
+### 🔥 Pro — €390/year
 
 **Full premium package**
 
-Perfect for growing startups, fintech, compliance-critical systems.
+Perfect for startups, trading bots, automation workflows, fintech and compliance-critical systems.
 
 **Includes:**
-- ✅ Everything in Early-Bird Pro
-- ✅ **50 certifications/month FREE** (vs 10)
+- ✅ **50 agents** (vs 3 Free)
+- ✅ **Ed25519 + Dilithium3** (post-quantum)
+- ✅ **AES-256-GCM** encrypted storage
+- ✅ **Unlimited exports**
+- ✅ **10 Simple certifications/month included**
+- ✅ **TSA timestamps** (RFC 3161)
+- ✅ **AgentSession** - N-agent cross-framework co-signed sessions
 - ✅ **Trust scoring dashboard** (I/V/D/F) *[v1.6]*
-- ✅ **Visual badges** (custom branding)
-- ✅ **Priority support** (24h vs 48h)
+- ✅ **Email support** (48h)
 
-<a href="https://buy.stripe.com/00wcMY7wMeOhc4L2Wf2VG01">
-<img src="https://img.shields.io/badge/Get_Standard_Pro-€390/year-orange?style=for-the-badge&logo=stripe&logoColor=white" alt="Standard Pro €390/year">
+<a href="https://piqrypt.com/pricing">
+<img src="https://img.shields.io/badge/Get_Pro-€390/year-orange?style=for-the-badge&logo=stripe&logoColor=white" alt="Pro €390/year">
 </a>
 
 ---
@@ -540,8 +520,7 @@ event = aiss.stamp_event(priv, agent_id, {
 
 **Pro subscription:**
 
-<a href="https://buy.stripe.com/4gM6oAeZe9tX6KreEX2VG02">Early-Bird €290/year</a> • 
-<a href="https://buy.stripe.com/00wcMY7wMeOhc4L2Wf2VG01">Standard €390/year</a>
+<a href="https://piqrypt.com/pricing">Pro €390/year</a>
 
 **Enterprise:**
 

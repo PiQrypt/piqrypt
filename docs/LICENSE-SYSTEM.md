@@ -1,13 +1,13 @@
 # PiQrypt License System
 
 **Version:** 1.10.0
-**Last Updated:** 2026-03-12
+**Last Updated:** 2026-10-26
 
 ---
 
 ## Overview
 
-PiQrypt uses a five-tier licensing system. The core AISS-1 protocol is free forever. Paid tiers unlock additional agents, encrypted storage, post-quantum signatures, behavioral monitoring, governance, and professional support.
+PiQrypt uses a six-tier licensing system (Free, Pro, Startup, Team, Business, Enterprise). The core AISS-1 protocol is free forever. Paid tiers unlock additional agents, encrypted storage, post-quantum signatures, behavioral monitoring, governance, and professional support.
 
 License validation is **local-first** — no internet required after activation. Free tier requires no license key at all.
 
@@ -27,13 +27,13 @@ License validation is **local-first** — no internet required after activation.
 - ✅ A2A handshake (Ed25519 co-signed)
 - ✅ All 9 framework bridges (LangChain, CrewAI, AutoGen, OpenClaw, Session, MCP, Ollama, ROS2, RPi)
 - ✅ Vigil — read-only (dashboard view)
-- ⚠️ TrustGate — manual mode only (no automated enforcement)
+- ⚠️ TrustGate - demo mode (real policy engine and approval queue with demo operators; the queue and journal are reset at each start)
 
 **License key:** Not required.
 
 ---
 
-### 💼 Pro — €290/year (Early-Bird) · €390/year (Standard)
+### 💼 Pro — €390/year
 
 **Quotas:** 50 agents · 500,000 events/month · 1,000 API req/hour
 
@@ -56,17 +56,25 @@ License validation is **local-first** — no internet required after activation.
 
 ---
 
-### 👥 Team — €1,990/year
+### 🚀 Startup — €990/year
 
-**Quotas:** 100 agents · 1,000,000 events/month · 10,000 API req/hour
+**Quotas:** 50 agents · 1,000,000 events/month · 5,000 API req/hour
+
+Everything in Pro, plus a team workspace (shared agent registry) and a shared Vigil dashboard. Email support, 24h response.
+
+---
+
+### 👥 Team — on request
+
+**Quotas:** 150 agents · 5,000,000 events/month · 10,000 API req/hour
 
 Everything in Pro. Designed for shared team deployments.
 
 ---
 
-### 🏢 Business — €14,990/year
+### 🏢 Business — on request
 
-**Quotas:** 500 agents · 10,000,000 events/month · 100,000 API req/hour
+**Quotas:** 500 agents · 20,000,000 events/month · 100,000 API req/hour
 
 **Everything in Team, plus:**
 - ✅ TrustGate — **full automated mode** (no human approval required)
@@ -105,8 +113,8 @@ All Pro features at no cost. Requirements: OSI-approved license · public repo �
 | Feature | Free | Pro | Team | Business | Enterprise |
 |---------|:----:|:---:|:----:|:--------:|:----------:|
 | **Quotas** | | | | | |
-| Agents | 3 | 50 | 100 | 500 | ∞ |
-| Events / month | 10k | 500k | 1M | 10M | ∞ |
+| Agents | 3 | 50 | 150 | 500 | ∞ |
+| Events / month | 10k | 500k | 5M | 20M | ∞ |
 | API req / hour | 100 | 1k | 10k | 100k | ∞ |
 | **AISS-1** | | | | | |
 | Ed25519 · chains · fork · anti-replay | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -131,7 +139,7 @@ All Pro features at no cost. Requirements: OSI-approved license · public repo �
 | A2C anomaly detection (16 scenarios) | — | ✅ | ✅ | ✅ | ✅ |
 | VRS composite score | — | ✅ | ✅ | ✅ | ✅ |
 | **TrustGate** | | | | | |
-| Manual mode (policy eval + REQUIRE_HUMAN) | ⚠️ | ✅ | ✅ | ✅ | ✅ |
+| Manual mode (policy eval + REQUIRE_HUMAN) | demo | ✅ | ✅ | ✅ | ✅ |
 | Full automated enforcement | — | — | — | ✅ | ✅ |
 | **Enterprise** | | | | | |
 | AgentSession cross-framework | — | ✅ | ✅ | ✅ | ✅ |
@@ -139,10 +147,12 @@ All Pro features at no cost. Requirements: OSI-approved license · public repo �
 | SIEM integration | — | — | — | ✅ | ✅ |
 | SSO | — | — | — | — | ✅ |
 | On-premise | — | — | — | option | ✅ |
-| **Support** | Community | Email 48h | Email 48h | Priority | Dedicated SLA |
-| **Price** | **Free** | **€290–390/yr** | **€1,990/yr** | **€14,990/yr** | **on demand** |
+| **Support** | Community | Email 48h | Priority | Dedicated | Dedicated SLA |
+| **Price** | **Free** | **€390/yr** | **on request** | **on request** | **on request** |
 
-⚠️ Free: TrustGate manual mode — evaluation works, automated enforcement requires Pro+.
+Free: TrustGate runs in demo mode (real policy engine and approval queue, demo operators, queue and journal reset at each start). Manual mode with a persistent journal starts at Pro; full automated mode starts at Business.
+
+Startup (€990/year) is Pro plus a team workspace and a shared Vigil dashboard; it is not a separate column in this table. See TIERS_PRICING.md for the full comparison.
 
 ---
 
@@ -151,7 +161,7 @@ All Pro features at no cost. Requirements: OSI-approved license · public repo �
 ### Architecture
 
 ```
-Free    →  HMAC local (free.<id>.<hmac8>)         — zéro réseau, jamais
+Free    →  HMAC local (free.<id>.<hmac8>)         — aucun appel réseau pour la licence
 Pro+    →  JWT Ed25519 — vérifié offline           — réseau au renouvellement seulement
                                                      Grace period 72h si réseau absent
 ```
@@ -177,12 +187,18 @@ Pro+    →  JWT Ed25519 — vérifié offline           — réseau au renouvel
 ### Vérifier la licence actuelle
 
 ```bash
-piqrypt license info
-# License Tier:   free
-# Agents:         0 / 3
-# Events/month:   847 / 10,000
-# Expires:        never
-# Upgrade:        https://piqrypt.com/pricing
+piqrypt license status
+# ==================================================
+#   PiQrypt License Status
+# ==================================================
+#
+#   Tier    : FREE
+#
+#   Features:
+#     (one line per feature, with a check mark when it is available)
+#
+#   Upgrade to Pro:
+#     piqrypt.com/pricing  -  EUR 390/year
 ```
 
 ### Activer une licence Pro
@@ -208,8 +224,8 @@ from aiss.license import get_license, require, FeatureNotAvailableError
 lic = get_license()
 
 # Tier et quotas
-print(lic.tier)              # "free" | "pro" | "team" | "business" | "enterprise"
-print(lic.agents_max)        # 3 | 50 | 100 | 500 | None (Enterprise = illimité)
+print(lic.tier)              # "free" | "pro" | "startup" | "team" | "business" | "enterprise"
+print(lic.agents_max)        # 3 | 50 | 50 | 150 | 500 | None (Enterprise = illimité)
 print(lic.events_month)      # 10000 | 500000 | ... | None
 
 # Vérifier une feature
@@ -259,9 +275,7 @@ def stamp_with_tsa(event):
 
 <div align="center">
 
-[![Early-Bird Pro €290/year](https://img.shields.io/badge/Early--Bird_Pro-€290/year-blue?style=for-the-badge&logo=stripe)](https://buy.stripe.com/4gM6oAeZe9tX6KreEX2VG02)
-&nbsp;
-[![Standard Pro €390/year](https://img.shields.io/badge/Standard_Pro-€390/year-orange?style=for-the-badge&logo=stripe)](https://buy.stripe.com/00wcMY7wMeOhc4L2Wf2VG01)
+[![Pro €390/year](https://img.shields.io/badge/Pro-€390/year-orange?style=for-the-badge&logo=stripe)](https://piqrypt.com/pricing)
 
 </div>
 
@@ -290,7 +304,7 @@ Oui. LangChain, CrewAI, AutoGen, OpenClaw, Session, MCP, Ollama, ROS2, RPi — t
 Non. AgentSession (co-signature cross-framework entre N agents) requiert Pro+.
 
 **TrustGate est-il disponible en Free ?**
-Oui, en mode manual — évaluation de politique et flow REQUIRE_HUMAN fonctionnent. L'enforcement automatisé sans intervention humaine requiert Business+.
+En mode démo, pour l'évaluation : le moteur de politiques et la file d'approbation sont les vrais, avec deux opérateurs de démonstration, et la file et le journal sont remis à zéro à chaque démarrage. Le mode manuel avec journal persistant commence à Pro ; le mode automatique complet commence à Business.
 
 **Que se passe-t-il à l'expiration ?**
 Grace period de 72h, puis dégradation gracieuse vers Free. Zéro perte de données. Les signatures existantes restent valides indéfiniment.
@@ -309,7 +323,7 @@ Stocké dans `~/.piqrypt/license.jwt` (chmod 600). La clé privée de signature 
 > Advanced features fund sustainable development.
 
 - ✅ AISS-1 core — gratuit, toujours, sans régression
-- ✅ No phone-home sur Free tier
+- ✅ Pas de vérification de licence en ligne
 - ✅ Local-first — pas de dépendance cloud forcée
 - ✅ Grace period — jamais de blocage brutal
 - ✅ Open-source program pour les projets OSS

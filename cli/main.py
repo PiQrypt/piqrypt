@@ -634,8 +634,9 @@ def cmd_certify_request(args):
         print("   4. Verify with: piqrypt certify-verify <certified-file>")
         print()
         print("💰 Pricing:")
-        print("   - Pro users:  Included (unlimited)")
-        print("   - Free users: $99 one-time per certification")
+        print("   - Pay per certification: from EUR 9 (Simple)")
+        print("   - Pro: 10 Simple certifications included per month")
+        print("   - Details: https://piqrypt.com/pricing")
         print()
 
     except Exception as e:

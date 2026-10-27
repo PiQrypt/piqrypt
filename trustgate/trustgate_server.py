@@ -1047,21 +1047,23 @@ def main():
     print("  Trust Gate HTTP Server v1.8.6")
     print(f"  Listening on http://{args.host}:{args.port}")
     print(f"  Policy     : {args.policy}")
-    print(f"  Demo mode  : {args.demo}")
+    print(f"  Demo mode  : {args.demo or _tg_level is None}")
     print(f"  Auth       : {'✅ ENABLED' if _AUTH.token else '⚠️  WARNING — set TRUSTGATE_TOKEN'}")
     print(f"  Tier       : {_tier.upper()}  [{_lic_status.upper()}]")
     if _lic_exp:
         print(f"  Expires    : {_lic_exp}")
-    print(f"  Level      : {_tg_level or '🔒 UNAVAILABLE on Free — upgrade to Pro'}")
+    print(f"  Level      : {_tg_level or 'demo (Free tier)'}")
 
     # ── License gate — bloquer le démarrage de TrustGate en Free ─────────────
     if _tg_level is None:
-        print("\n  ⚠️  TRUSTGATE IS LOCKED on Free tier.")
-        print("     TrustGate requires Pro tier or above.")
-        print("     Activate a license: piqrypt license activate <token>")
-        print("     Or visit: https://piqrypt.com/pricing")
+        print("\n  TrustGate runs in DEMO mode on the Free tier.")
+        print("     The policy engine and the approval queue are the real ones.")
+        print("     Two demo operators are created (admin L3, operator L2), and the")
+        print("     queue and the journal are reset at each start.")
+        print("     Pro and above keep the journal and use your own principals.")
+        print("     Try Pro free for 30 days: piqrypt trial start")
+        print("     Plans: https://piqrypt.com/pricing")
         if not args.demo:
-            print("\n  Starting in DEMO mode (no enforcement).")
             args.demo = True  # Force demo si pas de licence valide
     elif _tg_level == "manual":
         print("  Mode       : Manual approval queue — automatic policies require Business tier")

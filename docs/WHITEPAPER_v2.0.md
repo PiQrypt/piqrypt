@@ -454,7 +454,7 @@ Every TrustGate decision — ALLOW or DENY — is itself a signed event appended
 
 ### 6.4 Availability
 
-TrustGate is available in **Pro+ tier** and above. It is the primary differentiator between Free and Pro.
+TrustGate is available in **Pro+ tier** and above. It is the primary differentiator between Free and Pro. The Free tier runs it in a demo mode for evaluation (queue and journal reset at each start).
 
 ---
 
@@ -680,11 +680,14 @@ Agent proposes high-risk action
 
 | Tier | Agents | Events/month | Price | Key features |
 |------|--------|-------------|-------|-------------|
-| **Free** | 3 | 10,000 | Free forever | AISS STANDARD, .pqz memory, Vigil read-only |
-| **Pro** | 50 | 500,000 | $79/mo · $790/yr | QUANTUM, TSA RFC 3161, .pqz CERTIFIED, Vigil full, TrustGate manual |
-| **Team** | 100 | 1,000,000 | $199/mo · $1,990/yr | All Pro + priority support |
-| **Business** | 500 | 10,000,000 | $1,499/mo · $14,990/yr | All Team + TrustGate full, SIEM, multi-org |
+| **Free** | 3 | 10,000 | Free forever | AISS STANDARD, .pqz memory, Vigil read+write (2 bridges max), TrustGate demo mode |
+| **Pro** | 50 | 500,000 | €390/year | QUANTUM, TSA RFC 3161, .pqz CERTIFIED, Vigil full, TrustGate manual |
+| **Startup** | 50 | 1,000,000 | €990/year | All Pro + team workspace |
+| **Team** | 150 | 5,000,000 | On request | All Startup + priority support |
+| **Business** | 500 | 20,000,000 | On request | All Team + TrustGate full, SIEM, multi-org |
 | **Enterprise** | Unlimited | Unlimited | On request | All Business + SSO, on-premise, SLA, air-gap |
+
+Prices are indicative; current prices and purchase links are at https://piqrypt.com/pricing.
 
 ### 14.2 Certification Pay-Per
 
