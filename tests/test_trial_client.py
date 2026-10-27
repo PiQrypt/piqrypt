@@ -402,6 +402,7 @@ class TestPendingNotice(TrialTestBase):
         except Exception as exc:
             self.fail(f"pending_notice raised: {exc}")
 
+
     def test_grace_shown_once(self):
         # Grace: trial license expired recently, still in grace period
         past = int(time.time()) - 3600  # expired 1 hour ago
@@ -431,6 +432,28 @@ class TestPendingNotice(TrialTestBase):
         self.assertIsNotNone(msg1)
         self.assertIn("ended", msg1)
         self.assertIsNone(msg2)
+
+
+class TestReadMarker(TrialTestBase):
+
+    def test_list_marker_is_ignored(self):
+        """A trial.json containing a JSON array is treated as absent (not a dict)."""
+        (self._lic._CONFIG_DIR / "trial.json").write_text("[1, 2]")
+        result = self._trial._read_marker()
+        self.assertIsNone(result)
+
+    def test_valid_dict_marker_is_read(self):
+        """A well-formed dict marker is returned unchanged."""
+        marker = {
+            "license_id": "trial-test",
+            "started_at": int(time.time()) - 86400,
+            "expires_at": int(time.time()) + 29 * 86400,
+            "notified": [],
+        }
+        (self._lic._CONFIG_DIR / "trial.json").write_text(json.dumps(marker))
+        result = self._trial._read_marker()
+        self.assertIsNotNone(result)
+        self.assertEqual(result["license_id"], "trial-test")
 
 
 class TestTrialStatus(TrialTestBase):

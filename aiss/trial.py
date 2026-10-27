@@ -73,7 +73,10 @@ def _marker_path() -> Path:
 
 def _read_marker() -> Optional[Dict[str, Any]]:
     try:
-        return json.loads(_marker_path().read_text(encoding="utf-8"))
+        data = json.loads(_marker_path().read_text(encoding="utf-8"))
+        if not isinstance(data, dict):
+            return None
+        return data
     except Exception:
         return None
 
