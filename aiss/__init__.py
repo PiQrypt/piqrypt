@@ -7,7 +7,7 @@
 
 """
 AISS (Agent Identity and Signature Standard)
-PiQrypt v1.10.0
+PiQrypt v1.11.0
 
 Standards referenced:
 - RFC 8785  (JSON Canonicalization Scheme) — MANDATORY
