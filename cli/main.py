@@ -843,7 +843,7 @@ def cmd_license_activate(args):
     else:
         print("✗ Invalid license key", file=sys.stderr)
         print("\n  Get a license:")
-        print("    Pro: https://piqrypt.com/pro  ($1,990/year)")
+        print("    Pro: https://piqrypt.com/pricing  (EUR 390/year)")
         print("    OSS: https://piqrypt.com/oss  (free for open-source)")
         return 1
 
@@ -859,6 +859,17 @@ def cmd_license_status(args):
 
     if tier != "FREE":
         print(f"  License : {info.get('license_id', 'N/A')}")
+        status_val = info.get("status", "")
+        if status_val:
+            print(f"  Status  : {status_val.upper()}")
+        days_left = info.get("days_left")
+        if days_left is not None and info.get("expires_at"):
+            from datetime import datetime
+            try:
+                date_str = info["expires_at"][:10]
+            except Exception:
+                date_str = str(info["expires_at"])
+            print(f"  Expires : {date_str} ({days_left} days left)")
 
     print("\n  Features:")
     for feature, available in info['features'].items():
@@ -867,7 +878,8 @@ def cmd_license_status(args):
 
     if tier == "FREE":
         print("\n  Upgrade to Pro:")
-        print("    piqrypt.com/pro  –  $1,990/year")
+        print("    Try Pro free for 30 days: piqrypt trial start")
+        print("    piqrypt.com/pricing  -  EUR 390/year")
         print("    piqrypt.com/oss  –  Free for open-source")
     print()
 
@@ -910,6 +922,60 @@ def cmd_badge_generate(args):
 # ─────────────────────────────────────────────
 # Telemetry Commands
 # ─────────────────────────────────────────────
+
+def cmd_trial_start(args):
+    import aiss.trial as _trial
+    print("Starting your Pro trial. This request sends your anonymous installation ID "
+          "(a random UUID) to the PiQrypt server to issue the trial.")
+    try:
+        result = _trial.start_trial()
+        from datetime import datetime, timezone
+        expires_dt = datetime.fromtimestamp(result["expires_at"], tz=timezone.utc)
+        date_str = expires_dt.strftime("%Y-%m-%d")
+        days = result.get("days_left") or result.get("trial_days", 30)
+        print("✓ Trial active: Pro features unlocked until " + date_str + " (" + str(days) + " days).")
+        print("  Check anytime: piqrypt trial status")
+        print("  When it ends, PiQrypt returns to the Free tier (3 agents) and your data is untouched.")
+        print("  Keep Pro: https://piqrypt.com/pricing")
+        return 0
+    except _trial.TrialError as exc:
+        print("✗ " + exc.message, file=sys.stderr)
+        return 1
+
+
+def cmd_trial_status(args):
+    import aiss.trial as _trial
+    st = _trial.trial_status()
+    state = st["state"]
+    days_left = st.get("days_left")
+    exp_iso = st.get("expires_at_iso")
+    paid = st.get("paid_license", False)
+
+    print("\n" + "="*50)
+    print("  PiQrypt Trial")
+    print("="*50)
+
+    if state == "not_started":
+        print("\n  State    : NOT STARTED")
+    elif state == "active" and days_left is not None:
+        print("\n  State    : ACTIVE (" + str(days_left) + " days left)")
+    elif state == "active":
+        print("\n  State    : ACTIVE")
+    elif state == "grace":
+        print("\n  State    : GRACE PERIOD")
+    elif state == "ended":
+        print("\n  State    : ENDED (back on Free)")
+
+    if exp_iso:
+        print("  Expires  : " + exp_iso)
+
+    if state == "not_started" and not paid:
+        print("  Start it with: piqrypt trial start")
+    if paid:
+        print("  A paid license is active; no trial needed.")
+    print()
+    return 0
+
 
 def cmd_telemetry_enable(args):
     aiss.enable_telemetry()
@@ -990,6 +1056,14 @@ def main():
         pass  # Migration non critique — ne bloque pas le démarrage
 
     _maybe_show_telemetry_notice()
+
+    try:
+        from aiss.trial import pending_notice
+        _msg = pending_notice()
+        if _msg:
+            print(_msg, file=sys.stderr)
+    except Exception:
+        pass
 
     parser = argparse.ArgumentParser(
         description=f"PiQrypt v{aiss.__version__} – AISS Command Line Interface",
@@ -1142,6 +1216,12 @@ Examples:
                            help='Badge tier (default: current license tier)')
     badge_gen.add_argument('--format', choices=['json', 'markdown', 'html', 'rst', 'svg'],
                            default='json', help='Output format (default: json)')
+
+    # ── trial ──
+    trial_p = sub.add_parser('trial', help='30-day Pro trial management')
+    trial_s = trial_p.add_subparsers(dest='trial_command')
+    trial_s.add_parser('start',  help='Start the 30-day Pro trial')
+    trial_s.add_parser('status', help='Show trial status')
 
     # ── telemetry ──
     tel_p = sub.add_parser('telemetry', help='Telemetry management')
@@ -1342,6 +1422,15 @@ Examples:
                 cmd_badge_generate(args)
             else:
                 badge_p.print_help()
+
+        # Trial
+        elif args.command == 'trial':
+            if args.trial_command == 'start':
+                return cmd_trial_start(args)
+            elif args.trial_command == 'status':
+                return cmd_trial_status(args)
+            else:
+                trial_p.print_help()
 
         # Telemetry
         elif args.command == 'telemetry':
@@ -1570,12 +1659,12 @@ def cmd_start(args):
         print()
         print("  Activation de la licence...")
         try:
-            from aiss.license import activate, get_tier, get_license_info
-            activate(key)
+            from aiss.license import activate_license, get_tier, get_license_info
+            activate_license(key)
             activated_tier = get_tier()
             info = get_license_info()
-            agents = info.get("agent_limit") or "illimité"
-            events = info.get("events_month_limit") or "illimité"
+            agents = info.get("agents_max") or "illimité"
+            events = info.get("events_month") or "illimité"
             print(green(f"  ✓ Licence OK — Tier : {activated_tier.upper()}  |  Agents : {agents}  |  Events/mois : {events}"))
             os.environ["PIQRYPT_LICENSE_KEY"] = key
         except Exception as e:

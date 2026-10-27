@@ -11,6 +11,7 @@ import os
 os.environ.setdefault(
     "PIQRYPT_TELEMETRY_ENDPOINT", "pytest-no-network://telemetry"
 )
+os.environ.setdefault("PIQRYPT_TRIAL_ENDPOINT", "pytest-no-network://trial")
 
 _REPO_ROOT = Path(__file__).resolve().parent
 

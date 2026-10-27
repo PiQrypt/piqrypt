@@ -32,6 +32,7 @@ import base64
 import hashlib
 import hmac
 import json
+import math
 import os
 import time
 from datetime import datetime, timezone
@@ -728,10 +729,30 @@ class License:
 
     # ── Info ─────────────────────────────────────────────────────────────────
 
+    def _status_fields(self) -> Dict[str, Any]:
+        """Return status, trial flag, and days_left derived from the payload."""
+        if self._tier == "free":
+            return {"status": "free", "trial": False, "days_left": None}
+        payload = self._payload or {}
+        exp = payload.get("expires_at")
+        now = time.time()
+        trial = bool(payload.get("trial"))
+        if exp and now > exp:
+            status = "grace"
+        elif trial:
+            status = "trial"
+        else:
+            status = "active"
+        if not exp:
+            days_left = None
+        else:
+            days_left = max(0, int(math.ceil((exp - now) / 86400.0)))
+        return {"status": status, "trial": trial, "days_left": days_left}
+
     def info(self) -> Dict[str, Any]:
         """Retourne un résumé complet de la licence."""
         tier_cfg = TIERS.get(self._tier, TIERS["free"])
-        return {
+        result = {
             "tier":          self._tier,
             "license_id":    self.license_id,
             "agents_max":    self.agents_max,
@@ -742,6 +763,8 @@ class License:
             "validation":    tier_cfg.get("validation"),
             "local_first":   True,  # Toujours — zéro réseau sauf renouvellement
         }
+        result.update(self._status_fields())
+        return result
 
     def __repr__(self) -> str:
         return f"License(tier={self._tier!r}, id={self.license_id!r})"
