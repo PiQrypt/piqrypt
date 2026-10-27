@@ -5,9 +5,9 @@ from __future__ import annotations
 
 import base64
 import http.server
-import importlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -17,8 +17,6 @@ import unittest
 from pathlib import Path
 from typing import Any, Dict
 from unittest.mock import patch
-
-import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -61,37 +59,43 @@ class TrialTestBase(unittest.TestCase):
 
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, str(self.tmp), True)
         piqrypt_home = self.tmp / ".piqrypt"
         piqrypt_home.mkdir()
 
-        # Generate throwaway keypair and patch _DEV_PUBLIC_KEY_B64
+        # Generate throwaway keypair
         self._priv, self._pub, self._pub_b64 = _gen_keypair()
 
         import aiss.license as _lic
         import aiss.trial as _trial
 
-        # Reload to get clean state
-        importlib.reload(_lic)
-        importlib.reload(_trial)
-
         self._lic = _lic
         self._trial = _trial
 
-        # Patch config paths
-        _lic._CONFIG_DIR = piqrypt_home
-        _lic._LICENSE_FILE = piqrypt_home / "license.jwt"
-        _lic._GRACE_FILE = piqrypt_home / "license.grace"
-        # Patch dev public key so our test tokens verify
-        _lic._DEV_PUBLIC_KEY_B64 = self._pub_b64
-        # Reset global license to free
-        _lic._license = _lic.License.__new__(_lic.License)
-        _lic._license._tier = "free"
-        _lic._license._payload = _lic._license._default_free_payload()
-        _lic._license._loaded_at = 0.0
+        # Build a clean Free license instance for reset
+        free_lic = _lic.License.__new__(_lic.License)
+        free_lic._tier = "free"
+        free_lic._payload = _lic.License.__new__(_lic.License)._default_free_payload()
+        free_lic._loaded_at = 0.0
 
-        # Remove env license keys
-        for k in ("PIQRYPT_LICENSE_KEY", "AISS2_LICENSE_KEY"):
-            os.environ.pop(k, None)
+        # Patch config paths (restored after each test)
+        p1 = patch.object(_lic, "_CONFIG_DIR", piqrypt_home)
+        p2 = patch.object(_lic, "_LICENSE_FILE", piqrypt_home / "license.jwt")
+        p3 = patch.object(_lic, "_GRACE_FILE", piqrypt_home / "license.grace")
+        p4 = patch.object(_lic, "_DEV_PUBLIC_KEY_B64", self._pub_b64)
+        p5 = patch.object(_lic, "_license", free_lic)
+        for p in (p1, p2, p3, p4, p5):
+            p.start()
+            self.addCleanup(p.stop)
+
+        # Remove license env keys (restored after each test)
+        env_patch = patch.dict(os.environ,
+                               {"PIQRYPT_LICENSE_KEY": "", "AISS2_LICENSE_KEY": ""},
+                               clear=False)
+        env_patch.start()
+        self.addCleanup(env_patch.stop)
+        os.environ.pop("PIQRYPT_LICENSE_KEY", None)
+        os.environ.pop("AISS2_LICENSE_KEY", None)
 
     def _make_trial_token(self, days=30):
         now = int(time.time())
@@ -158,7 +162,6 @@ class TestStartTrialSuccess(TrialTestBase):
             "trial_days": 30,
         }
         captured = {}
-        original = self._trial._post_json
 
         def capture(url, body, timeout):
             captured.update(body)
@@ -204,7 +207,8 @@ class TestStartTrialRefused(TrialTestBase):
         self._lic._license.activate(token)
 
         called = []
-        with patch.object(self._trial, "_post_json", side_effect=lambda *a, **kw: called.append(1) or (200, {})):
+        _noop = lambda *a, **kw: called.append(1) or (200, {})  # noqa: E731
+        with patch.object(self._trial, "_post_json", side_effect=_noop):
             with self.assertRaises(self._trial.TrialError) as ctx:
                 self._trial.start_trial()
         self.assertEqual(ctx.exception.code, "license_active")
@@ -214,7 +218,8 @@ class TestStartTrialRefused(TrialTestBase):
         os.environ["PIQRYPT_LICENSE_KEY"] = "fake_key"
         called = []
         try:
-            with patch.object(self._trial, "_post_json", side_effect=lambda *a, **kw: called.append(1) or (200, {})):
+            _noop2 = lambda *a, **kw: called.append(1) or (200, {})  # noqa: E731
+            with patch.object(self._trial, "_post_json", side_effect=_noop2):
                 with self.assertRaises(self._trial.TrialError) as ctx:
                     self._trial.start_trial()
             self.assertEqual(ctx.exception.code, "env_license")
@@ -228,7 +233,8 @@ class TestStartTrialRefused(TrialTestBase):
                    "expires_at": expired, "notified": []}
         (self._lic._CONFIG_DIR / "trial.json").write_text(json.dumps(marker))
         called = []
-        with patch.object(self._trial, "_post_json", side_effect=lambda *a, **kw: called.append(1) or (200, {})):
+        _noop3 = lambda *a, **kw: called.append(1) or (200, {})  # noqa: E731
+        with patch.object(self._trial, "_post_json", side_effect=_noop3):
             with self.assertRaises(self._trial.TrialError) as ctx:
                 self._trial.start_trial()
         self.assertEqual(ctx.exception.code, "already_used")
@@ -392,9 +398,39 @@ class TestPendingNotice(TrialTestBase):
         # Even with a broken marker
         (self._lic._CONFIG_DIR / "trial.json").write_text("NOT_JSON")
         try:
-            result = self._trial.pending_notice()
+            self._trial.pending_notice()
         except Exception as exc:
             self.fail(f"pending_notice raised: {exc}")
+
+    def test_grace_shown_once(self):
+        # Grace: trial license expired recently, still in grace period
+        past = int(time.time()) - 3600  # expired 1 hour ago
+        lic = self._lic.License.__new__(self._lic.License)
+        lic._tier = "pro"
+        lic._payload = {
+            "tier": "pro", "trial": True, "trial_days": 30,
+            "license_id": "trial-grace", "issued_at": int(time.time()) - 30 * 86400,
+            "expires_at": past,
+            "agents_max": 50, "events_month": 500000,
+        }
+        lic._loaded_at = 0.0
+        self._lic._license = lic
+        self._set_marker(past)
+        msg1 = self._trial.pending_notice()
+        msg2 = self._trial.pending_notice()
+        self.assertIsNotNone(msg1)
+        self.assertIn("grace", msg1)
+        self.assertIsNone(msg2)
+
+    def test_ended_shown_once(self):
+        # Ended: trial expired and tier is back to free
+        past = int(time.time()) - 86400  # expired yesterday
+        self._set_marker(past)
+        msg1 = self._trial.pending_notice()
+        msg2 = self._trial.pending_notice()
+        self.assertIsNotNone(msg1)
+        self.assertIn("ended", msg1)
+        self.assertIsNone(msg2)
 
 
 class TestTrialStatus(TrialTestBase):

@@ -15,7 +15,6 @@ activating it locally, writing a marker file, and emitting reminder messages.
 from __future__ import annotations
 
 import json
-import math
 import os
 import tempfile
 import time

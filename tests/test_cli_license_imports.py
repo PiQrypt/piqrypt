@@ -4,8 +4,6 @@
 from __future__ import annotations
 
 import ast
-import importlib
-import sys
 from pathlib import Path
 
 import pytest
@@ -36,7 +34,10 @@ def test_cli_license_imports_exist():
         for mod, names, filename in _get_imports_from_file(cli_file):
             for name in names:
                 if not hasattr(_lic, name):
-                    missing.append(f"{filename}: from {mod} import {name!r} — not found in aiss.license")
+                    missing.append(
+                        f"{filename}: from {mod} import {name!r}"
+                        " -- not found in aiss.license"
+                    )
 
     assert not missing, "Missing aiss.license exports:\n" + "\n".join(missing)
 

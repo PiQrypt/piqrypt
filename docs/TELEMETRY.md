@@ -28,7 +28,7 @@ Environment variable (an "off" value always wins over the configuration file):
 export PIQRYPT_TELEMETRY=0    # also accepted: false, no, off (any case)
 ```
 
-When telemetry is off, nothing is written to the local event log and nothing is sent. A random installation ID file (`~/.piqrypt/installation_id`) is still created on your machine; it is only transmitted while telemetry is on, and you can delete it.
+When telemetry is off, nothing is written to the local event log and nothing is sent. A random installation ID file (`~/.piqrypt/installation_id`) is still created on your machine; it is only transmitted while telemetry is on, and you can delete it. The only exception is the `piqrypt trial start` command: it sends this installation ID to the Trust Server to issue the trial, whatever the telemetry setting.
 
 ---
 
@@ -74,6 +74,12 @@ The Trust Server (`/api/telemetry`) checks that the three required fields are pr
 - Synchronous, at the moment of the event, with a 3 second timeout. No retry, no queue. An unreachable server can therefore delay an event by up to 3 seconds.
 - Every error is ignored: telemetry never raises an exception into your program, and PiQrypt works offline.
 - To capture the requests on your own listener, or to send them to your own server, set `PIQRYPT_TELEMETRY_ENDPOINT` (for example `http://127.0.0.1:8000/api/telemetry`) before PiQrypt is first imported.
+
+---
+
+## Trial request
+
+Only when you run `piqrypt trial start`, PiQrypt sends one HTTPS POST to `https://trust-server-ucjb.onrender.com/api/trial/start` with this body: `{"installation_id": "...", "client_version": "..."}`. The server answers with a signed license token valid for 30 days. To refuse a second trial on the same installation, it keeps, on a best-effort basis, a SHA-256 hash of the installation ID, the start and end dates and the client version. The application does not store the IP address; the hosting provider's own logs are outside its control. This request is sent whatever the telemetry setting, because you asked for the trial. To send it to your own server, set `PIQRYPT_TRIAL_ENDPOINT`.
 
 ---
 

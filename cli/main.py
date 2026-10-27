@@ -865,7 +865,6 @@ def cmd_license_status(args):
             print(f"  Status  : {status_val.upper()}")
         days_left = info.get("days_left")
         if days_left is not None and info.get("expires_at"):
-            from datetime import datetime
             try:
                 date_str = info["expires_at"][:10]
             except Exception:

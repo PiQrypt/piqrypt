@@ -15,7 +15,7 @@ SCRIPT = ROOT / ".github" / "scripts" / "sync_aiss.py"
 # Modules that aiss-standard maintains itself and that are not synced.
 STANDARD_OWNED = {"aiss.memory", "aiss.telemetry"}
 # Modules that must never reach aiss-standard.
-ELV2_ONLY = {"aiss.license", "aiss.rfc3161"}
+ELV2_ONLY = {"aiss.license", "aiss.rfc3161", "aiss.trial"}
 
 _CATCH_ALL = {"ImportError", "ModuleNotFoundError", "Exception"}
 
